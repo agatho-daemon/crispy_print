@@ -5,3 +5,37 @@
 tags
 node_modules
 __pycache__
+*.bundle.*.js
+*.bundle.*.css
+dist
+# # -----------------------------
+# # Crispy Print – Build Outputs
+# # -----------------------------
+public/js/crispy
+
+# # -----------------------------
+# # Dev workspace (Vite, Vue)
+# # -----------------------------
+# crispy/
+# crispy/node_modules/
+# crispy/dist/
+# crispy/.vite/
+# crispy/tsconfig.tsbuildinfo
+
+# # -----------------------------
+# # Node Modules (safety)
+# # -----------------------------
+# node_modules/
+
+# # -----------------------------
+# # Lock files for frontend
+# # -----------------------------
+# crispy/yarn.lock
+# crispy/package-lock.json
+# crispy/pnpm-lock.yaml
+
+# # -----------------------------
+# # Misc
+# # -----------------------------
+# *.log
+# .DS_Store

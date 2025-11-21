@@ -1,7 +1,9 @@
 app_name = "crispy_print"
 app_title = "Crispy Print"
 app_publisher = "Agathodaemon"
-app_description = "A Frappe App that uses Typst CLI engine with Vue based frontend to format DocType print formats."
+app_description = (
+	"A Frappe App that uses Typst CLI engine with Vue based frontend to format DocType print formats."
+)
 app_email = "agatho_daemon@icloud.com"
 app_license = "mit"
 
@@ -25,8 +27,11 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/crispy_print/css/crispy_print.css"
-# app_include_js = "/assets/crispy_print/js/crispy_print.js"
+app_include_css = [
+	"/assets/crispy_print/js/crispy/crispy_print-main.css",
+	"/assets/crispy_print/js/crispy/crispy_print-pages.css",
+]
+# app_include_js is at the bottom (Frappe auto-loads *.bundle.js)
 
 # include js, css files in header of web template
 # web_include_css = "/assets/crispy_print/css/crispy_print.css"
@@ -242,3 +247,4 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+app_include_js = "crispy_print.bundle.js"
