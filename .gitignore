@@ -12,6 +12,7 @@ dist
 # # Crispy Print – Build Outputs
 # # -----------------------------
 public/js/crispy
+crispy_print/public/js/crispy/
 
 # # -----------------------------
 # # Dev workspace (Vite, Vue)

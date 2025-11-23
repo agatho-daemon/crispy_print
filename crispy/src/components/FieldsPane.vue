@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="fields-pane bg-white/90  border border-slate-200 rounded-xl h-full flex flex-col"
+		class="fields-pane bg-white/90 border border-slate-200 rounded-xl h-full flex flex-col"
 	>
 		<div
 			class="pane-header border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-4 py-3"
@@ -20,7 +20,7 @@
 				/>
 			</div>
 			<div v-if="loading" class="loading-indicator">
-				<span class="loading-text">Loading fields...</span>
+				<span class="loading-text">Loading fields</span>
 			</div>
 		</div>
 
@@ -39,38 +39,38 @@
 					No fields match "{{ searchQuery }}"
 				</p>
 				<p v-else class="empty-message">
-					No fields available. Load a DocType first.
+					No fields available yet.
 				</p>
 			</div>
 
 			<div
 				v-for="field in filteredFields"
 				:key="field.fieldname"
-				class="field-item w-full flex items-start justify-between gap-3 rounded-xl border px-3 py-3 min-h-[68px] bg-gradient-to-br from-white via-indigo-50 to-slate-50 hover:from-indigo-50 hover:to-cyan-50 transition-all"
+				class="field-item w-full flex flex-col gap-2 rounded-xl border px-3 py-3 bg-gradient-to-br from-white via-indigo-50 to-slate-50 hover:from-indigo-50 hover:to-cyan-50 transition-all"
 				draggable="true"
 				@dragstart="onFieldDragStart($event, field)"
 				:title="`${field.label} (${field.fieldtype})`"
 			>
-				<div class="field-main flex flex-col gap-0.5 min-w-0 flex-1">
+				<div
+					class="field-label block text-sm font-semibold text-slate-900 truncate"
+					:title="field.label"
+				>
+					{{ field.label }}
+				</div>
+				<div class="field-meta flex items-center gap-2 min-w-0">
 					<span
-						class="field-label block text-sm font-semibold text-slate-900 truncate"
-						:title="field.label"
-					>
-						{{ field.label }}
-					</span>
-					<span
-						class="field-name block text-[11px] text-slate-500 truncate"
+						class="field-name block text-[11px] text-slate-500 truncate min-w-0 flex-1"
 						:title="field.fieldname"
 					>
 						{{ field.fieldname }}
 					</span>
+					<span
+						class="field-type shrink-0 inline-flex items-center justify-center px-3 py-1 text-[8px] font-bold uppercase tracking-wide rounded-full border bg-indigo-50 text-indigo-700"
+						:class="`type-${(field.fieldtype || 'unknown').toLowerCase()}`"
+					>
+						{{ field.fieldtype || "Unknown" }}
+					</span>
 				</div>
-				<span
-					class="field-type ml-3 shrink-0 inline-flex items-center justify-center px-3 py-1 text-[8px] font-bold uppercase tracking-wide rounded-full border bg-indigo-50 text-indigo-700 self-end mt-auto"
-					:class="`type-${(field.fieldtype || 'unknown').toLowerCase()}`"
-				>
-					{{ field.fieldtype || "Unknown" }}
-				</span>
 			</div>
 		</div>
 	</div>
@@ -369,4 +369,23 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	background: #9ca3af;
 }
 */
+
+.loading-text {
+	position: relative;
+}
+
+.loading-text::after {
+	content: "...";
+	display: inline-block;
+	width: 0;
+	overflow: hidden;
+	vertical-align: bottom;
+	animation: dots 1s steps(4, end) infinite;
+}
+
+@keyframes dots {
+	to {
+		width: 1.2em;
+	}
+}
 </style>
