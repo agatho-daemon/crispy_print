@@ -51,13 +51,10 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 	let currentSection: LayoutSection | null = null
 	let currentColumn: LayoutColumn | null = null
 
-	// Filter out print_hide and break fields
-	const printableFields = meta.fields.filter(
-		(f: DocField) => !f.print_hide && f.fieldname && f.label
-	)
+	for (const field of meta.fields as DocField[]) {
+		const type = field.fieldtype || ""
 
-	for (const field of printableFields) {
-		if (field.fieldtype === "Section Break") {
+		if (type === "Section Break") {
 			// Start a new section
 			if (currentSection && currentSection.columns.length > 0) {
 				sections.push(currentSection)
@@ -67,7 +64,10 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 				columns: [],
 			}
 			currentColumn = null
-		} else if (field.fieldtype === "Column Break") {
+			continue
+		}
+
+		if (type === "Column Break") {
 			// Start a new column in current section
 			if (currentSection) {
 				currentColumn = {
@@ -76,39 +76,40 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 				}
 				currentSection.columns.push(currentColumn)
 			}
-		} else {
-			// Regular field
-			if (!currentSection) {
-				// No section yet, create default one
-				currentSection = {
-					label: "Details",
-					columns: [],
-				}
-			}
-
-			if (!currentColumn) {
-				// No column yet, create default one
-				currentColumn = {
-					label: "",
-					fields: [],
-				}
-				currentSection.columns.push(currentColumn)
-			}
-
-			// Add field to current column
-			const layoutField: LayoutField = {
-				fieldname: field.fieldname,
-				label: field.label,
-				fieldtype: field.fieldtype,
-			}
-
-			// Handle table fields with child columns
-			if (field.fieldtype === "Table" && field.options) {
-				layoutField.table_columns = getTableColumns(field.options)
-			}
-
-			currentColumn.fields.push(layoutField)
+			continue
 		}
+
+		// Regular field; require a fieldname
+		if (!field.fieldname || field.print_hide) {
+			continue
+		}
+
+		if (!currentSection) {
+			currentSection = {
+				label: "Details",
+				columns: [],
+			}
+		}
+
+		if (!currentColumn) {
+			currentColumn = {
+				label: "",
+				fields: [],
+			}
+			currentSection.columns.push(currentColumn)
+		}
+
+		const layoutField: LayoutField = {
+			fieldname: field.fieldname,
+			label: field.label || field.fieldname,
+			fieldtype: type,
+		}
+
+		if (type === "Table" && field.options) {
+			layoutField.table_columns = getTableColumns(field.options)
+		}
+
+		currentColumn.fields.push(layoutField)
 	}
 
 	// Push last section if exists
@@ -117,15 +118,26 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 	}
 
 	// If no sections were created, create a default one with all fields
+	const printableFields = (meta.fields as DocField[]).filter(
+		(f) =>
+			f.fieldname &&
+			!f.print_hide &&
+			f.fieldtype &&
+			!["Section Break", "Column Break"].includes(f.fieldtype)
+	)
+
 	if (sections.length === 0 && printableFields.length > 0) {
 		const defaultColumn: LayoutColumn = {
 			label: "",
 			fields: printableFields
-				.filter((f: DocField) => f.fieldtype && !["Section Break", "Column Break"].includes(f.fieldtype))
+				.filter(
+					(f: DocField) =>
+						f.fieldtype && !["Section Break", "Column Break"].includes(f.fieldtype)
+				)
 				.map((f: DocField) => ({
 					fieldname: f.fieldname,
 					label: f.label,
-					fieldtype: f.fieldtype,
+					fieldtype: f.fieldtype || "Data",
 				})),
 		}
 

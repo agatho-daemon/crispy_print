@@ -4,14 +4,7 @@
 		<FieldsPane :fields="store.fields" :loading="store.loading" />
 
 		<!-- Column 2: Layout Builder Pane -->
-		<div class="builder-pane">
-			<div class="pane-header">
-				<h3 class="text-sm font-semibold text-gray-700 mb-2">Layout Builder</h3>
-			</div>
-			<div class="builder-canvas">
-				<p class="text-gray-500 text-sm">Drag fields here to build your layout</p>
-			</div>
-		</div>
+		<LayoutPane class="builder-pane" />
 
 		<!-- Column 3: Preview Pane -->
 		<div class="preview-pane">
@@ -111,6 +104,7 @@
 <script setup lang="ts">
 import { onMounted, watch } from "vue"
 import FieldsPane from "@/components/FieldsPane.vue"
+import LayoutPane from "@/components/LayoutPane.vue"
 import { useStore } from "@/composables/useStore"
 
 const store = useStore()
