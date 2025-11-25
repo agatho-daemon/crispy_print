@@ -5,6 +5,11 @@ import { ref, computed } from "vue"
 import { createDefaultLayout, serializeLayout, deserializeLayout } from "@/utils/layout"
 import type { CrispyLayout, DocField } from "@/utils/layout"
 
+declare const frappe: any
+declare const __: any
+
+let storeInstance: ReturnType<typeof buildStore> | null = null
+
 interface CrispyFormat {
 	name: string
 	doc_type: string
@@ -29,7 +34,7 @@ interface PageSettings {
 	letterhead: string
 }
 
-export function useStore() {
+function buildStore() {
 	// State
 	const crispyFormat = ref<CrispyFormat | null>(null)
 	const layout = ref<CrispyLayout | null>(null)
@@ -83,17 +88,17 @@ export function useStore() {
 
 						const skipTypes = ["Section Break", "Column Break"]
 
-						// Extract fields for the fields pane, matching beta builder behavior
-						const baseFields: DocField[] = meta.value.fields
-							.filter(
-								(f: DocField) =>
-									f.fieldname &&
-									!skipTypes.includes(f.fieldtype)
-							)
-							.map((f: DocField) => ({
-								fieldname: f.fieldname,
-								label: f.label || f.fieldname,
-								fieldtype: f.fieldtype,
+							// Extract fields for the fields pane, matching beta builder behavior
+							const baseFields: DocField[] = meta.value.fields
+								.filter(
+									(f: DocField) =>
+										f.fieldname &&
+										!skipTypes.includes(f.fieldtype || "")
+								)
+								.map((f: DocField) => ({
+									fieldname: f.fieldname,
+									label: f.label || f.fieldname,
+									fieldtype: f.fieldtype,
 								options: f.options,
 								print_hide: f.print_hide,
 							}))
@@ -148,6 +153,9 @@ export function useStore() {
 
 			// Load or create layout
 			layout.value = getLayout()
+			if (!layout.value || !layout.value.sections?.length) {
+				layout.value = getDefaultLayout()
+			}
 
 			// Load page settings
 			if (doc.page_settings) {
@@ -284,7 +292,7 @@ export function useStore() {
 		dirty.value = true
 	}
 
-	return {
+	const store = {
 		// State
 		crispyFormat,
 		layout,
@@ -306,4 +314,13 @@ export function useStore() {
 		resetLayout,
 		getDefaultLayout,
 	}
+	return store
+}
+
+export function useStore() {
+	if (storeInstance) {
+		return storeInstance
+	}
+	storeInstance = buildStore()
+	return storeInstance
 }
