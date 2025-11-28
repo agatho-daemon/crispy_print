@@ -29,7 +29,7 @@ app_license = "mit"
 # include js, css files in header of desk.html
 app_include_css = [
 	"/assets/crispy_print/js/crispy/crispy_print-main.css",
-	"/assets/crispy_print/js/crispy/crispy_print-pages.css",
+	# "/assets/crispy_print/js/crispy/crispy_print-pages.css",
 ]
 # app_include_js is at the bottom (Frappe auto-loads *.bundle.js)
 

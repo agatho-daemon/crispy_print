@@ -1,5 +1,11 @@
+import base64
+import shutil
 import subprocess
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
 import frappe
+from frappe import _
 
 
 @frappe.whitelist()
@@ -45,3 +51,173 @@ def get_typst_local_fonts() -> list[str]:
 
 	# Deduplicate
 	return sorted(list(set(fonts)))
+
+
+def _copy_letterhead_to_temp(letterhead_image, temp_dir):
+	"""
+	Copy letterhead image to temp directory for Typst compilation.
+
+	Args:
+	    letterhead_image (str): Path to letterhead image (e.g., /files/letterhead.png)
+	    temp_dir (str): Temporary directory path
+
+	Returns:
+	    str: Filename of copied letterhead (e.g., "letterhead.png")
+	"""
+	if not letterhead_image:
+		return None
+
+	# Handle Frappe file paths (/files/... or /private/files/...)
+	if letterhead_image.startswith("/files/") or letterhead_image.startswith("/private/files/"):
+		# Get site path
+		site_path = frappe.get_site_path()
+
+		# Remove leading slash and construct full path
+		rel_path = letterhead_image.lstrip("/")
+		source_path = Path(site_path) / "public" / rel_path
+
+		if not source_path.exists():
+			# Try private files
+			source_path = Path(site_path) / rel_path
+
+		if not source_path.exists():
+			frappe.log_error(f"Letterhead image not found: {letterhead_image}", "Letterhead Copy Error")
+			return None
+
+		# Copy to temp directory with original filename
+		dest_filename = source_path.name
+		dest_path = Path(temp_dir) / dest_filename
+		shutil.copy2(source_path, dest_path)
+
+		return dest_filename
+
+	return None
+
+
+@frappe.whitelist()
+def compile_typst(typst_source, output_format="svg", letterhead_image=None):
+	"""
+	Compile Typst source code using the local Typst CLI.
+
+	Args:
+	    typst_source (str): The Typst source code to compile.
+	    output_format (str): Desired output format ("pdf" or "svg").
+	    letterhead_image (str): Optional path to letterhead image (file path or URL).
+
+	Returns:
+	    dict: Response with compiled artifact or error.
+	"""
+
+	if not typst_source or not typst_source.strip():
+		frappe.throw(_("Typst source code is required"))
+
+	allowed_formats = {"pdf", "svg"}
+	output_format = (output_format or "svg").lower()
+	if output_format not in allowed_formats:
+		frappe.throw(_("Unsupported Typst output format: {0}").format(output_format))
+
+	try:
+		with TemporaryDirectory() as temp_dir:
+			# Handle letterhead image if provided
+			if letterhead_image:
+				_copy_letterhead_to_temp(letterhead_image, temp_dir)
+
+			# Write Typst source to temp file
+			src_path = Path(temp_dir) / "document.typ"
+			src_path.write_text(typst_source, encoding="utf-8")
+
+			src_path_obj = Path(src_path)
+			if output_format == "pdf":
+				output_template = src_path_obj.with_suffix(".pdf")
+			else:
+				# Include page placeholder so Typst emits page-numbered SVGs (e.g. foo-1.svg, foo-2.svg ...)
+				output_template = src_path_obj.with_name(f"{src_path_obj.stem}-{{p}}.svg")
+
+			app_path = frappe.get_app_path("crispy_print")
+			font_dir = Path(app_path) / "public" / "vendor" / "typst"
+
+			result = subprocess.run(
+				[
+					"typst",
+					"compile",
+					"--font-path",
+					str(font_dir),
+					"--format",
+					output_format,
+					src_path,
+					str(output_template),
+				],
+				capture_output=True,
+				text=True,
+				timeout=30,
+			)
+
+			if result.returncode != 0:
+				error_msg = result.stderr or result.stdout or "Unknown compilation error"
+				frappe.log_error(
+					message=f"Typst CLI error:\n{error_msg}\n\nSource:\n{typst_source[:500]}",
+					title="Typst Compilation Error",
+				)
+				frappe.throw(_("Typst compilation failed: {0}").format(error_msg[:200]))
+
+			if output_format == "pdf":
+				output_path = Path(output_template)
+				if not output_path.exists():
+					frappe.throw(_("Compiled PDF was not produced"))
+
+				with output_path.open("rb") as pdf_file:
+					pdf_bytes = pdf_file.read()
+
+				pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+				return {"success": True, "format": "pdf", "pdf_data": pdf_base64}
+
+			# SVG output (may include multiple pages)
+			base_name = src_path_obj.stem
+			output_dir = Path(output_template).parent
+
+			def svg_sort_key(path: Path):
+				name = path.stem
+				if name.startswith(f"{base_name}-"):
+					suffix = name[len(base_name) + 1 :]
+					try:
+						return int(suffix)
+					except ValueError:
+						return 9999
+				return 9999
+
+			svg_files = sorted(output_dir.glob(f"{base_name}-*.svg"), key=svg_sort_key)
+
+			if not svg_files:
+				frappe.throw(_("Compiled SVG was not produced"))
+
+			svg_pages = []
+			for svg_path in svg_files:
+				with svg_path.open("r", encoding="utf-8") as svg_file:
+					svg_pages.append(svg_file.read())
+
+			return {
+				"success": True,
+				"format": "svg",
+				"svg_pages": svg_pages,
+				"page_count": len(svg_pages),
+			}
+
+	except FileNotFoundError:
+		frappe.throw(_("Typst compiler not found. Please install Typst CLI: brew install typst"))
+
+	except subprocess.TimeoutExpired:
+		frappe.throw(_("Compilation timed out. The document may be too complex."))
+
+	except Exception as exc:
+		frappe.log_error(message=str(exc), title="Typst Compilation Error")
+		frappe.throw(_("Unexpected error during compilation: {0}").format(str(exc)))
+
+	finally:
+		# Cleanup temp directory (includes source file, letterhead, and outputs)
+		if src_path:
+			temp_dir = Path(src_path).parent
+			try:
+				if temp_dir.exists():
+					shutil.rmtree(temp_dir)
+			except Exception as e:
+				frappe.log_error(f"Failed to cleanup temp directory: {e}", "Typst Cleanup Error")
