@@ -1,6 +1,8 @@
 // utils/layout.ts
 // Utility functions for creating and manipulating Typst print layouts
 
+declare const frappe: any
+declare const __: any
 export interface DocField {
 	fieldname: string
 	label: string
@@ -13,14 +15,16 @@ export interface TableColumn {
 	fieldname: string
 	label: string
 	fieldtype: string
-	width?: string
+	width?: number
 }
 
 export interface LayoutField {
 	fieldname: string
 	label: string
 	fieldtype: string
+	options?: string
 	table_columns?: TableColumn[]
+	field_template?: string
 }
 
 export interface LayoutColumn {
@@ -40,121 +44,105 @@ export interface CrispyLayout {
 
 /**
  * Creates a default Typst-based layout from DocType metadata
- * Similar to Frappe's print builder but for Typst output
+ * Mirrors Frappe's beta print builder behavior
  */
 export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout {
 	if (!meta?.fields) {
 		return { sections: [] }
 	}
 
-	const sections: LayoutSection[] = []
-	let currentSection: LayoutSection | null = null
-	let currentColumn: LayoutColumn | null = null
+	type SectionWithFields = LayoutSection & { has_fields?: boolean }
 
-	for (const field of meta.fields as DocField[]) {
-		const type = field.fieldtype || ""
-
-		if (type === "Section Break") {
-			// Start a new section
-			if (currentSection && currentSection.columns.length > 0) {
-				sections.push(currentSection)
-			}
-			currentSection = {
-				label: field.label || "Details",
-				columns: [],
-			}
-			currentColumn = null
-			continue
-		}
-
-		if (type === "Column Break") {
-			// Start a new column in current section
-			if (currentSection) {
-				currentColumn = {
-					label: field.label || "",
-					fields: [],
-				}
-				currentSection.columns.push(currentColumn)
-			}
-			continue
-		}
-
-		// Regular field; require a fieldname
-		if (!field.fieldname || field.print_hide) {
-			continue
-		}
-
-		if (!currentSection) {
-			currentSection = {
-				label: "Details",
-				columns: [],
-			}
-		}
-
-		if (!currentColumn) {
-			currentColumn = {
-				label: "",
-				fields: [],
-			}
-			currentSection.columns.push(currentColumn)
-		}
-
-		const layoutField: LayoutField = {
-			fieldname: field.fieldname,
-			label: field.label || field.fieldname,
-			fieldtype: type,
-		}
-
-		if (type === "Table" && field.options) {
-			layoutField.table_columns = getTableColumns(field.options)
-		}
-
-		currentColumn.fields.push(layoutField)
+	const layout: CrispyLayout & { sections: SectionWithFields[] } = {
+		header: getDefaultHeader(meta),
+		sections: [],
 	}
 
-	// Push last section if exists
-	if (currentSection && currentSection.columns.length > 0) {
+	const sections = layout.sections
+
+	let currentSection: SectionWithFields | null = null
+	let currentColumn: LayoutColumn | null = null
+
+	const setSection = (df?: DocField) => {
+		const source = df || { label: "" }
+		currentSection = {
+			label: source.label || "",
+			columns: [],
+		}
+		currentColumn = null
 		sections.push(currentSection)
 	}
 
-	// If no sections were created, create a default one with all fields
-	const printableFields = (meta.fields as DocField[]).filter(
-		(f) =>
-			f.fieldname &&
-			!f.print_hide &&
-			f.fieldtype &&
-			!["Section Break", "Column Break"].includes(f.fieldtype)
-	)
-
-	if (sections.length === 0 && printableFields.length > 0) {
-		const defaultColumn: LayoutColumn = {
-			label: "",
-			fields: printableFields
-				.filter(
-					(f: DocField) =>
-						f.fieldtype && !["Section Break", "Column Break"].includes(f.fieldtype)
-				)
-				.map((f: DocField) => ({
-					fieldname: f.fieldname,
-					label: f.label,
-					fieldtype: f.fieldtype || "Data",
-				})),
+	const setColumn = (df?: DocField) => {
+		if (!currentSection) {
+			setSection()
 		}
-
-		sections.push({
-			label: "Details",
-			columns: [defaultColumn],
-		})
+		const source = df || { label: "" }
+		currentColumn = {
+			label: source.label || "",
+			fields: [],
+		}
+		currentSection!.columns.push(currentColumn)
 	}
 
-	return { sections }
+	for (let dfRaw of meta.fields as DocField[]) {
+		let df = dfRaw.fieldname ? (JSON.parse(JSON.stringify(dfRaw)) as DocField) : null
+		if (!df) continue
+
+		if (df.fieldtype === "Section Break") {
+			setSection(df)
+		} else if (df.fieldtype === "Column Break") {
+			setColumn(df)
+		} else if (df.label) {
+			if (!currentColumn) setColumn()
+
+			if (!df.print_hide) {
+				const field: LayoutField = {
+					label: df.label,
+					fieldname: df.fieldname,
+					fieldtype: df.fieldtype || "Data",
+					options: df.options,
+				}
+
+				const fieldTemplate = getFieldTemplate(crispyFormat, df.fieldname, df)
+				if (fieldTemplate) {
+					field.label = `${__(df.label, null, (df as any).parent)} (${__("Field Template")})`
+					field.fieldtype = "Field Template"
+					field.field_template = (fieldTemplate as any).name
+					field.fieldname = "_template"
+				}
+
+				if (df.fieldtype === "Table") {
+					field.table_columns = getTableColumns(df)
+				}
+
+				currentColumn!.fields.push(field)
+				currentSection!.has_fields = true
+			}
+		}
+	}
+
+	const filteredSections = (sections as SectionWithFields[]).filter(
+		(section: SectionWithFields) => Boolean(section.has_fields)
+	)
+	layout.sections = filteredSections
+
+	return layout
 }
 
 /**
  * Get table columns for a child table field
  */
-function getTableColumns(childDoctype: string): TableColumn[] {
+export function getTableColumns(dfOrDoctype: DocField | string): TableColumn[] {
+	const childDoctype = typeof dfOrDoctype === "string" ? dfOrDoctype : dfOrDoctype.options
+	const parentHasLabel =
+		typeof dfOrDoctype === "string" ? true : Boolean((dfOrDoctype as DocField).label)
+
 	if (typeof frappe === "undefined") {
+		return []
+	}
+
+	if (!childDoctype) {
 		return []
 	}
 
@@ -163,15 +151,50 @@ function getTableColumns(childDoctype: string): TableColumn[] {
 		return []
 	}
 
-	return childMeta.fields
+	const tableColumns: TableColumn[] = []
+	let totalWidth = 0
+
+	const candidates = childMeta.fields
 		.filter((f: DocField) => !f.print_hide && f.fieldname && f.label)
-		.filter((f: DocField) => f.fieldtype && !["Section Break", "Column Break"].includes(f.fieldtype))
-		.map((f: DocField) => ({
+		.filter(
+			(f: DocField) =>
+				f.fieldtype && !["Section Break", "Column Break"].includes(f.fieldtype)
+		)
+
+	for (const f of candidates) {
+		if (!parentHasLabel) break
+		if (totalWidth >= 100) break
+		const rawWidth = (f as any).width
+		const width =
+			typeof rawWidth === "number" && rawWidth < 100 ? rawWidth : rawWidth ? 20 : 10
+
+		tableColumns.push({
 			fieldname: f.fieldname,
 			label: f.label,
 			fieldtype: f.fieldtype,
-			width: "auto",
-		}))
+			width,
+		})
+		totalWidth += width
+	}
+
+	return tableColumns
+}
+
+function getFieldTemplate(crispyFormat: any, fieldname: string, df: DocField) {
+	const templates = crispyFormat?.__onload?.print_templates || []
+	for (const template of templates) {
+		if (template.field === fieldname) {
+			return template
+		}
+	}
+	return null
+}
+
+function getDefaultHeader(meta: any) {
+	return `<div class="document-header">
+\t<h3>${meta?.name || ""}</h3>
+\t<p>{{ doc.name }}</p>
+</div>`
 }
 
 /**
