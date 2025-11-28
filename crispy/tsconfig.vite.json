@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "strict": false
+  },
+  "include": [
+    "vite.config.ts",
+    "frappe-ui-vite.d.ts"
+  ]
+}
