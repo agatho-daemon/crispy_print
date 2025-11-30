@@ -350,7 +350,7 @@ class JSONTypstTranslator {
 
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
 			lines.push(`  #table(`)
-			lines.push(`    columns: (${columns.map(() => "1fr").join(", ")}),`)
+			lines.push(`    columns: (${columns.map(() => "auto").join(", ")}),`)
 			lines.push(`    align: (${columns.map(() => "left").join(", ")}),`)
 
 			const headerCells = columns

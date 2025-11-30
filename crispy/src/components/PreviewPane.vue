@@ -59,15 +59,13 @@
 			</div>
 		</div>
 
-		<div class="flex-1 overflow-y-auto bg-slate-200 px-4 py-4">
-			<div class="mx-auto w-full max-w-5xl">
-				<div id="typst-svg-container" class="space-y-8 bg-transparent">
+		<div class="flex-1 overflow-y-auto bg-slate-200 p-4 mx-auto w-full">
+				<div id="typst-svg-container">
 					<div id="typst-preview-placeholder"
-						class="px-6 py-10 text-center text-sm">
+						class="px-6 py-10 text-center text-sm text-slate-400 bg-white rounded-md shadow">
 						Preview output will render here.
 					</div>
 				</div>
-			</div>
 		</div>
 	</div>
 </template>

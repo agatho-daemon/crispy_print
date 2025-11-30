@@ -63,8 +63,17 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 		svgPages.forEach((svg) => {
 			const page = document.createElement("div")
-			page.className = "bg-white rounded-md shadow-md shadow-slate-400/40 p-4 overflow-hidden"
+			// page.className = "w-full p-0 bg-white rounded-md shadow-md shadow-slate-400/40 overflow-hidden"
+			page.className = "shadow"
 			page.innerHTML = svg
+			const svgEl = page.querySelector("svg");
+			if (svgEl) {
+				svgEl.style.width = "100%";
+				svgEl.style.height = "auto";
+				svgEl.removeAttribute("width");   // let viewBox control sizing
+				svgEl.removeAttribute("height");
+			}
+
 			container.appendChild(page)
 		})
 	}
@@ -86,18 +95,18 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 
 		currentDoctype = doctype
-			console.log("[Typst Preview] Setting up autocomplete for doctype:", doctype)
+		console.log("[Typst Preview] Setting up autocomplete for doctype:", doctype)
 
-			sampleDocInput.placeholder = `Search ${doctype}...`
-			sampleDocInput.setAttribute("data-doctype", doctype)
-			sampleDocInput.value = ""
-			sampleDocData = null
-			sampleDocSelected = false
+		sampleDocInput.placeholder = `Search ${doctype}...`
+		sampleDocInput.setAttribute("data-doctype", doctype)
+		sampleDocInput.value = ""
+		sampleDocData = null
+		sampleDocSelected = false
 
-			awesomplete = new Awesomplete(sampleDocInput, {
-				minChars: 0,
-				maxItems: 20,
-				autoFirst: true,
+		awesomplete = new Awesomplete(sampleDocInput, {
+			minChars: 0,
+			maxItems: 20,
+			autoFirst: true,
 			filter: () => true,
 		})
 
@@ -120,28 +129,28 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			})
 		}
 
-			sampleDocInput.addEventListener("focus", () => {
-				searchDocs(sampleDocInput.value)
-			})
+		sampleDocInput.addEventListener("focus", () => {
+			searchDocs(sampleDocInput.value)
+		})
 
-			sampleDocInput.addEventListener(
-				"input",
-				frappe.utils.debounce(() => {
-					sampleDocSelected = false
-					sampleDocData = null
-					searchDocs(sampleDocInput.value)
-				}, 300)
-			)
-
-			sampleDocInput.addEventListener("awesomplete-selectcomplete", () => {
-				const selectedDoc = sampleDocInput.value
-				console.log("[Typst Preview] Document selected:", selectedDoc)
+		sampleDocInput.addEventListener(
+			"input",
+			frappe.utils.debounce(() => {
 				sampleDocSelected = false
+				sampleDocData = null
+				searchDocs(sampleDocInput.value)
+			}, 300)
+		)
 
-				if (!selectedDoc || !currentDoctype) {
-					console.warn("[Typst Preview] No document or doctype selected")
-					return
-				}
+		sampleDocInput.addEventListener("awesomplete-selectcomplete", () => {
+			const selectedDoc = sampleDocInput.value
+			console.log("[Typst Preview] Document selected:", selectedDoc)
+			sampleDocSelected = false
+
+			if (!selectedDoc || !currentDoctype) {
+				console.warn("[Typst Preview] No document or doctype selected")
+				return
+			}
 
 			statusEl && (statusEl.textContent = "fetching document...")
 			if (statusEl) statusEl.style.color = "#3498db"
@@ -186,16 +195,16 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	svgContainer?.classList.remove("preview-hidden")
 
 	let compilationTimeout: number | undefined
-		let debounceTimer: number | undefined = undefined
-		let lastTypstCode = ""
-		let lastLayoutSerialized = ""
-		let currentPdfBlob: Blob | null = null
-		let pendingPdfDownload = false
-		let compileTriggerTimeout: number | undefined
-		let missingLayoutRetries = 0
-		let unsubscribeAdapter: (() => void) | null = null
-		let unsubscribeDoctype: (() => void) | null = null
-		let compilationDisabled = false
+	let debounceTimer: number | undefined = undefined
+	let lastTypstCode = ""
+	let lastLayoutSerialized = ""
+	let currentPdfBlob: Blob | null = null
+	let pendingPdfDownload = false
+	let compileTriggerTimeout: number | undefined
+	let missingLayoutRetries = 0
+	let unsubscribeAdapter: (() => void) | null = null
+	let unsubscribeDoctype: (() => void) | null = null
+	let compilationDisabled = false
 
 	function scheduleCompile(reason = "hook", delay = 200) {
 		if (compilationDisabled) {
@@ -280,26 +289,26 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 	}
 
-		function compile() {
-			console.log("[Typst Preview] compile() called")
-			if (compilationTimeout) {
-				clearTimeout(compilationTimeout)
-			}
-			compilationTimeout = window.setTimeout(() => {
-				console.log("[Typst Preview] Starting compilation after debounce...")
+	function compile() {
+		console.log("[Typst Preview] compile() called")
+		if (compilationTimeout) {
+			clearTimeout(compilationTimeout)
+		}
+		compilationTimeout = window.setTimeout(() => {
+			console.log("[Typst Preview] Starting compilation after debounce...")
 
-				clearPreview()
+			clearPreview()
 
-				if (!sampleDocSelected) {
-					console.warn("[Typst Preview] No sample document selected; skipping compile")
-					if (statusEl) {
-						statusEl.textContent = "select a document"
-						statusEl.style.color = "#e67e22"
-					}
-					return
+			if (!sampleDocSelected) {
+				console.warn("[Typst Preview] No sample document selected; skipping compile")
+				if (statusEl) {
+					statusEl.textContent = "select a document"
+					statusEl.style.color = "#e67e22"
 				}
+				return
+			}
 
-				const layout = getLayout()
+			const layout = getLayout()
 
 			if (!layout) {
 				console.error("[Typst Preview] No layout found from adapter")
