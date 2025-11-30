@@ -70,7 +70,7 @@ export default defineConfig(({ command }) => {
 		},
 
 		server: {
-			host: "localhost",
+			host: "fdev.local",
 			port: 8080,
 			allowedHosts: true,
 		},

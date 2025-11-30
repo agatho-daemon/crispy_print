@@ -1,5 +1,6 @@
 <template>
 	<div
+		id="crispy-print-root"
 		class="grid h-32 gap-4 bg-slate-50 p-4 items-stretch"
 		style="grid-template-columns: 280px minmax(0,1fr) minmax(0,1fr) 280px; min-height: 0; height: calc(100vh - 60px);"
 	>

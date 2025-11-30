@@ -132,9 +132,14 @@
 				</template>
 			</draggable>
 		</div>
+		<TableColumnsDialog
+			v-if="columnEditor"
+			:model-value="editingColumns"
+			:doctype="columnEditor.field.options || ''"
+			@update:modelValue="onColumnsUpdate"
+			@close="closeColumnEditor"
+		/>
 	</div>
-	<TableColumnsDialog v-if="columnEditor" :model-value="editingColumns" :doctype="columnEditor.field.options || ''"
-		@update:modelValue="onColumnsUpdate" @close="closeColumnEditor" />
 </template>
 
 <script setup lang="ts">
