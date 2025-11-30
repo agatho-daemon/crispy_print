@@ -11,9 +11,11 @@ declare global {
     frappe: any
     $: any
     mountCrispyPrint: (selector?: string) => any
+    Awesomplete: any
   }
   const frappe: any
   const $: any
+  const Awesomplete: any
 }
 
 export {}

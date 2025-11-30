@@ -248,3 +248,4 @@ app_include_css = [
 # }
 
 app_include_js = "crispy_print.bundle.js"
+# app_include_js = ["http://fdev.local:8080/src/main.ts"]

@@ -44,7 +44,7 @@ export interface CrispyLayout {
 
 /**
  * Creates a default Typst-based layout from DocType metadata
- * Mirrors Frappe's beta print builder behavior
+ * Mirrors Frappe's print format builder behavior
  */
 export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout {
 	if (!meta?.fields) {

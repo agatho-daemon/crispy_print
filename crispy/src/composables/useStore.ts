@@ -88,7 +88,7 @@ function buildStore() {
 
 						const skipTypes = ["Section Break", "Column Break"]
 
-							// Extract fields for the fields pane, matching beta builder behavior
+							// Extract fields for the fields pane, matching builder behavior
 							const baseFields: DocField[] = meta.value.fields
 								.filter(
 									(f: DocField) =>
