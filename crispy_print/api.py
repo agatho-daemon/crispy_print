@@ -49,7 +49,22 @@ def get_typst_local_fonts() -> list[str]:
 
 		fonts.append(family)
 
-	# Deduplicate
+	# Add bundled fonts from public/vendor/typst/
+	app_path = frappe.get_app_path("crispy_print")
+	vendor_font_dir = Path(app_path) / "public" / "vendor" / "typst"
+
+	if vendor_font_dir.exists():
+		for font_file in vendor_font_dir.glob("*.[ot]tf"):
+			# Extract font family name from filename (basic approach)
+			font_name = font_file.stem
+			# Remove common suffixes like -Regular, -Bold, etc.
+			for suffix in ["-Regular", "-Bold", "-Italic", "-BoldItalic", "-Light", "-Medium", "-Black"]:
+				if font_name.endswith(suffix):
+					font_name = font_name[: -len(suffix)]
+					break
+			fonts.append(font_name)
+
+	# Deduplicate and sort
 	return sorted(list(set(fonts)))
 
 

@@ -63,8 +63,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 		svgPages.forEach((svg) => {
 			const page = document.createElement("div")
-			// page.className = "w-full p-0 bg-white rounded-md shadow-md shadow-slate-400/40 overflow-hidden"
-			page.className = "shadow"
+			page.className = "shadow mb-6"
 			page.innerHTML = svg
 			const svgEl = page.querySelector("svg");
 			if (svgEl) {
@@ -296,8 +295,16 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 		compilationTimeout = window.setTimeout(() => {
 			console.log("[Typst Preview] Starting compilation after debounce...")
+			
+			// Defer heavy work to avoid blocking main thread
+			requestAnimationFrame(() => {
+				performCompilation()
+			})
+		}, 300)
+	}
 
-			clearPreview()
+	function performCompilation() {
+		clearPreview()
 
 			if (!sampleDocSelected) {
 				console.warn("[Typst Preview] No sample document selected; skipping compile")
@@ -406,7 +413,6 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 				letterheadImage,
 			})
 			console.log("[Typst Preview] Message sent to worker")
-		}, 300)
 	}
 
 	worker.addEventListener("message", (e) => {
