@@ -1,13 +1,21 @@
-import { createApp } from "vue"
+import { createApp, watch } from "vue"
 import CrispyPFB from "@/pages/CrispyPFB.vue"
+import { useStore } from "@/composables/useStore"
 import "./index.css"
 
-// Export mount function for Frappe integration
+// Export Vue functions for Frappe page integration
 declare global {
 	interface Window {
 		mountCrispyPrint: (selector?: string) => any
+		Vue: {
+			watch: typeof watch
+		}
 	}
 }
+
+// Make Vue watch available to page JS
+window.Vue = window.Vue || {}
+window.Vue.watch = watch
 
 window.mountCrispyPrint = (selector = "#crispy-print-root") => {
 	const mountPoint = document.querySelector(selector)
@@ -17,9 +25,17 @@ window.mountCrispyPrint = (selector = "#crispy-print-root") => {
 	}
 
 	const app = createApp(CrispyPFB)
-	app.mount(selector)
+	const mountedComponent = app.mount(selector)
 
-	return app
+	// Get store instance
+	const store = useStore()
+
+	// Return both app and store for toolbar integration
+	return {
+		app,
+		component: mountedComponent,
+		store,
+	}
 }
 
 // Auto-mount in dev mode (standalone)
