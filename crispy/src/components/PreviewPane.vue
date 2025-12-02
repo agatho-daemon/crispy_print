@@ -96,6 +96,7 @@ onMounted(() => {
 				getLayout: () => store.layout.value,
 				getLetterhead: () => store.letterhead.value,
 				getDoctype: () => store.docType.value,
+				getPageSettings: () => store.pageSettings.value,
 				hookDataChanges: (callback: () => void) => {
 					const stop = watch(
 						() => [store.layout.value, store.pageSettings.value],

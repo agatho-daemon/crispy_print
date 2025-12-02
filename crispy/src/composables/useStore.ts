@@ -1,7 +1,7 @@
 // composables/useStore.ts
 // State management for Crispy Print Format Builder
 
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { createDefaultLayout, serializeLayout, deserializeLayout } from "@/utils/layout"
 import type { CrispyLayout, DocField } from "@/utils/layout"
 
@@ -291,6 +291,38 @@ function buildStore() {
 		layout.value = getDefaultLayout()
 		dirty.value = true
 	}
+
+	/**
+	 * Fetch letterhead when letterhead setting changes
+	 */
+	async function fetchLetterhead(letterheadName: string) {
+		if (typeof frappe === "undefined") {
+			console.warn("[Store] Cannot fetch letterhead - Frappe not available")
+			return
+		}
+
+		if (!letterheadName) {
+			letterhead.value = null
+			console.log("[Store] Letterhead cleared")
+			return
+		}
+
+		try {
+			letterhead.value = await frappe.db.get_doc("Letter Head", letterheadName)
+			console.log("[Store] Loaded letterhead:", letterheadName, letterhead.value)
+		} catch (e) {
+			console.error("[Store] Failed to load letterhead:", e)
+			letterhead.value = null
+		}
+	}
+
+	// Watch for letterhead changes in pageSettings
+	watch(
+		() => pageSettings.value.letterhead,
+		(newLetterhead) => {
+			fetchLetterhead(newLetterhead)
+		}
+	)
 
 	const store = {
 		// State
