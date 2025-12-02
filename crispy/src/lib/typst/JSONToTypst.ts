@@ -183,7 +183,8 @@ class JSONTypstTranslator {
 						lines.push(`  ${key}: ""${isLast ? "" : ","}`)
 					} else if (Array.isArray(value)) {
 						lines.push(`  ${key}: (`)
-						value.forEach((row: any, rowIdx: number) => {
+						// Keep arrays as arrays even when only one row exists; trailing comma is allowed in Typst tuples
+						value.forEach((row: any) => {
 							if (typeof row === "object" && row !== null) {
 								lines.push(`    (`)
 								Object.entries(row).forEach(([colKey, colVal], colIdx, colArr) => {
@@ -191,8 +192,7 @@ class JSONTypstTranslator {
 									const escapedVal = String(colVal || "").replace(/"/g, '\\"')
 									lines.push(`      ${colKey}: "${escapedVal}"${isLastCol ? "" : ","}`)
 								})
-								const isLastRow = rowIdx === value.length - 1
-								lines.push(`    )${isLastRow ? "" : ","}`)
+								lines.push(`    ),`)
 							}
 						})
 						lines.push(`  )${isLast ? "" : ","}`)
