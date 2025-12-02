@@ -16,10 +16,10 @@
   "section_break_bjol",
   "default_print_language",
   "typst_code_section",
-  "layout_json",
-  "page_settings",
   "typst_preamble",
-  "typst_layout"
+  "typst_layout",
+  "page_settings",
+  "layout_json"
  ],
  "fields": [
   {
@@ -119,7 +119,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-19 07:29:05.219901",
+ "modified": "2025-12-02 06:56:11.044345",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",
