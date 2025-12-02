@@ -12,6 +12,7 @@ export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
+	getPageSettings?: () => any
 	hookDataChanges?: (callback: () => void) => () => void
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
 }
@@ -197,6 +198,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	let debounceTimer: number | undefined = undefined
 	let lastTypstCode = ""
 	let lastLayoutSerialized = ""
+	let lastPageSettingsSerialized = ""
 	let currentPdfBlob: Blob | null = null
 	let pendingPdfDownload = false
 	let compileTriggerTimeout: number | undefined
@@ -204,12 +206,27 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	let unsubscribeAdapter: (() => void) | null = null
 	let unsubscribeDoctype: (() => void) | null = null
 	let compilationDisabled = false
+	let noDocSkipCount = 0
 
 	function scheduleCompile(reason = "hook", delay = 200) {
 		if (compilationDisabled) {
 			console.log(`[Typst Preview] Compilation disabled, ignoring schedule request (${reason})`)
 			return
 		}
+		
+		// Don't schedule compile if no sample document is selected
+		if (!sampleDocSelected) {
+			// Only log first occurrence to reduce console noise
+			if (noDocSkipCount === 0) {
+				console.log(`[Typst Preview] No sample document selected, skipping schedule requests`)
+			}
+			noDocSkipCount++
+			return
+		}
+		
+		// Reset counter when document is selected
+		noDocSkipCount = 0
+		
 		console.log(`[Typst Preview] Scheduling compile (${reason}) in`, delay, "ms")
 		if (compileTriggerTimeout) {
 			clearTimeout(compileTriggerTimeout)
@@ -261,7 +278,8 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			})
 		}
 
-		scheduleCompile("adapter-ready", 400)
+		// Don't compile on initial adapter ready - wait for user to select a document
+		console.log("[Typst Preview] Adapter initialized, waiting for sample document selection")
 	}
 
 	function getLayout() {
@@ -293,14 +311,14 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		if (compilationTimeout) {
 			clearTimeout(compilationTimeout)
 		}
+		// Use shorter debounce and defer heavy work to next frame
 		compilationTimeout = window.setTimeout(() => {
 			console.log("[Typst Preview] Starting compilation after debounce...")
-			
-			// Defer heavy work to avoid blocking main thread
+			// Split work across frames to avoid blocking
 			requestAnimationFrame(() => {
 				performCompilation()
 			})
-		}, 300)
+		}, 150)
 	}
 
 	function performCompilation() {
@@ -340,9 +358,20 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			missingLayoutRetries = 0
 
 			const layoutSerialized = serializeLayout(layout)
+			
+			// Also check page settings for changes
+			let pageSettingsSerialized = ""
+			if (adapter && adapter.getPageSettings) {
+				try {
+					const pageSettings = adapter.getPageSettings()
+					pageSettingsSerialized = pageSettings ? JSON.stringify(pageSettings) : ""
+				} catch (e) {
+					console.warn("[Typst Preview] Failed to serialize page settings:", e)
+				}
+			}
 
-			if (layoutSerialized === lastLayoutSerialized) {
-				console.log("[Typst Preview] Layout unchanged, skipping compilation")
+			if (layoutSerialized === lastLayoutSerialized && pageSettingsSerialized === lastPageSettingsSerialized) {
+				console.log("[Typst Preview] Layout and page settings unchanged, skipping compilation")
 				if (statusEl) {
 					statusEl.textContent = "unchanged"
 					statusEl.style.color = "#95a5a6"
@@ -350,8 +379,9 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 				return
 			}
 			lastLayoutSerialized = layoutSerialized
+			lastPageSettingsSerialized = pageSettingsSerialized
 
-			console.log("[Typst Preview] Layout changed, translating to Typst...")
+			console.log("[Typst Preview] Layout or page settings changed, translating to Typst...")
 			console.log("[Typst Preview] Layout sections:", (layout as any)?.sections?.length || 0)
 
 			let typst: string
@@ -362,7 +392,13 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 					console.log("[Typst Preview] Letterhead data:", letterheadData)
 				}
 
-				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, sampleDocData)
+				// Get page settings to pass to translator
+				let pageSettings: any = {}
+				if (adapter && adapter.getPageSettings) {
+					pageSettings = adapter.getPageSettings() || {}
+				}
+
+				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, sampleDocData, pageSettings)
 
 				console.log("[Typst Preview] Translation successful, length:", typst.length)
 			} catch (e: any) {

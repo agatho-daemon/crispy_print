@@ -61,7 +61,16 @@ class JSONTypstTranslator {
 			"// Page setup",
 		]
 
-		const margins = this.resolveMargins(this.options.pageMargins)
+		// Get page settings from options
+		const pageSize = this.options.pageSize || "A4"
+		const orientation = this.options.orientation || "portrait"
+		const fontFamily = this.options.fontFamily || "Arial"
+		const fontSize = this.options.fontSize || 10
+		
+		// Use margins from options or fall back to pageMargins
+		const margins = this.options.margins 
+			? this.resolveMargins(this.options.margins)
+			: this.resolveMargins(this.options.pageMargins)
 
 		if (this.letterhead && (this.letterhead as any).image) {
 			const imagePath = (this.letterhead as any).image as string
@@ -71,7 +80,10 @@ class JSONTypstTranslator {
 				lines.push(`// Letterhead: ${(this.letterhead as any).letter_head_name}`)
 			}
 			lines.push("#set page(")
-			lines.push('  paper: "a4",')
+			lines.push(`  paper: "${pageSize.toLowerCase()}",`)
+			if (orientation === "landscape") {
+				lines.push("  flipped: true,")
+			}
 			lines.push(`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right}),`)
 			if (filename) {
 				lines.push(`  background: image("${filename}", width: 100%)`)
@@ -80,7 +92,10 @@ class JSONTypstTranslator {
 			console.log("[Typst Translator] Added letterhead as page background:", filename)
 		} else {
 			lines.push("#set page(")
-			lines.push('  paper: "a4",')
+			lines.push(`  paper: "${pageSize.toLowerCase()}",`)
+			if (orientation === "landscape") {
+				lines.push("  flipped: true,")
+			}
 			lines.push(`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right})`)
 			lines.push(")")
 			console.log("[Typst Translator] No letterhead found:", this.letterhead)
@@ -89,8 +104,8 @@ class JSONTypstTranslator {
 		lines.push("")
 		lines.push("// Typography")
 		lines.push("#set text(")
-		lines.push('  font: "Arial",')
-		lines.push("  size: 10pt")
+		lines.push(`  font: "${fontFamily}",`)
+		lines.push(`  size: ${fontSize}pt`)
 		lines.push(")")
 		lines.push("")
 
@@ -350,7 +365,7 @@ class JSONTypstTranslator {
 
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
 			lines.push(`  #table(`)
-			lines.push(`    columns: (${columns.map(() => "auto").join(", ")}),`)
+			lines.push(`    columns: (${columns.map(() => "1fr").join(", ")}),`)
 			lines.push(`    align: (${columns.map(() => "left").join(", ")}),`)
 
 			const headerCells = columns
