@@ -17,6 +17,7 @@
   "default_print_language",
   "typst_code_section",
   "layout_json",
+  "page_settings",
   "typst_preamble",
   "typst_layout"
  ],
@@ -107,6 +108,12 @@
    "fieldtype": "Code",
    "hidden": 1,
    "label": "Layout JSON"
+  },
+  {
+   "fieldname": "page_settings",
+   "fieldtype": "Code",
+   "hidden": 1,
+   "label": "Page Settings"
   }
  ],
  "grid_page_length": 50,
