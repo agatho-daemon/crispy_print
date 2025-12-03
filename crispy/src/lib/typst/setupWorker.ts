@@ -64,7 +64,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 		svgPages.forEach((svg) => {
 			const page = document.createElement("div")
-			page.className = "shadow mb-6"
+			page.className = "typst-page"
 			page.innerHTML = svg
 			const svgEl = page.querySelector("svg");
 			if (svgEl) {

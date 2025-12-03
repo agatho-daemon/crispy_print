@@ -1,13 +1,9 @@
 <template>
-	<div
-		id="crispy-print-root"
-		class="grid h-32 gap-4 bg-slate-50 p-4 items-stretch"
-		style="grid-template-columns: 280px minmax(0,1fr) minmax(0,1fr) 280px; min-height: 0; height: calc(100vh - 60px);"
-	>
-		<FieldsPane class="min-h-0 col-start-1" :fields="store.fields" :loading="store.loading" />
-		<LayoutPane class="min-h-0 col-start-2" />
-		<PreviewPane class="min-h-0 col-start-3" />
-		<SettingsPane class="min-h-0 col-start-4" :page-settings="pageSettings" :mark-dirty="store.markDirty" />
+	<div id="crispy-print-root" class="crispy-layout">
+		<FieldsPane class="pane pane--fields" :fields="store.fields" :loading="store.loading" />
+		<LayoutPane class="pane pane--layout" />
+		<PreviewPane class="pane pane--preview" />
+		<SettingsPane class="pane pane--settings" :page-settings="pageSettings" :mark-dirty="store.markDirty" />
 	</div>
 </template>
 
@@ -23,27 +19,17 @@ const store = useStore()
 const pageSettings = store.pageSettings
 
 onMounted(async () => {
-	// Guard for dev mode
-	if (typeof frappe === "undefined") {
-		console.log("[Dev Mode] Frappe not available - using mock data")
-		return
-	}
-
 	const route = frappe.get_route()
 
 	if (route.length > 1) {
-		const formatName = route[1]
-		console.log("[CrispyPFB] Loading format:", formatName)
-
-		// Fetch format and fields via store
-		await store.fetch(formatName)
+		await store.fetch(route[1])
 	} else {
 		console.log("[CrispyPFB] No format specified in route")
 	}
 })
 
 // Watch for route changes
-if (typeof frappe !== "undefined") {
+if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	frappe.router.on("change", async () => {
 		const route = frappe.get_route()
 		if (route[0] === "crispy-print-builder" && route.length > 1) {

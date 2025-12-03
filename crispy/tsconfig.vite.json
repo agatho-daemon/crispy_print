@@ -6,7 +6,6 @@
     "strict": false
   },
   "include": [
-    "vite.config.ts",
-    "frappe-ui-vite.d.ts"
+    "vite.config.ts"
   ]
 }

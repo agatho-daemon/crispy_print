@@ -1,15 +1,21 @@
 <template>
-	<div ref="previewPaneEl" class="bg-white border border-slate-200 flex flex-col overflow-hidden">
-		<div class="border-b border-slate-200 px-4 py-3">
-			<div class="flex items-center gap-2">
-				<h3 class="text-sm font-semibold text-slate-800">Typst Preview</h3>
-				<div class="ml-auto">
-					<button type="button"
-						class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50"
-						popovertarget="preview-help" popovertargetaction="toggle" title="Toggle help">?</button>
-					<div id="preview-help" popovertargetaction="toggle" popover
-						class="top-8 rounded-xl border border-indigo-100 bg-white p-3 text-xs leading-relaxed text-slate-700 shadow-xl shadow-slate-400">
-						<ul class="list-inside list-disc space-y-1">
+	<div ref="previewPaneEl" class="preview-pane">
+		<div class="preview-pane__header">
+			<div class="preview-pane__header-row">
+				<h3 class="preview-pane__title">Typst Preview</h3>
+				<div class="preview-pane__spacer"></div>
+				<div>
+					<button
+						type="button"
+						class="preview-pane__help-btn"
+						popovertarget="preview-help"
+						popovertargetaction="toggle"
+						title="Toggle help"
+					>
+						?
+					</button>
+					<div id="preview-help" popovertargetaction="toggle" popover class="preview-pane__help-popover">
+						<ul class="preview-pane__help-list">
 							<li>Pick a document to preview.</li>
 							<li>View opens the PDF in a new tab.</li>
 							<li>Download saves the PDF to your device.</li>
@@ -21,51 +27,69 @@
 			</div>
 		</div>
 
-		<div class="px-4 py-3 border-b border-slate-200">
-			<div class="flex flex-wrap items-center gap-3">
-				<span id="typst-status" class="text-[12px] text-slate-500">idle</span>
+		<div class="preview-pane__controls">
+			<div class="preview-pane__controls-row">
+				<span id="typst-status" class="preview-status">idle</span>
 
-				<div class="flex items-center gap-2">
-					<div class="relative w-full">
+				<div class="preview-search">
+					<div class="preview-search__input-wrap">
 						<div class="awesomplete">
-							<input id="typst-sample-doc-input" type="text" placeholder="Sample Document..."
-								autocomplete="off" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900
-                   focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 focus:outline-none" />
+							<input
+								id="typst-sample-doc-input"
+								type="text"
+								placeholder="Sample Document..."
+								autocomplete="off"
+								class="preview-search__input"
+							/>
 						</div>
-					</div> <button id="typst-refresh"
-						class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50"
-						type="button" title="Refresh preview">
+					</div>
+					<button
+						id="typst-refresh"
+						class="preview-btn"
+						type="button"
+						title="Refresh preview"
+					>
 						Refresh
 					</button>
 				</div>
 
-				<div class="flex items-center gap-2 ml-auto">
-					<button id="typst-view-pdf"
-						class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:text-slate-400"
-						type="button" disabled title="View PDF in new tab">
+				<div class="preview-actions">
+					<button
+						id="typst-view-pdf"
+						class="preview-btn"
+						type="button"
+						disabled
+						title="View PDF in new tab"
+					>
 						View PDF
 					</button>
-					<button id="typst-download"
-						class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:text-slate-400"
-						type="button" disabled title="Download PDF">
+					<button
+						id="typst-download"
+						class="preview-btn"
+						type="button"
+						disabled
+						title="Download PDF"
+					>
 						Download
 					</button>
-					<button id="typst-view-code"
-						class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50"
-						type="button" title="View Typst code">
+					<button
+						id="typst-view-code"
+						class="preview-btn"
+						type="button"
+						title="View Typst code"
+					>
 						View code
 					</button>
 				</div>
 			</div>
 		</div>
 
-		<div class="flex-1 overflow-y-auto bg-slate-200 p-4 mx-auto w-full">
-				<div id="typst-svg-container">
-					<div id="typst-preview-placeholder"
-						class="px-6 py-10 text-center text-sm text-slate-400 bg-white rounded-md shadow">
-						Preview output will render here.
-					</div>
+		<div class="preview-pane__body">
+			<div id="typst-svg-container">
+				<div id="typst-preview-placeholder" class="preview-placeholder">
+					Preview output will render here.
 				</div>
+			</div>
 		</div>
 	</div>
 </template>

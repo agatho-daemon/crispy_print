@@ -1,7 +1,6 @@
 // vite.config.ts
 import path from "node:path"
 import vue from "@vitejs/plugin-vue"
-import frappeui from "frappe-ui/vite"
 import { defineConfig } from "vite"
 
 const appName = "crispy_print"
@@ -11,13 +10,6 @@ export default defineConfig(({ command }) => {
 
 	return {
 		plugins: [
-			frappeui({
-				frappeProxy: true,
-				jinjaBootData: true,
-				lucideIcons: true,
-				frappeTypes: true,
-				buildConfig: false,
-			}),
 			vue(),
 		],
 
@@ -59,13 +51,7 @@ export default defineConfig(({ command }) => {
 		},
 
 		optimizeDeps: {
-			include: [
-				"feather-icons",
-				"showdown",
-				"highlight.js/lib/core",
-				"interactjs",
-				"socket.io-client",
-			],
+			include: [],
 			exclude: ["@/workers/*"],
 		},
 
