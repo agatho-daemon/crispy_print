@@ -27,11 +27,9 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = [
-	"/assets/crispy_print/js/crispy/crispy_print-main.css",
-	# "/assets/crispy_print/js/crispy/crispy_print-pages.css",
-]
-# app_include_js is at the bottom (Frappe auto-loads *.bundle.js)
+# app_include_css = "/assets/wsq/css/crispy_print.css"
+# app_include_js = "/assets/wsq/js/crispy_print.js"
+app_include_js = "crispy_print.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/crispy_print/css/crispy_print.css"
@@ -246,6 +244,3 @@ app_include_css = [
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
-app_include_js = "crispy_print.bundle.js"
-# app_include_js = ["http://fdev.local:8080/src/main.ts"]

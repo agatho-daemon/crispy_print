@@ -100,7 +100,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue"
 import draggable from "vuedraggable"
-import type { TableColumn } from "@/utils/layout"
+import type { TableColumn } from "../utils/layout"
 
 declare const frappe: any
 
@@ -227,3 +227,285 @@ watch(
 	() => loadChildMeta()
 )
 </script>
+
+<style scoped>
+/* TableColumnsDialog.vue */
+.table-dialog {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(15, 23, 42, 0.5);
+	padding: 16px;
+}
+
+.table-dialog__card {
+	width: 100%;
+	max-width: 768px;
+	background: #fff;
+	border-radius: 16px;
+	box-shadow:
+		0 25px 50px rgba(15, 23, 42, 0.25),
+		0 10px 20px rgba(15, 23, 42, 0.18);
+	overflow: hidden;
+}
+
+.table-dialog__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	border-bottom: 1px solid #e2e8f0;
+	padding: 16px 20px;
+	gap: 12px;
+}
+
+.table-dialog__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.table-dialog__subtitle {
+	margin: 4px 0 0;
+	font-size: 14px;
+	color: #475569;
+}
+
+.table-dialog__close {
+	border: none;
+	background: transparent;
+	border-radius: 9999px;
+	padding: 8px;
+	color: #94a3b8;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.table-dialog__close:hover {
+	background: #f1f5f9;
+	color: #475569;
+}
+
+.table-dialog__body {
+	padding: 16px 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.table-dialog__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 14px;
+	color: #475569;
+}
+
+.table-dialog__total {
+	color: #64748b;
+}
+
+.table-dialog__total--over {
+	color: #e11d48;
+}
+
+.table-dialog__list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.table-dialog__item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #f8fafc;
+	padding: 12px;
+}
+
+.drag-handle {
+	cursor: grab;
+	color: #94a3b8;
+	font-size: 16px;
+	padding: 0 4px;
+}
+
+.table-dialog__item-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.table-dialog__input {
+	width: 100%;
+	padding: 8px 12px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #0f172a;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.table-dialog__input:focus {
+	border-color: #a5b4fc;
+	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.table-dialog__fieldname {
+	margin: 4px 0 0;
+	font-size: 11px;
+	color: #64748b;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.table-dialog__item-controls {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.table-dialog__width-input {
+	width: 80px;
+	padding: 6px 8px;
+	font-size: 14px;
+	text-align: right;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.table-dialog__width-input:focus {
+	border-color: #a5b4fc;
+	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.table-dialog__width-input--invalid {
+	border-color: #fb7185;
+	color: #be123c;
+}
+
+.table-dialog__remove {
+	border: none;
+	background: transparent;
+	border-radius: 9999px;
+	padding: 6px;
+	color: #94a3b8;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.table-dialog__remove:hover {
+	background: #f1f5f9;
+	color: #e11d48;
+}
+
+.table-dialog__empty {
+	margin-top: 8px;
+	border: 1px dashed #cbd5e1;
+	border-radius: 10px;
+	background: #f8fafc;
+	padding: 12px;
+	text-align: center;
+	font-size: 14px;
+	color: #94a3b8;
+}
+
+.table-dialog__add {
+	margin-top: 12px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.table-dialog__add-label {
+	font-size: 14px;
+	font-weight: 600;
+	color: #334155;
+}
+
+.table-dialog__select {
+	width: 256px;
+	max-width: 100%;
+	padding: 8px 12px;
+	font-size: 14px;
+	color: #0f172a;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.table-dialog__select:focus {
+	border-color: #a5b4fc;
+	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.table-dialog__add-btn {
+	border: none;
+	background: #4f46e5;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 600;
+	border-radius: 10px;
+	padding: 8px 14px;
+	cursor: pointer;
+	transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.table-dialog__add-btn:hover {
+	background: #4338ca;
+}
+
+.table-dialog__add-btn:disabled {
+	cursor: not-allowed;
+	background: #cbd5e1;
+}
+
+.table-dialog__footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 10px;
+	border-top: 1px solid #e2e8f0;
+	padding: 12px 20px;
+}
+
+.table-dialog__footer-btn {
+	border: none;
+	background: transparent;
+	color: #475569;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 10px;
+	padding: 8px 12px;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.table-dialog__footer-btn:hover {
+	background: #f1f5f9;
+}
+
+.table-dialog__footer-btn--primary {
+	background: #4f46e5;
+	color: #fff;
+}
+
+.table-dialog__footer-btn--primary:hover {
+	background: #4338ca;
+}
+
+</style>

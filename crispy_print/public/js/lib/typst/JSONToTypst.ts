@@ -1,7 +1,7 @@
 // Print Format Builder JSON → Typst Translator
 // Translates layout from Crispy builder + optional letterhead into Typst source
 
-import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "@/utils/layout"
+import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../../utils/layout"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
 	sections?: (LayoutSection & { has_fields?: boolean })[]

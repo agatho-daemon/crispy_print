@@ -65,6 +65,9 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		svgPages.forEach((svg) => {
 			const page = document.createElement("div")
 			page.className = "typst-page"
+		    page.style.marginBottom = "1.5rem"
+    		page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2)"
+
 			page.innerHTML = svg
 			const svgEl = page.querySelector("svg");
 			if (svgEl) {
