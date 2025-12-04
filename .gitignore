@@ -8,35 +8,8 @@ __pycache__
 *.bundle.*.js
 *.bundle.*.css
 dist
-# # -----------------------------
-# # Crispy Print – Build Outputs
-# # -----------------------------
-public/js/crispy
-crispy_print/public/js/crispy/
 
-# # -----------------------------
-# # Dev workspace (Vite, Vue)
-# # -----------------------------
-# crispy/
-# crispy/node_modules/
-# crispy/dist/
-# crispy/.vite/
-# crispy/tsconfig.tsbuildinfo
-
-# # -----------------------------
-# # Node Modules (safety)
-# # -----------------------------
-# node_modules/
-
-# # -----------------------------
-# # Lock files for frontend
-# # -----------------------------
-# crispy/yarn.lock
-# crispy/package-lock.json
-# crispy/pnpm-lock.yaml
-
-# # -----------------------------
-# # Misc
-# # -----------------------------
-# *.log
-# .DS_Store
+# IDE type support (local only)
+crispy_print/public/js/package.json
+crispy_print/public/js/yarn.lock
+crispy_print/public/js/tsconfig.json

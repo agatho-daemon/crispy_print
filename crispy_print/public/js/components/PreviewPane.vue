@@ -97,7 +97,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useStore } from "../composables/useStore"
-import { setupWorker } from "../lib/typst/setupWorker"
+import { setupWorker } from "../typst/setupWorker"
 
 const previewPaneEl = ref<HTMLElement | null>(null)
 const store = useStore()
