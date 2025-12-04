@@ -2,7 +2,7 @@
 
 import { translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
-import type { CrispyLayout } from "@/utils/layout"
+import type { CrispyLayout } from "../utils/layout"
 
 declare const Awesomplete: any
 declare const frappe: any
