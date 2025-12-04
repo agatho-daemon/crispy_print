@@ -2,8 +2,8 @@
 // State management for Crispy Print Format Builder
 
 import { ref, computed, watch } from "vue"
-import { createDefaultLayout, serializeLayout, deserializeLayout } from "@/utils/layout"
-import type { CrispyLayout, DocField } from "@/utils/layout"
+import { createDefaultLayout, serializeLayout, deserializeLayout } from "../utils/layout"
+import type { CrispyLayout, DocField } from "../utils/layout"
 
 declare const frappe: any
 declare const __: any
