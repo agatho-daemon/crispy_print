@@ -8,8 +8,3 @@ __pycache__
 *.bundle.*.js
 *.bundle.*.css
 dist
-
-# IDE type support (local only)
-crispy_print/public/js/package.json
-crispy_print/public/js/yarn.lock
-crispy_print/public/js/tsconfig.json
