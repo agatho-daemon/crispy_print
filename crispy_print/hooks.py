@@ -29,7 +29,10 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/wsq/css/crispy_print.css"
 # app_include_js = "/assets/wsq/js/crispy_print.js"
-app_include_js = "crispy_print.bundle.js"
+app_include_js = [
+	"crispy_print.bundle.js",
+	"/assets/crispy_print/js/crispy_print_button.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/crispy_print/css/crispy_print.css"
@@ -54,7 +57,7 @@ app_include_js = "crispy_print.bundle.js"
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "crispy_print/public/icons.svg"
+# app_include_icons = "crispy_print/public/icons/typst.svg"
 
 # Home Pages
 # ----------

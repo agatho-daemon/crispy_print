@@ -1,3 +1,5 @@
+# This entire project is a work in progress, including this README 
+
 ### Crispy Print
 
 A Frappe App that uses Typst CLI engine with Vue 3 based frontend to format DocType print formats.

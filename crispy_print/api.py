@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import frappe
+from frappe.query_builder import DocType
 from frappe import _
 
 
@@ -236,3 +237,65 @@ def compile_typst(typst_source, output_format="svg", letterhead_image=None):
 					shutil.rmtree(temp_dir)
 			except Exception as e:
 				frappe.log_error(f"Failed to cleanup temp directory: {e}", "Typst Cleanup Error")
+
+
+import frappe
+from frappe.query_builder import DocType
+
+
+@frappe.whitelist()
+def get_crispy_formats_for_doctype(doctype):
+	"""Get all enabled Crispy Formats for a given DocType.
+
+	Returns formats that have both:
+	- layout_json (reconstructable layout)
+	- page_settings (page configuration)
+	"""
+	CrispyFormat = DocType("Crispy Format")
+
+	formats = (
+		frappe.qb.from_(CrispyFormat)
+		.select(CrispyFormat.name, CrispyFormat.doc_type)
+		.where(CrispyFormat.doc_type == doctype)
+		.where(CrispyFormat.layout_json.isnotnull())  # Must have layout
+		.orderby(CrispyFormat.name)
+		.run(as_dict=True)
+	)
+
+	# Filter formats that have valid layout_json
+	valid_formats = []
+	for fmt in formats:
+		try:
+			layout = frappe.get_value(
+				"Crispy Format", fmt.name, ["layout_json", "page_settings"], as_dict=True
+			)
+
+			# Check if layout_json is parseable
+			if layout.get("layout_json"):
+				import json
+
+				json.loads(layout["layout_json"])  # Validate JSON
+				valid_formats.append(fmt)
+		except (json.JSONDecodeError, Exception) as e:
+			frappe.log_error(
+				f"Invalid layout_json for Crispy Format {fmt.name}: {str(e)}",
+				"Crispy Print Format Validation",
+			)
+			continue
+
+	return valid_formats
+
+
+@frappe.whitelist()
+def get_default_doctypes():
+	"""Get all DocTypes that have a default Crispy Format set"""
+	CrispyFormat = DocType("Crispy Format")
+
+	results = (
+		frappe.qb.from_(CrispyFormat)
+		.select(CrispyFormat.doc_type)
+		.where(CrispyFormat.is_default == 1)
+		.run(as_dict=True)
+	)
+
+	return [res.doc_type for res in results]
