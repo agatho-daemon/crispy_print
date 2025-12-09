@@ -81,6 +81,31 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		})
 	}
 
+	// Listen for direct document compilation (preview mode)
+	const handlePreviewCompile = (event: any) => {
+		const { doctype, docname, doc } = event.detail || {}
+		if (!doc || !doctype || !docname) {
+			console.warn("[Typst Preview] Invalid preview compile event", event.detail)
+			return
+		}
+
+		console.log("[Typst Preview] Preview mode: Direct document compilation", docname)
+		currentDoctype = doctype
+		sampleDocData = doc
+		sampleDocSelected = true
+		clearPreview()
+		lastLayoutSerialized = ""
+		lastTypstCode = ""
+		compile()
+
+		frappe.show_alert({
+			message: __("Preview loaded: {0}", [docname]),
+			indicator: "green",
+		})
+	}
+
+	window.addEventListener("crispy-compile-document", handlePreviewCompile)
+
 	function setupSampleDocAutocomplete(doctype: string) {
 		if (!doctype) {
 			console.warn("[Typst Preview] Cannot setup autocomplete - missing doctype")
@@ -728,6 +753,8 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			unsubscribeDoctype()
 			console.log("[Typst Preview] Doctype subscription removed")
 		}
+		window.removeEventListener("crispy-compile-document", handlePreviewCompile)
+		console.log("[Typst Preview] Preview compile listener removed")
 		if (worker) {
 			cleanup()
 			console.log("[Typst Preview] Worker terminated")
