@@ -31,6 +31,7 @@ app_license = "mit"
 # app_include_js = "/assets/wsq/js/crispy_print.js"
 app_include_js = [
 	"crispy_print.bundle.js",
+	"crispy_preview.bundle.js",
 	"/assets/crispy_print/js/crispy_print_button.js",
 ]
 
