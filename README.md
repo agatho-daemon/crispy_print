@@ -1,4 +1,13 @@
-# This entire project is a work in progress, including this README 
+# WIP Project
+
+**This entire project is a work in progress. Hence, it is heavily logging to js console.**
+
+The project is an idea, that was born out of the need to have a modern print format designer for Frappe applications, using the [Typst](https://typst.app/) typesetting system. The goal is to provide a user-friendly interface for creating and managing print formats that can be used across various Frappe DocTypes.
+
+As a mildly experienced Frappe developer, I am excited to explore the possibilities of this project and contribute to its development. The project is currently in its early stages, and I welcome any feedback or suggestions from the community.
+
+Many thanks for the many different AI tools that I have used to help me with this project.
+
 
 ## Crispy Print
 
@@ -188,7 +197,7 @@ cd apps/crispy_print/crispy_print/public/js
 yarn install
 ```
 
-This installs local type definitions for IDE support only. These files are gitignored:
+This installs local type definitions for IDE support only:
 - `package.json`, `yarn.lock` - Type dependencies
 - `tsconfig.json` - TypeScript configuration
 - `node_modules/` - Type definitions
@@ -252,9 +261,8 @@ page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25)"
 ### Using a Print Format
 
 1. Open any document (e.g., Sales Invoice)
-2. Click **Print** dropdown
-3. Select your Crispy Format
-4. Preview and download PDF
+2. Click **Typst** button in the toolbar
+3. Preview and download PDF
 
 ### Print Preview Page
 
