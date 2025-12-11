@@ -127,6 +127,18 @@ def compile_typst(typst_source, output_format="svg", letterhead_image=None):
 	if not typst_source or not typst_source.strip():
 		frappe.throw(_("Typst source code is required"))
 
+	# Log document data size for monitoring field filtering
+	import re
+
+	doc_match = re.search(r"#let doc = \((.*?)\)", typst_source, re.DOTALL)
+	if doc_match:
+		doc_content = doc_match.group(1)
+		# Count top-level fields (rough estimate)
+		field_count = len(re.findall(r"^\s+\w+:", doc_content, re.MULTILINE))
+		frappe.logger().info(f"[Typst Compile] Document contains ~{field_count} fields")
+	else:
+		frappe.logger().info("[Typst Compile] No #let doc found in source")
+
 	allowed_formats = {"pdf", "svg"}
 	output_format = (output_format or "svg").lower()
 	if output_format not in allowed_formats:
