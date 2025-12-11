@@ -49,7 +49,7 @@
 					<label class="settings-pane__label">Margins (mm)</label>
 					<div class="settings-pane__margins">
 						<div class="settings-pane__margin-input">
-							<span class="settings-pane__margin-prefix">T</span>
+							<span class="settings-pane__margin-prefix">top</span>
 							<input
 								v-model.number="pageSettings.margins.top"
 								type="number"
@@ -58,7 +58,7 @@
 							/>
 						</div>
 						<div class="settings-pane__margin-input">
-							<span class="settings-pane__margin-prefix">B</span>
+							<span class="settings-pane__margin-prefix">bottom</span>
 							<input
 								v-model.number="pageSettings.margins.bottom"
 								type="number"
@@ -67,7 +67,7 @@
 							/>
 						</div>
 						<div class="settings-pane__margin-input">
-							<span class="settings-pane__margin-prefix">L</span>
+							<span class="settings-pane__margin-prefix">left</span>
 							<input
 								v-model.number="pageSettings.margins.left"
 								type="number"
@@ -76,7 +76,7 @@
 							/>
 						</div>
 						<div class="settings-pane__margin-input">
-							<span class="settings-pane__margin-prefix">R</span>
+							<span class="settings-pane__margin-prefix">right</span>
 							<input
 								v-model.number="pageSettings.margins.right"
 								type="number"
@@ -343,14 +343,14 @@ watch(
 	left: 10px;
 	top: 50%;
 	transform: translateY(-50%);
-	font-size: 12px;
+	font-size: 10px;
 	font-weight: 600;
 	color: #94a3b8;
 	pointer-events: none;
 }
 
 .settings-pane__margin-input .settings-pane__input {
-	padding-left: 28px;
+	padding-left: 50px;
 }
 
 </style>
