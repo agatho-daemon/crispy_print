@@ -2,6 +2,7 @@
 
 import { translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
+import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import type { CrispyLayout } from "../utils/layout"
 
 declare const Awesomplete: any
@@ -412,6 +413,17 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			console.log("[Typst Preview] Layout or page settings changed, translating to Typst...")
 			console.log("[Typst Preview] Layout sections:", (layout as any)?.sections?.length || 0)
 
+			// Extract fields actually used in the layout
+			const usedFields = extractUsedFields(layout)
+			console.log(
+				`[Typst Preview] Layout uses ${usedFields.size} fields:`,
+				Array.from(usedFields).sort()
+			)
+
+			// Filter document to only include used fields
+			const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
+			console.log("[Typst Preview] Filtered document fields:", Object.keys(filteredDoc || {}).sort())
+
 			let typst: string
 			try {
 				let letterheadData: any = null
@@ -426,7 +438,8 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 					pageSettings = adapter.getPageSettings() || {}
 				}
 
-				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, sampleDocData, pageSettings)
+				// Use filtered document instead of full sampleDocData
+				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, pageSettings)
 
 				console.log("[Typst Preview] Translation successful, length:", typst.length)
 			} catch (e: any) {
