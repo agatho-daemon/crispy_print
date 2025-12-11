@@ -110,15 +110,149 @@
 						</option>
 					</select>
 				</div>
-			</div>
+			<div class="settings-pane__section">
+				<h4 class="settings-pane__section-title">Typography</h4>
+
+				<!-- Field Labels -->
+				<div class="settings-pane__subsection">
+					<label class="settings-pane__label">Field Labels</label>
+					<div class="settings-pane__grid">
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Family</label>
+							<select v-model="typography.fieldLabel.fontFamily" class="settings-pane__select">
+								<option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Size</label>
+							<input v-model="typography.fieldLabel.fontSize" type="text" placeholder="8pt" class="settings-pane__input" />
+						</div>
+						<div class="settings-pane__field">						<label class="settings-pane__sublabel">Style</label>
+						<select v-model="typography.fieldLabel.fontStyle" class="settings-pane__select">
+							<option value="normal">Normal</option>
+							<option value="italic">Italic</option>
+							<option value="oblique">Oblique</option>
+						</select>
+					</div>
+					<div class="settings-pane__field">							<label class="settings-pane__sublabel">Weight</label>
+							<select v-model="typography.fieldLabel.fontWeight" class="settings-pane__select">
+								<option value="thin">Thin</option>
+								<option value="extralight">Extralight</option>
+								<option value="light">Light</option>
+								<option value="normal">Normal</option>
+								<option value="medium">Medium</option>
+								<option value="semibold">Semibold</option>
+								<option value="bold">Bold</option>
+								<option value="extrabold">Extrabold</option>
+								<option value="black">Black</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Color</label>
+						<ColorInput v-model="typography.fieldLabel.color" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Field Values -->
+				<div class="settings-pane__subsection">
+					<label class="settings-pane__label">Field Values</label>
+					<div class="settings-pane__grid">
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Family</label>
+							<select v-model="typography.fieldValue.fontFamily" class="settings-pane__select">
+								<option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Size</label>
+							<input v-model="typography.fieldValue.fontSize" type="text" placeholder="10pt" class="settings-pane__input" />
+						</div>
+						<div class="settings-pane__field">						<label class="settings-pane__sublabel">Style</label>
+						<select v-model="typography.fieldValue.fontStyle" class="settings-pane__select">
+							<option value="normal">Normal</option>
+							<option value="italic">Italic</option>
+							<option value="oblique">Oblique</option>
+						</select>
+					</div>
+					<div class="settings-pane__field">							<label class="settings-pane__sublabel">Weight</label>
+							<select v-model="typography.fieldValue.fontWeight" class="settings-pane__select">
+								<option value="thin">Thin</option>
+								<option value="extralight">Extralight</option>
+								<option value="light">Light</option>
+								<option value="normal">Normal</option>
+								<option value="medium">Medium</option>
+								<option value="semibold">Semibold</option>
+								<option value="bold">Bold</option>
+								<option value="extrabold">Extrabold</option>
+								<option value="black">Black</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Color</label>
+						<ColorInput v-model="typography.fieldValue.color" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Section Labels -->
+				<div class="settings-pane__subsection">
+					<label class="settings-pane__label">Section Labels</label>
+					<div class="settings-pane__grid">
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Family</label>
+							<select v-model="typography.sectionLabel.fontFamily" class="settings-pane__select">
+								<option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Size</label>
+							<input v-model="typography.sectionLabel.fontSize" type="text" placeholder="14pt" class="settings-pane__input" />
+						</div>
+						<div class="settings-pane__field">						<label class="settings-pane__sublabel">Style</label>
+						<select v-model="typography.sectionLabel.fontStyle" class="settings-pane__select">
+							<option value="normal">Normal</option>
+							<option value="italic">Italic</option>
+							<option value="oblique">Oblique</option>
+						</select>
+					</div>
+					<div class="settings-pane__field">							<label class="settings-pane__sublabel">Weight</label>
+							<select v-model="typography.sectionLabel.fontWeight" class="settings-pane__select">
+								<option value="thin">Thin</option>
+								<option value="extralight">Extralight</option>
+								<option value="light">Light</option>
+								<option value="normal">Normal</option>
+								<option value="medium">Medium</option>
+								<option value="semibold">Semibold</option>
+								<option value="bold">Bold</option>
+								<option value="extrabold">Extrabold</option>
+								<option value="black">Black</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">Color</label>
+						<ColorInput v-model="typography.sectionLabel.color" />
+						</div>
+					</div>
+				</div>
+			</div>			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue"
+import { ref, watch, onMounted, computed } from "vue"
+import ColorInput from "./ColorInput.vue"
 
 declare const frappe: any
+
+interface TypographyStyle {
+	fontFamily: string
+	fontSize: string
+	fontStyle: string
+	fontWeight: string
+	color: string
+}
 
 interface PageSettings {
 	pageSize: string
@@ -132,6 +266,11 @@ interface PageSettings {
 	fontFamily: string
 	fontSize: number
 	letterhead: string
+	typography?: {
+		fieldLabel: TypographyStyle
+		fieldValue: TypographyStyle
+		sectionLabel: TypographyStyle
+	}
 }
 
 interface Props {
@@ -145,6 +284,36 @@ const availableFonts = ref<string[]>([])
 const loadingFonts = ref(false)
 const availableLetterheads = ref<string[]>([])
 const loadingLetterheads = ref(false)
+
+// Initialize typography with defaults if not present
+const typography = computed(() => {
+	if (!props.pageSettings.typography) {
+		props.pageSettings.typography = {
+			fieldLabel: {
+				fontFamily: props.pageSettings.fontFamily || "Inter",
+				fontSize: "8pt",
+				fontStyle: "normal",
+				fontWeight: "semibold",
+				color: "#64748b"
+			},
+			fieldValue: {
+				fontFamily: props.pageSettings.fontFamily || "Inter",
+				fontSize: "10pt",
+				fontStyle: "normal",
+				fontWeight: "normal",
+				color: "#0f172a"
+			},
+			sectionLabel: {
+				fontFamily: props.pageSettings.fontFamily || "Inter",
+				fontSize: "14pt",
+				fontStyle: "normal",
+				fontWeight: "bold",
+				color: "#1e293b"
+			}
+		}
+	}
+	return props.pageSettings.typography
+})
 
 // Fetch available fonts from Typst
 async function fetchFonts() {
@@ -351,6 +520,42 @@ watch(
 
 .settings-pane__margin-input .settings-pane__input {
 	padding-left: 50px;
+}
+
+.settings-pane__section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-top: 8px;
+	padding-top: 16px;
+	border-top: 1px solid #e2e8f0;
+}
+
+.settings-pane__section-title {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 700;
+	color: #1e293b;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.settings-pane__subsection {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.settings-pane__grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 8px;
+}
+
+.settings-pane__sublabel {
+	font-size: 11px;
+	font-weight: 500;
+	color: #64748b;
 }
 
 </style>

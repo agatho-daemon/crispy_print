@@ -698,12 +698,13 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 	refreshBtn &&
 		(refreshBtn.onclick = () => {
-			console.log("[Typst Preview] Refresh button clicked")
+			console.log("[Typst Preview] Refresh button clicked - forcing recompilation")
 			if (statusEl) {
 				statusEl.textContent = "refreshing..."
 				statusEl.style.color = "#3498db"
 			}
 			lastLayoutSerialized = ""
+			lastTypstCode = "" // Force recompilation by clearing cached code
 			missingLayoutRetries = 0
 			compilationDisabled = false
 			scheduleCompile("manual-refresh", 0)

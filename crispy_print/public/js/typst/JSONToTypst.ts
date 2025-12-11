@@ -51,6 +51,24 @@ class JSONTypstTranslator {
 		return parts.join("\n\n")
 	}
 
+	// Convert font weight name to numeric value for Typst
+	fontWeightToNumber(weight: string): number {
+		const weightMap: Record<string, number> = {
+			thin: 100,
+			extralight: 200,
+			light: 300,
+			normal: 400,
+			regular: 400,
+			medium: 500,
+			semibold: 600,
+			bold: 700,
+			extrabold: 800,
+			black: 900,
+		}
+		const normalized = weight.toLowerCase()
+		return weightMap[normalized] || 400
+	}
+
 	generateUserSection() {
 		const lines = [
 			"// ========================================",
@@ -106,6 +124,56 @@ class JSONTypstTranslator {
 		lines.push("#set text(")
 		lines.push(`  font: "${fontFamily}",`)
 		lines.push(`  size: ${fontSize}pt`)
+		lines.push(")")
+		lines.push("")
+
+		// Typography styles for labels and values
+		const typography = this.options.typography || {}
+		const fieldLabel = typography.fieldLabel || {
+			fontFamily: fontFamily,
+			fontSize: "8pt",
+			fontStyle: "normal",
+			fontWeight: "semibold",
+			color: "#64748b"
+		}
+		const fieldValue = typography.fieldValue || {
+			fontFamily: fontFamily,
+			fontSize: "10pt",
+			fontStyle: "normal",
+			fontWeight: "normal",
+			color: "#0f172a"
+		}
+		const sectionLabel = typography.sectionLabel || {
+			fontFamily: fontFamily,
+			fontSize: "14pt",
+			fontStyle: "normal",
+			fontWeight: "bold",
+			color: "#1e293b"
+		}
+
+		lines.push("// Typography styles")
+		lines.push("#let fieldLabelStyle = (")
+		lines.push(`  font: "${fieldLabel.fontFamily}",`)
+		lines.push(`  size: ${fieldLabel.fontSize},`)
+		lines.push(`  style: "${fieldLabel.fontStyle}",`)
+		lines.push(`  weight: ${this.fontWeightToNumber(fieldLabel.fontWeight)},`)
+		lines.push(`  fill: rgb("${fieldLabel.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push("#let fieldValueStyle = (")
+		lines.push(`  font: "${fieldValue.fontFamily}",`)
+		lines.push(`  size: ${fieldValue.fontSize},`)
+		lines.push(`  style: "${fieldValue.fontStyle}",`)
+		lines.push(`  weight: ${this.fontWeightToNumber(fieldValue.fontWeight)},`)
+		lines.push(`  fill: rgb("${fieldValue.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push("#let sectionLabelStyle = (")
+		lines.push(`  font: "${sectionLabel.fontFamily}",`)
+		lines.push(`  size: ${sectionLabel.fontSize},`)
+		lines.push(`  style: "${sectionLabel.fontStyle}",`)
+		lines.push(`  weight: ${this.fontWeightToNumber(sectionLabel.fontWeight)},`)
+		lines.push(`  fill: rgb("${sectionLabel.color}")`)
 		lines.push(")")
 		lines.push("")
 
@@ -281,7 +349,7 @@ class JSONTypstTranslator {
 		}
 
 		if (section.label) {
-			lines.push(`=== ${section.label}`)
+			lines.push(`#text(..sectionLabelStyle)[${section.label}]`)
 			lines.push("")
 		}
 
@@ -350,10 +418,10 @@ class JSONTypstTranslator {
 				// Label always left-aligned, value respects field alignment
 				if (align === "left") {
 					// Both left-aligned - simple format
-					return `#text(size: 8pt, fill: rgb("#888"))[${label}]#linebreak()#text(size: 10pt)[#doc.${fieldname}]#parbreak()`
+					return `#text(..fieldLabelStyle)[${label}]#linebreak()#text(..fieldValueStyle)[#doc.${fieldname}]#parbreak()`
 				} else {
 					// Label left, value aligned separately
-					return `#text(size: 8pt, fill: rgb("#888"))[${label}]#linebreak()#align(${align})[#text(size: 10pt)[#doc.${fieldname}]]#parbreak()`
+					return `#text(..fieldLabelStyle)[${label}]#linebreak()#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]#parbreak()`
 				}
 		}
 	}
