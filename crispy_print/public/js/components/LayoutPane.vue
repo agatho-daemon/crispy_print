@@ -616,13 +616,10 @@ function closeColumnEditor() {
 }
 
 .section-column__empty {
-	border: 1px dashed #cbd5e1;
-	border-radius: 10px;
-	background: #fff;
-	padding: 12px;
 	text-align: center;
 	font-size: 12px;
 	color: #94a3b8;
+	padding: 20px 12px;
 }
 
 .field-card {
