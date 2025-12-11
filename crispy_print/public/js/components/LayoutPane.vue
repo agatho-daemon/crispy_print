@@ -109,14 +109,22 @@
 													</div>
 												</div>
 												<div class="field-card__actions">
-													<button
-														v-if="field.fieldtype === 'Table'"
-														class="lp-btn lp-btn--small"
-														type="button"
-														@click="configureColumns(field)"
-													>
-														Configure columns
-													</button>
+												<button
+													class="lp-btn lp-btn--small lp-btn--icon"
+													type="button"
+													@click="cycleAlignment(field)"
+													:title="`Alignment: ${field.align || 'left'}`"
+												>
+													{{ getAlignIcon(field.align) }}
+												</button>
+												<button
+													v-if="field.fieldtype === 'Table'"
+													class="lp-btn lp-btn--small"
+													type="button"
+													@click="configureColumns(field)"
+												>
+													Configure columns
+												</button>
 													<button class="field-card__remove" @click="removeField(column, fieldIndex)" title="Remove" type="button">
 														&#x2715;
 													</button>
@@ -250,6 +258,34 @@ function removeField(column: Column, fieldIndex: number) {
 	store.markDirty()
 }
 
+function cycleAlignment(field: Field) {
+	// Cycle through: left → center → right → left
+	const current = field.align || "left"
+	const alignments: Array<"left" | "center" | "right"> = ["left", "center", "right"]
+	const currentIndex = alignments.indexOf(current)
+	const nextIndex = (currentIndex + 1) % alignments.length
+	field.align = alignments[nextIndex]
+	store.markDirty()
+}
+
+function getAlignIcon(align?: "left" | "center" | "right"): string {
+	// Unicode alignment icons
+	switch (align) {
+		case "center":
+			return "≡" // Center align
+		case "right":
+			return "⇥" // Right align
+		default:
+			return "⇤" // Left align
+	}
+}
+
+function getDefaultAlignment(fieldtype?: string): "left" | "center" | "right" {
+	// Numeric fields default to right alignment, like Frappe
+	const numericTypes = ["Int", "Float", "Currency", "Percent"]
+	return numericTypes.includes(fieldtype || "") ? "right" : "left"
+}
+
 function togglePageBreak(section: Section) {
 	; (section as any).page_break = !(section as any).page_break
 	store.markDirty()
@@ -283,16 +319,20 @@ async function onDropField(event: DragEvent, column: Column) {
 		if (!data) return
 		const parsed: DocField = JSON.parse(data)
 		if (!parsed.fieldname) return
+		
 		const field: LayoutField = {
 			fieldname: parsed.fieldname,
 			label: parsed.label || parsed.fieldname,
 			fieldtype: parsed.fieldtype || "Data",
+			align: getDefaultAlignment(parsed.fieldtype),  // Add default alignment
 		}
+		
 		if (parsed.fieldtype === "Table") {
 			field.table_columns = []
 			field.options = parsed.options
 			await ensureTableColumns(field)
 		}
+		
 		column.fields.push(field)
 		store.markDirty()
 	} catch (e) {
@@ -699,6 +739,17 @@ function closeColumnEditor() {
 .lp-btn--secondary {
 	border-color: #fecdd3;
 	color: #be123c;
+}
+
+.lp-btn--icon {
+	padding: 8px 12px;
+	min-width: 40px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 18px;
+	font-family: monospace;
+	font-weight: bold;
 }
 
 .lp-btn--secondary:hover {

@@ -15,7 +15,8 @@ export interface TableColumn {
 	fieldname: string
 	label: string
 	fieldtype: string
-	width?: number
+	width?: string // Typst width: "auto", "1fr", "2fr", "100pt", etc.
+	align?: "left" | "center" | "right"
 }
 
 export interface LayoutField {
@@ -23,6 +24,7 @@ export interface LayoutField {
 	label: string
 	fieldtype: string
 	options?: string
+	align?: "left" | "center" | "right"
 	table_columns?: TableColumn[]
 	field_template?: string
 }
@@ -97,11 +99,14 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 			if (!currentColumn) setColumn()
 
 			if (!df.print_hide) {
-				const field: LayoutField = {
-					label: df.label,
-					fieldname: df.fieldname,
-					fieldtype: df.fieldtype || "Data",
-					options: df.options,
+			const fieldtype = df.fieldtype || "Data"
+			
+			const field: LayoutField = {
+				label: df.label,
+				fieldname: df.fieldname,
+				fieldtype: fieldtype,
+				options: df.options,
+				align: getDefaultFieldAlignment(fieldtype),
 				}
 
 				const fieldTemplate = getFieldTemplate(crispyFormat, df.fieldname, df)
@@ -152,7 +157,6 @@ export function getTableColumns(dfOrDoctype: DocField | string): TableColumn[] {
 	}
 
 	const tableColumns: TableColumn[] = []
-	let totalWidth = 0
 
 	const candidates = childMeta.fields
 		.filter((f: DocField) => !f.print_hide && f.fieldname && f.label)
@@ -163,18 +167,17 @@ export function getTableColumns(dfOrDoctype: DocField | string): TableColumn[] {
 
 	for (const f of candidates) {
 		if (!parentHasLabel) break
-		if (totalWidth >= 100) break
-		const rawWidth = (f as any).width
-		const width =
-			typeof rawWidth === "number" && rawWidth < 100 ? rawWidth : rawWidth ? 20 : 10
+		
+		// Use Typst width values
+		const width = "auto" // Default to auto width
 
 		tableColumns.push({
 			fieldname: f.fieldname,
 			label: f.label,
 			fieldtype: f.fieldtype,
 			width,
+			align: getDefaultFieldAlignment(f.fieldtype),
 		})
-		totalWidth += width
 	}
 
 	return tableColumns
@@ -230,4 +233,13 @@ export function deserializeLayout(json: string): CrispyLayout | null {
 		console.error("[Layout] Failed to parse layout JSON:", e)
 		return null
 	}
+}
+
+/**
+ * Get default alignment for a field based on its fieldtype
+ * Numeric fields default to right alignment, like Frappe
+ */
+export function getDefaultFieldAlignment(fieldtype: string): "left" | "center" | "right" {
+	const numericTypes = ["Int", "Float", "Currency", "Percent"]
+	return numericTypes.includes(fieldtype) ? "right" : "left"
 }

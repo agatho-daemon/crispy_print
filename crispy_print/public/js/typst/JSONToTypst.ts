@@ -344,8 +344,24 @@ class JSONTypstTranslator {
 					return `// ${label} (field not in document)`
 				}
 
-				return `#text(size: 8pt, fill: rgb("#888"))[${label}]#linebreak()#text(size: 10pt)[#doc.${fieldname}]#parbreak()`
+				// Determine alignment
+				const align = field.align || this.getDefaultAlignment(fieldtype)
+				
+				// Label always left-aligned, value respects field alignment
+				if (align === "left") {
+					// Both left-aligned - simple format
+					return `#text(size: 8pt, fill: rgb("#888"))[${label}]#linebreak()#text(size: 10pt)[#doc.${fieldname}]#parbreak()`
+				} else {
+					// Label left, value aligned separately
+					return `#text(size: 8pt, fill: rgb("#888"))[${label}]#linebreak()#align(${align})[#text(size: 10pt)[#doc.${fieldname}]]#parbreak()`
+				}
 		}
+	}
+
+	getDefaultAlignment(fieldtype: string): "left" | "center" | "right" {
+		// Numeric fields default to right alignment, like Frappe
+		const numericTypes = ["Int", "Float", "Currency", "Percent"]
+		return numericTypes.includes(fieldtype) ? "right" : "left"
 	}
 
 	translateTable(field: LayoutField) {
@@ -365,23 +381,23 @@ class JSONTypstTranslator {
 
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
 			lines.push(`  #table(`)
-			lines.push(`    columns: (${columns.map(() => "1fr").join(", ")}),`)
-			lines.push(`    align: (${columns.map(() => "left").join(", ")}),`)
-
-			const headerCells = columns
-				.map((col) => {
-					const headerLabel = (col.label || col.fieldname || "Column").replace(/#/g, "\\#")
-					return `[*${headerLabel}*]`
-				})
-				.join(", ")
+		// Use column widths from layout (auto, 1fr, 2fr, 100pt, etc.)
+		const widths = columns.map((col) => col.width || "auto")
+		lines.push(`    columns: (${widths.join(", ")}),`)
+			const alignments = columns.map((col) => {
+				const align = col.align || this.getDefaultAlignment(col.fieldtype)
+				return align
+			})
+			lines.push(`    align: (${alignments.join(", ")}),`)
+			
+			const headerCells = columns.map((col) => `[*${col.label}*]`).join(", ")
 			lines.push(`    ${headerCells},`)
-
-			lines.push(`    ..doc.${fieldname}.map(item => (`)
-			lines.push(`      ${columns.map((col) => `[#item.at("${col.fieldname}", default: "")]`).join(", ")}`)
-			lines.push(`    )).flatten()`)
+			
+			// Row data - map each row to all its column values and flatten
+			const rowCells = columns.map((col) => `[#row.${col.fieldname}]`).join(", ")
+			lines.push(`    ..doc.${fieldname}.map(row => (${rowCells})).flatten(),`)
+			
 			lines.push(`  )`)
-			lines.push(`] else [`)
-			lines.push(`  // Table "${label}" is empty or not an array`)
 			lines.push(`]`)
 		} else {
 			lines.push(`// TODO: Table ${fieldname} has no columns defined`)
@@ -389,10 +405,8 @@ class JSONTypstTranslator {
 
 		return lines.join("\n")
 	}
-
 	convertHTMLToTypst(html: string) {
-			if (!html || !html.trim()) return "// (empty HTML)"
-
+		if (!html || !html.trim()) return "// (empty HTML)"
 			let typst = html
 				.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "= $1")
 				.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "== $1")
