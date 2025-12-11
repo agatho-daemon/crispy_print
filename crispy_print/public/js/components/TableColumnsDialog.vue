@@ -5,7 +5,7 @@
 				<div>
 					<h3 class="table-dialog__title">Configure columns</h3>
 					<p class="table-dialog__subtitle">
-						Drag to reorder. Widths are percentages; total should stay at or below 100.
+						Drag to reorder. Widths use Typst units: auto, 1fr, 2fr, 100pt, 50%, etc.
 					</p>
 				</div>
 				<button class="table-dialog__close" @click="$emit('close')" type="button">
@@ -16,12 +16,9 @@
 			<div class="table-dialog__body">
 				<div class="table-dialog__row">
 					<span>Columns</span>
-					<span :class="totalWidth > 100 ? 'table-dialog__total--over' : 'table-dialog__total'">
-						Total width: {{ totalWidth }}%
-					</span>
-				</div>
+			</div>
 
-				<draggable
+			<draggable
 					v-model="localColumns"
 					item-key="fieldname"
 					handle=".drag-handle"
@@ -38,17 +35,24 @@
 									class="table-dialog__input"
 									placeholder="Column label"
 								/>
-								<p class="table-dialog__fieldname">{{ column.fieldname }}</p>
+
 							</div>
 							<div class="table-dialog__item-controls">
+								<button
+									class="table-dialog__align-btn"
+									type="button"
+									@click="cycleColumnAlignment(column)"
+									:title="`Align: ${column.align || 'left'}`"
+								>
+									{{ getAlignIcon(column.align) }}
+								</button>
 								<input
-									v-model.number="column.width"
-									type="number"
-									min="0"
-									max="100"
-									step="5"
-									class="table-dialog__width-input"
-									:class="column.invalid_width ? 'table-dialog__width-input--invalid' : ''"
+								v-model="column.width"
+								type="text"
+								placeholder="auto"
+								class="table-dialog__width-input"
+								:class="column.invalid_width ? 'table-dialog__width-input--invalid' : ''"
+								title="Typst width: auto, 1fr, 2fr, 100pt, etc."
 								/>
 								<button class="table-dialog__remove" title="Remove" @click="removeColumn(column)" type="button">
 									&#x2715;
@@ -144,10 +148,6 @@ watch(
 	{ deep: true }
 )
 
-const totalWidth = computed(() =>
-	localColumns.value.reduce((total, col) => total + (col.width || 0), 0)
-)
-
 const availableColumns = computed(() => {
 	const existing = new Set(localColumns.value.map((c) => c.fieldname))
 	const base: { label: string; fieldname: string; fieldtype: string }[] = [
@@ -189,20 +189,46 @@ function addColumn() {
 		fieldname: option.fieldname,
 		label: option.label,
 		fieldtype: option.fieldtype || "Data",
-		width: 10,
+		width: "auto",
+		align: getDefaultAlignment(option.fieldtype),
 	}
 	localColumns.value = [...localColumns.value, newCol]
 	pendingFieldname.value = ""
 }
 
+function cycleColumnAlignment(column: TableColumn) {
+	const current = column.align || "left"
+	const alignments: Array<"left" | "center" | "right"> = ["left", "center", "right"]
+	const currentIndex = alignments.indexOf(current)
+	const nextIndex = (currentIndex + 1) % alignments.length
+	column.align = alignments[nextIndex]
+}
+
+function getAlignIcon(align?: "left" | "center" | "right"): string {
+	switch (align) {
+		case "center":
+			return "≡"
+		case "right":
+			return "⇥"
+		default:
+			return "⇤"
+	}
+}
+
+function getDefaultAlignment(fieldtype?: string): "left" | "center" | "right" {
+	const numericTypes = ["Int", "Float", "Currency", "Percent"]
+	return numericTypes.includes(fieldtype || "") ? "right" : "left"
+}
+
 function validateWidths(cols: TableColumn[]) {
-	let runningTotal = 0
+	// Validate Typst width values
 	for (const col of cols) {
-		if (typeof col.width !== "number" || Number.isNaN(col.width)) {
-			col.width = 10
+		if (!col.width || typeof col.width !== "string") {
+			col.width = "auto"
 		}
-		runningTotal += col.width
-		;(col as any).invalid_width = runningTotal > 100
+		// Basic validation: should be like "1fr", "auto", "100pt", etc.
+		const valid = /^(\d+\.?\d*)(fr|pt|em|%|cm|mm|in)?$|^auto$/i.test(col.width.trim())
+		;(col as any).invalid_width = !valid
 	}
 }
 
@@ -371,6 +397,28 @@ watch(
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.table-dialog__align-btn {
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	border-radius: 8px;
+	padding: 6px 10px;
+	min-width: 36px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	font-family: monospace;
+	font-weight: bold;
+	color: #334155;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.table-dialog__align-btn:hover {
+	border-color: #c7d2fe;
+	background: #eef2ff;
 }
 
 .table-dialog__width-input {
