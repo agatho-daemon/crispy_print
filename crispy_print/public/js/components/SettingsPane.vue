@@ -139,7 +139,7 @@
 								<option value="thin">Thin</option>
 								<option value="extralight">Extralight</option>
 								<option value="light">Light</option>
-								<option value="normal">Normal</option>
+							<option value="regular">Regular</option>
 								<option value="medium">Medium</option>
 								<option value="semibold">Semibold</option>
 								<option value="bold">Bold</option>
@@ -180,7 +180,7 @@
 								<option value="thin">Thin</option>
 								<option value="extralight">Extralight</option>
 								<option value="light">Light</option>
-								<option value="normal">Normal</option>
+							<option value="regular">Regular</option>
 								<option value="medium">Medium</option>
 								<option value="semibold">Semibold</option>
 								<option value="bold">Bold</option>
@@ -221,7 +221,7 @@
 								<option value="thin">Thin</option>
 								<option value="extralight">Extralight</option>
 								<option value="light">Light</option>
-								<option value="normal">Normal</option>
+							<option value="regular">Regular</option>
 								<option value="medium">Medium</option>
 								<option value="semibold">Semibold</option>
 								<option value="bold">Bold</option>
@@ -300,7 +300,7 @@ const typography = computed(() => {
 				fontFamily: props.pageSettings.fontFamily || "Inter",
 				fontSize: "10pt",
 				fontStyle: "normal",
-				fontWeight: "normal",
+				fontWeight: "regular",
 				color: "#0f172a"
 			},
 			sectionLabel: {
@@ -468,7 +468,7 @@ watch(
 .settings-pane__field {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 0px;
 }
 
 .settings-pane__label {
@@ -484,7 +484,7 @@ watch(
 	font-size: 14px;
 	color: #0f172a;
 	border: 1px solid #e2e8f0;
-	border-radius: 8px;
+	border-radius: 3px;
 	background: #fff;
 	outline: none;
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -556,6 +556,7 @@ watch(
 	font-size: 11px;
 	font-weight: 500;
 	color: #64748b;
+	margin-bottom: 0px;
 }
 
 </style>
