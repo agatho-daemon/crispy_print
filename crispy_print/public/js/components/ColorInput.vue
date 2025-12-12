@@ -1,89 +1,92 @@
 <template>
-	<div class="color-input" ref="colorPicker"></div>
+    <div class="color-input">
+        <div ref="pickrContainer"></div>
+    </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
-
-declare const frappe: any
+import { ref, onMounted, watch, onUnmounted } from "vue"
+import Pickr from "@simonwep/pickr"
+import "@simonwep/pickr/dist/themes/nano.min.css" // Or classic.min.css, monolith.min.css
 
 interface Props {
-	modelValue: string
+    modelValue: string
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-	"update:modelValue": [value: string]
+    "update:modelValue": [value: string]
 }>()
 
-const colorPicker = ref<HTMLElement>()
-let colorControl: any = null
+const pickrContainer = ref<HTMLElement>()
+let pickr: Pickr | null = null
 
 onMounted(() => {
-	if (!colorPicker.value) return
+    if (!pickrContainer.value) return
 
-	colorControl = frappe.ui.form.make_control({
-		parent: colorPicker.value,
-		df: {
-			fieldname: "color",
-			fieldtype: "Color",
-		},
-		render_input: true,
-	})
+    pickr = Pickr.create({
+        el: pickrContainer.value,
+        theme: "nano", // 'classic', 'monolith', or 'nano'
+        default: props.modelValue || "#000000",
+        
+        swatches: [
+            // Colorful standards
+            "#ef4444", "#f97316", "#f59e0b", "#eab308",
+            "#84cc16", "#22c55e", "#10b981", "#14b8a6",
+            "#06b6d4", "#0ea5e9", "#3b82f6", "#6366f1",
+            "#8b5cf6", "#a855f7", "#d946ef", "#ec4899",
+            // Grayscale
+            "#000000", "#1a1a1a", "#333333", "#4d4d4d",
+            "#666666", "#808080", "#999999", "#b3b3b3",
+            "#cccccc", "#e6e6e6", "#f5f5f5", "#ffffff",
+        ],
 
-	// Set initial value
-	colorControl.set_input(props.modelValue || "#000000")
+        components: {
+            preview: true,
+            opacity: true, // Disable if you don't need transparency
+            hue: true,
+            
+            interaction: {
+                hex: true,
+                rgba: false,
+                hsla: false,
+                hsva: false,
+                cmyk: false,
+                input: true,
+                clear: false,
+                save: true,
+            },
+        },
+    })
 
-	// Customize picker swatches to include black and grayscale
-	if (colorControl.picker) {
-		colorControl.picker.swatches = [
-			"#000000",
-			"#1a1a1a",
-			"#333333",
-			"#4d4d4d",
-			"#666666",
-			"#808080",
-			"#999999",
-			"#b3b3b3",
-			"#cccccc",
-			"#e6e6e6",
-			"#f5f5f5",
-			"#ffffff",
-		]
-		colorControl.picker.setup_swatches()
-	}
+    // Update parent when color changes
+    pickr.on("save", (color: any) => {
+        const hexColor = color.toHEXA().toString()
+        emit("update:modelValue", hexColor)
+        pickr?.hide()
+    })
 
-	// Update parent when user picks a color
-	const updateColor = () => {
-		const newColor = colorControl.get_value()
-		if (newColor && newColor !== props.modelValue) {
-			emit("update:modelValue", newColor)
-		}
-	}
-
-	// Hook into the color picker's internal on_change
-	if (colorControl.picker) {
-		colorControl.picker.on_change = (color: string) => {
-			colorControl.set_input(color)
-			emit("update:modelValue", color)
-		}
-	}
-
-	// Also listen to input changes for manual entry
-	colorControl.$input.on("change", updateColor)
-	colorControl.$input.on("blur", updateColor)
+    pickr.on("change", (color: any) => {
+        const hexColor = color.toHEXA().toString()
+        emit("update:modelValue", hexColor)
+    })
 })
 
-// Watch for external changes to modelValue
+// Watch for external changes
 watch(() => props.modelValue, (newValue) => {
-	if (colorControl && newValue !== colorControl.get_value()) {
-		colorControl.set_input(newValue)
-	}
+    if (pickr && newValue) {
+        pickr.setColor(newValue)
+    }
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+    pickr?.destroyAndRemove()
 })
 </script>
 
 <style scoped>
-.color-input :deep(.control-label) {
-	display: none;
+.color-input {
+    display: inline-block;
 }
 </style>

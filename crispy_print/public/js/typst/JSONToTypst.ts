@@ -140,7 +140,7 @@ class JSONTypstTranslator {
 			fontFamily: fontFamily,
 			fontSize: "10pt",
 			fontStyle: "normal",
-			fontWeight: "normal",
+			fontWeight: "regular",
 			color: "#0f172a"
 		}
 		const sectionLabel = typography.sectionLabel || {
