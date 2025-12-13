@@ -21,6 +21,9 @@ export interface PageSettings {
 	fontFamily?: string
 	fontSize?: number
 	letterhead: string
+	// Optional nested typography block (used by builder)
+	typography?: any
+	language?: string
 }
 
 export interface FormatData {
@@ -83,7 +86,9 @@ export async function loadFormatData(formatName: string): Promise<{
 			pageSize: "A4",
 			orientation: "portrait",
 			margins: { top: 25, bottom: 20, left: 20, right: 20 },
-			letterhead: ""
+			letterhead: "",
+			typography: undefined,
+			language: "en"
 		}
 
 		// Parse layout JSON
@@ -99,14 +104,16 @@ export async function loadFormatData(formatName: string): Promise<{
 		if (doc.page_settings) {
 			try {
 				const settings = JSON.parse(doc.page_settings)
-				pageSettings = {
-					pageSize: settings.pageSize || "A4",
-					orientation: settings.orientation || "portrait",
-					margins: settings.margins || { top: 25, bottom: 20, left: 20, right: 20 },
-					fontFamily: settings.fontFamily,
-					fontSize: settings.fontSize,
-					letterhead: settings.letterhead || ""
-				}
+					pageSettings = {
+						pageSize: settings.pageSize || "A4",
+						orientation: settings.orientation || "portrait",
+						margins: settings.margins || { top: 25, bottom: 20, left: 20, right: 20 },
+						fontFamily: settings.fontFamily,
+						fontSize: settings.fontSize,
+						letterhead: settings.letterhead || "",
+						typography: settings.typography,
+						language: settings.language || "en"
+					}
 			} catch (e) {
 				console.error("[FormatLoader] Failed to parse page_settings:", e)
 			}
