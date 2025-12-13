@@ -74,62 +74,14 @@ frappe.ui.CrispyPrintView = class {
                 docname: frm.docname,
                 format,
             });
-            
-            // Setup worker after Vue mounts
-            this.setup_worker(frm, format);
         }
         
-        this.status_el.text(__("")); // clear after mount
-    }
-
-    setup_worker(frm, format) {
-        // Wait for Vue to load format data and mount
+        // Trigger compile after Vue mounts and worker inside component initializes
         setTimeout(() => {
-            const container = document.getElementById("typst-svg-container");
-            if (!container) {
-                console.error("[CrispyPrint] Preview container not found");
-                return;
-            }
-
-            // Initialize worker with format and document data
-            if (typeof window.setupWorker === "function") {
-                // Create a modified container that provides document data
-                const previewContainer = container;
-                
-                // Pre-populate with document data (no sample selection needed)
-                this.current_doc_data = frm.doc;
-                
-                this.teardown_worker = window.setupWorker(format, previewContainer, {
-                    getLayout: () => this.vue_instance?.component?.getLayout() || null,
-                    getLetterhead: () => this.vue_instance?.component?.getLetterhead() || "",
-                    getDoctype: () => frm.doctype,
-                    getPageSettings: () => this.vue_instance?.component?.getPageSettings() || this.get_default_page_settings(),
-                    hookDataChanges: (callback) => {
-                        // Listen for settings/layout changes from Vue
-                        const handler = (event) => {
-                            console.log("[CrispyPrint] Refresh event:", event.detail);
-                            callback();
-                        };
-                        window.addEventListener("crispy-refresh-preview", handler);
-                        return () => window.removeEventListener("crispy-refresh-preview", handler);
-                    },
-                    hookDoctypeChanges: (callback) => {
-                        // Doctype doesn't change in preview, but needed by setupWorker
-                        callback(frm.doctype);
-                        return () => {};
-                    }
-                });
-                
-                // Simulate document selection by directly setting the data
-                setTimeout(() => {
-                    this.trigger_compile_with_document(frm);
-                }, 500);
-                
-                console.log("[CrispyPrint] Worker setup complete for format:", format);
-            } else {
-                console.error("[CrispyPrint] setupWorker not available");
-            }
-        }, 300);
+            this.trigger_compile_with_document(frm);
+        }, 800);
+        
+        this.status_el.text(__("")); // clear after mount
     }
 
     trigger_compile_with_document(frm) {
@@ -158,7 +110,6 @@ frappe.ui.CrispyPrintView = class {
     setup_toolbar() {
         this.page.set_primary_action(__("Print"), () => this.print_document(), "printer");
         this.page.add_button(__("PDF"), () => this.render_pdf(), { icon: "small-file" });
-        this.page.add_button(__("Refresh"), () => this.refresh_preview(), { icon: "refresh" });
         this.page.add_action_icon("es-line-filetype", () => this.go_to_form_view(), "", __("Form"));
     }
 

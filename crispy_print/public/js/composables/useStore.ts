@@ -4,6 +4,7 @@
 import { ref, computed, watch } from "vue"
 import { createDefaultLayout, serializeLayout, deserializeLayout } from "../utils/layout"
 import type { CrispyLayout, DocField } from "../utils/layout"
+import { defaultPageSettings, mergePageSettings, type PageSettings } from "../utils/pageSettings"
 
 declare const frappe: any
 declare const __: any
@@ -20,20 +21,6 @@ interface CrispyFormat {
 	__onload?: any
 }
 
-interface PageSettings {
-	pageSize: string
-	orientation: string
-	margins: {
-		top: number
-		bottom: number
-		left: number
-		right: number
-	}
-	fontFamily: string
-	fontSize: number
-	letterhead: string
-}
-
 function buildStore() {
 	// State
 	const crispyFormat = ref<CrispyFormat | null>(null)
@@ -44,19 +31,7 @@ function buildStore() {
 	const dirty = ref(false)
 	const loading = ref(false)
 
-	const pageSettings = ref<PageSettings>({
-		pageSize: "A4",
-		orientation: "portrait",
-		margins: {
-			top: 20,
-			bottom: 20,
-			left: 20,
-			right: 20,
-		},
-		fontFamily: "Arial",
-		fontSize: 11,
-		letterhead: "",
-	})
+	const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 
 	// Computed
 	const formatName = computed(() => crispyFormat.value?.name || null)
@@ -160,10 +135,13 @@ function buildStore() {
 			// Load page settings
 			if (doc.page_settings) {
 				try {
-					pageSettings.value = JSON.parse(doc.page_settings)
+					pageSettings.value = mergePageSettings(defaultPageSettings, JSON.parse(doc.page_settings))
 				} catch (e) {
 					console.warn("[Store] Failed to parse page_settings:", e)
+					pageSettings.value = { ...defaultPageSettings }
 				}
+			} else {
+				pageSettings.value = { ...defaultPageSettings }
 			}
 
 			// Load letterhead if specified
