@@ -113,7 +113,7 @@ frappe.ui.CrispyPrintView = class {
             }
         });
         window.dispatchEvent(event);
-        console.log("[CrispyPrint] Triggered compile with document:", frm.docname);
+        // console.log("[CrispyPrint] Triggered compile with document:", frm.docname);
     }
 
     get_default_page_settings() {
