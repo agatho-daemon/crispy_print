@@ -135,12 +135,12 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 
 		if (!sampleDocInput) {
-			console.warn("[Typst Preview] Cannot setup autocomplete - input not found")
+			// In PP, the search input isn't rendered; silently skip autocomplete
 			return
 		}
 
 		if (typeof Awesomplete === "undefined") {
-			console.warn("[Typst Preview] Awesomplete not available; skipping sample doc autocomplete")
+			// Builder-only enhancement; skip quietly when not available
 			return
 		}
 
@@ -374,14 +374,15 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	function performCompilation() {
 		clearPreview()
 
-		if (!sampleDocSelected) {
-			console.warn("[Typst Preview] No sample document selected; skipping compile")
-			if (statusEl) {
-				statusEl.textContent = "select a document"
-				statusEl.style.color = "#e67e22"
+			// Allow compile if we already have document data, even if sampleDocSelected wasn't toggled
+			if (!sampleDocData) {
+				console.warn("[Typst Preview] No document data; skipping compile")
+				if (statusEl) {
+					statusEl.textContent = "select a document"
+					statusEl.style.color = "#e67e22"
+				}
+				return
 			}
-			return
-		}
 
 		const layout = getLayout()
 
@@ -420,16 +421,9 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			}
 		}
 
-		if (layoutSerialized === lastLayoutSerialized && pageSettingsSerialized === lastPageSettingsSerialized) {
-			console.log("[Typst Preview] Layout and page settings unchanged, skipping compilation")
-			if (statusEl) {
-				statusEl.textContent = "unchanged"
-				statusEl.style.color = "#95a5a6"
-			}
-			return
-		}
-		lastLayoutSerialized = layoutSerialized
-		lastPageSettingsSerialized = pageSettingsSerialized
+			// Always compile on trigger; skip unchanged guard to honor debounced triggers
+			lastLayoutSerialized = layoutSerialized
+			lastPageSettingsSerialized = pageSettingsSerialized
 
 		console.log("[Typst Preview] Layout or page settings changed, translating to Typst...")
 		console.log("[Typst Preview] Layout sections:", (layout as any)?.sections?.length || 0)
