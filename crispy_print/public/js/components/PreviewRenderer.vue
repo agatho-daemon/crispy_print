@@ -39,21 +39,16 @@ function createAdapter() {
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
 		getPageSettings: () => props.pageSettings,
-		hookDataChanges: (callback: () => void) => {
-			manualRefreshCallback = callback
-			const stop = watch(
-				() => [props.layout, props.pageSettings, props.letterhead, props.changeKey],
-				(newVals, oldVals) => {
-					console.log("[PreviewRenderer] hookDataChanges detected change:", {
-						changeKey: props.changeKey,
-						pageSettings: props.pageSettings
-					})
-					callback()
-				},
-				{ deep: true }
-			)
-			return () => stop()
-		},
+		// Temporarily disable change-driven hook to test single trigger path
+		// hookDataChanges: (callback: () => void) => {
+		// 	manualRefreshCallback = callback
+		// 	const stop = watch(
+		// 		() => [props.layout, props.pageSettings, props.letterhead, props.changeKey],
+		// 		() => callback(),
+		// 		{ deep: true }
+		// 	)
+		// 	return () => stop()
+		// },
 		hookDoctypeChanges: (callback: (doctype: string | null | undefined) => void) => {
 			const stop = watch(
 				() => props.docType,

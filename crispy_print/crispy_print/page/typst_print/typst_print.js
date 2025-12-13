@@ -64,25 +64,40 @@ frappe.ui.CrispyPrintView = class {
         }
     }
 
-    render_preview(frm, format) {
-        this.status_el.text(__("Loading preview..."));
-        
-        // Mount Vue component if not already mounted
-        if (!this.vue_instance) {
-            this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
-                doctype: frm.doctype,
-                docname: frm.docname,
-                format,
-            });
-        }
-        
-        // Trigger compile after Vue mounts and worker inside component initializes
-        setTimeout(() => {
-            this.trigger_compile_with_document(frm);
-        }, 800);
-        
-        this.status_el.text(__("")); // clear after mount
+render_preview(frm, format) {
+    this.status_el.text(__("Loading preview..."));
+    
+    // Remove existing listener before adding new one
+    if (this._remove_refresh_listener) {
+        this._remove_refresh_listener();
+        this._remove_refresh_listener = null;
     }
+    
+    // Mount Vue component if not already mounted
+    if (!this.vue_instance) {
+        this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
+            doctype: frm.doctype,
+            docname: frm.docname,
+            format,
+        });
+    }
+    
+    // **REMOVED:** Manual compile trigger - Vue component handles initial compile on mount
+    // setTimeout(() => {
+    //     this.trigger_compile_with_document(frm);
+    // }, 800);
+
+    // Re-send document data on any preview refresh to ensure worker has latest doc
+    const resendDoc = () => this.trigger_compile_with_document(frm);
+    window.addEventListener("crispy-refresh-preview", resendDoc);
+    
+    // Store cleanup function for next render
+    this._remove_refresh_listener = () => {
+        window.removeEventListener("crispy-refresh-preview", resendDoc);
+    };
+    
+    this.status_el.text(__("")); // clear after mount
+}
 
     trigger_compile_with_document(frm) {
         // Directly trigger compilation with the document data
