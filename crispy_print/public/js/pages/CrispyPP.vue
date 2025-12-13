@@ -188,7 +188,7 @@ async function initializeData() {
 
 	try {
 		loading.value = true
-		console.log("[CrispyPP] Initializing for doctype:", props.doctype)
+		// console.log("[CrispyPP] Initializing for doctype:", props.doctype)
 
 		// Load available formats for this doctype
 		const formats = await getFormatsForDoctype(props.doctype)
@@ -202,11 +202,11 @@ async function initializeData() {
 		)
 		
 		availableFormats.value = formatsWithDefault
-		console.log("[CrispyPP] Available formats:", formatsWithDefault)
+		// console.log("[CrispyPP] Available formats:", formatsWithDefault)
 
 		// Load letterheads
 		availableLetterheads.value = await getLetterheads()
-		console.log("[CrispyPP] Available letterheads:", availableLetterheads.value)
+		// console.log("[CrispyPP] Available letterheads:", availableLetterheads.value)
 
 		// Determine which format to use
 		let formatToLoad = props.format
@@ -238,7 +238,7 @@ async function initializeData() {
 async function loadFormatSettings(formatName: string) {
 	try {
 		loading.value = true
-		console.log("[CrispyPP] Loading format:", formatName)
+		// console.log("[CrispyPP] Loading format:", formatName)
 
 		const data = await loadFormatData(formatName)
 		
@@ -253,14 +253,14 @@ async function loadFormatSettings(formatName: string) {
 		// Preload letterhead data if the format has one set
 		if (pageSettings.value.letterhead) {
 			pageSettings.value.letterheadData = await getLetterheadData(pageSettings.value.letterhead)
-			console.log("[CrispyPP] Letterhead preloaded on format load:", pageSettings.value.letterheadData)
+			// console.log("[CrispyPP] Letterhead preloaded on format load:", pageSettings.value.letterheadData)
 		}
 
 		// Store layout
 		layout.value = data.layout
 
-		console.log("[CrispyPP] Loaded format settings:", data.pageSettings)
-		console.log("[CrispyPP] Loaded layout:", data.layout)
+		// console.log("[CrispyPP] Loaded format settings:", data.pageSettings)
+		// console.log("[CrispyPP] Loaded layout:", data.layout)
 
 		loading.value = false
 
@@ -278,13 +278,13 @@ async function loadFormatSettings(formatName: string) {
 
 // Handle format change
 async function onFormatChange() {
-	console.log("[CrispyPP] Format changed to:", selectedFormat.value)
+	// console.log("[CrispyPP] Format changed to:", selectedFormat.value)
 	await loadFormatSettings(selectedFormat.value)
 }
 
 async function resetFormat() {
 	if (!selectedFormat.value) return
-	console.log("[CrispyPP] Resetting format:", selectedFormat.value)
+	// console.log("[CrispyPP] Resetting format:", selectedFormat.value)
 	await loadFormatSettings(selectedFormat.value)
 }
 
@@ -297,7 +297,7 @@ const getPageSettings = () => ({
 const pageSettingsComputed = computed(() => getPageSettings())
 
 function triggerRefresh() {
-	console.log("[CrispyPP] Triggering refresh with settings:", getPageSettings())
+	// console.log("[CrispyPP] Triggering refresh with settings:", getPageSettings())
 	window.dispatchEvent(new CustomEvent("crispy-refresh-preview", {
 		detail: {
 			settings: getPageSettings(),
@@ -332,9 +332,9 @@ watch(
 	async (newLetterhead) => {
 		if (newLetterhead) {
 			pageSettings.value.letterheadData = await getLetterheadData(newLetterhead)
-			console.log("[CrispyPP] Letterhead data loaded:", pageSettings.value.letterheadData)
+			// console.log("[CrispyPP] Letterhead data loaded:", pageSettings.value.letterheadData)
 			if (pageSettings.value.letterheadData?.image) {
-				console.log("[CrispyPP] Letterhead image path:", pageSettings.value.letterheadData.image)
+				// console.log("[CrispyPP] Letterhead image path:", pageSettings.value.letterheadData.image)
 			} else {
 				console.warn("[CrispyPP] Letterhead has no image field!")
 			}
@@ -351,7 +351,7 @@ watch(
 watch(
 	() => pageSettings.value,
 	() => {
-		console.log("[CrispyPP] Settings changed:", getPageSettings())
+		// console.log("[CrispyPP] Settings changed:", getPageSettings())
 		if (!loading.value) {
 			schedulePreviewRefresh()
 		}
@@ -360,13 +360,13 @@ watch(
 )
 
 onMounted(async () => {
-	console.log("[CrispyPP] Mounted with props:", props)
+	// console.log("[CrispyPP] Mounted with props:", props)
 	await initializeData()
 })
 
 // Generate and open PDF in new tab
 async function generatePDF() {
-	console.log("[CrispyPP] Generating PDF...")
+	// console.log("[CrispyPP] Generating PDF...")
 	
 	if (!selectedFormat.value || !layout.value || !lastTypstReady()) {
 		frappe.show_alert({

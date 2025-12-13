@@ -20,7 +20,7 @@ export interface TypstAdapter {
 
 export function setupWorker(printFormatName: string, previewPane: HTMLElement, adapter: TypstAdapter) {
 	const { worker, cleanup } = createTypstWorker()
-	console.log("[Typst Preview] Worker created from factory")
+	// console.log("[Typst Preview] Worker created from factory")
 
 	worker.addEventListener("error", (err) => {
 		console.error("[Typst Preview] Worker error", err)
@@ -90,7 +90,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			return
 		}
 
-		console.log("[Typst Preview] Preview mode: Direct document compilation", docname)
+		// console.log("[Typst Preview] Preview mode: Direct document compilation", docname)
 		currentDoctype = doctype
 		sampleDocData = doc
 		sampleDocSelected = true
@@ -110,7 +110,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	// Replace handleSourceRequest (around line 110)
 	const handleSourceRequest = () => {
 		if (lastTypstCode) {
-			console.log("[Typst Preview] Source requested, responding with code length:", lastTypstCode.length)
+			// console.log("[Typst Preview] Source requested, responding with code length:", lastTypstCode.length)
 			// Dispatch CustomEvent instead of postMessage
 			window.dispatchEvent(
 				new CustomEvent("crispy-source-response", {
@@ -145,7 +145,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 
 		currentDoctype = doctype
-		console.log("[Typst Preview] Setting up autocomplete for doctype:", doctype)
+		// console.log("[Typst Preview] Setting up autocomplete for doctype:", doctype)
 
 		sampleDocInput.placeholder = `Search ${doctype}...`
 		sampleDocInput.setAttribute("data-doctype", doctype)
@@ -194,7 +194,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 		sampleDocInput.addEventListener("awesomplete-selectcomplete", () => {
 			const selectedDoc = sampleDocInput.value
-			console.log("[Typst Preview] Document selected:", selectedDoc)
+			// console.log("[Typst Preview] Document selected:", selectedDoc)
 			sampleDocSelected = false
 
 			if (!selectedDoc || !currentDoctype) {
@@ -216,7 +216,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 						sampleDocData = r.message
 						sampleDocSelected = true
 						clearPreview()
-						console.log("[Typst Preview] Document data fetched:", sampleDocData)
+						// console.log("[Typst Preview] Document data fetched:", sampleDocData)
 						lastLayoutSerialized = ""
 						lastTypstCode = ""
 						compile()
@@ -236,7 +236,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			})
 		})
 
-		console.log("[Typst Preview] Autocomplete setup complete")
+		// console.log("[Typst Preview] Autocomplete setup complete")
 	}
 
 	const PREVIEW_REQUEST_ID = "preview"
@@ -260,7 +260,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 	function scheduleCompile(reason = "hook", delay = 200) {
 		if (compilationDisabled) {
-			console.log(`[Typst Preview] Compilation disabled, ignoring schedule request (${reason})`)
+			// console.log(`[Typst Preview] Compilation disabled, ignoring schedule request (${reason})`)
 			return
 		}
 
@@ -268,7 +268,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		if (!sampleDocSelected) {
 			// Only log first occurrence to reduce console noise
 			if (noDocSkipCount === 0) {
-				console.log(`[Typst Preview] No sample document selected, skipping schedule requests`)
+				// console.log(`[Typst Preview] No sample document selected, skipping schedule requests`)
 			}
 			noDocSkipCount++
 			return
@@ -277,12 +277,12 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		// Reset counter when document is selected
 		noDocSkipCount = 0
 
-		console.log(`[Typst Preview] Scheduling compile (${reason}) in`, delay, "ms")
+		// console.log(`[Typst Preview] Scheduling compile (${reason}) in`, delay, "ms")
 		if (compileTriggerTimeout) {
 			clearTimeout(compileTriggerTimeout)
 		}
 		compileTriggerTimeout = window.setTimeout(() => {
-			console.log("[Typst Preview] Triggering compile via schedule:", reason)
+			// console.log("[Typst Preview] Triggering compile via schedule:", reason)
 			compile()
 		}, delay)
 	}
@@ -307,7 +307,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 		const doctype = adapter.getDoctype?.()
 		if (doctype) {
-			console.log("[Typst Preview] Doctype from adapter:", doctype)
+			// console.log("[Typst Preview] Doctype from adapter:", doctype)
 			setupSampleDocAutocomplete(doctype)
 		} else {
 			console.warn("[Typst Preview] No doctype found, skipping sample doc setup")
@@ -316,7 +316,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		if (adapter.hookDoctypeChanges) {
 			unsubscribeDoctype = adapter.hookDoctypeChanges((nextDoctype) => {
 				if (nextDoctype && nextDoctype !== currentDoctype) {
-					console.log("[Typst Preview] Doctype changed, reconfiguring autocomplete:", nextDoctype)
+					// console.log("[Typst Preview] Doctype changed, reconfiguring autocomplete:", nextDoctype)
 					setupSampleDocAutocomplete(nextDoctype)
 				}
 			})
@@ -329,7 +329,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 
 		// Don't compile on initial adapter ready - wait for user to select a document
-		console.log("[Typst Preview] Adapter initialized, waiting for sample document selection")
+		// console.log("[Typst Preview] Adapter initialized, waiting for sample document selection")
 	}
 
 	function getLayout() {
@@ -357,13 +357,13 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	}
 
 	function compile() {
-		console.log("[Typst Preview] compile() called")
+		// console.log("[Typst Preview] compile() called")
 		if (compilationTimeout) {
 			clearTimeout(compilationTimeout)
 		}
 		// Use shorter debounce and defer heavy work to next frame
 		compilationTimeout = window.setTimeout(() => {
-			console.log("[Typst Preview] Starting compilation after debounce...")
+			// console.log("[Typst Preview] Starting compilation after debounce...")
 			// Split work across frames to avoid blocking
 			requestAnimationFrame(() => {
 				performCompilation()
@@ -425,26 +425,26 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			lastLayoutSerialized = layoutSerialized
 			lastPageSettingsSerialized = pageSettingsSerialized
 
-		console.log("[Typst Preview] Layout or page settings changed, translating to Typst...")
-		console.log("[Typst Preview] Layout sections:", (layout as any)?.sections?.length || 0)
+		// console.log("[Typst Preview] Layout or page settings changed, translating to Typst...")
+		// console.log("[Typst Preview] Layout sections:", (layout as any)?.sections?.length || 0)
 
 		// Extract fields actually used in the layout
 		const usedFields = extractUsedFields(layout)
-		console.log(
+		// console.log(
 			`[Typst Preview] Layout uses ${usedFields.size} fields:`,
 			Array.from(usedFields).sort()
 		)
 
 		// Filter document to only include used fields
 		const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
-		console.log("[Typst Preview] Filtered document fields:", Object.keys(filteredDoc || {}).sort())
+		// console.log("[Typst Preview] Filtered document fields:", Object.keys(filteredDoc || {}).sort())
 
 		let typst: string
 		try {
 			let letterheadData: any = null
 			if (adapter && typeof adapter.getLetterhead === "function") {
 				letterheadData = adapter.getLetterhead()
-				console.log("[Typst Preview] Letterhead data:", letterheadData)
+				// console.log("[Typst Preview] Letterhead data:", letterheadData)
 			}
 
 			// Get page settings to pass to translator
@@ -456,7 +456,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			// Use filtered document instead of full sampleDocData
 			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, pageSettings)
 
-			console.log("[Typst Preview] Translation successful, length:", typst.length)
+			// console.log("[Typst Preview] Translation successful, length:", typst.length)
 		} catch (e: any) {
 			console.error("[Typst Preview] Translation error:", e)
 			if (statusEl) {
@@ -471,7 +471,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 
 		if (typst === lastTypstCode) {
-			console.log("[Typst Preview] Typst code unchanged")
+			// console.log("[Typst Preview] Typst code unchanged")
 			if (statusEl) {
 				statusEl.textContent = "code unchanged"
 				statusEl.style.color = "#95a5a6"
@@ -480,7 +480,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 		lastTypstCode = typst
 
-		console.log("[Typst Preview] Sending to worker for compilation")
+		// console.log("[Typst Preview] Sending to worker for compilation")
 		if (statusEl) {
 			statusEl.textContent = "compiling…"
 			statusEl.style.color = "#f39c12"
@@ -493,7 +493,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			const letterhead = adapter.getLetterhead()
 			if (letterhead && (letterhead as any).image) {
 				letterheadImage = (letterhead as any).image
-				console.log("[Typst Preview] Including letterhead:", letterheadImage)
+				// console.log("[Typst Preview] Including letterhead:", letterheadImage)
 			}
 		}
 
@@ -504,7 +504,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			requestId: PREVIEW_REQUEST_ID,
 			letterheadImage,
 		})
-		console.log("[Typst Preview] Message sent to worker")
+		// console.log("[Typst Preview] Message sent to worker")
 	}
 
 	worker.addEventListener("message", (e) => {
@@ -513,12 +513,12 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		const isViewPdf = requestId === "view-pdf"
 
 		if (type === "init") {
-			console.log("[Typst Preview] Worker ready", e.data)
+			// console.log("[Typst Preview] Worker ready", e.data)
 			return
 		}
 
 		if (type === "compile" || !type) {
-			console.log("[Typst Preview] Received compilation result")
+			// console.log("[Typst Preview] Received compilation result")
 
 			if (!ok) {
 				console.error("[Typst Preview] Compilation failed:", error)
@@ -555,7 +555,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 					return
 				}
 
-				console.log("[Typst Preview] SVG pages received:", svgPages.length, "pageCount:", pageCount)
+				// console.log("[Typst Preview] SVG pages received:", svgPages.length, "pageCount:", pageCount)
 
 				if (!isDownload) {
 					svgContainer?.classList.remove("preview-hidden")
@@ -578,7 +578,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			}
 
 			const pdfArray = new Uint8Array(pdfBytes || [])
-			console.log("[Typst Preview] PDF bytes length:", pdfArray.length)
+			// console.log("[Typst Preview] PDF bytes length:", pdfArray.length)
 
 			if (!pdfArray.length) {
 				if (statusEl) {
@@ -713,7 +713,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 	refreshBtn &&
 		(refreshBtn.onclick = () => {
-			console.log("[Typst Preview] Refresh button clicked - forcing recompilation")
+			// console.log("[Typst Preview] Refresh button clicked - forcing recompilation")
 			if (statusEl) {
 				statusEl.textContent = "refreshing..."
 				statusEl.style.color = "#3498db"
@@ -776,18 +776,18 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	return () => {
 		if (unsubscribeAdapter) {
 			unsubscribeAdapter()
-			console.log("[Typst Preview] Adapter unsubscribed")
+			// console.log("[Typst Preview] Adapter unsubscribed")
 		}
 		if (unsubscribeDoctype) {
 			unsubscribeDoctype()
-			console.log("[Typst Preview] Doctype subscription removed")
+			// console.log("[Typst Preview] Doctype subscription removed")
 		}
 		window.removeEventListener("crispy-compile-document", handlePreviewCompile)
 		window.removeEventListener("crispy-request-source", handleSourceRequest)
-		console.log("[Typst Preview] Preview compile listener removed")
+		// console.log("[Typst Preview] Preview compile listener removed")
 		if (worker) {
 			cleanup()
-			console.log("[Typst Preview] Worker terminated")
+			// console.log("[Typst Preview] Worker terminated")
 		}
 	}
 }
