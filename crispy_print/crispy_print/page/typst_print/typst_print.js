@@ -82,11 +82,6 @@ render_preview(frm, format) {
         });
     }
     
-    // **REMOVED:** Manual compile trigger - Vue component handles initial compile on mount
-    // setTimeout(() => {
-    //     this.trigger_compile_with_document(frm);
-    // }, 800);
-
     // Re-send document data on any preview refresh to ensure worker has latest doc
     const resendDoc = () => this.trigger_compile_with_document(frm);
     window.addEventListener("crispy-refresh-preview", resendDoc);
@@ -151,7 +146,17 @@ render_preview(frm, format) {
     }
 
     render_pdf() {
-        frappe.show_alert({ message: __("Opening PDF..."), indicator: "blue" });
+        frappe.show_alert({ message: __("Generating PDF..."), indicator: "blue" });
+        
+        // Call Vue component's PDF generation method
+        if (this.vue_instance?.component?.generatePDF) {
+            this.vue_instance.component.generatePDF();
+        } else {
+            frappe.show_alert({ 
+                message: __("PDF generation not available"), 
+                indicator: "red" 
+            });
+        }
     }
 
     refresh_preview() {
