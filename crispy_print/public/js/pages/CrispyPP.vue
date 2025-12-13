@@ -250,13 +250,22 @@ async function loadFormatSettings(formatName: string) {
 		pageSettings.value = mergePageSettings(defaultPageSettings, data.pageSettings)
 		pageSettings.value.letterheadData = null
 
+		// Preload letterhead data if the format has one set
+		if (pageSettings.value.letterhead) {
+			pageSettings.value.letterheadData = await getLetterheadData(pageSettings.value.letterhead)
+			console.log("[CrispyPP] Letterhead preloaded on format load:", pageSettings.value.letterheadData)
+		}
+
 		// Store layout
 		layout.value = data.layout
 
-	console.log("[CrispyPP] Loaded format settings:", data.pageSettings)
-	console.log("[CrispyPP] Loaded layout:", data.layout)
+		console.log("[CrispyPP] Loaded format settings:", data.pageSettings)
+		console.log("[CrispyPP] Loaded layout:", data.layout)
 
-	loading.value = false
+		loading.value = false
+
+		// Trigger render after data is ready (layout + letterhead)
+		schedulePreviewRefresh()
 	} catch (error) {
 		console.error("[CrispyPP] Error loading format settings:", error)
 		frappe.show_alert({
