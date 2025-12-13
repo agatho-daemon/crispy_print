@@ -64,35 +64,44 @@ frappe.ui.CrispyPrintView = class {
         }
     }
 
-render_preview(frm, format) {
-    this.status_el.text(__("Loading preview..."));
-    
-    // Remove existing listener before adding new one
-    if (this._remove_refresh_listener) {
-        this._remove_refresh_listener();
-        this._remove_refresh_listener = null;
-    }
-    
-    // Mount Vue component if not already mounted
-    if (!this.vue_instance) {
-        this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
-            doctype: frm.doctype,
-            docname: frm.docname,
-            format,
-        });
-    }
+    render_preview(frm, format) {
+        this.status_el.text(__("Loading preview..."));
+        
+        // Remove existing listener before adding new one
+        if (this._remove_refresh_listener) {
+            this._remove_refresh_listener();
+            this._remove_refresh_listener = null;
+        }
+        
+        // Mount Vue component if not already mounted
+        if (!this.vue_instance) {
+            this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
+                doctype: frm.doctype,
+                docname: frm.docname,
+                format,
+            });
+        }
     
     // Re-send document data on any preview refresh to ensure worker has latest doc
     const resendDoc = () => this.trigger_compile_with_document(frm);
     window.addEventListener("crispy-refresh-preview", resendDoc);
     
     // Store cleanup function for next render
-    this._remove_refresh_listener = () => {
-        window.removeEventListener("crispy-refresh-preview", resendDoc);
-    };
-    
-    this.status_el.text(__("")); // clear after mount
-}
+        this._remove_refresh_listener = () => {
+            window.removeEventListener("crispy-refresh-preview", resendDoc);
+        };
+        
+        this.status_el.text(__("")); // clear after mount
+    }
+
+    // Optional: call this when tearing down the page to avoid lingering listeners
+    destroy() {
+        if (this._remove_refresh_listener) {
+            this._remove_refresh_listener();
+            this._remove_refresh_listener = null;
+        }
+        this.vue_instance = null;
+    }
 
     trigger_compile_with_document(frm) {
         // Directly trigger compilation with the document data

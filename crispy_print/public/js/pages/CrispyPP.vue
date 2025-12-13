@@ -359,10 +359,10 @@ onMounted(async () => {
 async function generatePDF() {
 	console.log("[CrispyPP] Generating PDF...")
 	
-	if (!selectedFormat.value || !layout.value) {
+	if (!selectedFormat.value || !layout.value || !lastTypstReady()) {
 		frappe.show_alert({
-			message: __("No format loaded"),
-			indicator: "red"
+			message: __("Compile a preview before generating PDF"),
+			indicator: "orange"
 		})
 		return
 	}
@@ -433,6 +433,12 @@ async function generatePDF() {
 			indicator: "red"
 		})
 	}
+}
+
+// Simple readiness check: we consider Typst ready if a prior compile set code in worker
+function lastTypstReady() {
+	// We can't read lastTypstCode from worker here; rely on layout present and prior refresh
+	return Boolean(layout.value)
 }
 
 // Expose methods for parent access

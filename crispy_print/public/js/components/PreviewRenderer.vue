@@ -23,15 +23,12 @@ interface Props {
 	pageSettings: any
 	letterhead: any
 	docType: string | null
-	// Optional trigger value to force refresh (e.g., external events)
-	changeKey?: string | number | null
 }
 
 const props = defineProps<Props>()
 
 const previewPaneEl = ref<HTMLElement | null>(null)
 let teardown: (() => void) | null = null
-let manualRefreshCallback: (() => void) | null = null
 
 function createAdapter() {
 	return {
@@ -39,16 +36,6 @@ function createAdapter() {
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
 		getPageSettings: () => props.pageSettings,
-		// Temporarily disable change-driven hook to test single trigger path
-		// hookDataChanges: (callback: () => void) => {
-		// 	manualRefreshCallback = callback
-		// 	const stop = watch(
-		// 		() => [props.layout, props.pageSettings, props.letterhead, props.changeKey],
-		// 		() => callback(),
-		// 		{ deep: true }
-		// 	)
-		// 	return () => stop()
-		// },
 		hookDoctypeChanges: (callback: (doctype: string | null | undefined) => void) => {
 			const stop = watch(
 				() => props.docType,
