@@ -153,6 +153,17 @@ import {
 declare const frappe: any
 declare const __: any
 
+const defaultPageSettings: PageSettings = {
+	pageSize: "A4",
+	orientation: "portrait",
+	margins: { top: 25, bottom: 20, left: 20, right: 20 },
+	fontFamily: "Arial",
+	fontSize: 11,
+	letterhead: "",
+	typography: undefined,
+	language: "en"
+}
+
 interface Props {
 	doctype?: string
 	docname?: string
@@ -167,6 +178,7 @@ const availableLetterheads = ref<string[]>([])
 const selectedFormat = ref<string>("")
 
 // Settings state
+const persistedPageSettings = ref<PageSettings>({ ...defaultPageSettings })
 const language = ref("en")
 const letterhead = ref("") // letterhead name
 const letterheadData = ref<any>(null) // full letterhead document with image
@@ -250,11 +262,15 @@ async function loadFormatSettings(formatName: string) {
 			throw new Error("Failed to load format data")
 		}
 
-		// Apply page settings
-		pageSize.value = data.pageSettings.pageSize
-		orientation.value = data.pageSettings.orientation
-		margins.value = { ...data.pageSettings.margins }
-		letterhead.value = data.pageSettings.letterhead
+		// Apply persisted page settings (from the builder)
+		persistedPageSettings.value = { ...defaultPageSettings, ...data.pageSettings }
+
+		// Apply ephemeral controls from persisted settings
+		pageSize.value = persistedPageSettings.value.pageSize
+		orientation.value = persistedPageSettings.value.orientation
+		margins.value = { ...persistedPageSettings.value.margins }
+		letterhead.value = persistedPageSettings.value.letterhead || ""
+		language.value = persistedPageSettings.value.language || "en"
 		
 		// Store layout
 		layout.value = data.layout
@@ -284,9 +300,12 @@ async function onFormatChange() {
 
 // Expose settings getters for external access
 const getPageSettings = () => ({
+	// Start from persisted builder settings so PP renders like PFB
+	...persistedPageSettings.value,
+	// Apply live overrides from PP controls
 	pageSize: pageSize.value,
 	orientation: orientation.value,
-	margins: margins.value,
+	margins: { ...margins.value },
 	language: language.value,
 	letterhead: letterhead.value,
 	letterheadImage: letterheadData.value?.image || null  // Include image path for change detection
