@@ -124,6 +124,12 @@ const localColumns = ref<TableColumn[]>(cloneColumns(props.modelValue || []))
 const childMeta = ref<any>(null)
 const pendingFieldname = ref<string>("")
 const syncingFromProp = ref(false)
+const validationMessage = ref<string>("")
+let validationDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const hasInvalidWidths = computed(() => {
+	return localColumns.value.some((col: any) => col.invalid_width)
+})
 
 watch(
 	() => props.modelValue,
@@ -143,6 +149,34 @@ watch(
 	(cols) => {
 		if (syncingFromProp.value) return
 		validateWidths(cols)
+		
+		// Clear any existing debounce timer
+		if (validationDebounceTimer) {
+			clearTimeout(validationDebounceTimer)
+		}
+		
+		// Check if any column has invalid width
+		const invalidCols = cols.filter((col: any) => col.invalid_width)
+		if (invalidCols.length > 0) {
+			// Debounce: only show alert after user stops typing for 800ms
+			validationDebounceTimer = setTimeout(() => {
+				const invalidValues = invalidCols.map((col) => col.width || '(empty)').join(', ')
+				validationMessage.value = `Invalid column width values: ${invalidValues}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc.`
+				
+				if (typeof frappe !== 'undefined') {
+					frappe.show_alert({
+						message: validationMessage.value,
+						indicator: "orange",
+					})
+				}
+			}, 800)
+			
+			// Do NOT emit update to prevent compilation
+			return
+		}
+		
+		// Clear validation message if all are valid
+		validationMessage.value = ""
 		emit("update:modelValue", cols)
 	},
 	{ deep: true }
