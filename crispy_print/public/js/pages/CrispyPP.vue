@@ -126,43 +126,32 @@
 		</div>
 
 		<!-- Right Pane: Preview -->
-		<div class="preview-pane">
-			<div class="preview-pane__body">
-				<div id="typst-svg-container" class="typst-preview-container">
-					<div class="preview-placeholder">
-						Loading preview...
-					</div>
-				</div>
-			</div>
-		</div>
+		<PreviewRenderer
+			:format-name="selectedFormat"
+			:layout="layout"
+			:letterhead="letterheadData"
+			:doc-type="props.doctype || null"
+			:page-settings="pageSettingsComputed"
+			:change-key="changeKey"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
+import { ref, onMounted, watch, computed } from "vue"
 import { 
 	getFormatsForDoctype, 
 	getDefaultFormat, 
 	loadFormatData, 
 	getLetterheads,
 	getLetterheadData,
-	type FormatInfo,
-	type PageSettings 
+	type FormatInfo
 } from "../utils/formatLoader"
+import { defaultPageSettings, mergePageSettings, type PageSettings } from "../utils/pageSettings"
+import PreviewRenderer from "../components/PreviewRenderer.vue"
 
 declare const frappe: any
 declare const __: any
-
-const defaultPageSettings: PageSettings = {
-	pageSize: "A4",
-	orientation: "portrait",
-	margins: { top: 25, bottom: 20, left: 20, right: 20 },
-	fontFamily: "Arial",
-	fontSize: 11,
-	letterhead: "",
-	typography: undefined,
-	language: "en"
-}
 
 interface Props {
 	doctype?: string
@@ -190,6 +179,7 @@ const margins = ref({
 	left: 20,
 	right: 20
 })
+const changeKey = ref(0) // bump to force preview re-render
 
 const layout = ref<any>(null)
 const loading = ref(true)
@@ -263,7 +253,7 @@ async function loadFormatSettings(formatName: string) {
 		}
 
 		// Apply persisted page settings (from the builder)
-		persistedPageSettings.value = { ...defaultPageSettings, ...data.pageSettings }
+		persistedPageSettings.value = mergePageSettings(defaultPageSettings, data.pageSettings)
 
 		// Apply ephemeral controls from persisted settings
 		pageSize.value = persistedPageSettings.value.pageSize
@@ -280,8 +270,8 @@ async function loadFormatSettings(formatName: string) {
 
 		loading.value = false
 
-		// Trigger initial render after data loaded
-		setTimeout(() => triggerRefresh(), 200)
+	// Bump changeKey to trigger initial render after data loaded
+	setTimeout(() => bumpChangeKey(), 200)
 	} catch (error) {
 		console.error("[CrispyPP] Error loading format settings:", error)
 		frappe.show_alert({
@@ -311,14 +301,25 @@ const getPageSettings = () => ({
 	letterheadImage: letterheadData.value?.image || null  // Include image path for change detection
 })
 
-const getLayout = () => layout.value
-const getLetterhead = () => {
-	// Return the letterhead object with image path
-	// setupWorker expects an object with .image property
-	return letterheadData.value
+const pageSettingsComputed = computed(() => getPageSettings())
+
+function bumpChangeKey() {
+	changeKey.value += 1
+	console.log("[CrispyPP] Bumped changeKey to:", changeKey.value, "Settings:", getPageSettings())
 }
 
-// Expose refresh trigger
+let refreshTimer: number | null = null
+function schedulePreviewRefresh() {
+	if (refreshTimer) {
+		clearTimeout(refreshTimer)
+	}
+	refreshTimer = window.setTimeout(() => {
+		refreshTimer = null
+		bumpChangeKey()
+		triggerRefresh()
+	}, 200)
+}
+
 const triggerRefresh = () => {
 	console.log("[CrispyPP] Triggering refresh with settings:", getPageSettings())
 	window.dispatchEvent(new CustomEvent("crispy-refresh-preview", {
@@ -329,6 +330,13 @@ const triggerRefresh = () => {
 			docname: props.docname
 		}
 	}))
+}
+
+const getLayout = () => layout.value
+const getLetterhead = () => {
+	// Return the letterhead object with image path
+	// setupWorker expects an object with .image property
+	return letterheadData.value
 }
 
 // Fetch letterhead data when letterhead selection changes
@@ -344,17 +352,17 @@ watch(letterhead, async (newLetterhead) => {
 	} else {
 		letterheadData.value = null
 	}
-	// Trigger refresh after letterhead data is loaded
+	// Bump changeKey to trigger PreviewRenderer re-render
 	if (!loading.value) {
-		triggerRefresh()
+		schedulePreviewRefresh()
 	}
 })
 
-// Watch for other settings changes and trigger refresh
+// Watch for settings changes and bump changeKey to trigger PreviewRenderer
 watch([language, pageSize, orientation, margins], () => {
 	console.log("[CrispyPP] Settings changed:", getPageSettings())
 	if (!loading.value) {
-		triggerRefresh()
+		schedulePreviewRefresh()
 	}
 }, { deep: true })
 
@@ -368,7 +376,6 @@ defineExpose({
 	getPageSettings,
 	getLayout,
 	getLetterhead,
-	triggerRefresh,
 	loadFormatSettings,
 	initializeData
 })
