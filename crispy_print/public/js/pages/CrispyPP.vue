@@ -6,6 +6,14 @@
 				<div class="settings-pane__header-row">
 					<h3 class="settings-pane__title">Print Settings</h3>
 					<div class="settings-pane__spacer"></div>
+					<button
+						type="button"
+						class="settings-pane__reset-btn"
+						@click="resetFormat"
+						title="Reset to saved format"
+					>
+						Reset
+					</button>
 					<div>
 						<button
 							type="button"
@@ -40,7 +48,7 @@
 				<!-- Language -->
 				<div class="settings-pane__field">
 					<label class="settings-pane__label">Language</label>
-					<select v-model="language" class="settings-pane__select">
+					<select v-model="pageSettings.language" class="settings-pane__select">
 						<option value="en">English</option>
 						<option value="ar">Arabic</option>
 						<option value="fr">French</option>
@@ -52,7 +60,7 @@
 				<!-- Letter Head -->
 				<div class="settings-pane__field">
 					<label class="settings-pane__label">Letter Head</label>
-					<select v-model="letterhead" class="settings-pane__select">
+					<select v-model="pageSettings.letterhead" class="settings-pane__select">
 						<option value="">None</option>
 						<option v-for="lh in availableLetterheads" :key="lh" :value="lh">
 							{{ lh }}
@@ -61,7 +69,7 @@
 				</div>					<!-- Page Size -->
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">Page Size</label>
-						<select v-model="pageSize" class="settings-pane__select">
+						<select v-model="pageSettings.pageSize" class="settings-pane__select">
 							<option value="A3">A3 (297 × 420 mm)</option>
 							<option value="A4">A4 (210 × 297 mm)</option>
 							<option value="A5">A5 (148 × 210 mm)</option>
@@ -73,7 +81,7 @@
 					<!-- Orientation -->
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">Orientation</label>
-						<select v-model="orientation" class="settings-pane__select">
+						<select v-model="pageSettings.orientation" class="settings-pane__select">
 							<option value="portrait">Portrait</option>
 							<option value="landscape">Landscape</option>
 						</select>
@@ -86,7 +94,7 @@
 							<div class="settings-pane__margin-input">
 								<span class="settings-pane__margin-prefix">T</span>
 								<input
-									v-model.number="margins.top"
+									v-model.number="pageSettings.margins.top"
 									type="number"
 									placeholder="Top"
 									class="settings-pane__input"
@@ -95,7 +103,7 @@
 							<div class="settings-pane__margin-input">
 								<span class="settings-pane__margin-prefix">B</span>
 								<input
-									v-model.number="margins.bottom"
+									v-model.number="pageSettings.margins.bottom"
 									type="number"
 									placeholder="Bottom"
 									class="settings-pane__input"
@@ -104,7 +112,7 @@
 							<div class="settings-pane__margin-input">
 								<span class="settings-pane__margin-prefix">L</span>
 								<input
-									v-model.number="margins.left"
+									v-model.number="pageSettings.margins.left"
 									type="number"
 									placeholder="Left"
 									class="settings-pane__input"
@@ -113,7 +121,7 @@
 							<div class="settings-pane__margin-input">
 								<span class="settings-pane__margin-prefix">R</span>
 								<input
-									v-model.number="margins.right"
+									v-model.number="pageSettings.margins.right"
 									type="number"
 									placeholder="Right"
 									class="settings-pane__input"
@@ -129,7 +137,7 @@
 		<PreviewRenderer
 			:format-name="selectedFormat"
 			:layout="layout"
-			:letterhead="letterheadData"
+			:letterhead="pageSettingsComputed.letterheadData || null"
 			:doc-type="props.doctype || null"
 			:page-settings="pageSettingsComputed"
 			:change-key="changeKey"
@@ -141,7 +149,6 @@
 import { ref, onMounted, watch, computed } from "vue"
 import { 
 	getFormatsForDoctype, 
-	getDefaultFormat, 
 	loadFormatData, 
 	getLetterheads,
 	getLetterheadData,
@@ -166,19 +173,8 @@ const availableFormats = ref<FormatInfo[]>([])
 const availableLetterheads = ref<string[]>([])
 const selectedFormat = ref<string>("")
 
-// Settings state
-const persistedPageSettings = ref<PageSettings>({ ...defaultPageSettings })
-const language = ref("en")
-const letterhead = ref("") // letterhead name
-const letterheadData = ref<any>(null) // full letterhead document with image
-const pageSize = ref("A4")
-const orientation = ref("portrait")
-const margins = ref({
-	top: 25,
-	bottom: 20,
-	left: 20,
-	right: 20
-})
+// Settings state (single in-memory copy; PP does not persist)
+const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 const changeKey = ref(0) // bump to force preview re-render
 
 const layout = ref<any>(null)
@@ -252,16 +248,10 @@ async function loadFormatSettings(formatName: string) {
 			throw new Error("Failed to load format data")
 		}
 
-		// Apply persisted page settings (from the builder)
-		persistedPageSettings.value = mergePageSettings(defaultPageSettings, data.pageSettings)
+		// Overwrite in-memory page settings (ephemeral)
+		pageSettings.value = mergePageSettings(defaultPageSettings, data.pageSettings)
+		pageSettings.value.letterheadData = null
 
-		// Apply ephemeral controls from persisted settings
-		pageSize.value = persistedPageSettings.value.pageSize
-		orientation.value = persistedPageSettings.value.orientation
-		margins.value = { ...persistedPageSettings.value.margins }
-		letterhead.value = persistedPageSettings.value.letterhead || ""
-		language.value = persistedPageSettings.value.language || "en"
-		
 		// Store layout
 		layout.value = data.layout
 
@@ -288,17 +278,16 @@ async function onFormatChange() {
 	await loadFormatSettings(selectedFormat.value)
 }
 
+async function resetFormat() {
+	if (!selectedFormat.value) return
+	console.log("[CrispyPP] Resetting format:", selectedFormat.value)
+	await loadFormatSettings(selectedFormat.value)
+}
+
 // Expose settings getters for external access
 const getPageSettings = () => ({
-	// Start from persisted builder settings so PP renders like PFB
-	...persistedPageSettings.value,
-	// Apply live overrides from PP controls
-	pageSize: pageSize.value,
-	orientation: orientation.value,
-	margins: { ...margins.value },
-	language: language.value,
-	letterhead: letterhead.value,
-	letterheadImage: letterheadData.value?.image || null  // Include image path for change detection
+	...pageSettings.value,
+	letterheadImage: pageSettings.value.letterheadData?.image || null  // Include image path for change detection
 })
 
 const pageSettingsComputed = computed(() => getPageSettings())
@@ -308,19 +297,7 @@ function bumpChangeKey() {
 	console.log("[CrispyPP] Bumped changeKey to:", changeKey.value, "Settings:", getPageSettings())
 }
 
-let refreshTimer: number | null = null
-function schedulePreviewRefresh() {
-	if (refreshTimer) {
-		clearTimeout(refreshTimer)
-	}
-	refreshTimer = window.setTimeout(() => {
-		refreshTimer = null
-		bumpChangeKey()
-		triggerRefresh()
-	}, 200)
-}
-
-const triggerRefresh = () => {
+function triggerRefresh() {
 	console.log("[CrispyPP] Triggering refresh with settings:", getPageSettings())
 	window.dispatchEvent(new CustomEvent("crispy-refresh-preview", {
 		detail: {
@@ -332,39 +309,57 @@ const triggerRefresh = () => {
 	}))
 }
 
+let refreshTimer: number | null = null
+function schedulePreviewRefresh() {
+	if (refreshTimer) {
+		clearTimeout(refreshTimer)
+	}
+	refreshTimer = window.setTimeout(() => {
+		refreshTimer = null
+		bumpChangeKey()
+		triggerRefresh()
+	}, 150)
+}
+
 const getLayout = () => layout.value
 const getLetterhead = () => {
 	// Return the letterhead object with image path
 	// setupWorker expects an object with .image property
-	return letterheadData.value
+	return pageSettings.value.letterheadData
 }
 
 // Fetch letterhead data when letterhead selection changes
-watch(letterhead, async (newLetterhead) => {
-	if (newLetterhead) {
-		letterheadData.value = await getLetterheadData(newLetterhead)
-		console.log("[CrispyPP] Letterhead data loaded:", letterheadData.value)
-		if (letterheadData.value?.image) {
-			console.log("[CrispyPP] Letterhead image path:", letterheadData.value.image)
+watch(
+	() => pageSettings.value.letterhead,
+	async (newLetterhead) => {
+		if (newLetterhead) {
+			pageSettings.value.letterheadData = await getLetterheadData(newLetterhead)
+			console.log("[CrispyPP] Letterhead data loaded:", pageSettings.value.letterheadData)
+			if (pageSettings.value.letterheadData?.image) {
+				console.log("[CrispyPP] Letterhead image path:", pageSettings.value.letterheadData.image)
+			} else {
+				console.warn("[CrispyPP] Letterhead has no image field!")
+			}
 		} else {
-			console.warn("[CrispyPP] Letterhead has no image field!")
+			pageSettings.value.letterheadData = null
 		}
-	} else {
-		letterheadData.value = null
+		if (!loading.value) {
+			schedulePreviewRefresh()
+		}
 	}
-	// Bump changeKey to trigger PreviewRenderer re-render
-	if (!loading.value) {
-		schedulePreviewRefresh()
-	}
-})
+)
 
-// Watch for settings changes and bump changeKey to trigger PreviewRenderer
-watch([language, pageSize, orientation, margins], () => {
-	console.log("[CrispyPP] Settings changed:", getPageSettings())
-	if (!loading.value) {
-		schedulePreviewRefresh()
-	}
-}, { deep: true })
+// Watch for page settings changes (ephemeral) and trigger PreviewRenderer
+watch(
+	() => pageSettings.value,
+	() => {
+		console.log("[CrispyPP] Settings changed:", getPageSettings())
+		if (!loading.value) {
+			schedulePreviewRefresh()
+		}
+	},
+	{ deep: true }
+)
 
 onMounted(async () => {
 	console.log("[CrispyPP] Mounted with props:", props)
@@ -442,6 +437,22 @@ defineExpose({
 .settings-pane__help-btn:hover {
 	background: #f3f4f6;
 	color: #1f2937;
+}
+
+.settings-pane__reset-btn {
+	background: #f3f4f6;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	padding: 4px 8px;
+	margin-right: 8px;
+	cursor: pointer;
+	font-size: 12px;
+	color: #1f2937;
+	transition: all 0.2s;
+}
+
+.settings-pane__reset-btn:hover {
+	background: #e5e7eb;
 }
 
 .settings-pane__help-popover {

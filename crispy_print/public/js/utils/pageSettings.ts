@@ -12,6 +12,7 @@ export interface PageSettings {
 	fontFamily?: string
 	fontSize?: number
 	letterhead: string
+	letterheadData?: any
 	typography?: any
 	language?: string
 }
