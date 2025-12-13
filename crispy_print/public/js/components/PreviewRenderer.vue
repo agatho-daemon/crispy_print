@@ -55,16 +55,16 @@ function createAdapter() {
 			return
 		}
 
-		console.log("[PreviewRenderer] Setting up worker for format:", formatName)
+		// console.log("[PreviewRenderer] Setting up worker for format:", formatName)
 
 		if (teardown) {
-			console.log("[PreviewRenderer] Tearing down previous worker")
+			// console.log("[PreviewRenderer] Tearing down previous worker")
 			teardown()
 			teardown = null
 		}
 
 		teardown = setupWorker(formatName, previewPaneEl.value, createAdapter())
-		console.log("[PreviewRenderer] Worker initialized")
+		// console.log("[PreviewRenderer] Worker initialized")
 	},
 	{ immediate: true }
 )

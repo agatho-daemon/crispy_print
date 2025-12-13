@@ -119,7 +119,7 @@ export async function getLetterheadData(letterheadName: string): Promise<any | n
 	
 	try {
 		const doc = await frappe.db.get_doc("Letter Head", letterheadName)
-		console.log("[FormatLoader] Letterhead data fetched:", letterheadName, doc)
+		// console.log("[FormatLoader] Letterhead data fetched:", letterheadName, doc)
 		return doc
 	} catch (error) {
 		console.error("[FormatLoader] Error fetching letterhead data:", error)

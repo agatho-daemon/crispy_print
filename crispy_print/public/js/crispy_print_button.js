@@ -9,7 +9,7 @@
             const doctypes = r.message || [];
             if (doctypes.length > 0) {
                 ns.registerButtonsFor(doctypes);
-                console.log(`[CrispyPrint] Registered buttons for ${doctypes.length} DocTypes`);
+                // console.log(`[CrispyPrint] Registered buttons for ${doctypes.length} DocTypes`);
             }
         },
         error: () => {

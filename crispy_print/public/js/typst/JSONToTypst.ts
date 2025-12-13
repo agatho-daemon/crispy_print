@@ -40,8 +40,8 @@ class JSONTypstTranslator {
 	}
 
 	translate() {
-		console.log("[Typst] Starting translation...")
-		console.log("[Typst] Sections:", this.sections?.length || 0)
+		// console.log("[Typst] Starting translation...")
+		// console.log("[Typst] Sections:", this.sections?.length || 0)
 
 		const parts: string[] = []
 
@@ -107,7 +107,7 @@ class JSONTypstTranslator {
 				lines.push(`  background: image("${filename}", width: 100%)`)
 			}
 			lines.push(")")
-			console.log("[Typst Translator] Added letterhead as page background:", filename)
+			// console.log("[Typst Translator] Added letterhead as page background:", filename)
 		} else {
 			lines.push("#set page(")
 			lines.push(`  paper: "${pageSize.toLowerCase()}",`)
@@ -116,7 +116,7 @@ class JSONTypstTranslator {
 			}
 			lines.push(`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right})`)
 			lines.push(")")
-			console.log("[Typst Translator] No letterhead found:", this.letterhead)
+			// console.log("[Typst Translator] No letterhead found:", this.letterhead)
 		}
 
 		lines.push("")

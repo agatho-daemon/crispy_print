@@ -53,7 +53,7 @@ function buildStore() {
 			const doc = await frappe.db.get_doc("Crispy Format", formatName)
 			crispyFormat.value = doc
 
-			console.log("[Store] Loaded Crispy Format:", doc)
+			// console.log("[Store] Loaded Crispy Format:", doc)
 
 			// Load DocType metadata
 			if (doc.doc_type) {
@@ -118,8 +118,8 @@ function buildStore() {
 
 						fields.value = [...extras, ...templateFields, ...baseFields]
 
-						console.log("[Store] Loaded DocType meta:", meta.value.name)
-						console.log("[Store] Available fields:", fields.value.length)
+						// console.log("[Store] Loaded DocType meta:", meta.value.name)
+						// console.log("[Store] Available fields:", fields.value.length)
 
 						resolve()
 					})
@@ -237,7 +237,7 @@ function buildStore() {
 				},
 			})
 
-			console.log("[Store] Saved changes successfully")
+			// console.log("[Store] Saved changes successfully")
 			frappe.show_alert({
 				message: __("Crispy Format saved"),
 				indicator: "green",
@@ -281,13 +281,13 @@ function buildStore() {
 
 		if (!letterheadName) {
 			letterhead.value = null
-			console.log("[Store] Letterhead cleared")
+			// console.log("[Store] Letterhead cleared")
 			return
 		}
 
 		try {
 			letterhead.value = await frappe.db.get_doc("Letter Head", letterheadName)
-			console.log("[Store] Loaded letterhead:", letterheadName, letterhead.value)
+			// console.log("[Store] Loaded letterhead:", letterheadName, letterhead.value)
 		} catch (e) {
 			console.error("[Store] Failed to load letterhead:", e)
 			letterhead.value = null
