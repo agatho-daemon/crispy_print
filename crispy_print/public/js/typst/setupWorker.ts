@@ -66,8 +66,8 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		svgPages.forEach((svg) => {
 			const page = document.createElement("div")
 			page.className = "typst-page"
-		    page.style.marginBottom = "1.5rem"
-    		page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2)"
+			page.style.marginBottom = "1.5rem"
+			page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2)"
 
 			page.innerHTML = svg
 			const svgEl = page.querySelector("svg");
@@ -106,6 +106,27 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	}
 
 	window.addEventListener("crispy-compile-document", handlePreviewCompile)
+	// Handle source request for PDF generation
+	// Replace handleSourceRequest (around line 110)
+	const handleSourceRequest = () => {
+		if (lastTypstCode) {
+			console.log("[Typst Preview] Source requested, responding with code length:", lastTypstCode.length)
+			// Dispatch CustomEvent instead of postMessage
+			window.dispatchEvent(
+				new CustomEvent("crispy-source-response", {
+					detail: { source: lastTypstCode }
+				})
+			)
+		} else {
+			console.warn("[Typst Preview] No Typst source available yet")
+			window.dispatchEvent(
+				new CustomEvent("crispy-source-response", {
+					detail: { source: null, error: "No Typst source compiled yet" }
+				})
+			)
+		}
+	}
+	window.addEventListener("crispy-request-source", handleSourceRequest)
 
 	function setupSampleDocAutocomplete(doctype: string) {
 		if (!doctype) {
@@ -242,7 +263,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			console.log(`[Typst Preview] Compilation disabled, ignoring schedule request (${reason})`)
 			return
 		}
-		
+
 		// Don't schedule compile if no sample document is selected
 		if (!sampleDocSelected) {
 			// Only log first occurrence to reduce console noise
@@ -252,10 +273,10 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			noDocSkipCount++
 			return
 		}
-		
+
 		// Reset counter when document is selected
 		noDocSkipCount = 0
-		
+
 		console.log(`[Typst Preview] Scheduling compile (${reason}) in`, delay, "ms")
 		if (compileTriggerTimeout) {
 			clearTimeout(compileTriggerTimeout)
@@ -353,143 +374,143 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	function performCompilation() {
 		clearPreview()
 
-			if (!sampleDocSelected) {
-				console.warn("[Typst Preview] No sample document selected; skipping compile")
-				if (statusEl) {
-					statusEl.textContent = "select a document"
-					statusEl.style.color = "#e67e22"
-				}
-				return
+		if (!sampleDocSelected) {
+			console.warn("[Typst Preview] No sample document selected; skipping compile")
+			if (statusEl) {
+				statusEl.textContent = "select a document"
+				statusEl.style.color = "#e67e22"
 			}
+			return
+		}
 
-			const layout = getLayout()
+		const layout = getLayout()
 
-			if (!layout) {
-				console.error("[Typst Preview] No layout found from adapter")
-				if (statusEl) {
-					statusEl.textContent = "waiting for layout..."
-					statusEl.style.color = "#e67e22"
-				}
-				if (missingLayoutRetries < 5) {
-					missingLayoutRetries += 1
-					console.warn(`[Typst Preview] Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`)
-					scheduleCompile("retry-missing-layout", 500 * missingLayoutRetries)
-				} else {
-					console.error("[Typst Preview] Max retries (5) reached. Disabling compilation.")
-					compilationDisabled = true
-					if (statusEl) {
-						statusEl.textContent = "no layout data"
-						statusEl.style.color = "#e74c3c"
-					}
-				}
-				return
+		if (!layout) {
+			console.error("[Typst Preview] No layout found from adapter")
+			if (statusEl) {
+				statusEl.textContent = "waiting for layout..."
+				statusEl.style.color = "#e67e22"
 			}
-			missingLayoutRetries = 0
-
-			const layoutSerialized = serializeLayout(layout)
-			
-			// Also check page settings for changes
-			let pageSettingsSerialized = ""
-			if (adapter && adapter.getPageSettings) {
-				try {
-					const pageSettings = adapter.getPageSettings()
-					pageSettingsSerialized = pageSettings ? JSON.stringify(pageSettings) : ""
-				} catch (e) {
-					console.warn("[Typst Preview] Failed to serialize page settings:", e)
-				}
-			}
-
-			if (layoutSerialized === lastLayoutSerialized && pageSettingsSerialized === lastPageSettingsSerialized) {
-				console.log("[Typst Preview] Layout and page settings unchanged, skipping compilation")
+			if (missingLayoutRetries < 5) {
+				missingLayoutRetries += 1
+				console.warn(`[Typst Preview] Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`)
+				scheduleCompile("retry-missing-layout", 500 * missingLayoutRetries)
+			} else {
+				console.error("[Typst Preview] Max retries (5) reached. Disabling compilation.")
+				compilationDisabled = true
 				if (statusEl) {
-					statusEl.textContent = "unchanged"
-					statusEl.style.color = "#95a5a6"
-				}
-				return
-			}
-			lastLayoutSerialized = layoutSerialized
-			lastPageSettingsSerialized = pageSettingsSerialized
-
-			console.log("[Typst Preview] Layout or page settings changed, translating to Typst...")
-			console.log("[Typst Preview] Layout sections:", (layout as any)?.sections?.length || 0)
-
-			// Extract fields actually used in the layout
-			const usedFields = extractUsedFields(layout)
-			console.log(
-				`[Typst Preview] Layout uses ${usedFields.size} fields:`,
-				Array.from(usedFields).sort()
-			)
-
-			// Filter document to only include used fields
-			const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
-			console.log("[Typst Preview] Filtered document fields:", Object.keys(filteredDoc || {}).sort())
-
-			let typst: string
-			try {
-				let letterheadData: any = null
-				if (adapter && typeof adapter.getLetterhead === "function") {
-					letterheadData = adapter.getLetterhead()
-					console.log("[Typst Preview] Letterhead data:", letterheadData)
-				}
-
-				// Get page settings to pass to translator
-				let pageSettings: any = {}
-				if (adapter && adapter.getPageSettings) {
-					pageSettings = adapter.getPageSettings() || {}
-				}
-
-				// Use filtered document instead of full sampleDocData
-				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, pageSettings)
-
-				console.log("[Typst Preview] Translation successful, length:", typst.length)
-			} catch (e: any) {
-				console.error("[Typst Preview] Translation error:", e)
-				if (statusEl) {
-					statusEl.textContent = "translation error"
+					statusEl.textContent = "no layout data"
 					statusEl.style.color = "#e74c3c"
 				}
-				frappe?.show_alert({
-					message: __("Translation failed: {0}", [e.message || e]),
-					indicator: "red",
-				})
-				return
 			}
+			return
+		}
+		missingLayoutRetries = 0
 
-			if (typst === lastTypstCode) {
-				console.log("[Typst Preview] Typst code unchanged")
-				if (statusEl) {
-					statusEl.textContent = "code unchanged"
-					statusEl.style.color = "#95a5a6"
-				}
-				return
+		const layoutSerialized = serializeLayout(layout)
+
+		// Also check page settings for changes
+		let pageSettingsSerialized = ""
+		if (adapter && adapter.getPageSettings) {
+			try {
+				const pageSettings = adapter.getPageSettings()
+				pageSettingsSerialized = pageSettings ? JSON.stringify(pageSettings) : ""
+			} catch (e) {
+				console.warn("[Typst Preview] Failed to serialize page settings:", e)
 			}
-			lastTypstCode = typst
+		}
 
-			console.log("[Typst Preview] Sending to worker for compilation")
+		if (layoutSerialized === lastLayoutSerialized && pageSettingsSerialized === lastPageSettingsSerialized) {
+			console.log("[Typst Preview] Layout and page settings unchanged, skipping compilation")
 			if (statusEl) {
-				statusEl.textContent = "compiling…"
-				statusEl.style.color = "#f39c12"
+				statusEl.textContent = "unchanged"
+				statusEl.style.color = "#95a5a6"
 			}
-			if (downloadBtn) downloadBtn.disabled = true
-			currentPdfBlob = null
+			return
+		}
+		lastLayoutSerialized = layoutSerialized
+		lastPageSettingsSerialized = pageSettingsSerialized
 
-			let letterheadImage: string | null = null
+		console.log("[Typst Preview] Layout or page settings changed, translating to Typst...")
+		console.log("[Typst Preview] Layout sections:", (layout as any)?.sections?.length || 0)
+
+		// Extract fields actually used in the layout
+		const usedFields = extractUsedFields(layout)
+		console.log(
+			`[Typst Preview] Layout uses ${usedFields.size} fields:`,
+			Array.from(usedFields).sort()
+		)
+
+		// Filter document to only include used fields
+		const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
+		console.log("[Typst Preview] Filtered document fields:", Object.keys(filteredDoc || {}).sort())
+
+		let typst: string
+		try {
+			let letterheadData: any = null
 			if (adapter && typeof adapter.getLetterhead === "function") {
-				const letterhead = adapter.getLetterhead()
-				if (letterhead && (letterhead as any).image) {
-					letterheadImage = (letterhead as any).image
-					console.log("[Typst Preview] Including letterhead:", letterheadImage)
-				}
+				letterheadData = adapter.getLetterhead()
+				console.log("[Typst Preview] Letterhead data:", letterheadData)
 			}
 
-			worker.postMessage({
-				typstSrc: typst,
-				csrfToken: frappe?.csrf_token,
-				outputFormat: previewOutputFormat,
-				requestId: PREVIEW_REQUEST_ID,
-				letterheadImage,
+			// Get page settings to pass to translator
+			let pageSettings: any = {}
+			if (adapter && adapter.getPageSettings) {
+				pageSettings = adapter.getPageSettings() || {}
+			}
+
+			// Use filtered document instead of full sampleDocData
+			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, pageSettings)
+
+			console.log("[Typst Preview] Translation successful, length:", typst.length)
+		} catch (e: any) {
+			console.error("[Typst Preview] Translation error:", e)
+			if (statusEl) {
+				statusEl.textContent = "translation error"
+				statusEl.style.color = "#e74c3c"
+			}
+			frappe?.show_alert({
+				message: __("Translation failed: {0}", [e.message || e]),
+				indicator: "red",
 			})
-			console.log("[Typst Preview] Message sent to worker")
+			return
+		}
+
+		if (typst === lastTypstCode) {
+			console.log("[Typst Preview] Typst code unchanged")
+			if (statusEl) {
+				statusEl.textContent = "code unchanged"
+				statusEl.style.color = "#95a5a6"
+			}
+			return
+		}
+		lastTypstCode = typst
+
+		console.log("[Typst Preview] Sending to worker for compilation")
+		if (statusEl) {
+			statusEl.textContent = "compiling…"
+			statusEl.style.color = "#f39c12"
+		}
+		if (downloadBtn) downloadBtn.disabled = true
+		currentPdfBlob = null
+
+		let letterheadImage: string | null = null
+		if (adapter && typeof adapter.getLetterhead === "function") {
+			const letterhead = adapter.getLetterhead()
+			if (letterhead && (letterhead as any).image) {
+				letterheadImage = (letterhead as any).image
+				console.log("[Typst Preview] Including letterhead:", letterheadImage)
+			}
+		}
+
+		worker.postMessage({
+			typstSrc: typst,
+			csrfToken: frappe?.csrf_token,
+			outputFormat: previewOutputFormat,
+			requestId: PREVIEW_REQUEST_ID,
+			letterheadImage,
+		})
+		console.log("[Typst Preview] Message sent to worker")
 	}
 
 	worker.addEventListener("message", (e) => {
@@ -768,6 +789,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			console.log("[Typst Preview] Doctype subscription removed")
 		}
 		window.removeEventListener("crispy-compile-document", handlePreviewCompile)
+		window.removeEventListener("crispy-request-source", handleSourceRequest)
 		console.log("[Typst Preview] Preview compile listener removed")
 		if (worker) {
 			cleanup()
