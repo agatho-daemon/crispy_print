@@ -8,7 +8,8 @@ export interface TypstWorkerHandle {
 export function createTypstWorker(): TypstWorkerHandle {
 	const baseUrl = window.location?.origin || ""
 	const workerCode = `
-const log = (...args) => console.log('[Typst Worker]', ...args);
+const ENABLE_WORKER_LOGS = false;
+const log = (...args) => { if (ENABLE_WORKER_LOGS) console.log('[Typst Worker]', ...args) };
 const warn = (...args) => console.warn('[Typst Worker]', ...args);
 const BASE_URL = ${JSON.stringify(baseUrl)};
 

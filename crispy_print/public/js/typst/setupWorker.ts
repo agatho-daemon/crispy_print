@@ -431,9 +431,9 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		// Extract fields actually used in the layout
 		const usedFields = extractUsedFields(layout)
 		// console.log(
-			`[Typst Preview] Layout uses ${usedFields.size} fields:`,
-			Array.from(usedFields).sort()
-		)
+		// 	`[Typst Preview] Layout uses ${usedFields.size} fields:`,
+		// 	Array.from(usedFields).sort()
+		// )
 
 		// Filter document to only include used fields
 		const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
