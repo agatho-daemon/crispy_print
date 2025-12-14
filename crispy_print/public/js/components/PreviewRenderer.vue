@@ -23,6 +23,8 @@ interface Props {
 	pageSettings: any
 	letterhead: any
 	docType: string | null
+	changeKey?: number
+	watchDataChanges?: boolean
 }
 
 const props = defineProps<Props>()
@@ -31,11 +33,37 @@ const previewPaneEl = ref<HTMLElement | null>(null)
 let teardown: (() => void) | null = null
 
 function createAdapter() {
+	const enableDataWatch = props.watchDataChanges !== false
 	return {
 		getLayout: () => props.layout,
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
 		getPageSettings: () => props.pageSettings,
+		hookDataChanges: enableDataWatch
+			? (callback: () => void) => {
+				// Watch for data changes (layout, settings, letterhead)
+				const stopData = watch(
+					() => [props.layout, props.pageSettings, props.letterhead],
+					() => callback(),
+					{ deep: true }
+				)
+				
+				// Watch changeKey separately (forces re-render on structural changes)
+				const stopKey = watch(
+					() => props.changeKey,
+					(newVal, oldVal) => {
+						if (oldVal !== undefined) { // Skip initial mount
+							callback()
+						}
+					}
+				)
+				
+				return () => {
+					stopData()
+					stopKey()
+				}
+			}
+			: undefined,
 		hookDoctypeChanges: (callback: (doctype: string | null | undefined) => void) => {
 			const stop = watch(
 				() => props.docType,
@@ -47,26 +75,15 @@ function createAdapter() {
 	}
 }
 
-	watch(
-	() => props.formatName,
-	(formatName) => {
-		if (!formatName || !previewPaneEl.value) {
-			console.warn("[PreviewRenderer] Cannot setup worker:", { formatName, hasElement: !!previewPaneEl.value })
-			return
-		}
+watch(
+  () => [props.formatName, previewPaneEl.value] as const,
+  ([formatName, element]) => {
+    if (!formatName || !element) return
 
-		// console.log("[PreviewRenderer] Setting up worker for format:", formatName)
-
-		if (teardown) {
-			// console.log("[PreviewRenderer] Tearing down previous worker")
-			teardown()
-			teardown = null
-		}
-
-		teardown = setupWorker(formatName, previewPaneEl.value, createAdapter())
-		// console.log("[PreviewRenderer] Worker initialized")
-	},
-	{ immediate: true }
+    teardown?.()
+    teardown = setupWorker(formatName, element, createAdapter())
+  },
+  { immediate: true }
 )
 
 onBeforeUnmount(() => {
