@@ -19,8 +19,8 @@
 		</div>
 		<div class="settings-pane__body">
 			<div class="settings-pane__form">
-				<div class="settings-pane__section">
-					<button type="button" class="settings-pane__section-title"
+				<div class="settings-pane__section-card">
+					<button type="button" class="settings-pane__section-header"
 						@click="isPageSettingsExpanded = !isPageSettingsExpanded">
 						<span>Page Settings</span>
 						<svg :class="['settings-pane__chevron', { 'settings-pane__chevron--expanded': isPageSettingsExpanded }]"
@@ -80,8 +80,8 @@
 						</div>
 					</div>
 				</div>
-				<div class="settings-pane__section">
-					<button type="button" class="settings-pane__section-title"
+				<div class="settings-pane__section-card">
+					<button type="button" class="settings-pane__section-header"
 						@click="isTypographyExpanded = !isTypographyExpanded">
 						<span>Typography</span>
 						<svg :class="['settings-pane__chevron', { 'settings-pane__chevron--expanded': isTypographyExpanded }]"
@@ -541,27 +541,28 @@ watch(
 	gap: 16px;
 }
 
-.settings-pane__section-title {
+.settings-pane__section-card {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.settings-pane__section-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
 	margin: 0;
-	padding: 8px 12px;
+	padding: 10px 12px;
 	font-size: 13px;
 	font-weight: 700;
 	color: #1e293b;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
-	background: #f8fafc;
-	border: 1px solid #e2e8f0;
-	border-radius: 6px;
+	background: transparent;
+	border: none;
 	cursor: pointer;
-	transition: background-color 0.15s ease;
-}
-
-.settings-pane__section-title:hover {
-	background: #f1f5f9;
 }
 
 .settings-pane__chevron {
@@ -578,7 +579,10 @@ watch(
 .settings-pane__section-content {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 12px;
+	padding: 12px 12px 14px;
+	background: #f8fafc;
+	border-top: 1px solid #e2e8f0;
 }
 
 .settings-pane__subsection {
