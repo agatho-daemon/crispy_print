@@ -2,6 +2,16 @@ import { createApp } from "vue"
 import CrispyPP from "./pages/CrispyPP.vue"
 import { setupWorker } from "./typst/setupWorker"
 
+if (typeof __VUE_OPTIONS_API__ === 'undefined') {
+    globalThis.__VUE_OPTIONS_API__ = true
+}
+if (typeof __VUE_PROD_DEVTOOLS__ === 'undefined') {
+    globalThis.__VUE_PROD_DEVTOOLS__ = false
+}
+if (typeof __VUE_PROD_HYDRATION_MISMATCH_DETAILS__ === 'undefined') {
+    globalThis.__VUE_PROD_HYDRATION_MISMATCH_DETAILS__ = false
+}
+
 // Expose setupWorker globally for typst_print.js
 window.setupWorker = setupWorker
 

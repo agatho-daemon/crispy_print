@@ -1,5 +1,13 @@
 // Shared page settings model and helpers
 
+export interface TypographyStyle {
+	fontFamily: string
+	fontSize: string
+	fontStyle: string
+	fontWeight: string
+	color: string
+}
+
 export interface PageSettings {
 	pageSize: string
 	orientation: string
@@ -9,12 +17,17 @@ export interface PageSettings {
 		left: number
 		right: number
 	}
-	fontFamily?: string
-	fontSize?: number
-	letterhead: string
+	fontFamily: string
+	fontSize: number
+	letterhead?: string
 	letterheadData?: any
-	typography?: any
-	language?: string
+	language: string
+
+	typography: {
+		fieldLabel: TypographyStyle
+		fieldValue: TypographyStyle
+		sectionLabel: TypographyStyle
+	}
 }
 
 export const defaultPageSettings: PageSettings = {

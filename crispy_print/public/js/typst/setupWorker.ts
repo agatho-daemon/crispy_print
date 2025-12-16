@@ -5,10 +5,6 @@ import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import type { CrispyLayout } from "../utils/layout"
 
-declare const Awesomplete: any
-declare const frappe: any
-declare const __: any
-
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
 	getLetterhead?: () => any

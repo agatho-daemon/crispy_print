@@ -1,8 +1,6 @@
 // utils/layout.ts
 // Utility functions for creating and manipulating Typst print layouts
 
-declare const frappe: any
-declare const __: any
 export interface DocField {
 	fieldname: string
 	label: string
@@ -15,7 +13,7 @@ export interface TableColumn {
 	fieldname: string
 	label: string
 	fieldtype: string
-	width?: string // Typst width: "auto", "1fr", "2fr", "100pt", etc.
+	width?: string
 	align?: "left" | "center" | "right"
 }
 

@@ -253,36 +253,9 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
+import { PageSettings } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
 
-declare const frappe: any
-
-interface TypographyStyle {
-	fontFamily: string
-	fontSize: string
-	fontStyle: string
-	fontWeight: string
-	color: string
-}
-
-interface PageSettings {
-	pageSize: string
-	orientation: string
-	margins: {
-		top: number
-		bottom: number
-		left: number
-		right: number
-	}
-	fontFamily: string
-	fontSize: number
-	letterhead: string
-	typography?: {
-		fieldLabel: TypographyStyle
-		fieldValue: TypographyStyle
-		sectionLabel: TypographyStyle
-	}
-}
 
 interface Props {
 	pageSettings: PageSettings

@@ -6,14 +6,13 @@ import { createDefaultLayout, serializeLayout, deserializeLayout } from "../util
 import type { CrispyLayout, DocField } from "../utils/layout"
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "../utils/pageSettings"
 
-declare const frappe: any
-declare const __: any
 
 let storeInstance: ReturnType<typeof buildStore> | null = null
 
 interface CrispyFormat {
 	name: string
 	doc_type: string
+	is_default: boolean
 	typst_preamble?: string
 	typst_layout?: string
 	layout_json?: string
@@ -53,33 +52,31 @@ function buildStore() {
 			const doc = await frappe.db.get_doc("Crispy Format", formatName)
 			crispyFormat.value = doc
 
-			// console.log("[Store] Loaded Crispy Format:", doc)
-
 			// Load DocType metadata
 			if (doc.doc_type) {
 				await new Promise<void>((resolve) => {
 					frappe.model.with_doctype(doc.doc_type, () => {
 						meta.value = frappe.get_meta(doc.doc_type)
 
-						const skipTypes = ["Section Break", "Column Break"]
+						const skipTypes = ["Tab Break", "Section Break", "Column Break"]
 
-							// Extract fields for the fields pane, matching builder behavior
-							const baseFields: DocField[] = meta.value.fields
-								.filter(
-									(f: DocField) =>
-										f.fieldname &&
-										!skipTypes.includes(f.fieldtype || "")
-								)
-								.map((f: DocField) => ({
-									fieldname: f.fieldname,
-									label: f.label || f.fieldname,
-									fieldtype: f.fieldtype,
+						// Extract fields for the fields pane, matching builder behavior
+						const baseFields: DocField[] = meta.value.fields
+							.filter(
+								(f: DocField) =>
+									f.fieldname &&
+									!skipTypes.includes(f.fieldtype || "")
+							)
+							.map((f: DocField) => ({
+								fieldname: f.fieldname,
+								label: f.label || f.fieldname,
+								fieldtype: f.fieldtype,
 								options: f.options,
 								print_hide: f.print_hide,
 							}))
 
 						const extras: DocField[] = [
-							{ label: "Custom HTML", fieldname: "custom_html", fieldtype: "HTML" },
+							{ label: "DocType", fieldname: "doctype", fieldtype: "Data" },
 							{ label: "ID (name)", fieldname: "name", fieldtype: "Data" },
 							{ label: "Spacer", fieldname: "spacer", fieldtype: "Spacer" },
 							{ label: "Divider", fieldname: "divider", fieldtype: "Divider" },
@@ -87,39 +84,36 @@ function buildStore() {
 
 						const templateFields: DocField[] =
 							typeof frappe === "undefined" ||
-							!crispyFormat.value?.__onload?.print_templates
+								!crispyFormat.value?.__onload?.print_templates
 								? []
 								: crispyFormat.value.__onload.print_templates
-										.map((template: any) => {
-											let df: any
-											if (template.field) {
-												df = frappe.meta.get_docfield(meta.value.name, template.field)
-											} else {
-												const scrub =
-													typeof frappe.scrub === "function"
-														? frappe.scrub(template.name)
-														: template.name.toLowerCase().replace(/\s+/g, "_")
-												df = {
-													label: template.name,
-													fieldname: scrub,
-												}
+									.map((template: any) => {
+										let df: any
+										if (template.field) {
+											df = frappe.meta.get_docfield(meta.value.name, template.field)
+										} else {
+											const scrub =
+												typeof frappe.scrub === "function"
+													? frappe.scrub(template.name)
+													: template.name.toLowerCase().replace(/\s+/g, "_")
+											df = {
+												label: template.name,
+												fieldname: scrub,
 											}
+										}
 
-											if (!df?.fieldname) return null
+										if (!df?.fieldname) return null
 
-											return {
-												label: `${df.label} (Field Template)`,
-												fieldname: `${df.fieldname}_template`,
-												fieldtype: "Field Template",
-												options: template.name,
-											} as DocField
-										})
-										.filter(Boolean)
+										return {
+											label: `${df.label} (Field Template)`,
+											fieldname: `${df.fieldname}_template`,
+											fieldtype: "Field Template",
+											options: template.name,
+										} as DocField
+									})
+									.filter(Boolean)
 
 						fields.value = [...extras, ...templateFields, ...baseFields]
-
-						// console.log("[Store] Loaded DocType meta:", meta.value.name)
-						// console.log("[Store] Available fields:", fields.value.length)
 
 						resolve()
 					})

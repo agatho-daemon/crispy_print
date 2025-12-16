@@ -156,8 +156,6 @@ import {
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "../utils/pageSettings"
 import PreviewRenderer from "../components/PreviewRenderer.vue"
 
-declare const frappe: any
-declare const __: any
 
 interface Props {
 	doctype?: string
