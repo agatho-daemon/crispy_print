@@ -33,17 +33,17 @@
 				/>
 			</div>
 			<div v-if="loading" class="loading-indicator">
-				<span class="loading-text">Loading fields</span>
+				<span class="loading-text">Loading fields...</span>
 			</div>
 		</div>
 
 		<div class="fields-list">
 			<div v-if="filteredFields.length === 0" class="empty-state">
 				<p v-if="searchQuery" class="empty-message">
-					No fields match "{{ searchQuery }}"
+					No fields match "{{ searchQuery }}!"
 				</p>
 				<p v-else class="empty-message">
-					No fields available yet.
+					No fields available yet!
 				</p>
 			</div>
 
@@ -75,7 +75,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { loading: false })
 const searchQuery = ref("")
 const loading = computed(() => unref(props.loading))
-// const showHelp = ref(false)
 
 const filteredFields = computed(() => {
 	const all = unref(props.fields)
@@ -100,7 +99,6 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 </script>
 
 <style scoped>
-/* FieldsPane.vue */
 .fields-pane {
 	display: flex;
 	flex-direction: column;

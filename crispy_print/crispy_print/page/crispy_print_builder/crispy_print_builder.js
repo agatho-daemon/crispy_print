@@ -21,8 +21,14 @@ frappe.pages["crispy-print-builder"].on_page_show = function (wrapper) {
 
 function load_crispy_print_builder(wrapper) {
 	let route = frappe.get_route();
-	let $parent = $(wrapper).find(".layout-main-section");
-	$parent.empty();
+	const parent = wrapper.querySelector(".layout-main-section");
+
+	if (!parent) {
+		console.error("[CrispyPrint] Page container not found");
+		return;
+	}
+
+	parent.innerHTML = "";
 
 	if (route.length > 1) {
 		// Format specified in route - load builder with toolbar
@@ -38,7 +44,8 @@ function load_crispy_print_builder(wrapper) {
 		page.set_title(__("Editing {0}", [format_name]));
 
 		// Mount Vue app
-		$parent.html('<div id="crispy-print-root" style="height: calc(100vh - 60px);"></div>');
+		parent.innerHTML =
+			'<div id="crispy-print-root" style="height: calc(100vh - 60px);"></div>';
 		
 		if (window.mountCrispyPrint) {
 			const vueApp = window.mountCrispyPrint("#crispy-print-root");
@@ -57,13 +64,17 @@ function load_crispy_print_builder(wrapper) {
 			});
 
 			// Secondary actions
-			let $reset_changes_btn = page.add_button(__("Reset Changes"), () => {
-				store.resetLayout();
-			});
+			let reset_changes_btn = page
+				.add_button(__("Reset Changes"), () => {
+					store.resetLayout();
+				})
+				.get(0);
 
-			let $edit_properties_btn = page.add_button(__("Edit Crispy Properties"), () => {
-				frappe.set_route("Form", "Crispy Format", format_name);
-			});
+			let edit_properties_btn = page
+				.add_button(__("Edit Crispy Properties"), () => {
+					frappe.set_route("Form", "Crispy Format", format_name);
+				})
+				.get(0);
 
 			// Menu items
 			page.add_menu_item(__("Change Format"), () => {
@@ -77,17 +88,23 @@ function load_crispy_print_builder(wrapper) {
 					(dirty) => {
 						if (dirty) {
 							page.set_indicator(__("Not Saved"), "orange");
-							$reset_changes_btn.show();
+							if (reset_changes_btn) {
+								reset_changes_btn.style.display = "";
+							}
 						} else {
 							page.clear_indicator();
-							$reset_changes_btn.hide();
+							if (reset_changes_btn) {
+								reset_changes_btn.style.display = "none";
+							}
 						}
 					}
 				);
 			}
 
 			// Initial button state
-			$reset_changes_btn.hide();
+			if (reset_changes_btn) {
+				reset_changes_btn.style.display = "none";
+			}
 		} else {
 			console.error("[CrispyPrint] mountCrispyPrint not found. Bundle may not be loaded.");
 		}
@@ -95,6 +112,10 @@ function load_crispy_print_builder(wrapper) {
 		// No format specified - show dialog to create/edit
 		let d = new frappe.ui.Dialog({
 			title: __("Create or Edit Crispy Format"),
+			get_primary_button_element() {
+				const btn = d.get_primary_btn();
+				return btn && btn.get ? btn.get(0) : btn;
+			},
 			fields: [
 				{
 					label: __("Action"),
@@ -106,7 +127,11 @@ function load_crispy_print_builder(wrapper) {
 					],
 					change() {
 						let action = d.get_value("action");
-						d.get_primary_btn().text(action === "Create" ? __("Create") : __("Edit"));
+						const primaryBtn = d.get_primary_button_element();
+						if (primaryBtn) {
+							primaryBtn.textContent =
+								action === "Create" ? __("Create") : __("Edit");
+						}
 					},
 				},
 				{
@@ -149,7 +174,10 @@ function load_crispy_print_builder(wrapper) {
 				if (action === "Edit") {
 					frappe.set_route("crispy-print-builder", crispy_format);
 				} else if (action === "Create") {
-					d.get_primary_btn().prop("disabled", true);
+					const primaryBtn = d.get_primary_button_element();
+					if (primaryBtn) {
+						primaryBtn.disabled = true;
+					}
 					frappe.db
 						.insert({
 							doctype: "Crispy Format",
@@ -160,7 +188,10 @@ function load_crispy_print_builder(wrapper) {
 							frappe.set_route("crispy-print-builder", doc.name);
 						})
 						.finally(() => {
-							d.get_primary_btn().prop("disabled", false);
+							const enabledPrimaryBtn = d.get_primary_button_element();
+							if (enabledPrimaryBtn) {
+								enabledPrimaryBtn.disabled = false;
+							}
 						});
 				}
 			},

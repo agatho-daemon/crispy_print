@@ -23,8 +23,6 @@ onMounted(async () => {
 
 	if (route.length > 1) {
 		await store.fetch(route[1])
-	} else {
-		// console.log("[CrispyPFB] No format specified in route")
 	}
 })
 
@@ -34,7 +32,6 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 		const route = frappe.get_route()
 		if (route[0] === "crispy-print-builder" && route.length > 1) {
 			const formatName = route[1]
-			// console.log("[CrispyPFB] Route changed, loading format:", formatName)
 			await store.fetch(formatName)
 		}
 	})

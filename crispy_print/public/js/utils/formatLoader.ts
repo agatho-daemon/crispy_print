@@ -3,8 +3,6 @@
 
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "./pageSettings"
 
-declare const frappe: any
-
 export interface FormatInfo {
 	name: string
 	doc_type: string

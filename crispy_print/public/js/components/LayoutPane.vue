@@ -178,9 +178,6 @@ import TableColumnsDialog from "../components/TableColumnsDialog.vue"
 import type { LayoutSection, LayoutColumn, LayoutField, DocField, TableColumn } from "../utils/layout"
 import { getTableColumns } from "../utils/layout"
 
-declare const frappe: any
-declare const __: any
-
 type Section = LayoutSection & { id?: number; page_break?: boolean }
 type Column = LayoutColumn
 type Field = LayoutField

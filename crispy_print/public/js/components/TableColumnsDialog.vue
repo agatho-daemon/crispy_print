@@ -106,8 +106,6 @@ import { computed, nextTick, onMounted, ref, watch } from "vue"
 import draggable from "vuedraggable"
 import type { TableColumn } from "../utils/layout"
 
-declare const frappe: any
-
 interface Props {
 	modelValue: TableColumn[]
 	doctype: string
