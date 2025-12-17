@@ -218,7 +218,7 @@ export function pluck<T extends Record<string, any>>(
  * Convert layout to JSON string for storage
  */
 export function serializeLayout(layout: CrispyLayout): string {
-	return JSON.stringify(layout, null, 2)
+	return JSON.stringify(layout) // add null, 2 for pretty printing
 }
 
 /**
