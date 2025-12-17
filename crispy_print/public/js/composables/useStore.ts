@@ -122,6 +122,7 @@ function buildStore() {
 
 			// Load or create layout
 			layout.value = getLayout()
+			console.log("[Store] Loaded layout:", layout.value)
 			if (!layout.value || !layout.value.sections?.length) {
 				layout.value = getDefaultLayout()
 			}

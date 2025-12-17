@@ -343,10 +343,11 @@ class JSONTypstTranslator {
 			return lines.join("\n")
 		}
 
-		if (!section.has_fields) {
-			lines.push("// (no fields)")
-			return lines.join("\n")
-		}
+		// const hasFields = section.columns?.some(col => col.fields?.length) || false;
+		// if (!hasFields) {
+		// 	lines.push("// (no fields)")
+		// 	return lines.join("\n")
+		// }
 
 		if (section.label) {
 			lines.push(`#text(..sectionLabelStyle)[${section.label}]`)
