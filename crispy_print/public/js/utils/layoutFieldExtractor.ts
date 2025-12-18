@@ -73,6 +73,14 @@ export function filterDocumentFields(doc: any, usedFields: Set<string>): any {
 
 	const filtered: any = {}
 
+	// Always include essential top-level fields (used by `doc_header` and other helpers)
+	const essentialFields = ["name", "doctype", "title"]
+	essentialFields.forEach((field) => {
+		if (field in doc) {
+			filtered[field] = doc[field]
+		}
+	})
+
 	// Copy only used fields
 	usedFields.forEach((fieldname) => {
 		if (fieldname in doc) {

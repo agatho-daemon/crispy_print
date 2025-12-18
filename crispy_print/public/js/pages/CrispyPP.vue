@@ -137,6 +137,7 @@
 		<PreviewRenderer
 			:format-name="selectedFormat"
 			:layout="layout"
+			:doc-header="''"
 			:letterhead="pageSettingsComputed.letterheadData || null"
 			:doc-type="props.doctype || null"
 			:page-settings="pageSettingsComputed"

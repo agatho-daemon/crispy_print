@@ -191,10 +191,9 @@ function getFieldTemplate(crispyFormat: any, fieldname: string, df: DocField) {
 }
 
 function getDefaultHeader(meta: any) {
-	return `<div class="document-header">
-\t<h3>${meta?.name || ""}</h3>
-\t<p>{{ doc.name }}</p>
-</div>`
+	// Header rendering is handled via Typst `doc_header` on the Crispy Format doctype.
+	// Keep layout.header empty for legacy compatibility.
+	return ""
 }
 
 /**

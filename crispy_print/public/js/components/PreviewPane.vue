@@ -2,6 +2,7 @@
 	<PreviewRenderer
 		:format-name="store.formatName.value"
 		:layout="store.layout.value"
+		:doc-header="store.docHeader.value"
 		:letterhead="store.letterhead.value"
 		:doc-type="store.docType.value"
 		:page-settings="store.pageSettings.value"

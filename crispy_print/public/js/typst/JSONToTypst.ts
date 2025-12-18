@@ -26,7 +26,6 @@ class JSONTypstTranslator {
 	doctype: string
 	realDocData: RealDocData
 	sections: LayoutWithOptionalSections["sections"]
-	header: string | undefined
 	options: Record<string, any>
 
 	constructor(layoutData: LayoutWithOptionalSections, letterheadData: any, doctype: string, realDocData: RealDocData, options: Record<string, any>) {
@@ -35,7 +34,6 @@ class JSONTypstTranslator {
 		this.doctype = doctype
 		this.realDocData = realDocData
 		this.sections = this.layout.sections || []
-		this.header = this.layout.header || ""
 		this.options = options || {}
 	}
 
@@ -314,9 +312,10 @@ class JSONTypstTranslator {
 			}
 		}
 
-		if (this.header) {
+		const docHeader = (this.options.docHeader as string | undefined) || ""
+		if (docHeader && docHeader.trim()) {
 			lines.push("// Document Header")
-			lines.push(this.convertHTMLToTypst(this.header))
+			lines.push(docHeader.trim())
 			lines.push("")
 		}
 
