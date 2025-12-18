@@ -7,6 +7,7 @@ import type { CrispyLayout } from "../utils/layout"
 
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
+	getDocHeader?: () => string | null | undefined
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
 	getPageSettings?: () => any
@@ -449,8 +450,14 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 				pageSettings = adapter.getPageSettings() || {}
 			}
 
+			const docHeader =
+				adapter && typeof adapter.getDocHeader === "function" ? adapter.getDocHeader() || "" : ""
+
 			// Use filtered document instead of full sampleDocData
-			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, pageSettings)
+			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, {
+				...pageSettings,
+				docHeader,
+			})
 
 			// console.log("[Typst Preview] Translation successful, length:", typst.length)
 		} catch (e: any) {

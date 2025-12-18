@@ -20,6 +20,7 @@ import { setupWorker } from "../typst/setupWorker"
 interface Props {
 	formatName: string | null
 	layout: any
+	docHeader: string
 	pageSettings: any
 	letterhead: any
 	docType: string | null
@@ -36,6 +37,7 @@ function createAdapter() {
 	const enableDataWatch = props.watchDataChanges !== false
 	return {
 		getLayout: () => props.layout,
+		getDocHeader: () => props.docHeader,
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
 		getPageSettings: () => props.pageSettings,
@@ -43,7 +45,7 @@ function createAdapter() {
 			? (callback: () => void) => {
 				// Watch for data changes (layout, settings, letterhead)
 				const stopData = watch(
-					() => [props.layout, props.pageSettings, props.letterhead],
+					() => [props.layout, props.pageSettings, props.letterhead, props.docHeader],
 					() => callback(),
 					{ deep: true }
 				)

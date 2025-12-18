@@ -13,6 +13,7 @@ interface CrispyFormat {
 	name: string
 	doc_type: string
 	is_default: boolean
+	doc_header?: string
 	typst_preamble?: string
 	typst_layout?: string
 	layout_json?: string
@@ -35,6 +36,7 @@ function buildStore() {
 	// Computed
 	const formatName = computed(() => crispyFormat.value?.name || null)
 	const docType = computed(() => crispyFormat.value?.doc_type || null)
+	const docHeader = computed(() => crispyFormat.value?.doc_header || "")
 
 	/**
 	 * Fetch Crispy Format document and load DocType metadata
@@ -311,6 +313,7 @@ function buildStore() {
 		// Computed
 		formatName,
 		docType,
+		docHeader,
 
 		// Methods
 		fetch,
