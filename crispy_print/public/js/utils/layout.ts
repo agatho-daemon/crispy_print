@@ -35,6 +35,7 @@ export interface LayoutColumn {
 export interface LayoutSection {
 	label: string
 	columns: LayoutColumn[]
+	id?: number
 }
 
 export interface CrispyLayout {
@@ -51,16 +52,14 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 		return { sections: [] }
 	}
 
-	type SectionWithFields = LayoutSection & { has_fields?: boolean }
-
-	const layout: CrispyLayout & { sections: SectionWithFields[] } = {
+	const layout: CrispyLayout & { sections: LayoutSection[] } = {
 		header: getDefaultHeader(meta),
 		sections: [],
 	}
 
 	const sections = layout.sections
 
-	let currentSection: SectionWithFields | null = null
+	let currentSection: LayoutSection | null = null
 	let currentColumn: LayoutColumn | null = null
 
 	const setSection = (df?: DocField) => {
@@ -68,6 +67,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 		currentSection = {
 			label: source.label || "",
 			columns: [],
+			id: Date.now() + Math.random(),
 		}
 		currentColumn = null
 		sections.push(currentSection)
@@ -120,13 +120,12 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 				}
 
 				currentColumn!.fields.push(field)
-				currentSection!.has_fields = true
 			}
 		}
 	}
 
-	const filteredSections = (sections as SectionWithFields[]).filter(
-		(section: SectionWithFields) => Boolean(section.has_fields)
+	const filteredSections = sections.filter((section: LayoutSection) =>
+		section.columns?.some((col: LayoutColumn) => col.fields?.length)
 	)
 	layout.sections = filteredSections
 
@@ -218,7 +217,22 @@ export function pluck<T extends Record<string, any>>(
  * Convert layout to JSON string for storage
  */
 export function serializeLayout(layout: CrispyLayout): string {
-	return JSON.stringify(layout) // add null, 2 for pretty printing
+	const cleanedSections = (layout.sections || []).map((section) => {
+		const { has_fields: _ignored, ...restSection } = section as any
+		return {
+			...restSection,
+			columns: (restSection.columns || []).map((column: any) => ({ ...column })),
+		}
+	})
+
+	return JSON.stringify(
+		{
+			...layout,
+			sections: cleanedSections,
+		},
+		// null,
+		// 2
+	)
 }
 
 /**
@@ -226,7 +240,12 @@ export function serializeLayout(layout: CrispyLayout): string {
  */
 export function deserializeLayout(json: string): CrispyLayout | null {
 	try {
-		return JSON.parse(json)
+		const parsed = JSON.parse(json) as CrispyLayout
+		const sectionsWithIds = (parsed.sections || []).map((section, idx) => ({
+			...section,
+			id: section.id || Date.now() + Math.random() + idx,
+		}))
+		return { ...parsed, sections: sectionsWithIds }
 	} catch (e) {
 		console.error("[Layout] Failed to parse layout JSON:", e)
 		return null
