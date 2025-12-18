@@ -4,7 +4,7 @@
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
-	sections?: (LayoutSection & { has_fields?: boolean })[]
+	sections?: LayoutSection[]
 }
 
 export type RealDocData = Record<string, any> | null
@@ -332,7 +332,7 @@ class JSONTypstTranslator {
 		return lines.join("\n")
 	}
 
-	translateSection(section: LayoutSection & { has_fields?: boolean }, index: number) {
+	translateSection(section: LayoutSection, index: number) {
 		const lines: string[] = []
 		const label = section.label || `Section ${index + 1}`
 
@@ -343,11 +343,12 @@ class JSONTypstTranslator {
 			return lines.join("\n")
 		}
 
-		// const hasFields = section.columns?.some(col => col.fields?.length) || false;
-		// if (!hasFields) {
-		// 	lines.push("// (no fields)")
-		// 	return lines.join("\n")
-		// }
+		const hasFields =
+			section.columns?.some((col) => col.fields && col.fields.length > 0) || false
+		if (!hasFields) {
+			lines.push("// (no fields)")
+			return lines.join("\n")
+		}
 
 		if (section.label) {
 			lines.push(`#text(..sectionLabelStyle)[${section.label}]`)
