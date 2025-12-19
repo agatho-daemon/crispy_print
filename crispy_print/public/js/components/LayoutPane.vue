@@ -1,16 +1,13 @@
 <template>
 	<div class="layout-pane">
 		<div class="layout-pane__header">
-			<div class="layout-pane__header-row">
-				<h3 class="layout-pane__title">Layout Builder</h3>
-				<div class="layout-pane__controls">
-					<button class="lp-btn" @click="addSection">
-						+ Section
-					</button>
-					<button class="lp-btn lp-btn--secondary" @click="resetLayout">
-						Reset
-					</button>
-					<div class="layout-pane__spacer"></div>
+				<div class="layout-pane__header-row">
+					<h3 class="layout-pane__title">Layout Builder</h3>
+					<div class="layout-pane__controls">
+						<button class="lp-btn lp-btn--secondary" @click="resetLayout">
+							Reset
+						</button>
+						<div class="layout-pane__spacer"></div>
 					<div>
 						<button
 							type="button"
@@ -25,6 +22,7 @@
 							<ul class="layout-pane__help-list">
 								<li>Drag fields from Fields pane into columns.</li>
 								<li>Use handles to reorder sections, columns, and fields in place.</li>
+								<li>Use the &#8943; menu on a section for add/remove/page break/orientation.</li>
 							</ul>
 						</div>
 					</div>
@@ -55,40 +53,70 @@
 									class="section-title-input"
 									placeholder="Section title"
 								/>
+								</div>
+								<div class="section-card__actions">
+									<button
+										type="button"
+										class="section-card__menu-btn"
+										title="Section menu"
+										@click.stop="toggleSectionMenu(section, sectionIndex, $event)"
+									>
+										&#8943;
+									</button>
+									<div
+										v-if="openSectionMenuId === getSectionMenuId(section, sectionIndex)"
+										class="section-card__menu"
+										:style="sectionMenuStyle"
+										@click.stop
+									>
+										<button type="button" class="section-card__menu-item" @click="addSectionAbove(sectionIndex); closeSectionMenu()">
+											Add section above
+										</button>
+										<button type="button" class="section-card__menu-item" @click="addSectionBelow(sectionIndex); closeSectionMenu()">
+											Add section below
+										</button>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											:disabled="section.columns.length >= 4"
+											@click="addColumn(section); closeSectionMenu()"
+										>
+											Add column
+										</button>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											:disabled="section.columns.length <= 1"
+											@click="removeLastColumn(section); closeSectionMenu()"
+										>
+											Remove column
+										</button>
+										<button type="button" class="section-card__menu-item" @click="togglePageBreak(section); closeSectionMenu()">
+											{{ section.page_break ? "Remove page break" : "Add page break" }}
+										</button>
+										<button type="button" class="section-card__menu-item" @click="toggleFieldOrientation(section); closeSectionMenu()">
+											Field orientation ({{ getFieldOrientationLabel(section) }})
+										</button>
+										<div class="section-card__menu-divider"></div>
+										<button
+											type="button"
+											class="section-card__menu-item section-card__menu-item--danger"
+											@click="removeSection(sectionIndex); closeSectionMenu()"
+										>
+											Remove section
+										</button>
+									</div>
+								</div>
 							</div>
-							<div class="section-card__actions">
-								<button class="lp-btn" :disabled="section.columns.length >= 4" @click="addColumn(section)">
-									+ Column
-								</button>
-								<button class="lp-btn" @click="togglePageBreak(section)">
-									{{ section.page_break ? "Remove page break" : "Add page break" }}
-								</button>
-								<button class="section-card__remove" @click="removeSection(sectionIndex)">
-									&#x2715;
-								</button>
-							</div>
-						</div>
 
 						<div class="section-grid" :style="gridStyle(section)">
 							<div
 								v-for="(column, colIndex) in section.columns"
 								:key="colIndex"
-								class="section-column"
+								:class="['section-column', { 'section-column--empty': !column.fields.length }]"
 								@dragover.prevent
 								@drop="onDropField($event, column)"
 							>
-								<div class="section-column__header">
-									<span>Column {{ colIndex + 1 }}</span>
-									<button
-										v-if="section.columns.length > 1"
-										class="section-column__remove"
-										title="Remove column"
-										@click="removeColumn(section, colIndex)"
-									>
-										&#x2715;
-									</button>
-								</div>
-
 								<draggable
 									v-model="column.fields"
 									group="layout-fields"
@@ -172,13 +200,17 @@
 
 <script setup lang="ts">
 import draggable from "vuedraggable"
-import { onMounted, ref, watch } from "vue"
+import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useStore } from "../composables/useStore"
 import TableColumnsDialog from "../components/TableColumnsDialog.vue"
 import type { LayoutSection, LayoutColumn, LayoutField, DocField, TableColumn } from "../utils/layout"
 import { getTableColumns } from "../utils/layout"
 
-type Section = LayoutSection & { id?: number; page_break?: boolean }
+type Section = LayoutSection & {
+	id?: number
+	page_break?: boolean
+	field_orientation?: "left-right" | "top-down"
+}
 type Column = LayoutColumn
 type Field = LayoutField
 type TableEditorContext = {
@@ -190,8 +222,45 @@ const layout = store.layout
 const columnEditor = ref<TableEditorContext | null>(null)
 const editingColumns = ref<TableColumn[]>([])
 
+const openSectionMenuId = ref<string | null>(null)
+const sectionMenuStyle = ref<Record<string, string>>({})
+
 const sectionKey = (section: Section, index: number) => {
 	return (section as any).id || index
+}
+
+function getSectionMenuId(section: Section, index: number) {
+	return String(section.id || index)
+}
+
+function closeSectionMenu() {
+	openSectionMenuId.value = null
+	sectionMenuStyle.value = {}
+}
+
+function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
+	const id = getSectionMenuId(section, index)
+	if (openSectionMenuId.value === id) {
+		closeSectionMenu()
+		return
+	}
+
+	openSectionMenuId.value = id
+
+	const target = event.currentTarget as HTMLElement | null
+	if (!target) return
+
+	const rect = target.getBoundingClientRect()
+	const top = rect.bottom + 6
+	const left = rect.right
+
+	sectionMenuStyle.value = {
+		position: "fixed",
+		top: `${top}px`,
+		left: `${left}px`,
+		transform: "translateX(-100%)",
+		zIndex: "1000",
+	}
 }
 
 function ensureLayout() {
@@ -205,13 +274,41 @@ function ensureLayout() {
 	}
 }
 
+function ensureAtLeastOneSection() {
+	if (!layout.value) {
+		layout.value = { sections: [] }
+	}
+	if (!layout.value.sections?.length) {
+		layout.value.sections = [createEmptySection()]
+	}
+}
+
 onMounted(() => {
 	ensureLayout()
+	ensureAtLeastOneSection()
+})
+
+const onDocClick = () => closeSectionMenu()
+const onKeyDown = (e: KeyboardEvent) => {
+	if (e.key === "Escape") closeSectionMenu()
+}
+
+onMounted(() => {
+	document.addEventListener("click", onDocClick)
+	document.addEventListener("keydown", onKeyDown)
+})
+
+onBeforeUnmount(() => {
+	document.removeEventListener("click", onDocClick)
+	document.removeEventListener("keydown", onKeyDown)
 })
 
 watch(
 	() => store.meta.value,
-	() => ensureLayout(),
+	() => {
+		ensureLayout()
+		ensureAtLeastOneSection()
+	},
 	{ immediate: false }
 )
 
@@ -219,13 +316,33 @@ function addSection() {
 	if (!layout.value) {
 		layout.value = { sections: [] }
 	}
-	const newSection: Section = {
+	layout.value.sections.push(createEmptySection())
+	store.markDirty()
+}
+
+function addSectionAbove(index: number) {
+	if (!layout.value) {
+		layout.value = { sections: [] }
+	}
+	layout.value.sections.splice(Math.max(0, index), 0, createEmptySection())
+	store.markDirty()
+}
+
+function addSectionBelow(index: number) {
+	if (!layout.value) {
+		layout.value = { sections: [] }
+	}
+	layout.value.sections.splice(Math.max(0, index + 1), 0, createEmptySection())
+	store.markDirty()
+}
+
+function createEmptySection(): Section {
+	return {
 		label: "",
 		columns: [{ label: "", fields: [] }],
 		id: Date.now() + Math.random(),
+		field_orientation: "left-right",
 	}
-	layout.value.sections.push(newSection)
-	store.markDirty()
 }
 
 function removeSection(index: number) {
@@ -248,6 +365,11 @@ function removeColumn(section: Section, colIndex: number) {
 	const targetIndex = Math.max(colIndex - 1, 0)
 	section.columns[targetIndex].fields.push(...removed.fields)
 	store.markDirty()
+}
+
+function removeLastColumn(section: Section) {
+	if (section.columns.length <= 1) return
+	removeColumn(section, section.columns.length - 1)
 }
 
 function removeField(column: Column, fieldIndex: number) {
@@ -286,6 +408,16 @@ function getDefaultAlignment(fieldtype?: string): "left" | "center" | "right" {
 function togglePageBreak(section: Section) {
 	; (section as any).page_break = !(section as any).page_break
 	store.markDirty()
+}
+
+function toggleFieldOrientation(section: Section) {
+	const current = section.field_orientation || "left-right"
+	section.field_orientation = current === "left-right" ? "top-down" : "left-right"
+	store.markDirty()
+}
+
+function getFieldOrientationLabel(section: Section) {
+	return (section.field_orientation || "left-right") === "left-right" ? "Left-Right" : "Top-Down"
 }
 
 async function ensureTableColumns(field: Field) {
@@ -342,6 +474,7 @@ function resetLayout() {
 		const fresh = store.getDefaultLayout()
 		if (fresh) {
 			store.layout.value = fresh
+			ensureAtLeastOneSection()
 			store.markDirty()
 		}
 	}
@@ -361,6 +494,7 @@ function resetLayout() {
 	const fresh = store.getDefaultLayout()
 	if (fresh) {
 		store.layout.value = fresh
+		ensureAtLeastOneSection()
 		store.markDirty()
 	}
 }
@@ -555,19 +689,72 @@ function closeColumnEditor() {
 	flex-wrap: wrap;
 }
 
-.section-card__remove {
-	padding: 6px 10px;
-	font-size: 12px;
-	font-weight: 600;
-	color: #94a3b8;
-	background: transparent;
+.section-card__menu-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
 	border: none;
+	background: transparent;
+	color: #475569;
 	cursor: pointer;
-	transition: color 0.15s ease;
+	font-size: 18px;
+	line-height: 1;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.section-card__remove:hover {
-	color: #e11d48;
+.section-card__menu-btn:hover {
+	background: #f8fafc;
+}
+
+.section-card__menu {
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	padding: 6px;
+	width: 260px;
+	max-width: calc(100vw - 32px);
+	box-shadow:
+		0 10px 25px rgba(148, 163, 184, 0.25),
+		0 8px 10px rgba(148, 163, 184, 0.15);
+}
+
+.section-card__menu-item {
+	width: 100%;
+	text-align: left;
+	border: 0;
+	background: transparent;
+	padding: 8px 10px;
+	border-radius: 8px;
+	font-size: 13px;
+	color: #0f172a;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.section-card__menu-item:hover {
+	background: #f1f5f9;
+}
+
+.section-card__menu-item:disabled {
+	color: #94a3b8;
+	cursor: not-allowed;
+}
+
+.section-card__menu-divider {
+	height: 1px;
+	margin: 6px 6px;
+	background: #e2e8f0;
+}
+
+.section-card__menu-item--danger {
+	color: #b91c1c;
+}
+
+.section-card__menu-item--danger:hover {
+	background: #fee2e2;
 }
 
 .section-grid {
@@ -576,34 +763,26 @@ function closeColumnEditor() {
 }
 
 .section-column {
-	min-height: 140px;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	border: 1px dashed #cbd5e1;
-	border-radius: 10px;
-	background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-	padding: 12px;
+	gap: 10px;
+	padding: 0;
+	min-height: 0;
 }
 
-.section-column__header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	font-size: 11px;
-	color: #64748b;
+.section-column--empty {
+	min-height: 56px;
+	border: 1px dashed #e2e8f0;
+	border-radius: 12px;
+	background: #fafafa;
+	padding: 10px;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.section-column__remove {
-	background: transparent;
-	border: none;
-	cursor: pointer;
-	color: #94a3b8;
-	transition: color 0.15s ease;
-}
-
-.section-column__remove:hover {
-	color: #e11d48;
+.section-column--empty:hover,
+.section-column--empty:focus-within {
+	border-color: #c7d2fe;
+	background: rgba(238, 242, 255, 0.25);
 }
 
 .section-column__fields {
@@ -613,17 +792,28 @@ function closeColumnEditor() {
 }
 
 .section-column__empty {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	text-align: center;
 	font-size: 12px;
 	color: #94a3b8;
-	padding: 20px 12px;
+	padding: 12px;
 }
 
 .field-card {
-	border: 1px solid #d1d5db;
-	background: #fff;
-	padding: 10px;
+	border: 1px dashed #cbd5e1;
+	background: rgba(255, 255, 255, 0.9);
+	padding: 12px;
 	border-radius: 8px;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.field-card:hover,
+.field-card:focus-within {
+	border-color: #c7d2fe;
+	background: #fff;
 }
 
 .field-card__row {
@@ -661,6 +851,15 @@ function closeColumnEditor() {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+}
+
+.field-card:hover .field-card__actions,
+.field-card:focus-within .field-card__actions {
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .field-card__remove {
@@ -668,13 +867,7 @@ function closeColumnEditor() {
 	border: none;
 	cursor: pointer;
 	color: #cbd5e1;
-	opacity: 0;
-	transition: color 0.15s ease, opacity 0.15s ease;
-}
-
-.field-card:hover .field-card__remove {
-	opacity: 1;
-	pointer-events: auto;
+	transition: color 0.15s ease;
 }
 
 .field-card__remove:hover {
