@@ -224,20 +224,6 @@
 				</div>
 
 				<div class="settings-pane__field">
-					<label class="settings-pane__label">Font Family</label>
-					<select v-model="pageSettings.fontFamily" class="settings-pane__select">
-						<option v-if="loadingFonts" disabled>Loading fonts...</option>
-						<option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
-					</select>
-				</div>
-
-				<div class="settings-pane__field">
-					<label class="settings-pane__label">Font Size (pt)</label>
-					<input v-model.number="pageSettings.fontSize" type="number" placeholder="11"
-						class="settings-pane__input" />
-				</div>
-
-				<div class="settings-pane__field">
 					<label class="settings-pane__label">Letterhead / Logo</label>
 					<select v-model="pageSettings.letterhead" class="settings-pane__select">
 						<option value="">None</option>
@@ -253,7 +239,7 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
-import { PageSettings } from "../utils/pageSettings"
+import type { PageSettings } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
 
 
@@ -276,21 +262,21 @@ const typography = computed(() => {
 	if (!props.pageSettings.typography) {
 		props.pageSettings.typography = {
 			fieldLabel: {
-				fontFamily: props.pageSettings.fontFamily || "Inter",
+				fontFamily: "Inter",
 				fontSize: "8pt",
 				fontStyle: "normal",
 				fontWeight: "semibold",
 				color: "#64748b"
 			},
 			fieldValue: {
-				fontFamily: props.pageSettings.fontFamily || "Inter",
+				fontFamily: "Inter",
 				fontSize: "10pt",
 				fontStyle: "normal",
 				fontWeight: "regular",
 				color: "#0f172a"
 			},
 			sectionLabel: {
-				fontFamily: props.pageSettings.fontFamily || "Inter",
+				fontFamily: "Inter",
 				fontSize: "14pt",
 				fontStyle: "normal",
 				fontWeight: "bold",

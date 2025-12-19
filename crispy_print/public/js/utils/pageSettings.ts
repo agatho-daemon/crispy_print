@@ -17,13 +17,11 @@ export interface PageSettings {
 		left: number
 		right: number
 	}
-	fontFamily: string
-	fontSize: number
 	letterhead?: string
 	letterheadData?: any
 	language: string
 
-	typography: {
+	typography?: {
 		fieldLabel: TypographyStyle
 		fieldValue: TypographyStyle
 		sectionLabel: TypographyStyle
@@ -34,8 +32,6 @@ export const defaultPageSettings: PageSettings = {
 	pageSize: "A4",
 	orientation: "portrait",
 	margins: { top: 25, bottom: 20, left: 20, right: 20 },
-	fontFamily: "Arial",
-	fontSize: 11,
 	letterhead: "",
 	typography: undefined,
 	language: "en"
@@ -45,10 +41,14 @@ export function mergePageSettings(
 	base: PageSettings = defaultPageSettings,
 	overrides: Partial<PageSettings> = {}
 ): PageSettings {
+	// Backward-compatible: older saved settings may still include `fontFamily` / `fontSize`.
+	// Drop them entirely so typography + Typst preamble/doc_header become the single source of truth.
+	const { fontFamily: _ignoredFontFamily, fontSize: _ignoredFontSize, ...safeOverrides } =
+		overrides as any
 	return {
 		...base,
-		...overrides,
-		margins: { ...base.margins, ...(overrides.margins || {}) },
-		typography: overrides.typography ?? base.typography,
+		...safeOverrides,
+		margins: { ...base.margins, ...(safeOverrides.margins || {}) },
+		typography: safeOverrides.typography ?? base.typography,
 	}
 }
