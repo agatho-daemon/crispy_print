@@ -80,8 +80,6 @@ class JSONTypstTranslator {
 		// Get page settings from options
 		const pageSize = this.options.pageSize || "A4"
 		const orientation = this.options.orientation || "portrait"
-		const fontFamily = this.options.fontFamily || "Arial"
-		const fontSize = this.options.fontSize || 10
 		
 		// Use margins from options or fall back to pageMargins
 		const margins = this.options.margins 
@@ -118,31 +116,25 @@ class JSONTypstTranslator {
 		}
 
 		lines.push("")
-		lines.push("// Typography")
-		lines.push("#set text(")
-		lines.push(`  font: "${fontFamily}",`)
-		lines.push(`  size: ${fontSize}pt`)
-		lines.push(")")
-		lines.push("")
 
 		// Typography styles for labels and values
 		const typography = this.options.typography || {}
 		const fieldLabel = typography.fieldLabel || {
-			fontFamily: fontFamily,
+			fontFamily: "Inter",
 			fontSize: "8pt",
 			fontStyle: "normal",
 			fontWeight: "semibold",
 			color: "#64748b"
 		}
 		const fieldValue = typography.fieldValue || {
-			fontFamily: fontFamily,
+			fontFamily: "Inter",
 			fontSize: "10pt",
 			fontStyle: "normal",
 			fontWeight: "regular",
 			color: "#0f172a"
 		}
 		const sectionLabel = typography.sectionLabel || {
-			fontFamily: fontFamily,
+			fontFamily: "Inter",
 			fontSize: "14pt",
 			fontStyle: "normal",
 			fontWeight: "bold",
