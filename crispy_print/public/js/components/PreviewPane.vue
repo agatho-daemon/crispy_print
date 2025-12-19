@@ -25,8 +25,6 @@
 						<div id="preview-help" popovertargetaction="toggle" popover class="preview-pane__help-popover">
 							<ul class="preview-pane__help-list">
 								<li>Pick a document to preview.</li>
-								<li>View opens the PDF in a new tab.</li>
-								<li>Download saves the PDF to your device.</li>
 								<li>Refresh regenerates the preview.</li>
 								<li>View code shows the generated Typst source.</li>
 							</ul>
@@ -51,41 +49,15 @@
 								/>
 							</div>
 						</div>
-						<button
-							id="typst-refresh"
-							class="preview-btn"
-							type="button"
-							title="Refresh preview"
-						>
-							Refresh
-						</button>
 					</div>
 
+					<div class="preview-pane__spacer"></div>
+
 					<div class="preview-actions">
-						<button
-							id="typst-view-pdf"
-							class="preview-btn"
-							type="button"
-							disabled
-							title="View PDF in new tab"
-						>
-							View PDF
+						<button id="typst-refresh" class="preview-btn" type="button" title="Refresh preview">
+							Refresh
 						</button>
-						<button
-							id="typst-download"
-							class="preview-btn"
-							type="button"
-							disabled
-							title="Download PDF"
-						>
-							Download
-						</button>
-						<button
-							id="typst-view-code"
-							class="preview-btn"
-							type="button"
-							title="View Typst code"
-						>
+						<button id="typst-view-code" class="preview-btn" type="button" title="View Typst code">
 							View code
 						</button>
 					</div>
@@ -183,6 +155,10 @@ const store = useStore()
 .preview-status {
 	font-size: 12px;
 	color: #64748b;
+}
+
+.preview-pane__spacer {
+	flex: 1;
 }
 
 .preview-search {

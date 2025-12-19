@@ -125,6 +125,53 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	}
 	window.addEventListener("crispy-request-source", handleSourceRequest)
 
+	// PDF generation request (used by typst-print toolbar and any other UI)
+	const handlePdfRequest = (event: any) => {
+		const action = (event?.detail?.action || "view") as "view" | "download"
+
+		if (currentPdfBlob) {
+			if (action === "download") {
+				triggerPdfDownload()
+				return
+			}
+
+			const url = URL.createObjectURL(currentPdfBlob)
+			window.open(url, "_blank")
+			setTimeout(() => URL.revokeObjectURL(url), 1000)
+			return
+		}
+
+		if (!lastTypstCode) {
+			frappe?.show_alert({ message: __("Typst code not ready yet"), indicator: "orange" })
+			return
+		}
+
+		if (statusEl) {
+			statusEl.textContent = "generating pdf…"
+			statusEl.style.color = "#3498db"
+		}
+
+		pendingPdfDownload = action === "download"
+
+		let letterheadImage: string | null = null
+		if (adapter && typeof adapter.getLetterhead === "function") {
+			const letterhead = adapter.getLetterhead()
+			if (letterhead && (letterhead as any).image) {
+				letterheadImage = (letterhead as any).image
+			}
+		}
+
+		const requestId = pendingPdfDownload ? DOWNLOAD_REQUEST_ID : "view-pdf"
+		worker.postMessage({
+			typstSrc: lastTypstCode,
+			csrfToken: frappe?.csrf_token,
+			outputFormat: "pdf",
+			requestId,
+			letterheadImage,
+		})
+	}
+	window.addEventListener("crispy-request-pdf", handlePdfRequest)
+
 	function setupSampleDocAutocomplete(doctype: string) {
 		if (!doctype) {
 			console.warn("[Typst Preview] Cannot setup autocomplete - missing doctype")
@@ -785,9 +832,10 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			unsubscribeDoctype()
 			// console.log("[Typst Preview] Doctype subscription removed")
 		}
-		window.removeEventListener("crispy-compile-document", handlePreviewCompile)
-		window.removeEventListener("crispy-request-source", handleSourceRequest)
-		// console.log("[Typst Preview] Preview compile listener removed")
+			window.removeEventListener("crispy-compile-document", handlePreviewCompile)
+			window.removeEventListener("crispy-request-source", handleSourceRequest)
+			window.removeEventListener("crispy-request-pdf", handlePdfRequest)
+			// console.log("[Typst Preview] Preview compile listener removed")
 		if (worker) {
 			cleanup()
 			// console.log("[Typst Preview] Worker terminated")
