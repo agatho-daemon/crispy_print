@@ -134,14 +134,14 @@
 		</div>
 
 		<!-- Right Pane: Preview -->
-		<PreviewRenderer
-			:format-name="selectedFormat"
-			:layout="layout"
-			:doc-header="''"
-			:letterhead="pageSettingsComputed.letterheadData || null"
-			:doc-type="props.doctype || null"
-			:page-settings="pageSettingsComputed"
-		/>
+			<PreviewRenderer
+				:format-name="selectedFormat"
+				:layout="layout"
+				:doc-header="docHeader"
+				:letterhead="pageSettingsComputed.letterheadData || null"
+				:doc-type="props.doctype || null"
+				:page-settings="pageSettingsComputed"
+			/>
 	</div>
 </template>
 
@@ -171,11 +171,12 @@ const availableFormats = ref<FormatInfo[]>([])
 const availableLetterheads = ref<string[]>([])
 const selectedFormat = ref<string>("")
 
-// Settings state (single in-memory copy; PP does not persist)
-const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
+	// Settings state (single in-memory copy; PP does not persist)
+	const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 
-const layout = ref<any>(null)
-const loading = ref(true)
+	const layout = ref<any>(null)
+	const loading = ref(true)
+	const docHeader = ref("")
 
 // Initialize: Load available formats and letterheads
 async function initializeData() {
@@ -257,6 +258,7 @@ async function loadFormatSettings(formatName: string) {
 
 		// Store layout
 		layout.value = data.layout
+		docHeader.value = data.formatDoc.doc_header || ""
 
 		// console.log("[CrispyPP] Loaded format settings:", data.pageSettings)
 		// console.log("[CrispyPP] Loaded layout:", data.layout)
@@ -365,82 +367,11 @@ onMounted(async () => {
 
 // Generate and open PDF in new tab
 async function generatePDF() {
-	// console.log("[CrispyPP] Generating PDF...")
-	
-	if (!selectedFormat.value || !layout.value || !lastTypstReady()) {
-		frappe.show_alert({
-			message: __("Compile a preview before generating PDF"),
-			indicator: "orange"
-		})
-		return
-	}
+	window.dispatchEvent(new CustomEvent("crispy-request-pdf", { detail: { action: "view" } }))
+}
 
-	try {
-		// Get the Typst source from the worker
-		const typstSource = await new Promise((resolve, reject) => {
-			const handler = (event: any) => {
-				if (event.detail && "source" in event.detail) {
-					window.removeEventListener("crispy-source-response", handler)
-					resolve(event.detail.source)
-				}
-			}
-			window.addEventListener("crispy-source-response", handler)
-			
-			// Request source from worker
-			window.dispatchEvent(new CustomEvent("crispy-request-source"))
-			
-			// Timeout after 5 seconds
-			setTimeout(() => {
-				window.removeEventListener("crispy-source-response", handler)
-				reject(new Error("Timeout getting Typst source"))
-			}, 5000)
-		})
-
-		if (!typstSource) {
-			throw new Error("Failed to get Typst source")
-		}
-
-		// Compile to PDF
-		const response = await frappe.call({
-			method: "crispy_print.api.compile_typst",
-			args: {
-				typst_source: typstSource,
-				output_format: "pdf",
-				letterhead_image: pageSettings.value.letterheadData?.image || null
-			}
-		})
-
-		if (response.message?.pdf_data) {
-			// Convert base64 to blob
-			const byteCharacters = atob(response.message.pdf_data)
-			const byteNumbers = new Array(byteCharacters.length)
-			for (let i = 0; i < byteCharacters.length; i++) {
-				byteNumbers[i] = byteCharacters.charCodeAt(i)
-			}
-			const byteArray = new Uint8Array(byteNumbers)
-			const blob = new Blob([byteArray], { type: "application/pdf" })
-			
-			// Create URL and open in new tab
-			const url = URL.createObjectURL(blob)
-			window.open(url, "_blank")
-			
-			// Clean up URL after opening
-			setTimeout(() => URL.revokeObjectURL(url), 100)
-			
-			frappe.show_alert({
-				message: __("PDF opened in new tab"),
-				indicator: "green"
-			})
-		} else {
-			throw new Error("No PDF data returned")
-		}
-	} catch (error) {
-		console.error("[CrispyPP] PDF generation failed:", error)
-		frappe.show_alert({
-			message: __("Failed to generate PDF: {0}", [error.message]),
-			indicator: "red"
-		})
-	}
+async function downloadPDF() {
+	window.dispatchEvent(new CustomEvent("crispy-request-pdf", { detail: { action: "download" } }))
 }
 
 // Simple readiness check: we consider Typst ready if a prior compile set code in worker
@@ -456,7 +387,8 @@ defineExpose({
 	getLetterhead,
 	loadFormatSettings,
 	initializeData,
-	generatePDF
+	generatePDF,
+	downloadPDF
 })
 </script>
 

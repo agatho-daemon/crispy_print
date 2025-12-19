@@ -14,6 +14,7 @@ export interface FormatData {
 	doc_type: string
 	layout_json: string
 	page_settings: string
+	doc_header?: string
 	is_default?: number
 }
 

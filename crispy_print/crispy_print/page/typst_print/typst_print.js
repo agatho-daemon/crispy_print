@@ -128,7 +128,12 @@ frappe.ui.CrispyPrintView = class {
 
     setup_toolbar() {
         this.page.set_primary_action(__("Print"), () => this.print_document(), "printer");
-        this.page.add_button(__("PDF"), () => this.render_pdf(), { icon: "small-file" });
+        const $view_pdf_btn = this.page.add_button(__("PDF"), () => this.render_pdf(), { icon: "small-file" });
+        $view_pdf_btn && $view_pdf_btn.attr && $view_pdf_btn.attr("id", "typst-view-pdf");
+
+        const $download_pdf_btn = this.page.add_button(__("Download"), () => this.download_pdf(), { icon: "download" });
+        $download_pdf_btn && $download_pdf_btn.attr && $download_pdf_btn.attr("id", "typst-download");
+
         this.page.add_action_icon("es-line-filetype", () => this.go_to_form_view(), "", __("Form"));
     }
 
@@ -164,6 +169,22 @@ frappe.ui.CrispyPrintView = class {
             frappe.show_alert({ 
                 message: __("PDF generation not available"), 
                 indicator: "red" 
+            });
+        }
+    }
+
+    download_pdf() {
+        frappe.show_alert({ message: __("Generating PDF..."), indicator: "blue" });
+
+        if (this.vue_instance?.component?.downloadPDF) {
+            this.vue_instance.component.downloadPDF();
+        } else if (this.vue_instance?.component?.generatePDF) {
+            // Fallback to opening in new tab if download isn't available
+            this.vue_instance.component.generatePDF();
+        } else {
+            frappe.show_alert({
+                message: __("PDF generation not available"),
+                indicator: "red"
             });
         }
     }
