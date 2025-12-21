@@ -132,9 +132,14 @@
 													<span class="field-grip" title="Drag field">
 														&#8942;
 													</span>
-													<div class="field-card__label">
-														{{ field.label }}
-													</div>
+													<input
+														v-model="field.label"
+														type="text"
+														class="field-card__label field-card__label-input"
+														:placeholder="field.fieldname"
+														@blur="markDirty()"
+														@keydown.enter.prevent="onLabelEnter"
+													/>
 												</div>
 												<div class="field-card__actions">
 												<button
@@ -144,6 +149,14 @@
 													:title="`Alignment: ${field.align || 'left'}`"
 												>
 													{{ getAlignIcon(field.align) }}
+												</button>
+												<button
+													class="lp-btn lp-btn--small lp-btn--icon lp-btn--label-toggle"
+													type="button"
+													@click="toggleFieldLabel(field)"
+													:title="field.label?.trim() ? 'Hide label' : 'Show label'"
+												>
+													Aa
 												</button>
 												<button
 													v-if="field.fieldtype === 'Table'"
@@ -523,6 +536,31 @@ function onColumnsUpdate(columns: TableColumn[]) {
 function closeColumnEditor() {
 	columnEditor.value = null
 }
+
+function markDirty() {
+	store.markDirty()
+}
+
+function onLabelEnter(event: KeyboardEvent) {
+	const el = event.target as HTMLInputElement | null
+	el?.blur()
+}
+
+function getDefaultLabel(field: Field): string {
+	const meta = store.meta.value as any
+	const df = meta?.fields?.find?.((f: any) => f?.fieldname === field.fieldname)
+	return df?.label || field.fieldname
+}
+
+function toggleFieldLabel(field: Field) {
+	const current = (field.label || "").trim()
+	if (current) {
+		field.label = ""
+	} else {
+		field.label = getDefaultLabel(field)
+	}
+	store.markDirty()
+}
 </script>
 
 <style scoped>
@@ -847,6 +885,22 @@ function closeColumnEditor() {
 	text-overflow: ellipsis;
 }
 
+.field-card__label-input {
+	width: 100%;
+	border: none;
+	outline: none;
+	background: transparent;
+	padding: 0;
+	min-width: 0;
+}
+
+.field-card__label-input:focus {
+	background: #fff;
+	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18);
+	border-radius: 6px;
+	padding: 4px 6px;
+}
+
 .field-card__actions {
 	display: flex;
 	align-items: center;
@@ -937,6 +991,12 @@ function closeColumnEditor() {
 	font-size: 18px;
 	font-family: monospace;
 	font-weight: bold;
+}
+
+.lp-btn--label-toggle {
+	font-size: 14px;
+	font-family: inherit;
+	letter-spacing: -0.02em;
 }
 
 .lp-btn--secondary:hover {

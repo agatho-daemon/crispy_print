@@ -4,6 +4,7 @@ import { translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import type { CrispyLayout } from "../utils/layout"
+import type { LayoutField } from "../utils/layout"
 
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
@@ -483,6 +484,14 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
 		// console.log("[Typst Preview] Filtered document fields:", Object.keys(filteredDoc || {}).sort())
 
+		// Apply Frappe-style formatting (Currency/Date/Percent/etc.) so Typst output matches Frappe preview.
+		// We format *after* filtering to keep the payload small.
+		try {
+			applyFrappeFormatting(layout as any, currentDoctype, sampleDocData, filteredDoc)
+		} catch (e) {
+			console.warn("[Typst Preview] Failed to apply Frappe formatting:", e)
+		}
+
 		let typst: string
 		try {
 			let letterheadData: any = null
@@ -840,5 +849,97 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			cleanup()
 			// console.log("[Typst Preview] Worker terminated")
 		}
+	}
+}
+
+function applyFrappeFormatting(
+	layout: CrispyLayout | null | undefined,
+	doctype: string | null,
+	fullDoc: Record<string, any> | null,
+	filteredDoc: Record<string, any> | null
+) {
+	if (!layout || !doctype || !fullDoc || !filteredDoc) return
+	if (typeof frappe === "undefined" || typeof frappe.format !== "function" || !frappe.meta) return
+
+	const normalizeFieldtype = (df: any) => String(df?.fieldtype || "").replace(/\s+/g, "")
+	const shouldFormatFieldtype = (fieldtype: string) =>
+		[
+			"Currency",
+			"Int",
+			"Float",
+			"Percent",
+			"Date",
+			"Datetime",
+			"Time",
+		].includes(fieldtype)
+
+	const stripHtml = (value: any) => {
+		if (typeof value !== "string") return value
+		if (typeof frappe !== "undefined" && frappe.utils && typeof frappe.utils.strip_html === "function") {
+			return frappe.utils.strip_html(value)
+		}
+		// Fallback: basic tag stripping (keeps plain text)
+		return value
+			.replace(/<br\s*\/?>\s*\n/gi, "\n")
+			.replace(/<br\s*\/?>/gi, "\n")
+			.replace(/<[^>]+>/g, "")
+	}
+
+	const formatValue = (value: any, df: any) => {
+		// `only_value` avoids HTML wrappers (right-align spans, etc.)
+		return stripHtml(frappe.format(value, df, { only_value: 1 }, fullDoc))
+	}
+
+	const walkFields = (): LayoutField[] => {
+		const out: LayoutField[] = []
+		for (const section of layout.sections || []) {
+			for (const col of (section as any).columns || []) {
+				for (const field of (col as any).fields || []) {
+					if (field && field.fieldname) out.push(field as LayoutField)
+				}
+			}
+		}
+		return out
+	}
+
+	for (const field of walkFields()) {
+		if (!field.fieldname) continue
+
+		// Table fields: format each selected column value per row.
+		if (field.fieldtype === "Table") {
+			const tableFieldname = field.fieldname
+			const df = frappe.meta.get_docfield(doctype, tableFieldname)
+			const childDoctype = df?.options || field.options
+			if (!childDoctype) continue
+
+			const rows = filteredDoc[tableFieldname]
+			if (!Array.isArray(rows) || !rows.length) continue
+
+			const columns = field.table_columns || []
+			for (const row of rows) {
+				if (!row || typeof row !== "object") continue
+				for (const col of columns) {
+					if (!col?.fieldname) continue
+					const childDf = frappe.meta.get_docfield(childDoctype, col.fieldname)
+					if (!childDf) continue
+					if (!(col.fieldname in row)) continue
+					const ft = normalizeFieldtype(childDf)
+					if (!shouldFormatFieldtype(ft)) continue
+					row[col.fieldname] = formatValue(row[col.fieldname], childDf)
+				}
+			}
+			continue
+		}
+
+		// Non-table fields: format based on DocType docfield.
+		const df = frappe.meta.get_docfield(doctype, field.fieldname)
+		if (!df) continue
+		if (!(field.fieldname in filteredDoc)) continue
+
+		// Only run for types where Frappe formatting is meaningful/expected.
+		// (Currency handles symbols/precision; Date/Datetime handles locale; Percent handles precision + %.)
+		const ft = normalizeFieldtype(df)
+		if (!shouldFormatFieldtype(ft)) continue
+		filteredDoc[field.fieldname] = formatValue(filteredDoc[field.fieldname], df)
 	}
 }

@@ -380,11 +380,11 @@ class JSONTypstTranslator {
 
 		const fieldtype = field.fieldtype || "Data"
 		const fieldname = field.fieldname || "unknown"
-		const label = field.label || fieldname
+		const label = (field.label ?? "").trim()
 
 		switch (fieldtype) {
 			case "Section Break":
-				return `// Section Break: ${label}`
+				return `// Section Break: ${label || fieldname}`
 			case "Column Break":
 				return `// Column Break`
 			case "Custom HTML":
@@ -398,24 +398,31 @@ class JSONTypstTranslator {
 				return `// HTML field: ${fieldname}`
 			default:
 				if ((field as any).print_hide) {
-					return `// ${label} (hidden)`
+					return `// ${label || fieldname} (hidden)`
 				}
 
 				if (this.realDocData && !(fieldname in (this.realDocData as Record<string, any>))) {
-					return `// ${label} (field not in document)`
+					return `// ${label || fieldname} (field not in document)`
 				}
 
 				// Determine alignment
 				const align = field.align || this.getDefaultAlignment(fieldtype)
-				
+
+				// If label is empty, render only the value (common for "display" fields like address_display).
+				if (!label) {
+					if (align === "left") {
+						return `#text(..fieldValueStyle)[#doc.${fieldname}]#parbreak()`
+					}
+					return `#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]#parbreak()`
+				}
+
 				// Label always left-aligned, value respects field alignment
 				if (align === "left") {
 					// Both left-aligned - simple format
 					return `#text(..fieldLabelStyle)[${label}]#linebreak()#text(..fieldValueStyle)[#doc.${fieldname}]#parbreak()`
-				} else {
-					// Label left, value aligned separately
-					return `#text(..fieldLabelStyle)[${label}]#linebreak()#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]#parbreak()`
 				}
+				// Label left, value aligned separately
+				return `#text(..fieldLabelStyle)[${label}]#linebreak()#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]#parbreak()`
 		}
 	}
 
