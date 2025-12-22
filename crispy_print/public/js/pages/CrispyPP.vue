@@ -157,6 +157,7 @@ import {
 } from "../utils/formatLoader"
 import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
 import PreviewRenderer from "../components/PreviewRenderer.vue"
+import { pickFormatName } from "../utils/formatSelection"
 
 
 interface Props {
@@ -211,13 +212,7 @@ async function initializeData() {
 		// console.log("[CrispyPP] Available letterheads:", availableLetterheads.value)
 
 		// Determine which format to use
-		let formatToLoad = props.format
-		
-		if (!formatToLoad) {
-			// No format specified, use default
-			const defaultFormat = formatsWithDefault.find(f => f.is_default === 1)
-			formatToLoad = defaultFormat?.name || formatsWithDefault[0]?.name
-		}
+		const formatToLoad = pickFormatName(formatsWithDefault, props.format || null)
 
 		if (formatToLoad) {
 			selectedFormat.value = formatToLoad

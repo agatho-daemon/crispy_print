@@ -14,26 +14,21 @@ import LayoutPane from "../components/LayoutPane.vue"
 import PreviewPane from "../components/PreviewPane.vue"
 import SettingsPane from "../components/SettingsPane.vue"
 import { useStore } from "../composables/useStore"
+import { getCrispyBuilderFormatName } from "../utils/routes"
 
 const store = useStore()
 const pageSettings = store.pageSettings
 
 onMounted(async () => {
-	const route = frappe.get_route()
-
-	if (route.length > 1) {
-		await store.fetch(route[1])
-	}
+	const formatName = getCrispyBuilderFormatName()
+	if (formatName) await store.fetch(formatName)
 })
 
 // Watch for route changes
 if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	frappe.router.on("change", async () => {
-		const route = frappe.get_route()
-		if (route[0] === "crispy-print-builder" && route.length > 1) {
-			const formatName = route[1]
-			await store.fetch(formatName)
-		}
+		const formatName = getCrispyBuilderFormatName()
+		if (formatName) await store.fetch(formatName)
 	})
 }
 </script>
