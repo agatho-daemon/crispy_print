@@ -2,6 +2,7 @@
 // Modular utilities for loading and managing Crispy Format data
 
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "./pageSettings"
+import { deserializeLayout, type CrispyLayout } from "./layout"
 
 export interface FormatInfo {
 	name: string
@@ -16,6 +17,36 @@ export interface FormatData {
 	page_settings: string
 	doc_header?: string
 	is_default?: number
+}
+
+export function parseCrispyFormatDoc(doc: FormatData): {
+	layout: CrispyLayout | null
+	pageSettings: PageSettings
+	docHeader: string
+	formatDoc: FormatData
+} {
+	let layout: CrispyLayout | null = null
+	let pageSettings: PageSettings = { ...defaultPageSettings }
+
+	// Parse layout JSON (normalize section ids, etc.)
+	if (doc.layout_json) {
+		layout = deserializeLayout(doc.layout_json)
+	}
+
+	// Parse page settings
+	if (doc.page_settings) {
+		try {
+			const settings = JSON.parse(doc.page_settings)
+			pageSettings = mergePageSettings(defaultPageSettings, settings)
+		} catch (e) {
+			console.error("[FormatLoader] Failed to parse page_settings:", e)
+			pageSettings = { ...defaultPageSettings }
+		}
+	}
+
+	const docHeader = doc.doc_header || ""
+
+	return { layout, pageSettings, docHeader, formatDoc: doc }
 }
 
 /**
@@ -64,30 +95,8 @@ export async function loadFormatData(formatName: string): Promise<{
 } | null> {
 	try {
 		const doc = await frappe.db.get_doc("Crispy Format", formatName) as FormatData
-
-		let layout = null
-		let pageSettings: PageSettings = { ...defaultPageSettings }
-
-		// Parse layout JSON
-		if (doc.layout_json) {
-			try {
-				layout = JSON.parse(doc.layout_json)
-			} catch (e) {
-				console.error("[FormatLoader] Failed to parse layout_json:", e)
-			}
-		}
-
-		// Parse page settings
-		if (doc.page_settings) {
-			try {
-				const settings = JSON.parse(doc.page_settings)
-				pageSettings = mergePageSettings(defaultPageSettings, settings)
-			} catch (e) {
-				console.error("[FormatLoader] Failed to parse page_settings:", e)
-			}
-		}
-
-		return { layout, pageSettings, formatDoc: doc }
+		const parsed = parseCrispyFormatDoc(doc)
+		return { layout: parsed.layout, pageSettings: parsed.pageSettings, formatDoc: parsed.formatDoc }
 	} catch (error) {
 		console.error("[FormatLoader] Error loading format data:", error)
 		return null

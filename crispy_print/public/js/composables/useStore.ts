@@ -2,9 +2,10 @@
 // State management for Crispy Print Format Builder
 
 import { ref, computed, watch } from "vue"
-import { createDefaultLayout, serializeLayout, deserializeLayout } from "../utils/layout"
+import { createDefaultLayout, serializeLayout } from "../utils/layout"
 import type { CrispyLayout, DocField } from "../utils/layout"
-import { defaultPageSettings, mergePageSettings, type PageSettings } from "../utils/pageSettings"
+import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
+import { parseCrispyFormatDoc } from "../utils/formatLoader"
 
 
 let storeInstance: ReturnType<typeof buildStore> | null = null
@@ -122,24 +123,14 @@ function buildStore() {
 				})
 			}
 
-			// Load or create layout
-			layout.value = getLayout()
-			// console.log("[Store] Loaded layout:", layout.value)
-			if (!layout.value || !layout.value.sections?.length) {
-				layout.value = getDefaultLayout()
-			}
+			// Parse + normalize persisted state (shared with typst-print)
+			const parsed = parseCrispyFormatDoc(doc)
 
-			// Load page settings
-			if (doc.page_settings) {
-				try {
-					pageSettings.value = mergePageSettings(defaultPageSettings, JSON.parse(doc.page_settings))
-				} catch (e) {
-					console.warn("[Store] Failed to parse page_settings:", e)
-					pageSettings.value = { ...defaultPageSettings }
-				}
-			} else {
-				pageSettings.value = { ...defaultPageSettings }
-			}
+			// Load or create layout
+			layout.value = parsed.layout || getDefaultLayout()
+
+			// Load page settings (already merged with defaults by parser)
+			pageSettings.value = parsed.pageSettings || { ...defaultPageSettings }
 
 			// Load letterhead if specified
 			if (pageSettings.value.letterhead) {
@@ -160,26 +151,6 @@ function buildStore() {
 		} finally {
 			loading.value = false
 		}
-	}
-
-	/**
-	 * Get layout from Crispy Format or create default
-	 */
-	function getLayout(): CrispyLayout {
-		if (!crispyFormat.value) {
-			return { sections: [] }
-		}
-
-		// Try to parse existing layout_json
-		if (crispyFormat.value.layout_json) {
-			const parsed = deserializeLayout(crispyFormat.value.layout_json)
-			if (parsed) {
-				return parsed
-			}
-		}
-
-		// Create default layout from DocType meta
-		return getDefaultLayout()
 	}
 
 	/**
