@@ -4,6 +4,8 @@
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "./pageSettings"
 import { deserializeLayout, type CrispyLayout } from "./layout"
 
+let letterheadCache: Map<string, any> | null = null
+
 export interface FormatInfo {
 	name: string
 	doc_type: string
@@ -119,18 +121,39 @@ export async function getLetterheads(): Promise<string[]> {
 	}
 }
 
-/**
- * Get full Letter Head document with image
- */
-export async function getLetterheadData(letterheadName: string): Promise<any | null> {
+export async function loadLetterheadDoc(letterheadName: string): Promise<any | null> {
 	if (!letterheadName) return null
-	
+
 	try {
+		if (!letterheadCache) {
+			letterheadCache = new Map()
+		}
+
+		if (letterheadCache.has(letterheadName)) {
+			return letterheadCache.get(letterheadName) || null
+		}
+
 		const doc = await frappe.db.get_doc("Letter Head", letterheadName)
-		// console.log("[FormatLoader] Letterhead data fetched:", letterheadName, doc)
+		letterheadCache.set(letterheadName, doc)
 		return doc
 	} catch (error) {
 		console.error("[FormatLoader] Error fetching letterhead data:", error)
 		return null
 	}
+}
+
+export function clearLetterheadCache(letterheadName?: string) {
+	if (!letterheadCache) return
+	if (!letterheadName) {
+		letterheadCache.clear()
+		return
+	}
+	letterheadCache.delete(letterheadName)
+}
+
+/**
+ * Get full Letter Head document with image
+ */
+export async function getLetterheadData(letterheadName: string): Promise<any | null> {
+	return loadLetterheadDoc(letterheadName)
 }

@@ -5,7 +5,7 @@ import { ref, computed, watch } from "vue"
 import { createDefaultLayout, serializeLayout } from "../utils/layout"
 import type { CrispyLayout, DocField } from "../utils/layout"
 import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
-import { parseCrispyFormatDoc } from "../utils/formatLoader"
+import { loadLetterheadDoc, parseCrispyFormatDoc } from "../utils/formatLoader"
 
 
 let storeInstance: ReturnType<typeof buildStore> | null = null
@@ -135,10 +135,7 @@ function buildStore() {
 			// Load letterhead if specified
 			if (pageSettings.value.letterhead) {
 				try {
-					letterhead.value = await frappe.db.get_doc(
-						"Letter Head",
-						pageSettings.value.letterhead
-					)
+					letterhead.value = await loadLetterheadDoc(pageSettings.value.letterhead)
 				} catch (e) {
 					console.warn("[Store] Failed to load letterhead:", e)
 				}
@@ -254,7 +251,7 @@ function buildStore() {
 		}
 
 		try {
-			letterhead.value = await frappe.db.get_doc("Letter Head", letterheadName)
+			letterhead.value = await loadLetterheadDoc(letterheadName)
 			// console.log("[Store] Loaded letterhead:", letterheadName, letterhead.value)
 		} catch (e) {
 			console.error("[Store] Failed to load letterhead:", e)
