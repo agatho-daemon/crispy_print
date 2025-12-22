@@ -12,18 +12,10 @@ frappe.pages["typst-print"].on_page_show = function () {
     const print_view = frappe.pages["typst-print"].print_view;
     if (!print_view || !doctype || !docname) return;
 
-    // fetch doc + meta before rendering; cache prevents redundant network calls
-    frappe.model.with_doc(doctype, docname, () => {
-        frappe.model.with_doctype(doctype, () => {
-            const frm = {
-                doctype,
-                docname,
-                doc: frappe.get_doc(doctype, docname),
-                meta: frappe.get_meta(doctype),
-            };
-            print_view.show(frm, format);
-        });
-    });
+    // Let the Typst worker be the single source of truth for fetching the document (via API).
+    // We only pass doctype/docname through; the worker will fetch and compile.
+    const frm = { doctype, docname };
+    print_view.show(frm, format);
 };
 
 frappe.ui.CrispyPrintView = class {
@@ -82,7 +74,7 @@ frappe.ui.CrispyPrintView = class {
             });
         }
     
-    // Re-send document data on any preview refresh to ensure worker has latest doc
+    // Re-send document identity on any preview refresh to ensure worker fetches latest doc
     const resendDoc = () => this.trigger_compile_with_document(frm);
     window.addEventListener("crispy-refresh-preview", resendDoc);
     
@@ -104,12 +96,11 @@ frappe.ui.CrispyPrintView = class {
     }
 
     trigger_compile_with_document(frm) {
-        // Directly trigger compilation with the document data
+        // Trigger compilation by document identity (worker will fetch)
         const event = new CustomEvent("crispy-compile-document", {
             detail: {
                 doctype: frm.doctype,
                 docname: frm.docname,
-                doc: frm.doc
             }
         });
         window.dispatchEvent(event);

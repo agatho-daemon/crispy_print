@@ -38,7 +38,41 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	let awesomplete: any = null
 	let sampleDocData: Record<string, any> | null = null
 	let currentDoctype: string | null = null
+	let currentDocname: string | null = null
 	let sampleDocSelected = false
+	const docCache = new Map<string, Record<string, any>>()
+
+	function cacheKey(doctype: string, docname: string) {
+		return `${doctype}::${docname}`
+	}
+
+	function fetchDoc(doctype: string, docname: string): Promise<Record<string, any> | null> {
+		const key = cacheKey(doctype, docname)
+		const cached = docCache.get(key)
+		if (cached) return Promise.resolve(cached)
+
+		return new Promise((resolve) => {
+			if (typeof frappe === "undefined" || typeof frappe.call !== "function") {
+				resolve(null)
+				return
+			}
+
+			frappe.call({
+				method: "frappe.client.get",
+				args: { doctype, name: docname },
+				callback: (r: any) => {
+					if (r?.message && typeof r.message === "object") {
+						docCache.set(key, r.message)
+						resolve(r.message)
+					} else {
+						resolve(null)
+					}
+				},
+				error: () => resolve(null),
+			})
+		})
+	}
+
 	const clearPreview = () => {
 		if (svgContainer) {
 			svgContainer.classList.remove("has-pages")
@@ -82,24 +116,42 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 	// Listen for direct document compilation (preview mode)
 	const handlePreviewCompile = (event: any) => {
-		const { doctype, docname, doc } = event.detail || {}
-		if (!doc || !doctype || !docname) {
+		const { doctype, docname } = event.detail || {}
+		if (!doctype || !docname) {
 			console.warn("[Typst Preview] Invalid preview compile event", event.detail)
 			return
 		}
 
-		// console.log("[Typst Preview] Preview mode: Direct document compilation", docname)
+		// console.log("[Typst Preview] Preview mode: Fetch + compile document", docname)
 		currentDoctype = doctype
-		sampleDocData = doc
-		sampleDocSelected = true
+		currentDocname = docname
 		clearPreview()
 		lastLayoutSerialized = ""
 		lastTypstCode = ""
-		compile()
 
-		frappe.show_alert({
-			message: __("Preview loaded: {0}", [docname]),
-			indicator: "green",
+		statusEl && (statusEl.textContent = "fetching document…")
+		if (statusEl) statusEl.style.color = "#3498db"
+
+		fetchDoc(doctype, docname).then((doc) => {
+			if (!doc) {
+				console.warn("[Typst Preview] Failed to fetch document", doctype, docname)
+				sampleDocData = null
+				sampleDocSelected = false
+				if (statusEl) {
+					statusEl.textContent = "document not found"
+					statusEl.style.color = "#e74c3c"
+				}
+				return
+			}
+
+			sampleDocData = doc
+			sampleDocSelected = true
+			compile()
+
+			frappe?.show_alert?.({
+				message: __("Preview loaded: {0}", [docname]),
+				indicator: "green",
+			})
 		})
 	}
 
@@ -190,6 +242,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 
 		currentDoctype = doctype
+		currentDocname = null
 		// console.log("[Typst Preview] Setting up autocomplete for doctype:", doctype)
 
 		sampleDocInput.placeholder = `Search ${doctype}...`
@@ -241,6 +294,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			const selectedDoc = sampleDocInput.value
 			// console.log("[Typst Preview] Document selected:", selectedDoc)
 			sampleDocSelected = false
+			currentDocname = selectedDoc
 
 			if (!selectedDoc || !currentDoctype) {
 				console.warn("[Typst Preview] No document or doctype selected")
@@ -250,34 +304,27 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			statusEl && (statusEl.textContent = "fetching document...")
 			if (statusEl) statusEl.style.color = "#3498db"
 
-			frappe.call({
-				method: "frappe.client.get",
-				args: {
-					doctype: currentDoctype,
-					name: selectedDoc,
-				},
-				callback: (r: any) => {
-					if (r.message) {
-						sampleDocData = r.message
-						sampleDocSelected = true
-						clearPreview()
-						// console.log("[Typst Preview] Document data fetched:", sampleDocData)
-						lastLayoutSerialized = ""
-						lastTypstCode = ""
-						compile()
+			fetchDoc(currentDoctype, selectedDoc).then((doc) => {
+				if (doc) {
+					sampleDocData = doc
+					sampleDocSelected = true
+					clearPreview()
+					// console.log("[Typst Preview] Document data fetched:", sampleDocData)
+					lastLayoutSerialized = ""
+					lastTypstCode = ""
+					compile()
 
-						frappe.show_alert({
-							message: __("Preview updated with {0}", [selectedDoc]),
-							indicator: "green",
-						})
-					} else {
-						console.error("[Typst Preview] Failed to fetch document")
-						frappe.show_alert({
-							message: __("Failed to fetch document data"),
-							indicator: "red",
-						})
-					}
-				},
+					frappe.show_alert({
+						message: __("Preview updated with {0}", [selectedDoc]),
+						indicator: "green",
+					})
+				} else {
+					console.error("[Typst Preview] Failed to fetch document")
+					frappe.show_alert({
+						message: __("Failed to fetch document data"),
+						indicator: "red",
+					})
+				}
 			})
 		})
 
