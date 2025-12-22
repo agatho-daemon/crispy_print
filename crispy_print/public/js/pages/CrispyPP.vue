@@ -138,7 +138,7 @@
 				:format-name="selectedFormat"
 				:layout="layout"
 				:doc-header="docHeader"
-				:letterhead="pageSettingsComputed.letterheadData || null"
+				:letterhead="letterheadDoc"
 				:doc-type="props.doctype || null"
 				:doc-name="props.docname || null"
 				:page-settings="pageSettingsComputed"
@@ -152,7 +152,7 @@ import {
 	getFormatsForDoctype, 
 	loadFormatData, 
 	getLetterheads,
-	getLetterheadData,
+	loadLetterheadDoc,
 	type FormatInfo
 } from "../utils/formatLoader"
 import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
@@ -178,6 +178,7 @@ const selectedFormat = ref<string>("")
 	const layout = ref<any>(null)
 	const loading = ref(true)
 	const docHeader = ref("")
+	const letterheadDoc = ref<any | null>(null)
 
 // Initialize: Load available formats and letterheads
 async function initializeData() {
@@ -249,12 +250,12 @@ async function loadFormatSettings(formatName: string) {
 
 		// Overwrite in-memory page settings (ephemeral)
 		pageSettings.value = data.pageSettings || { ...defaultPageSettings }
-		pageSettings.value.letterheadData = null
 
 		// Preload letterhead data if the format has one set
 		if (pageSettings.value.letterhead) {
-			pageSettings.value.letterheadData = await getLetterheadData(pageSettings.value.letterhead)
-			// console.log("[CrispyPP] Letterhead preloaded on format load:", pageSettings.value.letterheadData)
+			letterheadDoc.value = await loadLetterheadDoc(pageSettings.value.letterhead)
+		} else {
+			letterheadDoc.value = null
 		}
 
 		// Store layout
@@ -290,7 +291,7 @@ async function resetFormat() {
 // Expose settings getters for external access
 const getPageSettings = () => ({
 	...pageSettings.value,
-	letterheadImage: pageSettings.value.letterheadData?.image || null  // Include image path for change detection
+	letterheadImage: letterheadDoc.value?.image || null  // Include image path for change detection
 })
 
 const pageSettingsComputed = computed(() => getPageSettings())
@@ -304,7 +305,7 @@ const getLayout = () => layout.value
 const getLetterhead = () => {
 	// Return the letterhead object with image path
 	// setupWorker expects an object with .image property
-	return pageSettings.value.letterheadData
+	return letterheadDoc.value
 }
 
 // Fetch letterhead data when letterhead selection changes
@@ -312,15 +313,9 @@ watch(
 	() => pageSettings.value.letterhead,
 	async (newLetterhead) => {
 		if (newLetterhead) {
-			pageSettings.value.letterheadData = await getLetterheadData(newLetterhead)
-			// console.log("[CrispyPP] Letterhead data loaded:", pageSettings.value.letterheadData)
-			if (pageSettings.value.letterheadData?.image) {
-				// console.log("[CrispyPP] Letterhead image path:", pageSettings.value.letterheadData.image)
-			} else {
-				console.warn("[CrispyPP] Letterhead has no image field!")
-			}
+			letterheadDoc.value = await loadLetterheadDoc(newLetterhead)
 		} else {
-			pageSettings.value.letterheadData = null
+			letterheadDoc.value = null
 		}
 	}
 )
