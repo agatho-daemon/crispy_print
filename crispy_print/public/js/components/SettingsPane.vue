@@ -105,8 +105,8 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Size</label>
-									<input v-model="typography.sectionLabel.fontSize" type="text" placeholder="14pt"
+									<label class="settings-pane__sublabel">Size (pt)</label>
+									<input v-model.number="sectionLabelFontSizePt" type="number" min="1" step="1"
 										class="settings-pane__input" />
 								</div>
 								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Style</label>
@@ -147,8 +147,8 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Size</label>
-									<input v-model="typography.fieldLabel.fontSize" type="text" placeholder="8pt"
+									<label class="settings-pane__sublabel">Size (pt)</label>
+									<input v-model.number="fieldLabelFontSizePt" type="number" min="1" step="1"
 										class="settings-pane__input" />
 								</div>
 								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Style</label>
@@ -189,8 +189,8 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Size</label>
-									<input v-model="typography.fieldValue.fontSize" type="text" placeholder="10pt"
+									<label class="settings-pane__sublabel">Size (pt)</label>
+									<input v-model.number="fieldValueFontSizePt" type="number" min="1" step="1"
 										class="settings-pane__input" />
 								</div>
 								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Style</label>
@@ -337,6 +337,43 @@ async function fetchLetterheads() {
 		loadingLetterheads.value = false
 	}
 }
+
+function parseSize(input: string | null | undefined): { value: number; unit: string; decimals: number } {
+	const raw = String(input || "").trim()
+	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i)
+	if (!match) return { value: 0, unit: "pt", decimals: 0 }
+	const value = Number(match[1])
+	const unit = (match[2] || "pt").toLowerCase()
+	const decimals = (match[1].split(".")[1] || "").length
+	return { value: Number.isFinite(value) ? value : 0, unit, decimals }
+}
+
+function formatPt(value: number): string {
+	const safe = Math.max(1, value)
+	const num = safe.toFixed(2).replace(/\.?0+$/, "")
+	return `${num}pt`
+}
+
+const sectionLabelFontSizePt = computed<number>({
+	get: () => Math.max(1, parseSize(typography.value.sectionLabel.fontSize).value || 0),
+	set: (value) => {
+		typography.value.sectionLabel.fontSize = formatPt(value)
+	},
+})
+
+const fieldLabelFontSizePt = computed<number>({
+	get: () => Math.max(1, parseSize(typography.value.fieldLabel.fontSize).value || 0),
+	set: (value) => {
+		typography.value.fieldLabel.fontSize = formatPt(value)
+	},
+})
+
+const fieldValueFontSizePt = computed<number>({
+	get: () => Math.max(1, parseSize(typography.value.fieldValue.fontSize).value || 0),
+	set: (value) => {
+		typography.value.fieldValue.fontSize = formatPt(value)
+	},
+})
 
 onMounted(() => {
 	fetchFonts()
