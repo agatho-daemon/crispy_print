@@ -82,16 +82,6 @@ frappe.ui.CrispyPrintView = class {
         this.vue_instance = null;
     }
 
-    get_default_page_settings() {
-        return {
-            pageSize: "A4",
-            orientation: "portrait",
-            margins: { top: 25, bottom: 20, left: 20, right: 20 },
-            language: "en",
-            letterhead: ""
-        };
-    }
-
     setup_toolbar() {
         this.page.set_primary_action(__("Print"), () => this.print_document(), "printer");
         const $view_pdf_btn = this.page.add_button(__("PDF"), () => this.render_pdf(), { icon: "small-file" });
