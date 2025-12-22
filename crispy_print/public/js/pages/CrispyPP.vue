@@ -155,7 +155,7 @@ import {
 	getLetterheadData,
 	type FormatInfo
 } from "../utils/formatLoader"
-import { defaultPageSettings, mergePageSettings, type PageSettings } from "../utils/pageSettings"
+import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
 import PreviewRenderer from "../components/PreviewRenderer.vue"
 
 
@@ -248,7 +248,7 @@ async function loadFormatSettings(formatName: string) {
 		}
 
 		// Overwrite in-memory page settings (ephemeral)
-		pageSettings.value = mergePageSettings(defaultPageSettings, data.pageSettings)
+		pageSettings.value = data.pageSettings || { ...defaultPageSettings }
 		pageSettings.value.letterheadData = null
 
 		// Preload letterhead data if the format has one set
