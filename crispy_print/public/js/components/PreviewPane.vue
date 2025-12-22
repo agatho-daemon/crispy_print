@@ -5,6 +5,7 @@
 		:doc-header="store.docHeader.value"
 		:letterhead="store.letterhead.value"
 		:doc-type="store.docType.value"
+		:doc-name="null"
 		:page-settings="store.pageSettings.value"
 	>
 		<template #menu>

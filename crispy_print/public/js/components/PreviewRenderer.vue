@@ -24,6 +24,7 @@ interface Props {
 	pageSettings: any
 	letterhead: any
 	docType: string | null
+	docName?: string | null
 	changeKey?: number
 	watchDataChanges?: boolean
 }
@@ -40,6 +41,7 @@ function createAdapter() {
 		getDocHeader: () => props.docHeader,
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
+		getDocname: () => props.docName,
 		getPageSettings: () => props.pageSettings,
 		hookDataChanges: enableDataWatch
 			? (callback: () => void) => {

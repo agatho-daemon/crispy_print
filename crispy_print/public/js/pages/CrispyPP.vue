@@ -140,6 +140,7 @@
 				:doc-header="docHeader"
 				:letterhead="pageSettingsComputed.letterheadData || null"
 				:doc-type="props.doctype || null"
+				:doc-name="props.docname || null"
 				:page-settings="pageSettingsComputed"
 			/>
 	</div>
@@ -264,9 +265,6 @@ async function loadFormatSettings(formatName: string) {
 		// console.log("[CrispyPP] Loaded layout:", data.layout)
 
 		loading.value = false
-
-		// Trigger render after data is ready (layout + letterhead)
-		schedulePreviewRefresh()
 	} catch (error) {
 		console.error("[CrispyPP] Error loading format settings:", error)
 		frappe.show_alert({
@@ -298,26 +296,8 @@ const getPageSettings = () => ({
 const pageSettingsComputed = computed(() => getPageSettings())
 
 function triggerRefresh() {
-	// console.log("[CrispyPP] Triggering refresh with settings:", getPageSettings())
-	window.dispatchEvent(new CustomEvent("crispy-refresh-preview", {
-		detail: {
-			settings: getPageSettings(),
-			layout: getLayout(),
-			doctype: props.doctype,
-			docname: props.docname
-		}
-	}))
-}
-
-let refreshTimer: number | null = null
-function schedulePreviewRefresh() {
-	if (refreshTimer) {
-		clearTimeout(refreshTimer)
-	}
-	refreshTimer = window.setTimeout(() => {
-		refreshTimer = null
-		triggerRefresh()
-	}, 150)
+	// Manual refresh (refetch + recompile) for typst-print page.
+	window.dispatchEvent(new CustomEvent("crispy-preview:refresh"))
 }
 
 const getLayout = () => layout.value
@@ -342,23 +322,10 @@ watch(
 		} else {
 			pageSettings.value.letterheadData = null
 		}
-		if (!loading.value) {
-			schedulePreviewRefresh()
-		}
 	}
 )
 
-// Watch for page settings changes (ephemeral) and trigger PreviewRenderer
-watch(
-	() => pageSettings.value,
-	() => {
-		// console.log("[CrispyPP] Settings changed:", getPageSettings())
-		if (!loading.value) {
-			schedulePreviewRefresh()
-		}
-	},
-	{ deep: true }
-)
+// No explicit preview events needed: PreviewRenderer/setupWorker reacts to prop changes directly.
 
 onMounted(async () => {
 	// console.log("[CrispyPP] Mounted with props:", props)
@@ -367,11 +334,11 @@ onMounted(async () => {
 
 // Generate and open PDF in new tab
 async function generatePDF() {
-	window.dispatchEvent(new CustomEvent("crispy-request-pdf", { detail: { action: "view" } }))
+	window.dispatchEvent(new CustomEvent("crispy-preview:request-pdf", { detail: { action: "view" } }))
 }
 
 async function downloadPDF() {
-	window.dispatchEvent(new CustomEvent("crispy-request-pdf", { detail: { action: "download" } }))
+	window.dispatchEvent(new CustomEvent("crispy-preview:request-pdf", { detail: { action: "download" } }))
 }
 
 // Simple readiness check: we consider Typst ready if a prior compile set code in worker

@@ -11,6 +11,7 @@ export interface TypstAdapter {
 	getDocHeader?: () => string | null | undefined
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
+	getDocname?: () => string | null | undefined
 	getPageSettings?: () => any
 	hookDataChanges?: (callback: () => void) => () => void
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
@@ -46,10 +47,10 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		return `${doctype}::${docname}`
 	}
 
-	function fetchDoc(doctype: string, docname: string): Promise<Record<string, any> | null> {
+	function fetchDoc(doctype: string, docname: string, opts: { force?: boolean } = {}): Promise<Record<string, any> | null> {
 		const key = cacheKey(doctype, docname)
 		const cached = docCache.get(key)
-		if (cached) return Promise.resolve(cached)
+		if (!opts.force && cached) return Promise.resolve(cached)
 
 		return new Promise((resolve) => {
 			if (typeof frappe === "undefined" || typeof frappe.call !== "function") {
@@ -69,6 +70,52 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 					}
 				},
 				error: () => resolve(null),
+			})
+		})
+	}
+
+	function dispatchStatus(status: "fetching" | "compiling" | "ready" | "error", message?: string) {
+		window.dispatchEvent(
+			new CustomEvent("crispy-preview:status", {
+				detail: { status, message },
+			})
+		)
+	}
+
+	function setCurrentDoc(doctype: string, docname: string, opts: { force?: boolean } = {}) {
+		currentDoctype = doctype
+		currentDocname = docname
+		sampleDocSelected = false
+		sampleDocData = null
+
+		clearPreview()
+		lastLayoutSerialized = ""
+		lastTypstCode = ""
+
+		if (statusEl) {
+			statusEl.textContent = "fetching document…"
+			statusEl.style.color = "#3498db"
+		}
+		dispatchStatus("fetching", docname)
+
+		fetchDoc(doctype, docname, { force: Boolean(opts.force) }).then((doc) => {
+			if (!doc) {
+				console.warn("[Typst Preview] Failed to fetch document", doctype, docname)
+				if (statusEl) {
+					statusEl.textContent = "document not found"
+					statusEl.style.color = "#e74c3c"
+				}
+				dispatchStatus("error", "document not found")
+				return
+			}
+
+			sampleDocData = doc
+			sampleDocSelected = true
+			compile()
+
+			frappe?.show_alert?.({
+				message: __("Preview loaded: {0}", [docname]),
+				indicator: "green",
 			})
 		})
 	}
@@ -114,69 +161,42 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		})
 	}
 
-	// Listen for direct document compilation (preview mode)
-	const handlePreviewCompile = (event: any) => {
-		const { doctype, docname } = event.detail || {}
+	// Unified preview events (single source of truth)
+	const handleSetDoc = (event: any) => {
+		const { doctype, docname } = event?.detail || {}
 		if (!doctype || !docname) {
-			console.warn("[Typst Preview] Invalid preview compile event", event.detail)
+			console.warn("[Typst Preview] Invalid set-doc event", event?.detail)
 			return
 		}
-
-		// console.log("[Typst Preview] Preview mode: Fetch + compile document", docname)
-		currentDoctype = doctype
-		currentDocname = docname
-		clearPreview()
-		lastLayoutSerialized = ""
-		lastTypstCode = ""
-
-		statusEl && (statusEl.textContent = "fetching document…")
-		if (statusEl) statusEl.style.color = "#3498db"
-
-		fetchDoc(doctype, docname).then((doc) => {
-			if (!doc) {
-				console.warn("[Typst Preview] Failed to fetch document", doctype, docname)
-				sampleDocData = null
-				sampleDocSelected = false
-				if (statusEl) {
-					statusEl.textContent = "document not found"
-					statusEl.style.color = "#e74c3c"
-				}
-				return
-			}
-
-			sampleDocData = doc
-			sampleDocSelected = true
-			compile()
-
-			frappe?.show_alert?.({
-				message: __("Preview loaded: {0}", [docname]),
-				indicator: "green",
-			})
-		})
+		setCurrentDoc(doctype, docname, { force: true })
 	}
+	window.addEventListener("crispy-preview:set-doc", handleSetDoc)
 
-	window.addEventListener("crispy-compile-document", handlePreviewCompile)
-	// Handle source request for PDF generation
-	// Replace handleSourceRequest (around line 110)
-	const handleSourceRequest = () => {
-		if (lastTypstCode) {
-			// console.log("[Typst Preview] Source requested, responding with code length:", lastTypstCode.length)
-			// Dispatch CustomEvent instead of postMessage
-			window.dispatchEvent(
-				new CustomEvent("crispy-source-response", {
-					detail: { source: lastTypstCode }
-				})
-			)
-		} else {
-			console.warn("[Typst Preview] No Typst source available yet")
-			window.dispatchEvent(
-				new CustomEvent("crispy-source-response", {
-					detail: { source: null, error: "No Typst source compiled yet" }
-				})
-			)
+const handleRefresh = () => {
+	if (!currentDoctype || !currentDocname) {
+		// typst-print mode: a specific document is provided by the page
+		const doctype = adapter.getDoctype?.()
+		const docname = adapter.getDocname?.()
+		if (doctype && docname) {
+			setCurrentDoc(doctype, docname, { force: true })
+			return
 		}
+		frappe?.show_alert?.({ message: __("Select a document first"), indicator: "orange" })
+		return
 	}
-	window.addEventListener("crispy-request-source", handleSourceRequest)
+	// Refetch + recompile to ensure latest values (single source of truth).
+	setCurrentDoc(currentDoctype, currentDocname, { force: true })
+}
+	window.addEventListener("crispy-preview:refresh", handleRefresh)
+
+	const handleSourceRequest = () => {
+		window.dispatchEvent(
+			new CustomEvent("crispy-preview:source", {
+				detail: { source: lastTypstCode || null },
+			})
+		)
+	}
+	window.addEventListener("crispy-preview:request-source", handleSourceRequest)
 
 	// PDF generation request (used by typst-print toolbar and any other UI)
 	const handlePdfRequest = (event: any) => {
@@ -223,7 +243,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			letterheadImage,
 		})
 	}
-	window.addEventListener("crispy-request-pdf", handlePdfRequest)
+	window.addEventListener("crispy-preview:request-pdf", handlePdfRequest)
 
 	function setupSampleDocAutocomplete(doctype: string) {
 		if (!doctype) {
@@ -304,28 +324,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			statusEl && (statusEl.textContent = "fetching document...")
 			if (statusEl) statusEl.style.color = "#3498db"
 
-			fetchDoc(currentDoctype, selectedDoc).then((doc) => {
-				if (doc) {
-					sampleDocData = doc
-					sampleDocSelected = true
-					clearPreview()
-					// console.log("[Typst Preview] Document data fetched:", sampleDocData)
-					lastLayoutSerialized = ""
-					lastTypstCode = ""
-					compile()
-
-					frappe.show_alert({
-						message: __("Preview updated with {0}", [selectedDoc]),
-						indicator: "green",
-					})
-				} else {
-					console.error("[Typst Preview] Failed to fetch document")
-					frappe.show_alert({
-						message: __("Failed to fetch document data"),
-						indicator: "red",
-					})
-				}
-			})
+			setCurrentDoc(currentDoctype, selectedDoc, { force: true })
 		})
 
 		// console.log("[Typst Preview] Autocomplete setup complete")
@@ -398,7 +397,11 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 
 		const doctype = adapter.getDoctype?.()
-		if (doctype) {
+		const docname = adapter.getDocname?.()
+		if (doctype && docname) {
+			// typst-print mode: render a specific document without requiring sample selection
+			setCurrentDoc(doctype, docname, { force: true })
+		} else if (doctype) {
 			// console.log("[Typst Preview] Doctype from adapter:", doctype)
 			setupSampleDocAutocomplete(doctype)
 		} else {
@@ -473,6 +476,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 					statusEl.textContent = "select a document"
 					statusEl.style.color = "#e67e22"
 				}
+				dispatchStatus("error", "no document")
 				return
 			}
 
@@ -591,6 +595,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			statusEl.textContent = "compiling…"
 			statusEl.style.color = "#f39c12"
 		}
+		dispatchStatus("compiling")
 		if (downloadBtn) downloadBtn.disabled = true
 		currentPdfBlob = null
 
@@ -673,6 +678,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 						statusEl.textContent = "compiled ✓"
 						statusEl.style.color = "#27ae60"
 					}
+					dispatchStatus("ready")
 				} else {
 					console.warn("[Typst Preview] SVG response received for download request")
 					pendingPdfDownload = false
@@ -888,9 +894,10 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			unsubscribeDoctype()
 			// console.log("[Typst Preview] Doctype subscription removed")
 		}
-			window.removeEventListener("crispy-compile-document", handlePreviewCompile)
-			window.removeEventListener("crispy-request-source", handleSourceRequest)
-			window.removeEventListener("crispy-request-pdf", handlePdfRequest)
+			window.removeEventListener("crispy-preview:set-doc", handleSetDoc)
+			window.removeEventListener("crispy-preview:refresh", handleRefresh)
+			window.removeEventListener("crispy-preview:request-source", handleSourceRequest)
+			window.removeEventListener("crispy-preview:request-pdf", handlePdfRequest)
 			// console.log("[Typst Preview] Preview compile listener removed")
 		if (worker) {
 			cleanup()
