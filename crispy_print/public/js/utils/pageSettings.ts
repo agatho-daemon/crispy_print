@@ -8,6 +8,12 @@ export interface TypographyStyle {
 	color: string
 }
 
+export interface TypographySettings {
+	fieldLabel: TypographyStyle
+	fieldValue: TypographyStyle
+	sectionLabel: TypographyStyle
+}
+
 export interface PageSettings {
 	pageSize: string
 	orientation: string
@@ -21,11 +27,7 @@ export interface PageSettings {
 	letterheadData?: any
 	language: string
 
-	typography?: {
-		fieldLabel: TypographyStyle
-		fieldValue: TypographyStyle
-		sectionLabel: TypographyStyle
-	}
+	typography?: TypographySettings
 }
 
 export const defaultPageSettings: PageSettings = {
