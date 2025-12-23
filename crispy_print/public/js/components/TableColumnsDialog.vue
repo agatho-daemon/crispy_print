@@ -167,7 +167,7 @@ watch(
 						indicator: "orange",
 					})
 				}
-			}, 800)
+			}, 200)
 			
 			// Do NOT emit update to prevent compilation
 			return
