@@ -239,9 +239,9 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
-import type { PageSettings, TypographySettings } from "../utils/pageSettings"
+import { ensureTypography, type PageSettings, type TypographySettings } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
-import { call } from "../api/frappe"
+import { getLetterheads, getTypstLocalFonts } from "../api/crispy"
 
 
 interface Props {
@@ -260,32 +260,7 @@ const isTypographyExpanded = ref(false)
 
 // Initialize typography with defaults if not present
 const typography = computed<TypographySettings>(() => {
-	if (!props.pageSettings.typography) {
-		props.pageSettings.typography = {
-			fieldLabel: {
-				fontFamily: "Inter",
-				fontSize: "8pt",
-				fontStyle: "normal",
-				fontWeight: "semibold",
-				color: "#64748b"
-			},
-			fieldValue: {
-				fontFamily: "Inter",
-				fontSize: "10pt",
-				fontStyle: "normal",
-				fontWeight: "regular",
-				color: "#0f172a"
-			},
-			sectionLabel: {
-				fontFamily: "Inter",
-				fontSize: "14pt",
-				fontStyle: "normal",
-				fontWeight: "bold",
-				color: "#1e293b"
-			}
-		}
-	}
-	return props.pageSettings.typography
+	return ensureTypography(props.pageSettings)
 })
 
 // Fetch available fonts from Typst
@@ -298,10 +273,7 @@ async function fetchFonts() {
 
 	loadingFonts.value = true
 	try {
-		const response = await call<string[]>({
-			method: "crispy_print.api.get_typst_local_fonts",
-		})
-		availableFonts.value = response.message || []
+		availableFonts.value = await getTypstLocalFonts()
 	} catch (error) {
 		console.error("[SettingsPane] Failed to fetch fonts:", error)
 		// Fallback fonts
@@ -321,16 +293,7 @@ async function fetchLetterheads() {
 
 	loadingLetterheads.value = true
 	try {
-		const response = await call<Array<{ name: string }>>({
-			method: "frappe.client.get_list",
-			args: {
-				doctype: "Letter Head",
-				fields: ["name"],
-				filters: { disabled: 0 },
-				order_by: "name asc",
-			},
-		})
-		availableLetterheads.value = (response.message || []).map((lh: any) => lh.name)
+		availableLetterheads.value = await getLetterheads()
 	} catch (error) {
 		console.error("[SettingsPane] Failed to fetch letterheads:", error)
 		availableLetterheads.value = []

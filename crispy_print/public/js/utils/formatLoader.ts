@@ -3,7 +3,13 @@
 
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "./pageSettings"
 import { deserializeLayout, type CrispyLayout } from "./layout"
-import { call, getDoc, getList } from "../api/frappe"
+import {
+	getCrispyFormat,
+	getCrispyFormatsForDoctype,
+	getDefaultCrispyFormatForDoctype,
+	getLetterheadDoc,
+	getLetterheads as apiGetLetterheads,
+} from "../api/crispy"
 
 let letterheadCache: Map<string, any> | null = null
 
@@ -57,11 +63,7 @@ export function parseCrispyFormatDoc(doc: FormatData): {
  */
 export async function getFormatsForDoctype(doctype: string): Promise<FormatInfo[]> {
 	try {
-		const response = await call<FormatInfo[]>({
-			method: "crispy_print.api.get_crispy_formats_for_doctype",
-			args: { doctype }
-		})
-		return response.message || []
+		return await getCrispyFormatsForDoctype(doctype)
 	} catch (error) {
 		console.error("[FormatLoader] Error fetching formats:", error)
 		return []
@@ -73,15 +75,7 @@ export async function getFormatsForDoctype(doctype: string): Promise<FormatInfo[
  */
 export async function getDefaultFormat(doctype: string): Promise<string | null> {
 	try {
-		const formats = await getList<{ name: string }>("Crispy Format", {
-			filters: {
-				doc_type: doctype,
-				is_default: 1
-			},
-			fields: ["name"],
-			limit: 1
-		})
-		return formats.length > 0 ? formats[0].name : null
+		return await getDefaultCrispyFormatForDoctype(doctype)
 	} catch (error) {
 		console.error("[FormatLoader] Error fetching default format:", error)
 		return null
@@ -97,7 +91,7 @@ export async function loadFormatData(formatName: string): Promise<{
 	formatDoc: FormatData
 } | null> {
 	try {
-		const doc = await getDoc<FormatData>("Crispy Format", formatName)
+		const doc = await getCrispyFormat(formatName)
 		const parsed = parseCrispyFormatDoc(doc)
 		return { layout: parsed.layout, pageSettings: parsed.pageSettings, formatDoc: parsed.formatDoc }
 	} catch (error) {
@@ -111,11 +105,7 @@ export async function loadFormatData(formatName: string): Promise<{
  */
 export async function getLetterheads(): Promise<string[]> {
 	try {
-		const letterheads = await getList<{ name: string }>("Letter Head", {
-			fields: ["name"],
-			order_by: "name asc"
-		})
-		return letterheads.map((lh: any) => lh.name)
+		return await apiGetLetterheads()
 	} catch (error) {
 		console.error("[FormatLoader] Error fetching letterheads:", error)
 		return []
@@ -134,7 +124,7 @@ export async function loadLetterheadDoc(letterheadName: string): Promise<any | n
 			return letterheadCache.get(letterheadName) || null
 		}
 
-		const doc = await getDoc<any>("Letter Head", letterheadName)
+		const doc = await getLetterheadDoc(letterheadName)
 		letterheadCache.set(letterheadName, doc)
 		return doc
 	} catch (error) {

@@ -6,7 +6,8 @@ import { createDefaultLayout, serializeLayout } from "../utils/layout"
 import type { CrispyLayout, DocField } from "../utils/layout"
 import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
 import { loadLetterheadDoc, parseCrispyFormatDoc } from "../utils/formatLoader"
-import { getDoc, setValue, withDoctype } from "../api/frappe"
+import { getCrispyFormat, saveCrispyFormat } from "../api/crispy"
+import { withDoctype } from "../api/frappe"
 
 
 let storeInstance: ReturnType<typeof buildStore> | null = null
@@ -50,7 +51,7 @@ function buildStore() {
 
 		try {
 			// Fetch the Crispy Format document
-			const doc = await getDoc<CrispyFormat>("Crispy Format", formatName)
+			const doc = await getCrispyFormat(formatName)
 			crispyFormat.value = doc
 
 			// Load DocType metadata
@@ -174,7 +175,7 @@ function buildStore() {
 				page_settings: JSON.stringify(pageSettings.value),
 			}
 
-			await setValue("Crispy Format", crispyFormat.value.name, updateData)
+			await saveCrispyFormat(crispyFormat.value.name, updateData)
 
 			frappe.show_alert({
 				message: __("Crispy Format saved"),
