@@ -4,7 +4,7 @@
 			<div class="layout-pane__header-row">
 				<h3 class="layout-pane__title">Layout Builder</h3>
 				<div class="layout-pane__controls">
-					<button class="lp-btn lp-btn--secondary" @click="resetLayout">Reset</button>
+					<button class="lp-btn lp-btn--secondary" @click="resetLayout">Reset to Default</button>
 					<div class="layout-pane__spacer"></div>
 					<div>
 						<button
@@ -550,14 +550,20 @@ function resetLayout() {
 
 	if (typeof frappe !== "undefined" && typeof frappe.confirm === "function") {
 		frappe.confirm(
-			__("Reset layout to default? This will discard your changes."),
+			__(
+				"Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
+			),
 			() => confirmReset(),
 			() => {}
 		)
 		return
 	}
 
-	if (!window.confirm("Reset layout to default? This will discard your changes.")) {
+	if (
+		!window.confirm(
+			"Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
+		)
+	) {
 		return
 	}
 	const fresh = store.getDefaultLayout()
