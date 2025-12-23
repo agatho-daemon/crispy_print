@@ -401,7 +401,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 		if (adapter.hookDataChanges) {
 			unsubscribeAdapter = adapter.hookDataChanges(() => {
-				scheduleCompile("adapter-change", 800)
+				scheduleCompile("adapter-change", 200)
 			})
 		}
 
