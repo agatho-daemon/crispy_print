@@ -7,6 +7,7 @@
 		:doc-type="store.docType.value"
 		:doc-name="null"
 		:page-settings="store.pageSettings.value"
+		:watch-data-changes="true"
 	>
 		<template #menu>
 			<div class="preview-pane__header">
