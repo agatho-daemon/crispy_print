@@ -233,12 +233,13 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			}
 		}
 
-		const requestId = pendingPdfDownload ? DOWNLOAD_REQUEST_ID : "view-pdf"
+		const requestId = pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
 		worker.postMessage({
 			typstSrc: lastTypstCode,
 			csrfToken: frappe?.csrf_token,
 			outputFormat: "pdf",
 			requestId,
+			seq: nextSeq(requestId),
 			letterheadImage,
 		})
 	}
@@ -328,6 +329,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 
 	const PREVIEW_REQUEST_ID = "preview"
 	const DOWNLOAD_REQUEST_ID = "download"
+	const VIEW_PDF_REQUEST_ID = "view-pdf"
 	const previewOutputFormat = "svg"
 	svgContainer?.classList.remove("preview-hidden")
 
@@ -343,6 +345,14 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	let unsubscribeAdapter: (() => void) | null = null
 	let unsubscribeDoctype: (() => void) | null = null
 	let compilationDisabled = false
+	let seqCounter = 0
+	const latestSeqByRequest: Record<string, number> = {}
+
+	function nextSeq(requestId: string): number {
+		const seq = ++seqCounter
+		latestSeqByRequest[requestId] = seq
+		return seq
+	}
 
 	function scheduleCompile(reason = "hook", delay = 200) {
 		if (compilationDisabled) {
@@ -579,14 +589,21 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			csrfToken: frappe?.csrf_token,
 			outputFormat: previewOutputFormat,
 			requestId: PREVIEW_REQUEST_ID,
+			seq: nextSeq(PREVIEW_REQUEST_ID),
 			letterheadImage,
 		})
 	}
 
 	worker.addEventListener("message", (e) => {
-		const { type, ok, format, svgPages, pdfBytes, error, requestId, pageCount } = e.data || {}
+		const { type, ok, format, svgPages, pdfBytes, error, requestId, pageCount, seq } = e.data || {}
+		if (requestId && typeof seq === "number") {
+			const expected = latestSeqByRequest[requestId]
+			if (typeof expected === "number" && seq !== expected) {
+				return
+			}
+		}
 		const isDownload = requestId === DOWNLOAD_REQUEST_ID
-		const isViewPdf = requestId === "view-pdf"
+		const isViewPdf = requestId === VIEW_PDF_REQUEST_ID
 
 		if (type === "init") {
 			return
@@ -735,12 +752,12 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 				}
 			}
 
-			const VIEW_PDF_REQUEST_ID = "view-pdf"
 			worker.postMessage({
 				typstSrc: lastTypstCode,
 				csrfToken: frappe?.csrf_token,
 				outputFormat: "pdf",
 				requestId: VIEW_PDF_REQUEST_ID,
+				seq: nextSeq(VIEW_PDF_REQUEST_ID),
 				letterheadImage,
 			})
 		})
@@ -778,6 +795,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 				csrfToken: frappe?.csrf_token,
 				outputFormat: "pdf",
 				requestId: DOWNLOAD_REQUEST_ID,
+				seq: nextSeq(DOWNLOAD_REQUEST_ID),
 				letterheadImage,
 			})
 		})
