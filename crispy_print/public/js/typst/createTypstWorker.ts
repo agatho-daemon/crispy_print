@@ -78,7 +78,7 @@ async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterh
 self.postMessage({ type: 'init', ok: true, wasmReady: false });
 
 self.addEventListener('message', async (event) => {
-  const { typstSrc, csrfToken, outputFormat, requestId, letterheadImage } = event.data || {};
+  const { typstSrc, csrfToken, outputFormat, requestId, letterheadImage, seq } = event.data || {};
   const desiredFormat = (outputFormat || 'svg').toLowerCase();
 
   if (!typstSrc || !typstSrc.trim()) {
@@ -86,7 +86,8 @@ self.addEventListener('message', async (event) => {
       type: 'compile',
       ok: false,
       error: { message: 'No Typst source provided' },
-      requestId
+      requestId,
+      seq
     });
     return;
   }
@@ -101,7 +102,8 @@ self.addEventListener('message', async (event) => {
       type: 'compile',
       ok: true,
       format: result.format,
-      requestId
+      requestId,
+      seq
     };
 
     if (result.format === 'svg') {
@@ -118,6 +120,7 @@ self.addEventListener('message', async (event) => {
       type: 'compile',
       ok: false,
       requestId,
+      seq,
       error: {
         message: err?.message || String(err),
         stack: err?.stack || null
