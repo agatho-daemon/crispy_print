@@ -241,6 +241,7 @@
 import { ref, watch, onMounted, computed } from "vue"
 import type { PageSettings, TypographySettings } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
+import { call } from "../api/frappe"
 
 
 interface Props {
@@ -297,7 +298,7 @@ async function fetchFonts() {
 
 	loadingFonts.value = true
 	try {
-		const response = await frappe.call({
+		const response = await call<string[]>({
 			method: "crispy_print.api.get_typst_local_fonts",
 		})
 		availableFonts.value = response.message || []
@@ -320,7 +321,7 @@ async function fetchLetterheads() {
 
 	loadingLetterheads.value = true
 	try {
-		const response = await frappe.call({
+		const response = await call<Array<{ name: string }>>({
 			method: "frappe.client.get_list",
 			args: {
 				doctype: "Letter Head",

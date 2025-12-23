@@ -6,6 +6,7 @@ import { createDefaultLayout, serializeLayout } from "../utils/layout"
 import type { CrispyLayout, DocField } from "../utils/layout"
 import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
 import { loadLetterheadDoc, parseCrispyFormatDoc } from "../utils/formatLoader"
+import { getDoc, setValue, withDoctype } from "../api/frappe"
 
 
 let storeInstance: ReturnType<typeof buildStore> | null = null
@@ -13,7 +14,7 @@ let storeInstance: ReturnType<typeof buildStore> | null = null
 interface CrispyFormat {
 	name: string
 	doc_type: string
-	is_default: boolean
+	is_default?: number
 	doc_header?: string
 	typst_preamble?: string
 	typst_layout?: string
@@ -43,84 +44,68 @@ function buildStore() {
 	 * Fetch Crispy Format document and load DocType metadata
 	 */
 	async function fetch(formatName: string) {
-		if (typeof frappe === "undefined") {
-			console.warn("[Store] Frappe not available - running in dev mode")
-			return
-		}
-
 		loading.value = true
 
 		try {
 			// Fetch the Crispy Format document
-			const doc = await frappe.db.get_doc("Crispy Format", formatName)
+			const doc = await getDoc<CrispyFormat>("Crispy Format", formatName)
 			crispyFormat.value = doc
 
 			// Load DocType metadata
 			if (doc.doc_type) {
-				await new Promise<void>((resolve) => {
-					frappe.model.with_doctype(doc.doc_type, () => {
-						meta.value = frappe.get_meta(doc.doc_type)
+				await withDoctype(doc.doc_type)
+				meta.value = frappe.get_meta(doc.doc_type)
 
-						const skipTypes = ["Tab Break", "Section Break", "Column Break"]
+				const skipTypes = ["Tab Break", "Section Break", "Column Break"]
 
-						// Extract fields for the fields pane, matching builder behavior
-						const baseFields: DocField[] = meta.value.fields
-							.filter(
-								(f: DocField) =>
-									f.fieldname &&
-									!skipTypes.includes(f.fieldtype || "")
-							)
-							.map((f: DocField) => ({
-								fieldname: f.fieldname,
-								label: f.label || f.fieldname,
-								fieldtype: f.fieldtype,
-								options: f.options,
-								print_hide: f.print_hide,
-							}))
+				// Extract fields for the fields pane, matching builder behavior
+				const baseFields: DocField[] = meta.value.fields
+					.filter((f: DocField) => f.fieldname && !skipTypes.includes(f.fieldtype || ""))
+					.map((f: DocField) => ({
+						fieldname: f.fieldname,
+						label: f.label || f.fieldname,
+						fieldtype: f.fieldtype,
+						options: f.options,
+						print_hide: f.print_hide,
+					}))
 
-						const extras: DocField[] = [
-							{ label: "DocType", fieldname: "doctype", fieldtype: "Data" },
-							{ label: "ID (name)", fieldname: "name", fieldtype: "Data" },
-							{ label: "Spacer", fieldname: "spacer", fieldtype: "Spacer" },
-							{ label: "Divider", fieldname: "divider", fieldtype: "Divider" },
-						]
+				const extras: DocField[] = [
+					{ label: "DocType", fieldname: "doctype", fieldtype: "Data" },
+					{ label: "ID (name)", fieldname: "name", fieldtype: "Data" },
+					{ label: "Spacer", fieldname: "spacer", fieldtype: "Spacer" },
+					{ label: "Divider", fieldname: "divider", fieldtype: "Divider" },
+				]
 
-						const templateFields: DocField[] =
-							typeof frappe === "undefined" ||
-								!crispyFormat.value?.__onload?.print_templates
-								? []
-								: crispyFormat.value.__onload.print_templates
-									.map((template: any) => {
-										let df: any
-										if (template.field) {
-											df = frappe.meta.get_docfield(meta.value.name, template.field)
-										} else {
-											const scrub =
-												typeof frappe.scrub === "function"
-													? frappe.scrub(template.name)
-													: template.name.toLowerCase().replace(/\s+/g, "_")
-											df = {
-												label: template.name,
-												fieldname: scrub,
-											}
-										}
+				const templateFields: DocField[] = !crispyFormat.value?.__onload?.print_templates
+					? []
+					: crispyFormat.value.__onload.print_templates
+						.map((template: any) => {
+							let df: any
+							if (template.field) {
+								df = frappe.meta.get_docfield(meta.value.name, template.field)
+							} else {
+								const scrub =
+									typeof frappe.scrub === "function"
+										? frappe.scrub(template.name)
+										: template.name.toLowerCase().replace(/\s+/g, "_")
+								df = {
+									label: template.name,
+									fieldname: scrub,
+								}
+							}
 
-										if (!df?.fieldname) return null
+							if (!df?.fieldname) return null
 
-										return {
-											label: `${df.label} (Field Template)`,
-											fieldname: `${df.fieldname}_template`,
-											fieldtype: "Field Template",
-											options: template.name,
-										} as DocField
-									})
-									.filter(Boolean)
+							return {
+								label: `${df.label} (Field Template)`,
+								fieldname: `${df.fieldname}_template`,
+								fieldtype: "Field Template",
+								options: template.name,
+							} as DocField
+						})
+						.filter(Boolean)
 
-						fields.value = [...extras, ...templateFields, ...baseFields]
-
-						resolve()
-					})
-				})
+				fields.value = [...extras, ...templateFields, ...baseFields]
 			}
 
 			// Parse + normalize persisted state (shared with typst-print)
@@ -165,11 +150,6 @@ function buildStore() {
 	 * Save changes to backend
 	 */
 	async function saveChanges() {
-		if (typeof frappe === "undefined") {
-			console.warn("[Store] Cannot save - Frappe not available")
-			return
-		}
-
 		if (!crispyFormat.value || !layout.value) {
 			console.warn("[Store] Nothing to save")
 			return
@@ -192,15 +172,7 @@ function buildStore() {
 				page_settings: JSON.stringify(pageSettings.value),
 			}
 
-			// Save to backend
-			await frappe.call({
-				method: "frappe.client.set_value",
-				args: {
-					doctype: "Crispy Format",
-					name: crispyFormat.value.name,
-					fieldname: updateData,
-				},
-			})
+			await setValue("Crispy Format", crispyFormat.value.name, updateData)
 
 			frappe.show_alert({
 				message: __("Crispy Format saved"),
