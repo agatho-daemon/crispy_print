@@ -239,7 +239,7 @@
 </template>
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
-import type { PageSettings } from "../utils/pageSettings"
+import type { PageSettings, TypographySettings } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
 
 
@@ -258,7 +258,7 @@ const isPageSettingsExpanded = ref(false)
 const isTypographyExpanded = ref(false)
 
 // Initialize typography with defaults if not present
-const typography = computed(() => {
+const typography = computed<TypographySettings>(() => {
 	if (!props.pageSettings.typography) {
 		props.pageSettings.typography = {
 			fieldLabel: {
