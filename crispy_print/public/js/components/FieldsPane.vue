@@ -39,12 +39,8 @@
 
 		<div class="fields-list">
 			<div v-if="filteredFields.length === 0" class="empty-state">
-				<p v-if="searchQuery" class="empty-message">
-					No fields match "{{ searchQuery }}!"
-				</p>
-				<p v-else class="empty-message">
-					No fields available yet!
-				</p>
+				<p v-if="searchQuery" class="empty-message">No fields match "{{ searchQuery }}!"</p>
+				<p v-else class="empty-message">No fields available yet!</p>
 			</div>
 
 			<div
@@ -141,7 +137,9 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease;
 }
 
 .fields-pane__help-btn:hover {
@@ -189,7 +187,9 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	color: #0f172a;
 	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
 .search-input:focus {
@@ -230,7 +230,9 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	border: 1px dashed #e2e8f0;
 	border-radius: 6px;
 	background: #fff;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
 	cursor: grab;
 }
 
@@ -248,5 +250,4 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-
 </style>

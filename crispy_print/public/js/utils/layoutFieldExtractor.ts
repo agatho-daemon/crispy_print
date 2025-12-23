@@ -101,7 +101,14 @@ export function filterDocumentFields(doc: any, usedFields: Set<string>): any {
 					})
 
 					// Always include essential child table fields
-					const essentialChildFields = ["name", "idx", "doctype", "parent", "parentfield", "parenttype"]
+					const essentialChildFields = [
+						"name",
+						"idx",
+						"doctype",
+						"parent",
+						"parentfield",
+						"parenttype",
+					]
 					essentialChildFields.forEach((field) => {
 						if (field in childDoc) {
 							childFiltered[field] = childDoc[field]

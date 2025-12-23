@@ -25,7 +25,12 @@
 						>
 							?
 						</button>
-						<div id="preview-help" popovertargetaction="toggle" popover class="preview-pane__help-popover">
+						<div
+							id="preview-help"
+							popovertargetaction="toggle"
+							popover
+							class="preview-pane__help-popover"
+						>
 							<ul class="preview-pane__help-list">
 								<li>Pick a document to preview.</li>
 								<li>Refresh regenerates the preview.</li>
@@ -113,7 +118,9 @@ const store = useStore()
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease;
 }
 
 .preview-pane__help-btn:hover {
@@ -181,7 +188,9 @@ const store = useStore()
 	border: 1px solid #e2e8f0;
 	border-radius: 6px;
 	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
 .preview-search__input:focus {
@@ -198,7 +207,9 @@ const store = useStore()
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease;
 }
 
 .preview-btn:hover {

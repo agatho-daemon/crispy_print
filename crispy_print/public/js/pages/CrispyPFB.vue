@@ -3,7 +3,11 @@
 		<FieldsPane class="pane pane--fields" :fields="store.fields" :loading="store.loading" />
 		<LayoutPane class="pane pane--layout" />
 		<PreviewPane class="pane pane--preview" />
-		<SettingsPane class="pane pane--settings" :page-settings="pageSettings" :mark-dirty="store.markDirty" />
+		<SettingsPane
+			class="pane pane--settings"
+			:page-settings="pageSettings"
+			:mark-dirty="store.markDirty"
+		/>
 	</div>
 </template>
 

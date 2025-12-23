@@ -55,4 +55,3 @@ export async function withDoctype(doctype: string): Promise<void> {
 		f.model.with_doctype(doctype, () => resolve())
 	})
 }
-

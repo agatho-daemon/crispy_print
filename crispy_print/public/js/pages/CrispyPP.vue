@@ -35,38 +35,39 @@
 			</div>
 			<div class="settings-pane__body">
 				<div class="settings-pane__form">
-				<!-- Print Format -->
-				<div class="settings-pane__field">
-					<label class="settings-pane__label">Print Format</label>
-					<select v-model="selectedFormat" class="settings-pane__select" @change="onFormatChange">
-						<option v-for="fmt in availableFormats" :key="fmt.name" :value="fmt.name">
-							{{ fmt.name }}{{ fmt.is_default ? ' (Default)' : '' }}
-						</option>
-					</select>
-				</div>
+					<!-- Print Format -->
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">Print Format</label>
+						<select v-model="selectedFormat" class="settings-pane__select" @change="onFormatChange">
+							<option v-for="fmt in availableFormats" :key="fmt.name" :value="fmt.name">
+								{{ fmt.name }}{{ fmt.is_default ? " (Default)" : "" }}
+							</option>
+						</select>
+					</div>
 
-				<!-- Language -->
-				<div class="settings-pane__field">
-					<label class="settings-pane__label">Language</label>
-					<select v-model="pageSettings.language" class="settings-pane__select">
-						<option value="en">English</option>
-						<option value="ar">Arabic</option>
-						<option value="fr">French</option>
-						<option value="de">German</option>
-						<option value="es">Spanish</option>
-					</select>
-				</div>
+					<!-- Language -->
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">Language</label>
+						<select v-model="pageSettings.language" class="settings-pane__select">
+							<option value="en">English</option>
+							<option value="ar">Arabic</option>
+							<option value="fr">French</option>
+							<option value="de">German</option>
+							<option value="es">Spanish</option>
+						</select>
+					</div>
 
-				<!-- Letter Head -->
-				<div class="settings-pane__field">
-					<label class="settings-pane__label">Letter Head</label>
-					<select v-model="pageSettings.letterhead" class="settings-pane__select">
-						<option value="">None</option>
-						<option v-for="lh in availableLetterheads" :key="lh" :value="lh">
-							{{ lh }}
-						</option>
-					</select>
-				</div>					<!-- Page Size -->
+					<!-- Letter Head -->
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">Letter Head</label>
+						<select v-model="pageSettings.letterhead" class="settings-pane__select">
+							<option value="">None</option>
+							<option v-for="lh in availableLetterheads" :key="lh" :value="lh">
+								{{ lh }}
+							</option>
+						</select>
+					</div>
+					<!-- Page Size -->
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">Page Size</label>
 						<select v-model="pageSettings.pageSize" class="settings-pane__select">
@@ -134,34 +135,32 @@
 		</div>
 
 		<!-- Right Pane: Preview -->
-			<PreviewRenderer
-				:format-name="selectedFormat"
-				:layout="layout"
-				:doc-header="docHeader"
-				:letterhead="letterheadDoc"
-				:doc-type="props.doctype || null"
-				:doc-name="props.docname || null"
-				:page-settings="pageSettingsComputed"
-				:change-key="changeKey"
-				:watch-data-changes="true"
-
-			/>
+		<PreviewRenderer
+			:format-name="selectedFormat"
+			:layout="layout"
+			:doc-header="docHeader"
+			:letterhead="letterheadDoc"
+			:doc-type="props.doctype || null"
+			:doc-name="props.docname || null"
+			:page-settings="pageSettingsComputed"
+			:change-key="changeKey"
+			:watch-data-changes="true"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from "vue"
-import { 
-	getFormatsForDoctype, 
-	loadFormatData, 
+import {
+	getFormatsForDoctype,
+	loadFormatData,
 	getLetterheads,
 	loadLetterheadDoc,
-	type FormatInfo
+	type FormatInfo,
 } from "../utils/formatLoader"
 import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
 import PreviewRenderer from "../components/PreviewRenderer.vue"
 import { pickFormatName } from "../utils/formatSelection"
-
 
 interface Props {
 	doctype?: string
@@ -176,23 +175,23 @@ const availableFormats = ref<FormatInfo[]>([])
 const availableLetterheads = ref<string[]>([])
 const selectedFormat = ref<string>("")
 
-	// Settings state (single in-memory copy; PP does not persist)
-	const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
+// Settings state (single in-memory copy; PP does not persist)
+const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 
-	const layout = ref<any>(null)
-	const loading = ref(true)
-	const docHeader = ref("")
-	const letterheadDoc = ref<any | null>(null)
-	const changeKey = ref(0)
+const layout = ref<any>(null)
+const loading = ref(true)
+const docHeader = ref("")
+const letterheadDoc = ref<any | null>(null)
+const changeKey = ref(0)
 
-	// Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
-	watch(
-		() => [layout.value, pageSettings.value, letterheadDoc.value, docHeader.value],
-		() => {
-			changeKey.value++
-		},
-		{ deep: true }
-	)
+// Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
+watch(
+	() => [layout.value, pageSettings.value, letterheadDoc.value, docHeader.value],
+	() => {
+		changeKey.value++
+	},
+	{ deep: true }
+)
 
 // Initialize: Load available formats and letterheads
 async function initializeData() {
@@ -207,7 +206,7 @@ async function initializeData() {
 
 		// Load available formats for this doctype
 		const formats = await getFormatsForDoctype(props.doctype)
-		
+
 		// Check is_default flag for each format
 		const formatsWithDefault = await Promise.all(
 			formats.map(async (fmt) => {
@@ -215,7 +214,7 @@ async function initializeData() {
 				return { ...fmt, is_default: isDefault.message.is_default }
 			})
 		)
-		
+
 		availableFormats.value = formatsWithDefault
 
 		// Load letterheads
@@ -235,7 +234,7 @@ async function initializeData() {
 		console.error("[CrispyPP] Error initializing:", error)
 		frappe.show_alert({
 			message: __("Failed to initialize preview: {0}", [error.message]),
-			indicator: "red"
+			indicator: "red",
 		})
 		loading.value = false
 	}
@@ -247,7 +246,7 @@ async function loadFormatSettings(formatName: string) {
 		loading.value = true
 
 		const data = await loadFormatData(formatName)
-		
+
 		if (!data) {
 			throw new Error("Failed to load format data")
 		}
@@ -271,7 +270,7 @@ async function loadFormatSettings(formatName: string) {
 		console.error("[CrispyPP] Error loading format settings:", error)
 		frappe.show_alert({
 			message: __("Failed to load format: {0}", [error.message]),
-			indicator: "red"
+			indicator: "red",
 		})
 		loading.value = false
 	}
@@ -290,7 +289,7 @@ async function resetFormat() {
 // Expose settings getters for external access
 const getPageSettings = () => ({
 	...pageSettings.value,
-	letterheadImage: letterheadDoc.value?.image || null  // Include image path for change detection
+	letterheadImage: letterheadDoc.value?.image || null, // Include image path for change detection
 })
 
 const pageSettingsComputed = computed(() => getPageSettings())
@@ -327,11 +326,15 @@ onMounted(async () => {
 
 // Generate and open PDF in new tab
 async function generatePDF() {
-	window.dispatchEvent(new CustomEvent("crispy-preview:request-pdf", { detail: { action: "view" } }))
+	window.dispatchEvent(
+		new CustomEvent("crispy-preview:request-pdf", { detail: { action: "view" } })
+	)
 }
 
 async function downloadPDF() {
-	window.dispatchEvent(new CustomEvent("crispy-preview:request-pdf", { detail: { action: "download" } }))
+	window.dispatchEvent(
+		new CustomEvent("crispy-preview:request-pdf", { detail: { action: "download" } })
+	)
 }
 
 // Simple readiness check: we consider Typst ready if a prior compile set code in worker
@@ -348,7 +351,7 @@ defineExpose({
 	loadFormatSettings,
 	initializeData,
 	generatePDF,
-	downloadPDF
+	downloadPDF,
 })
 </script>
 
@@ -557,7 +560,9 @@ defineExpose({
 /* Typst page styling (will be populated by setupWorker) */
 :global(.typst-page) {
 	margin-bottom: 1.5rem;
-	box-shadow: 0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2);
+	box-shadow:
+		0 4px 12px rgba(148, 163, 184, 0.25),
+		0 2px 6px rgba(148, 163, 184, 0.2);
 	background: white;
 }
 

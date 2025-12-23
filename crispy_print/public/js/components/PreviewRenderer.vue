@@ -45,27 +45,27 @@ function createAdapter() {
 		getPageSettings: () => props.pageSettings,
 		hookDataChanges: enableDataWatch
 			? (callback: () => void) => {
-				// Prefer explicit invalidation via changeKey to avoid expensive deep watches.
-				if (props.changeKey !== undefined) {
-					const stop = watch(
-						() => props.changeKey,
-						(_newVal, oldVal) => {
-							if (oldVal !== undefined) {
-								callback()
+					// Prefer explicit invalidation via changeKey to avoid expensive deep watches.
+					if (props.changeKey !== undefined) {
+						const stop = watch(
+							() => props.changeKey,
+							(_newVal, oldVal) => {
+								if (oldVal !== undefined) {
+									callback()
+								}
 							}
-						}
+						)
+						return () => stop()
+					}
+
+					// Fallback for callers that don't provide changeKey.
+					const stop = watch(
+						() => [props.layout, props.pageSettings, props.letterhead, props.docHeader],
+						() => callback(),
+						{ deep: true }
 					)
 					return () => stop()
 				}
-
-				// Fallback for callers that don't provide changeKey.
-				const stop = watch(
-					() => [props.layout, props.pageSettings, props.letterhead, props.docHeader],
-					() => callback(),
-					{ deep: true }
-				)
-				return () => stop()
-			}
 			: undefined,
 		hookDoctypeChanges: (callback: (doctype: string | null | undefined) => void) => {
 			const stop = watch(
@@ -79,14 +79,14 @@ function createAdapter() {
 }
 
 watch(
-  () => [props.formatName, previewPaneEl.value] as const,
-  ([formatName, element]) => {
-    if (!formatName || !element) return
+	() => [props.formatName, previewPaneEl.value] as const,
+	([formatName, element]) => {
+		if (!formatName || !element) return
 
-    teardown?.()
-    teardown = setupWorker(formatName, element, createAdapter())
-  },
-  { immediate: true }
+		teardown?.()
+		teardown = setupWorker(formatName, element, createAdapter())
+	},
+	{ immediate: true }
 )
 
 onBeforeUnmount(() => {

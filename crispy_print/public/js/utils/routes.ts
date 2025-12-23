@@ -14,4 +14,3 @@ export function getCrispyBuilderFormatName(route: FrappeRoute = getRouteSafe()):
 	if (page !== "crispy-print-builder") return null
 	return format ? String(format) : null
 }
-

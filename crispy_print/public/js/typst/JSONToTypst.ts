@@ -16,7 +16,13 @@ export function translateJSONToTypst(
 	realDocData: RealDocData = null,
 	options: Record<string, any> = {}
 ) {
-	const translator = new JSONTypstTranslator(layoutData || {}, letterheadData || {}, doctype, realDocData, options)
+	const translator = new JSONTypstTranslator(
+		layoutData || {},
+		letterheadData || {},
+		doctype,
+		realDocData,
+		options
+	)
 	return translator.translate()
 }
 
@@ -28,7 +34,13 @@ class JSONTypstTranslator {
 	sections: LayoutWithOptionalSections["sections"]
 	options: Record<string, any>
 
-	constructor(layoutData: LayoutWithOptionalSections, letterheadData: any, doctype: string, realDocData: RealDocData, options: Record<string, any>) {
+	constructor(
+		layoutData: LayoutWithOptionalSections,
+		letterheadData: any,
+		doctype: string,
+		realDocData: RealDocData,
+		options: Record<string, any>
+	) {
 		this.layout = layoutData || {}
 		this.letterhead = letterheadData || {}
 		this.doctype = doctype
@@ -77,9 +89,9 @@ class JSONTypstTranslator {
 		// Get page settings from options
 		const pageSize = this.options.pageSize || "A4"
 		const orientation = this.options.orientation || "portrait"
-		
+
 		// Use margins from options or fall back to pageMargins
-		const margins = this.options.margins 
+		const margins = this.options.margins
 			? this.resolveMargins(this.options.margins)
 			: this.resolveMargins(this.options.pageMargins)
 
@@ -95,7 +107,9 @@ class JSONTypstTranslator {
 			if (orientation === "landscape") {
 				lines.push("  flipped: true,")
 			}
-			lines.push(`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right}),`)
+			lines.push(
+				`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right}),`
+			)
 			if (filename) {
 				lines.push(`  background: image("${filename}", width: 100%)`)
 			}
@@ -106,7 +120,9 @@ class JSONTypstTranslator {
 			if (orientation === "landscape") {
 				lines.push("  flipped: true,")
 			}
-			lines.push(`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right})`)
+			lines.push(
+				`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right})`
+			)
 			lines.push(")")
 		}
 
@@ -119,21 +135,21 @@ class JSONTypstTranslator {
 			fontSize: "8pt",
 			fontStyle: "normal",
 			fontWeight: "semibold",
-			color: "#64748b"
+			color: "#64748b",
 		}
 		const fieldValue = typography.fieldValue || {
 			fontFamily: "Inter",
 			fontSize: "10pt",
 			fontStyle: "normal",
 			fontWeight: "regular",
-			color: "#0f172a"
+			color: "#0f172a",
 		}
 		const sectionLabel = typography.sectionLabel || {
 			fontFamily: "Inter",
 			fontSize: "14pt",
 			fontStyle: "normal",
 			fontWeight: "bold",
-			color: "#1e293b"
+			color: "#1e293b",
 		}
 
 		lines.push("// Typography styles")
@@ -329,8 +345,7 @@ class JSONTypstTranslator {
 			return lines.join("\n")
 		}
 
-		const hasFields =
-			section.columns?.some((col) => col.fields && col.fields.length > 0) || false
+		const hasFields = section.columns?.some((col) => col.fields && col.fields.length > 0) || false
 		if (!hasFields) {
 			lines.push("// (no fields)")
 			return lines.join("\n")
@@ -444,22 +459,22 @@ class JSONTypstTranslator {
 
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
 			lines.push(`  #table(`)
-		// Use column widths from layout (auto, 1fr, 2fr, 100pt, etc.)
-		const widths = columns.map((col) => col.width || "auto")
-		lines.push(`    columns: (${widths.join(", ")}),`)
+			// Use column widths from layout (auto, 1fr, 2fr, 100pt, etc.)
+			const widths = columns.map((col) => col.width || "auto")
+			lines.push(`    columns: (${widths.join(", ")}),`)
 			const alignments = columns.map((col) => {
 				const align = col.align || this.getDefaultAlignment(col.fieldtype)
 				return align
 			})
 			lines.push(`    align: (${alignments.join(", ")}),`)
-			
+
 			const headerCells = columns.map((col) => `[*${col.label}*]`).join(", ")
 			lines.push(`    ${headerCells},`)
-			
+
 			// Row data - map each row to all its column values and flatten
 			const rowCells = columns.map((col) => `[#row.${col.fieldname}]`).join(", ")
 			lines.push(`    ..doc.${fieldname}.map(row => (${rowCells})).flatten(),`)
-			
+
 			lines.push(`  )`)
 			lines.push(`]`)
 		} else {
@@ -470,22 +485,20 @@ class JSONTypstTranslator {
 	}
 	convertHTMLToTypst(html: string) {
 		if (!html || !html.trim()) return "// (empty HTML)"
-			let typst = html
-				.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "= $1")
-				.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "== $1")
-				.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "=== $1")
-				.replace(/<strong[^>]*>(.*?)<\/strong>/gi, "*$1*")
-				.replace(/<b[^>]*>(.*?)<\/b>/gi, "*$1*")
-				.replace(/<em[^>]*>(.*?)<\/em>/gi, "_$1_")
-				.replace(/<i[^>]*>(.*?)<\/i>/gi, "_$1_")
-				.replace(/<br\s*\/?>/gi, " \\\n")
-				.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n\n")
-				.replace(/<div[^>]*>(.*?)<\/div>/gi, "$1\n")
-				.replace(/<[^>]+>/g, "")
+		let typst = html
+			.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "= $1")
+			.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "== $1")
+			.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "=== $1")
+			.replace(/<strong[^>]*>(.*?)<\/strong>/gi, "*$1*")
+			.replace(/<b[^>]*>(.*?)<\/b>/gi, "*$1*")
+			.replace(/<em[^>]*>(.*?)<\/em>/gi, "_$1_")
+			.replace(/<i[^>]*>(.*?)<\/i>/gi, "_$1_")
+			.replace(/<br\s*\/?>/gi, " \\\n")
+			.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n\n")
+			.replace(/<div[^>]*>(.*?)<\/div>/gi, "$1\n")
+			.replace(/<[^>]+>/g, "")
 
-			typst = typst
-				.replace(/\{\{\s*doc\.(\w+)\s*\}\}/g, "#doc.$1")
-				.replace(/\{%.*?%\}/g, "")
+		typst = typst.replace(/\{\{\s*doc\.(\w+)\s*\}\}/g, "#doc.$1").replace(/\{%.*?%\}/g, "")
 
 		return typst.trim()
 	}

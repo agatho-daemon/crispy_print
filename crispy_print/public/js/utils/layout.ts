@@ -154,14 +154,14 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 			if (!currentColumn) setColumn()
 
 			if (!df.print_hide) {
-			const fieldtype = df.fieldtype || "Data"
-			
-			const field: LayoutField = {
-				label: df.label,
-				fieldname: df.fieldname,
-				fieldtype: fieldtype,
-				options: df.options,
-				align: getDefaultFieldAlignment(fieldtype),
+				const fieldtype = df.fieldtype || "Data"
+
+				const field: LayoutField = {
+					label: df.label,
+					fieldname: df.fieldname,
+					fieldtype: fieldtype,
+					options: df.options,
+					align: getDefaultFieldAlignment(fieldtype),
 				}
 
 				const fieldTemplate = getFieldTemplate(crispyFormat, df.fieldname, df)
@@ -215,13 +215,12 @@ export function getTableColumns(dfOrDoctype: DocField | string): TableColumn[] {
 	const candidates = childMeta.fields
 		.filter((f: DocField) => !f.print_hide && f.fieldname && f.label)
 		.filter(
-			(f: DocField) =>
-				f.fieldtype && !["Section Break", "Column Break"].includes(f.fieldtype)
+			(f: DocField) => f.fieldtype && !["Section Break", "Column Break"].includes(f.fieldtype)
 		)
 
 	for (const f of candidates) {
 		if (!parentHasLabel) break
-		
+
 		// Use Typst width values
 		const width = "auto" // Default to auto width
 
@@ -256,10 +255,7 @@ function getDefaultHeader(meta: any) {
 /**
  * Pick specific keys from an object (for serialization)
  */
-export function pluck<T extends Record<string, any>>(
-	obj: T,
-	keys: (keyof T)[]
-): Partial<T> {
+export function pluck<T extends Record<string, any>>(obj: T, keys: (keyof T)[]): Partial<T> {
 	const result: Partial<T> = {}
 	for (const key of keys) {
 		if (key in obj) {
@@ -287,7 +283,7 @@ export function serializeLayout(layout: CrispyLayout): string {
 		{
 			...normalized,
 			sections: cleanedSections,
-		},
+		}
 		// null,
 		// 2
 	)
