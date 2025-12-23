@@ -3,6 +3,7 @@
 
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "./pageSettings"
 import { deserializeLayout, type CrispyLayout } from "./layout"
+import { call, getDoc, getList } from "../api/frappe"
 
 let letterheadCache: Map<string, any> | null = null
 
@@ -15,8 +16,8 @@ export interface FormatInfo {
 export interface FormatData {
 	name: string
 	doc_type: string
-	layout_json: string
-	page_settings: string
+	layout_json?: string
+	page_settings?: string
 	doc_header?: string
 	is_default?: number
 }
@@ -56,7 +57,7 @@ export function parseCrispyFormatDoc(doc: FormatData): {
  */
 export async function getFormatsForDoctype(doctype: string): Promise<FormatInfo[]> {
 	try {
-		const response = await frappe.call({
+		const response = await call<FormatInfo[]>({
 			method: "crispy_print.api.get_crispy_formats_for_doctype",
 			args: { doctype }
 		})
@@ -72,7 +73,7 @@ export async function getFormatsForDoctype(doctype: string): Promise<FormatInfo[
  */
 export async function getDefaultFormat(doctype: string): Promise<string | null> {
 	try {
-		const formats = await frappe.db.get_list("Crispy Format", {
+		const formats = await getList<{ name: string }>("Crispy Format", {
 			filters: {
 				doc_type: doctype,
 				is_default: 1
@@ -96,7 +97,7 @@ export async function loadFormatData(formatName: string): Promise<{
 	formatDoc: FormatData
 } | null> {
 	try {
-		const doc = await frappe.db.get_doc("Crispy Format", formatName) as FormatData
+		const doc = await getDoc<FormatData>("Crispy Format", formatName)
 		const parsed = parseCrispyFormatDoc(doc)
 		return { layout: parsed.layout, pageSettings: parsed.pageSettings, formatDoc: parsed.formatDoc }
 	} catch (error) {
@@ -110,7 +111,7 @@ export async function loadFormatData(formatName: string): Promise<{
  */
 export async function getLetterheads(): Promise<string[]> {
 	try {
-		const letterheads = await frappe.db.get_list("Letter Head", {
+		const letterheads = await getList<{ name: string }>("Letter Head", {
 			fields: ["name"],
 			order_by: "name asc"
 		})
@@ -133,7 +134,7 @@ export async function loadLetterheadDoc(letterheadName: string): Promise<any | n
 			return letterheadCache.get(letterheadName) || null
 		}
 
-		const doc = await frappe.db.get_doc("Letter Head", letterheadName)
+		const doc = await getDoc<any>("Letter Head", letterheadName)
 		letterheadCache.set(letterheadName, doc)
 		return doc
 	} catch (error) {
