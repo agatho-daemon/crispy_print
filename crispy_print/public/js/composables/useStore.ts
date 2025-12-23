@@ -202,7 +202,6 @@ function buildStore() {
 				},
 			})
 
-			// console.log("[Store] Saved changes successfully")
 			frappe.show_alert({
 				message: __("Crispy Format saved"),
 				indicator: "green",
@@ -246,13 +245,11 @@ function buildStore() {
 
 		if (!letterheadName) {
 			letterhead.value = null
-			// console.log("[Store] Letterhead cleared")
 			return
 		}
 
 		try {
 			letterhead.value = await loadLetterheadDoc(letterheadName)
-			// console.log("[Store] Loaded letterhead:", letterheadName, letterhead.value)
 		} catch (e) {
 			console.error("[Store] Failed to load letterhead:", e)
 			letterhead.value = null

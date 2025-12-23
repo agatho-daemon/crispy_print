@@ -142,6 +142,8 @@
 				:doc-type="props.doctype || null"
 				:doc-name="props.docname || null"
 				:page-settings="pageSettingsComputed"
+				:watch-data-changes="true"
+
 			/>
 	</div>
 </template>
@@ -191,7 +193,6 @@ async function initializeData() {
 
 	try {
 		loading.value = true
-		// console.log("[CrispyPP] Initializing for doctype:", props.doctype)
 
 		// Load available formats for this doctype
 		const formats = await getFormatsForDoctype(props.doctype)
@@ -205,11 +206,9 @@ async function initializeData() {
 		)
 		
 		availableFormats.value = formatsWithDefault
-		// console.log("[CrispyPP] Available formats:", formatsWithDefault)
 
 		// Load letterheads
 		availableLetterheads.value = await getLetterheads()
-		// console.log("[CrispyPP] Available letterheads:", availableLetterheads.value)
 
 		// Determine which format to use
 		const formatToLoad = pickFormatName(formatsWithDefault, props.format || null)
@@ -235,7 +234,6 @@ async function initializeData() {
 async function loadFormatSettings(formatName: string) {
 	try {
 		loading.value = true
-		// console.log("[CrispyPP] Loading format:", formatName)
 
 		const data = await loadFormatData(formatName)
 		
@@ -257,9 +255,6 @@ async function loadFormatSettings(formatName: string) {
 		layout.value = data.layout
 		docHeader.value = data.formatDoc.doc_header || ""
 
-		// console.log("[CrispyPP] Loaded format settings:", data.pageSettings)
-		// console.log("[CrispyPP] Loaded layout:", data.layout)
-
 		loading.value = false
 	} catch (error) {
 		console.error("[CrispyPP] Error loading format settings:", error)
@@ -273,13 +268,11 @@ async function loadFormatSettings(formatName: string) {
 
 // Handle format change
 async function onFormatChange() {
-	// console.log("[CrispyPP] Format changed to:", selectedFormat.value)
 	await loadFormatSettings(selectedFormat.value)
 }
 
 async function resetFormat() {
 	if (!selectedFormat.value) return
-	// console.log("[CrispyPP] Resetting format:", selectedFormat.value)
 	await loadFormatSettings(selectedFormat.value)
 }
 
@@ -318,7 +311,6 @@ watch(
 // No explicit preview events needed: PreviewRenderer/setupWorker reacts to prop changes directly.
 
 onMounted(async () => {
-	// console.log("[CrispyPP] Mounted with props:", props)
 	await initializeData()
 })
 
