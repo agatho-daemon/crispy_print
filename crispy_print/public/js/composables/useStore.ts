@@ -32,6 +32,7 @@ function buildStore() {
 	const letterhead = ref<any>(null)
 	const dirty = ref(false)
 	const loading = ref(false)
+	const changeKey = ref(0)
 
 	const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 
@@ -45,6 +46,7 @@ function buildStore() {
 	 */
 	async function fetch(formatName: string) {
 		loading.value = true
+		changeKey.value = 0
 
 		try {
 			// Fetch the Crispy Format document
@@ -196,6 +198,7 @@ function buildStore() {
 	 */
 	function markDirty() {
 		dirty.value = true
+		changeKey.value++
 	}
 
 	/**
@@ -203,7 +206,7 @@ function buildStore() {
 	 */
 	function resetLayout() {
 		layout.value = getDefaultLayout()
-		dirty.value = true
+		markDirty()
 	}
 
 	/**
@@ -246,6 +249,7 @@ function buildStore() {
 		pageSettings,
 		dirty,
 		loading,
+		changeKey,
 
 		// Computed
 		formatName,

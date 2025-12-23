@@ -7,6 +7,7 @@
 		:doc-type="store.docType.value"
 		:doc-name="null"
 		:page-settings="store.pageSettings.value"
+		:change-key="store.changeKey.value"
 		:watch-data-changes="true"
 	>
 		<template #menu>
