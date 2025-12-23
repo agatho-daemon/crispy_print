@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { onBeforeUnmount, ref, watch } from "vue"
 import { setupWorker } from "../typst/setupWorker"
 
 interface Props {
