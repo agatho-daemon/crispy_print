@@ -3,8 +3,9 @@
 import { translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
+import { applyFrappeFormattingToDoc } from "../utils/formatters"
 import type { CrispyLayout } from "../utils/layout"
-import type { LayoutField } from "../utils/layout"
+import { CrispyPreviewEvents, dispatchCrispyPreviewSource, dispatchCrispyPreviewStatus } from "../utils/events"
 
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
@@ -17,8 +18,14 @@ export interface TypstAdapter {
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
 }
 
-export function setupWorker(printFormatName: string, previewPane: HTMLElement, adapter: TypstAdapter) {
-	const { worker, cleanup } = createTypstWorker()
+export function setupWorker(
+	printFormatName: string,
+	previewPane: HTMLElement,
+	adapter: TypstAdapter,
+	opts?: { createWorker?: typeof createTypstWorker }
+) {
+	const createWorker = opts?.createWorker || createTypstWorker
+	const { worker, cleanup } = createWorker()
 
 	worker.addEventListener("error", (err) => {
 		console.error("[Typst Preview] Worker error", err)
@@ -74,11 +81,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 	}
 
 	function dispatchStatus(status: "fetching" | "compiling" | "ready" | "error", message?: string) {
-		window.dispatchEvent(
-			new CustomEvent("crispy-preview:status", {
-				detail: { status, message },
-			})
-		)
+		dispatchCrispyPreviewStatus({ status, message })
 	}
 
 	function setCurrentDoc(doctype: string, docname: string, opts: { force?: boolean } = {}) {
@@ -169,7 +172,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		}
 		setCurrentDoc(doctype, docname, { force: true })
 	}
-	window.addEventListener("crispy-preview:set-doc", handleSetDoc)
+	window.addEventListener(CrispyPreviewEvents.SetDoc, handleSetDoc)
 
 	const handleRefresh = () => {
 		if (!currentDoctype || !currentDocname) {
@@ -186,16 +189,12 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		// Refetch + recompile to ensure latest values (single source of truth).
 		setCurrentDoc(currentDoctype, currentDocname, { force: true })
 	}
-	window.addEventListener("crispy-preview:refresh", handleRefresh)
+	window.addEventListener(CrispyPreviewEvents.Refresh, handleRefresh)
 
 	const handleSourceRequest = () => {
-		window.dispatchEvent(
-			new CustomEvent("crispy-preview:source", {
-				detail: { source: lastTypstCode || null },
-			})
-		)
+		dispatchCrispyPreviewSource({ source: lastTypstCode || null })
 	}
-	window.addEventListener("crispy-preview:request-source", handleSourceRequest)
+	window.addEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
 
 	// PDF generation request (used by typst-print toolbar and any other UI)
 	const handlePdfRequest = (event: any) => {
@@ -243,7 +242,7 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 			letterheadImage,
 		})
 	}
-	window.addEventListener("crispy-preview:request-pdf", handlePdfRequest)
+	window.addEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
 
 	function setupSampleDocAutocomplete(doctype: string) {
 		if (!doctype) {
@@ -519,7 +518,23 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		// Apply Frappe-style formatting (Currency/Date/Percent/etc.) so Typst output matches Frappe preview.
 		// We format *after* filtering to keep the payload small.
 		try {
-			applyFrappeFormatting(layout as any, currentDoctype, sampleDocData, filteredDoc)
+			applyFrappeFormattingToDoc({
+				layout: layout as any,
+				doctype: currentDoctype,
+				fullDoc: sampleDocData,
+				filteredDoc,
+				env:
+					typeof frappe === "undefined" || typeof frappe.format !== "function" || !frappe.meta
+						? null
+						: {
+							format: frappe.format.bind(frappe),
+							getDocfield: frappe.meta.get_docfield.bind(frappe.meta),
+							stripHtml:
+								frappe.utils && typeof frappe.utils.strip_html === "function"
+									? frappe.utils.strip_html.bind(frappe.utils)
+									: undefined,
+						},
+			})
 		} catch (e) {
 			console.warn("[Typst Preview] Failed to apply Frappe formatting:", e)
 		}
@@ -868,104 +883,12 @@ export function setupWorker(printFormatName: string, previewPane: HTMLElement, a
 		if (unsubscribeDoctype) {
 			unsubscribeDoctype()
 		}
-		window.removeEventListener("crispy-preview:set-doc", handleSetDoc)
-		window.removeEventListener("crispy-preview:refresh", handleRefresh)
-		window.removeEventListener("crispy-preview:request-source", handleSourceRequest)
-		window.removeEventListener("crispy-preview:request-pdf", handlePdfRequest)
+		window.removeEventListener(CrispyPreviewEvents.SetDoc, handleSetDoc)
+		window.removeEventListener(CrispyPreviewEvents.Refresh, handleRefresh)
+		window.removeEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
+		window.removeEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
 		if (worker) {
 			cleanup()
 		}
-	}
-}
-
-function applyFrappeFormatting(
-	layout: CrispyLayout | null | undefined,
-	doctype: string | null,
-	fullDoc: Record<string, any> | null,
-	filteredDoc: Record<string, any> | null
-) {
-	if (!layout || !doctype || !fullDoc || !filteredDoc) return
-	if (typeof frappe === "undefined" || typeof frappe.format !== "function" || !frappe.meta) return
-
-	const normalizeFieldtype = (df: any) => String(df?.fieldtype || "").replace(/\s+/g, "")
-	const shouldFormatFieldtype = (fieldtype: string) =>
-		[
-			"Currency",
-			"Int",
-			"Float",
-			"Percent",
-			"Date",
-			"Datetime",
-			"Time",
-		].includes(fieldtype)
-
-	const stripHtml = (value: any) => {
-		if (typeof value !== "string") return value
-		if (typeof frappe !== "undefined" && frappe.utils && typeof frappe.utils.strip_html === "function") {
-			return frappe.utils.strip_html(value)
-		}
-		// Fallback: basic tag stripping (keeps plain text)
-		return value
-			.replace(/<br\s*\/?>\s*\n/gi, "\n")
-			.replace(/<br\s*\/?>/gi, "\n")
-			.replace(/<[^>]+>/g, "")
-	}
-
-	const formatValue = (value: any, df: any) => {
-		// `only_value` avoids HTML wrappers (right-align spans, etc.)
-		return stripHtml(frappe.format(value, df, { only_value: 1 }, fullDoc))
-	}
-
-	const walkFields = (): LayoutField[] => {
-		const out: LayoutField[] = []
-		for (const section of layout.sections || []) {
-			for (const col of (section as any).columns || []) {
-				for (const field of (col as any).fields || []) {
-					if (field && field.fieldname) out.push(field as LayoutField)
-				}
-			}
-		}
-		return out
-	}
-
-	for (const field of walkFields()) {
-		if (!field.fieldname) continue
-
-		// Table fields: format each selected column value per row.
-		if (field.fieldtype === "Table") {
-			const tableFieldname = field.fieldname
-			const df = frappe.meta.get_docfield(doctype, tableFieldname)
-			const childDoctype = df?.options || field.options
-			if (!childDoctype) continue
-
-			const rows = filteredDoc[tableFieldname]
-			if (!Array.isArray(rows) || !rows.length) continue
-
-			const columns = field.table_columns || []
-			for (const row of rows) {
-				if (!row || typeof row !== "object") continue
-				for (const col of columns) {
-					if (!col?.fieldname) continue
-					const childDf = frappe.meta.get_docfield(childDoctype, col.fieldname)
-					if (!childDf) continue
-					if (!(col.fieldname in row)) continue
-					const ft = normalizeFieldtype(childDf)
-					if (!shouldFormatFieldtype(ft)) continue
-					row[col.fieldname] = formatValue(row[col.fieldname], childDf)
-				}
-			}
-			continue
-		}
-
-		// Non-table fields: format based on DocType docfield.
-		const df = frappe.meta.get_docfield(doctype, field.fieldname)
-		if (!df) continue
-		if (!(field.fieldname in filteredDoc)) continue
-
-		// Only run for types where Frappe formatting is meaningful/expected.
-		// (Currency handles symbols/precision; Date/Datetime handles locale; Percent handles precision + %.)
-		const ft = normalizeFieldtype(df)
-		if (!shouldFormatFieldtype(ft)) continue
-		filteredDoc[field.fieldname] = formatValue(filteredDoc[field.fieldname], df)
 	}
 }

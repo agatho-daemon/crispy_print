@@ -14,6 +14,30 @@ export interface TypographySettings {
 	sectionLabel: TypographyStyle
 }
 
+export const defaultTypography: TypographySettings = {
+	fieldLabel: {
+		fontFamily: "Inter",
+		fontSize: "8pt",
+		fontStyle: "normal",
+		fontWeight: "semibold",
+		color: "#64748b",
+	},
+	fieldValue: {
+		fontFamily: "Inter",
+		fontSize: "10pt",
+		fontStyle: "normal",
+		fontWeight: "regular",
+		color: "#0f172a",
+	},
+	sectionLabel: {
+		fontFamily: "Inter",
+		fontSize: "14pt",
+		fontStyle: "normal",
+		fontWeight: "bold",
+		color: "#1e293b",
+	},
+}
+
 export interface PageSettings {
 	pageSize: string
 	orientation: string
@@ -37,6 +61,13 @@ export const defaultPageSettings: PageSettings = {
 	letterhead: "",
 	typography: undefined,
 	language: "en"
+}
+
+export function ensureTypography(pageSettings: PageSettings): TypographySettings {
+	if (!pageSettings.typography) {
+		pageSettings.typography = JSON.parse(JSON.stringify(defaultTypography))
+	}
+	return pageSettings.typography
 }
 
 export function mergePageSettings(
