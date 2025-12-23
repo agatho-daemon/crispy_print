@@ -43,6 +43,63 @@ export interface CrispyLayout {
 	sections: LayoutSection[]
 }
 
+function generateLayoutId(): number {
+	return Date.now() + Math.random()
+}
+
+/**
+ * Normalize layout structure for consistent UI + serialization.
+ * - Ensures arrays exist (`sections`, `columns`, `fields`)
+ * - Ensures every section has a stable `id`
+ * - Strips legacy/derived keys (e.g. `has_fields`)
+ * - Leaves layout empty if it's empty (no auto-seeding)
+ */
+export function normalizeLayout(layout: CrispyLayout | null | undefined): CrispyLayout {
+	const base: CrispyLayout = {
+		header: layout?.header || "",
+		sections: Array.isArray(layout?.sections) ? layout!.sections : [],
+	}
+
+	const normalizedSections: LayoutSection[] = base.sections.map((rawSection) => {
+		const { has_fields: _ignoredHasFields, ...section } = (rawSection || {}) as any
+
+		const columns = Array.isArray(section.columns) ? section.columns : []
+		const normalizedColumns: LayoutColumn[] = columns.map((rawColumn: any) => {
+			const column: LayoutColumn = {
+				label: typeof rawColumn?.label === "string" ? rawColumn.label : "",
+				fields: Array.isArray(rawColumn?.fields) ? rawColumn.fields : [],
+			}
+
+			column.fields = column.fields
+				.filter(Boolean)
+				.map((rawField: any) => {
+					const fieldtype = rawField?.fieldtype || "Data"
+					return {
+						...rawField,
+						fieldtype,
+						label: typeof rawField?.label === "string" ? rawField.label : "",
+						fieldname: typeof rawField?.fieldname === "string" ? rawField.fieldname : "",
+						align: rawField?.align || getDefaultFieldAlignment(fieldtype),
+					} as LayoutField
+				})
+				.filter((f) => Boolean(f.fieldname))
+
+			return column
+		})
+
+		return {
+			label: typeof section.label === "string" ? section.label : "",
+			columns: normalizedColumns,
+			id: typeof section.id === "number" ? section.id : generateLayoutId(),
+		}
+	})
+
+	return {
+		...base,
+		sections: normalizedSections,
+	}
+}
+
 /**
  * Creates a default Typst-based layout from DocType metadata
  * Mirrors Frappe's print format builder behavior
@@ -67,7 +124,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 		currentSection = {
 			label: source.label || "",
 			columns: [],
-			id: Date.now() + Math.random(),
+			id: generateLayoutId(),
 		}
 		currentColumn = null
 		sections.push(currentSection)
@@ -129,7 +186,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 	)
 	layout.sections = filteredSections
 
-	return layout
+	return normalizeLayout(layout)
 }
 
 /**
@@ -216,7 +273,9 @@ export function pluck<T extends Record<string, any>>(
  * Convert layout to JSON string for storage
  */
 export function serializeLayout(layout: CrispyLayout): string {
-	const cleanedSections = (layout.sections || []).map((section) => {
+	const normalized = normalizeLayout(layout)
+
+	const cleanedSections = (normalized.sections || []).map((section) => {
 		const { has_fields: _ignored, ...restSection } = section as any
 		return {
 			...restSection,
@@ -226,7 +285,7 @@ export function serializeLayout(layout: CrispyLayout): string {
 
 	return JSON.stringify(
 		{
-			...layout,
+			...normalized,
 			sections: cleanedSections,
 		},
 		// null,
@@ -240,11 +299,7 @@ export function serializeLayout(layout: CrispyLayout): string {
 export function deserializeLayout(json: string): CrispyLayout | null {
 	try {
 		const parsed = JSON.parse(json) as CrispyLayout
-		const sectionsWithIds = (parsed.sections || []).map((section, idx) => ({
-			...section,
-			id: section.id || Date.now() + Math.random() + idx,
-		}))
-		return { ...parsed, sections: sectionsWithIds }
+		return normalizeLayout(parsed)
 	} catch (e) {
 		console.error("[Layout] Failed to parse layout JSON:", e)
 		return null
