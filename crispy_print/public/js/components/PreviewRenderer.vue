@@ -45,27 +45,26 @@ function createAdapter() {
 		getPageSettings: () => props.pageSettings,
 		hookDataChanges: enableDataWatch
 			? (callback: () => void) => {
-				// Watch for data changes (layout, settings, letterhead)
-				const stopData = watch(
+				// Prefer explicit invalidation via changeKey to avoid expensive deep watches.
+				if (props.changeKey !== undefined) {
+					const stop = watch(
+						() => props.changeKey,
+						(_newVal, oldVal) => {
+							if (oldVal !== undefined) {
+								callback()
+							}
+						}
+					)
+					return () => stop()
+				}
+
+				// Fallback for callers that don't provide changeKey.
+				const stop = watch(
 					() => [props.layout, props.pageSettings, props.letterhead, props.docHeader],
 					() => callback(),
 					{ deep: true }
 				)
-				
-				// Watch changeKey separately (forces re-render on structural changes)
-				const stopKey = watch(
-					() => props.changeKey,
-					(newVal, oldVal) => {
-						if (oldVal !== undefined) { // Skip initial mount
-							callback()
-						}
-					}
-				)
-				
-				return () => {
-					stopData()
-					stopKey()
-				}
+				return () => stop()
 			}
 			: undefined,
 		hookDoctypeChanges: (callback: (doctype: string | null | undefined) => void) => {

@@ -142,6 +142,7 @@
 				:doc-type="props.doctype || null"
 				:doc-name="props.docname || null"
 				:page-settings="pageSettingsComputed"
+				:change-key="changeKey"
 				:watch-data-changes="true"
 
 			/>
@@ -182,6 +183,16 @@ const selectedFormat = ref<string>("")
 	const loading = ref(true)
 	const docHeader = ref("")
 	const letterheadDoc = ref<any | null>(null)
+	const changeKey = ref(0)
+
+	// Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
+	watch(
+		() => [layout.value, pageSettings.value, letterheadDoc.value, docHeader.value],
+		() => {
+			changeKey.value++
+		},
+		{ deep: true }
+	)
 
 // Initialize: Load available formats and letterheads
 async function initializeData() {
