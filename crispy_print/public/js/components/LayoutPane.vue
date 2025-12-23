@@ -1,13 +1,11 @@
 <template>
 	<div class="layout-pane">
 		<div class="layout-pane__header">
-				<div class="layout-pane__header-row">
-					<h3 class="layout-pane__title">Layout Builder</h3>
-					<div class="layout-pane__controls">
-						<button class="lp-btn lp-btn--secondary" @click="resetLayout">
-							Reset
-						</button>
-						<div class="layout-pane__spacer"></div>
+			<div class="layout-pane__header-row">
+				<h3 class="layout-pane__title">Layout Builder</h3>
+				<div class="layout-pane__controls">
+					<button class="lp-btn lp-btn--secondary" @click="resetLayout">Reset</button>
+					<div class="layout-pane__spacer"></div>
 					<div>
 						<button
 							type="button"
@@ -53,61 +51,77 @@
 									class="section-title-input"
 									placeholder="Section title"
 								/>
-								</div>
-								<div class="section-card__actions">
+							</div>
+							<div class="section-card__actions">
+								<button
+									type="button"
+									class="section-card__menu-btn"
+									title="Section menu"
+									@click.stop="toggleSectionMenu(section, sectionIndex, $event)"
+								>
+									&#8943;
+								</button>
+								<div
+									v-if="openSectionMenuId === getSectionMenuId(section, sectionIndex)"
+									class="section-card__menu"
+									:style="sectionMenuStyle"
+									@click.stop
+								>
 									<button
 										type="button"
-										class="section-card__menu-btn"
-										title="Section menu"
-										@click.stop="toggleSectionMenu(section, sectionIndex, $event)"
+										class="section-card__menu-item"
+										@click="onAddSectionAbove(sectionIndex)"
 									>
-										&#8943;
+										Add section above
 									</button>
-									<div
-										v-if="openSectionMenuId === getSectionMenuId(section, sectionIndex)"
-										class="section-card__menu"
-										:style="sectionMenuStyle"
-										@click.stop
+									<button
+										type="button"
+										class="section-card__menu-item"
+										@click="onAddSectionBelow(sectionIndex)"
 									>
-										<button type="button" class="section-card__menu-item" @click="addSectionAbove(sectionIndex); closeSectionMenu()">
-											Add section above
-										</button>
-										<button type="button" class="section-card__menu-item" @click="addSectionBelow(sectionIndex); closeSectionMenu()">
-											Add section below
-										</button>
-										<button
-											type="button"
-											class="section-card__menu-item"
-											:disabled="section.columns.length >= 4"
-											@click="addColumn(section); closeSectionMenu()"
-										>
-											Add column
-										</button>
-										<button
-											type="button"
-											class="section-card__menu-item"
-											:disabled="section.columns.length <= 1"
-											@click="removeLastColumn(section); closeSectionMenu()"
-										>
-											Remove column
-										</button>
-										<button type="button" class="section-card__menu-item" @click="togglePageBreak(section); closeSectionMenu()">
-											{{ section.page_break ? "Remove page break" : "Add page break" }}
-										</button>
-										<button type="button" class="section-card__menu-item" @click="toggleFieldOrientation(section); closeSectionMenu()">
-											Field orientation ({{ getFieldOrientationLabel(section) }})
-										</button>
-										<div class="section-card__menu-divider"></div>
-										<button
-											type="button"
-											class="section-card__menu-item section-card__menu-item--danger"
-											@click="removeSection(sectionIndex); closeSectionMenu()"
-										>
-											Remove section
-										</button>
-									</div>
+										Add section below
+									</button>
+									<button
+										type="button"
+										class="section-card__menu-item"
+										:disabled="section.columns.length >= 4"
+										@click="onAddColumn(section)"
+									>
+										Add column
+									</button>
+									<button
+										type="button"
+										class="section-card__menu-item"
+										:disabled="section.columns.length <= 1"
+										@click="onRemoveLastColumn(section)"
+									>
+										Remove column
+									</button>
+									<button
+										type="button"
+										class="section-card__menu-item"
+										@click="onTogglePageBreak(section)"
+									>
+										{{ section.page_break ? "Remove page break" : "Add page break" }}
+									</button>
+									<button
+										type="button"
+										class="section-card__menu-item"
+										@click="onToggleFieldOrientation(section)"
+									>
+										Field orientation ({{ getFieldOrientationLabel(section) }})
+									</button>
+									<div class="section-card__menu-divider"></div>
+									<button
+										type="button"
+										class="section-card__menu-item section-card__menu-item--danger"
+										@click="onRemoveSection(sectionIndex)"
+									>
+										Remove section
+									</button>
 								</div>
 							</div>
+						</div>
 
 						<div class="section-grid" :style="gridStyle(section)">
 							<div
@@ -129,9 +143,7 @@
 										<div class="field-card">
 											<div class="field-card__row">
 												<div class="field-card__info">
-													<span class="field-grip" title="Drag field">
-														&#8942;
-													</span>
+													<span class="field-grip" title="Drag field"> &#8942; </span>
 													<input
 														v-model="field.label"
 														type="text"
@@ -142,31 +154,36 @@
 													/>
 												</div>
 												<div class="field-card__actions">
-												<button
-													class="lp-btn lp-btn--small lp-btn--icon"
-													type="button"
-													@click="cycleAlignment(field)"
-													:title="`Alignment: ${field.align || 'left'}`"
-												>
-													{{ getAlignIcon(field.align) }}
-												</button>
-												<button
-													class="lp-btn lp-btn--small lp-btn--icon lp-btn--label-toggle"
-													type="button"
-													@click="toggleFieldLabel(field)"
-													:title="field.label?.trim() ? 'Hide label' : 'Show label'"
-												>
-													Aa
-												</button>
-												<button
-													v-if="field.fieldtype === 'Table'"
-													class="lp-btn lp-btn--small"
-													type="button"
-													@click="configureColumns(field)"
-												>
-													Configure columns
-												</button>
-													<button class="field-card__remove" @click="removeField(column, fieldIndex)" title="Remove" type="button">
+													<button
+														class="lp-btn lp-btn--small lp-btn--icon"
+														type="button"
+														@click="cycleAlignment(field)"
+														:title="`Alignment: ${field.align || 'left'}`"
+													>
+														{{ getAlignIcon(field.align) }}
+													</button>
+													<button
+														class="lp-btn lp-btn--small lp-btn--icon lp-btn--label-toggle"
+														type="button"
+														@click="toggleFieldLabel(field)"
+														:title="field.label?.trim() ? 'Hide label' : 'Show label'"
+													>
+														Aa
+													</button>
+													<button
+														v-if="field.fieldtype === 'Table'"
+														class="lp-btn lp-btn--small"
+														type="button"
+														@click="configureColumns(field)"
+													>
+														Configure columns
+													</button>
+													<button
+														class="field-card__remove"
+														@click="removeField(column, fieldIndex)"
+														title="Remove"
+														type="button"
+													>
 														&#x2715;
 													</button>
 												</div>
@@ -194,9 +211,7 @@
 							</div>
 						</div>
 
-						<div v-if="section.page_break" class="section-page-break">
-							Page Break
-						</div>
+						<div v-if="section.page_break" class="section-page-break">Page Break</div>
 					</div>
 				</template>
 			</draggable>
@@ -216,7 +231,13 @@ import draggable from "vuedraggable"
 import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useStore } from "../composables/useStore"
 import TableColumnsDialog from "../components/TableColumnsDialog.vue"
-import type { LayoutSection, LayoutColumn, LayoutField, DocField, TableColumn } from "../utils/layout"
+import type {
+	LayoutSection,
+	LayoutColumn,
+	LayoutField,
+	DocField,
+	TableColumn,
+} from "../utils/layout"
 import { getTableColumns } from "../utils/layout"
 
 type Section = LayoutSection & {
@@ -341,12 +362,22 @@ function addSectionAbove(index: number) {
 	store.markDirty()
 }
 
+function onAddSectionAbove(index: number) {
+	addSectionAbove(index)
+	closeSectionMenu()
+}
+
 function addSectionBelow(index: number) {
 	if (!layout.value) {
 		layout.value = { sections: [] }
 	}
 	layout.value.sections.splice(Math.max(0, index + 1), 0, createEmptySection())
 	store.markDirty()
+}
+
+function onAddSectionBelow(index: number) {
+	addSectionBelow(index)
+	closeSectionMenu()
 }
 
 function createEmptySection(): Section {
@@ -363,6 +394,11 @@ function removeSection(index: number) {
 	store.markDirty()
 }
 
+function onRemoveSection(index: number) {
+	removeSection(index)
+	closeSectionMenu()
+}
+
 function addColumn(section: Section) {
 	if (!section.columns) section.columns = []
 	if (section.columns.length >= 4) {
@@ -370,6 +406,11 @@ function addColumn(section: Section) {
 	}
 	section.columns.push({ label: "", fields: [] })
 	store.markDirty()
+}
+
+function onAddColumn(section: Section) {
+	addColumn(section)
+	closeSectionMenu()
 }
 
 function removeColumn(section: Section, colIndex: number) {
@@ -383,6 +424,11 @@ function removeColumn(section: Section, colIndex: number) {
 function removeLastColumn(section: Section) {
 	if (section.columns.length <= 1) return
 	removeColumn(section, section.columns.length - 1)
+}
+
+function onRemoveLastColumn(section: Section) {
+	removeLastColumn(section)
+	closeSectionMenu()
 }
 
 function removeField(column: Column, fieldIndex: number) {
@@ -419,14 +465,24 @@ function getDefaultAlignment(fieldtype?: string): "left" | "center" | "right" {
 }
 
 function togglePageBreak(section: Section) {
-	; (section as any).page_break = !(section as any).page_break
+	;(section as any).page_break = !(section as any).page_break
 	store.markDirty()
+}
+
+function onTogglePageBreak(section: Section) {
+	togglePageBreak(section)
+	closeSectionMenu()
 }
 
 function toggleFieldOrientation(section: Section) {
 	const current = section.field_orientation || "left-right"
 	section.field_orientation = current === "left-right" ? "top-down" : "left-right"
 	store.markDirty()
+}
+
+function onToggleFieldOrientation(section: Section) {
+	toggleFieldOrientation(section)
+	closeSectionMenu()
 }
 
 function getFieldOrientationLabel(section: Section) {
@@ -461,20 +517,20 @@ async function onDropField(event: DragEvent, column: Column) {
 		if (!data) return
 		const parsed: DocField = JSON.parse(data)
 		if (!parsed.fieldname) return
-		
+
 		const field: LayoutField = {
 			fieldname: parsed.fieldname,
 			label: parsed.label || parsed.fieldname,
 			fieldtype: parsed.fieldtype || "Data",
-			align: getDefaultAlignment(parsed.fieldtype),  // Add default alignment
+			align: getDefaultAlignment(parsed.fieldtype), // Add default alignment
 		}
-		
+
 		if (parsed.fieldtype === "Table") {
 			field.table_columns = []
 			field.options = parsed.options
 			await ensureTableColumns(field)
 		}
-		
+
 		column.fields.push(field)
 		store.markDirty()
 	} catch (e) {
@@ -616,7 +672,9 @@ function toggleFieldLabel(field: Field) {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease;
 }
 
 .layout-pane__help-btn:hover {
@@ -712,7 +770,9 @@ function toggleFieldLabel(field: Field) {
 	border-radius: 8px;
 	outline: none;
 	background: #fff;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
 .section-title-input:focus {
@@ -740,7 +800,9 @@ function toggleFieldLabel(field: Field) {
 	cursor: pointer;
 	font-size: 18px;
 	line-height: 1;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease;
 }
 
 .section-card__menu-btn:hover {
@@ -814,7 +876,9 @@ function toggleFieldLabel(field: Field) {
 	border-radius: 12px;
 	background: #fafafa;
 	padding: 10px;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
 }
 
 .section-column--empty:hover,
@@ -845,7 +909,9 @@ function toggleFieldLabel(field: Field) {
 	background: rgba(255, 255, 255, 0.9);
 	padding: 12px;
 	border-radius: 8px;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
 }
 
 .field-card:hover,
@@ -962,7 +1028,10 @@ function toggleFieldLabel(field: Field) {
 	border-radius: 8px;
 	padding: 6px 12px;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease,
+		color 0.15s ease;
 }
 
 .lp-btn:hover {
@@ -1019,5 +1088,4 @@ function toggleFieldLabel(field: Field) {
 	font-size: 14px;
 	cursor: pointer;
 }
-
 </style>

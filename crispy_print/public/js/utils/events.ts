@@ -38,4 +38,3 @@ export function dispatchCrispyPreviewStatus(detail: CrispyPreviewStatusDetail) {
 export function dispatchCrispyPreviewSource(detail: CrispyPreviewSourceDetail) {
 	window.dispatchEvent(new CustomEvent(CrispyPreviewEvents.Source, { detail }))
 }
-

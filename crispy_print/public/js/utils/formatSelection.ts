@@ -13,4 +13,3 @@ export function pickFormatName(formats: FormatLike[], requested?: string | null)
 	const defaultFormat = formats.find((f) => f.is_default === 1 || f.is_default === true)
 	return defaultFormat?.name || formats[0].name || null
 }
-

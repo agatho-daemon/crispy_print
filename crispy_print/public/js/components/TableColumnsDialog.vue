@@ -8,17 +8,15 @@
 						Drag to reorder. Widths use Typst units: auto, 1fr, 2fr, 100pt, 50%, etc.
 					</p>
 				</div>
-				<button class="table-dialog__close" @click="$emit('close')" type="button">
-					&#x2715;
-				</button>
+				<button class="table-dialog__close" @click="$emit('close')" type="button">&#x2715;</button>
 			</div>
 
 			<div class="table-dialog__body">
 				<div class="table-dialog__row">
 					<span>Columns</span>
-			</div>
+				</div>
 
-			<draggable
+				<draggable
 					v-model="localColumns"
 					item-key="fieldname"
 					handle=".drag-handle"
@@ -35,7 +33,6 @@
 									class="table-dialog__input"
 									placeholder="Column label"
 								/>
-
 							</div>
 							<div class="table-dialog__item-controls">
 								<button
@@ -47,14 +44,19 @@
 									{{ getAlignIcon(column.align) }}
 								</button>
 								<input
-								v-model="column.width"
-								type="text"
-								placeholder="auto"
-								class="table-dialog__width-input"
-								:class="column.invalid_width ? 'table-dialog__width-input--invalid' : ''"
-								title="Typst width: auto, 1fr, 2fr, 100pt, etc."
+									v-model="column.width"
+									type="text"
+									placeholder="auto"
+									class="table-dialog__width-input"
+									:class="column.invalid_width ? 'table-dialog__width-input--invalid' : ''"
+									title="Typst width: auto, 1fr, 2fr, 100pt, etc."
 								/>
-								<button class="table-dialog__remove" title="Remove" @click="removeColumn(column)" type="button">
+								<button
+									class="table-dialog__remove"
+									title="Remove"
+									@click="removeColumn(column)"
+									type="button"
+								>
 									&#x2715;
 								</button>
 							</div>
@@ -68,13 +70,13 @@
 
 				<div class="table-dialog__add">
 					<label class="table-dialog__add-label" for="add-column">Add column</label>
-					<select
-						id="add-column"
-						v-model="pendingFieldname"
-						class="table-dialog__select"
-					>
+					<select id="add-column" v-model="pendingFieldname" class="table-dialog__select">
 						<option value="" disabled>Select field</option>
-						<option v-for="option in availableColumns" :key="option.fieldname" :value="option.fieldname">
+						<option
+							v-for="option in availableColumns"
+							:key="option.fieldname"
+							:value="option.fieldname"
+						>
 							{{ option.label }}
 						</option>
 					</select>
@@ -93,7 +95,11 @@
 				<button class="table-dialog__footer-btn" type="button" @click="$emit('close')">
 					Close
 				</button>
-				<button class="table-dialog__footer-btn table-dialog__footer-btn--primary" type="button" @click="$emit('close')">
+				<button
+					class="table-dialog__footer-btn table-dialog__footer-btn--primary"
+					type="button"
+					@click="$emit('close')"
+				>
 					Done
 				</button>
 			</div>
@@ -147,32 +153,32 @@ watch(
 	(cols) => {
 		if (syncingFromProp.value) return
 		validateWidths(cols)
-		
+
 		// Clear any existing debounce timer
 		if (validationDebounceTimer) {
 			clearTimeout(validationDebounceTimer)
 		}
-		
+
 		// Check if any column has invalid width
 		const invalidCols = cols.filter((col: any) => col.invalid_width)
 		if (invalidCols.length > 0) {
 			// Debounce: only show alert after user stops typing for 800ms
 			validationDebounceTimer = setTimeout(() => {
-				const invalidValues = invalidCols.map((col) => col.width || '(empty)').join(', ')
+				const invalidValues = invalidCols.map((col) => col.width || "(empty)").join(", ")
 				validationMessage.value = `Invalid column width values: ${invalidValues}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc.`
-				
-				if (typeof frappe !== 'undefined') {
+
+				if (typeof frappe !== "undefined") {
 					frappe.show_alert({
 						message: validationMessage.value,
 						indicator: "orange",
 					})
 				}
 			}, 200)
-			
+
 			// Do NOT emit update to prevent compilation
 			return
 		}
-		
+
 		// Clear validation message if all are valid
 		validationMessage.value = ""
 		emit("update:modelValue", cols)
@@ -339,7 +345,9 @@ watch(
 	padding: 8px;
 	color: #94a3b8;
 	cursor: pointer;
-	transition: background-color 0.15s ease, color 0.15s ease;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
 }
 
 .table-dialog__close:hover {
@@ -408,7 +416,9 @@ watch(
 	border-radius: 10px;
 	background: #fff;
 	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
 .table-dialog__input:focus {
@@ -445,7 +455,9 @@ watch(
 	font-weight: bold;
 	color: #334155;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
 }
 
 .table-dialog__align-btn:hover {
@@ -462,7 +474,10 @@ watch(
 	border-radius: 8px;
 	background: #fff;
 	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease,
+		color 0.15s ease;
 }
 
 .table-dialog__width-input:focus {
@@ -482,7 +497,9 @@ watch(
 	padding: 6px;
 	color: #94a3b8;
 	cursor: pointer;
-	transition: background-color 0.15s ease, color 0.15s ease;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
 }
 
 .table-dialog__remove:hover {
@@ -525,7 +542,9 @@ watch(
 	border-radius: 10px;
 	background: #fff;
 	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
 .table-dialog__select:focus {
@@ -542,7 +561,9 @@ watch(
 	border-radius: 10px;
 	padding: 8px 14px;
 	cursor: pointer;
-	transition: background-color 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		background-color 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
 .table-dialog__add-btn:hover {
@@ -572,7 +593,9 @@ watch(
 	border-radius: 10px;
 	padding: 8px 12px;
 	cursor: pointer;
-	transition: background-color 0.15s ease, color 0.15s ease;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
 }
 
 .table-dialog__footer-btn:hover {
@@ -587,5 +610,4 @@ watch(
 .table-dialog__footer-btn--primary:hover {
 	background: #4338ca;
 }
-
 </style>

@@ -60,7 +60,7 @@ export const defaultPageSettings: PageSettings = {
 	margins: { top: 25, bottom: 20, left: 20, right: 20 },
 	letterhead: "",
 	typography: undefined,
-	language: "en"
+	language: "en",
 }
 
 export function ensureTypography(pageSettings: PageSettings): TypographySettings {
@@ -76,8 +76,11 @@ export function mergePageSettings(
 ): PageSettings {
 	// Backward-compatible: older saved settings may still include `fontFamily` / `fontSize`.
 	// Drop them entirely so typography + Typst preamble/doc_header become the single source of truth.
-	const { fontFamily: _ignoredFontFamily, fontSize: _ignoredFontSize, ...safeOverrides } =
-		overrides as any
+	const {
+		fontFamily: _ignoredFontFamily,
+		fontSize: _ignoredFontSize,
+		...safeOverrides
+	} = overrides as any
 	return {
 		...base,
 		...safeOverrides,

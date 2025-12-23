@@ -5,8 +5,13 @@
 				<h3 class="settings-pane__title">Typst Settings</h3>
 				<div class="settings-pane__spacer"></div>
 				<div>
-					<button type="button" class="settings-pane__help-btn" popovertarget="settings-help"
-						popovertargetaction="toggle" title="Toggle help">
+					<button
+						type="button"
+						class="settings-pane__help-btn"
+						popovertarget="settings-help"
+						popovertargetaction="toggle"
+						title="Toggle help"
+					>
 						?
 					</button>
 					<div id="settings-help" popover class="settings-pane__help-popover">
@@ -20,14 +25,26 @@
 		<div class="settings-pane__body">
 			<div class="settings-pane__form">
 				<div class="settings-pane__section-card">
-					<button type="button" class="settings-pane__section-header"
-						@click="isPageSettingsExpanded = !isPageSettingsExpanded">
+					<button
+						type="button"
+						class="settings-pane__section-header"
+						@click="isPageSettingsExpanded = !isPageSettingsExpanded"
+					>
 						<span>Page Settings</span>
-						<svg :class="['settings-pane__chevron', { 'settings-pane__chevron--expanded': isPageSettingsExpanded }]"
-							xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-							<path fill-rule="evenodd"
+						<svg
+							:class="[
+								'settings-pane__chevron',
+								{ 'settings-pane__chevron--expanded': isPageSettingsExpanded },
+							]"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
 								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-								clip-rule="evenodd" />
+								clip-rule="evenodd"
+							/>
 						</svg>
 					</button>
 
@@ -58,66 +75,108 @@
 							<div class="settings-pane__margins">
 								<div class="settings-pane__margin-input">
 									<span class="settings-pane__margin-prefix">top</span>
-									<input v-model.number="pageSettings.margins.top" type="number" placeholder="Top"
-										class="settings-pane__input" />
+									<input
+										v-model.number="pageSettings.margins.top"
+										type="number"
+										placeholder="Top"
+										class="settings-pane__input"
+									/>
 								</div>
 								<div class="settings-pane__margin-input">
 									<span class="settings-pane__margin-prefix">bottom</span>
-									<input v-model.number="pageSettings.margins.bottom" type="number"
-										placeholder="Bottom" class="settings-pane__input" />
+									<input
+										v-model.number="pageSettings.margins.bottom"
+										type="number"
+										placeholder="Bottom"
+										class="settings-pane__input"
+									/>
 								</div>
 								<div class="settings-pane__margin-input">
 									<span class="settings-pane__margin-prefix">left</span>
-									<input v-model.number="pageSettings.margins.left" type="number" placeholder="Left"
-										class="settings-pane__input" />
+									<input
+										v-model.number="pageSettings.margins.left"
+										type="number"
+										placeholder="Left"
+										class="settings-pane__input"
+									/>
 								</div>
 								<div class="settings-pane__margin-input">
 									<span class="settings-pane__margin-prefix">right</span>
-									<input v-model.number="pageSettings.margins.right" type="number" placeholder="Right"
-										class="settings-pane__input" />
+									<input
+										v-model.number="pageSettings.margins.right"
+										type="number"
+										placeholder="Right"
+										class="settings-pane__input"
+									/>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 				<div class="settings-pane__section-card">
-					<button type="button" class="settings-pane__section-header"
-						@click="isTypographyExpanded = !isTypographyExpanded">
+					<button
+						type="button"
+						class="settings-pane__section-header"
+						@click="isTypographyExpanded = !isTypographyExpanded"
+					>
 						<span>Typography</span>
-						<svg :class="['settings-pane__chevron', { 'settings-pane__chevron--expanded': isTypographyExpanded }]"
-							xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-							<path fill-rule="evenodd"
+						<svg
+							:class="[
+								'settings-pane__chevron',
+								{ 'settings-pane__chevron--expanded': isTypographyExpanded },
+							]"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
 								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-								clip-rule="evenodd" />
+								clip-rule="evenodd"
+							/>
 						</svg>
 					</button>
 
 					<div v-if="isTypographyExpanded" class="settings-pane__section-content">
-												<!-- Section Labels -->
+						<!-- Section Labels -->
 						<div class="settings-pane__subsection">
 							<label class="settings-pane__label">Section Labels</label>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Family</label>
-									<select v-model="typography.sectionLabel.fontFamily" class="settings-pane__select">
-										<option v-for="font in availableFonts" :key="font" :value="font">{{ font }}
+									<select
+										v-model="typography.sectionLabel.fontFamily"
+										class="settings-pane__select"
+									>
+										<option v-for="font in availableFonts" :key="font" :value="font">
+											{{ font }}
 										</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Size (pt)</label>
-									<input v-model.number="sectionLabelFontSizePt" type="number" min="1" step="1"
-										class="settings-pane__input" />
+									<input
+										v-model.number="sectionLabelFontSizePt"
+										type="number"
+										min="1"
+										step="1"
+										class="settings-pane__input"
+									/>
 								</div>
-								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Style</label>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Style</label>
 									<select v-model="typography.sectionLabel.fontStyle" class="settings-pane__select">
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
 										<option value="oblique">Oblique</option>
 									</select>
 								</div>
-								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Weight</label>
-									<select v-model="typography.sectionLabel.fontWeight" class="settings-pane__select">
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Weight</label>
+									<select
+										v-model="typography.sectionLabel.fontWeight"
+										class="settings-pane__select"
+									>
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
 										<option value="light">Light</option>
@@ -142,23 +201,31 @@
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Family</label>
 									<select v-model="typography.fieldLabel.fontFamily" class="settings-pane__select">
-										<option v-for="font in availableFonts" :key="font" :value="font">{{ font }}
+										<option v-for="font in availableFonts" :key="font" :value="font">
+											{{ font }}
 										</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Size (pt)</label>
-									<input v-model.number="fieldLabelFontSizePt" type="number" min="1" step="1"
-										class="settings-pane__input" />
+									<input
+										v-model.number="fieldLabelFontSizePt"
+										type="number"
+										min="1"
+										step="1"
+										class="settings-pane__input"
+									/>
 								</div>
-								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Style</label>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Style</label>
 									<select v-model="typography.fieldLabel.fontStyle" class="settings-pane__select">
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
 										<option value="oblique">Oblique</option>
 									</select>
 								</div>
-								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Weight</label>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Weight</label>
 									<select v-model="typography.fieldLabel.fontWeight" class="settings-pane__select">
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
@@ -184,23 +251,31 @@
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Family</label>
 									<select v-model="typography.fieldValue.fontFamily" class="settings-pane__select">
-										<option v-for="font in availableFonts" :key="font" :value="font">{{ font }}
+										<option v-for="font in availableFonts" :key="font" :value="font">
+											{{ font }}
 										</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Size (pt)</label>
-									<input v-model.number="fieldValueFontSizePt" type="number" min="1" step="1"
-										class="settings-pane__input" />
+									<input
+										v-model.number="fieldValueFontSizePt"
+										type="number"
+										min="1"
+										step="1"
+										class="settings-pane__input"
+									/>
 								</div>
-								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Style</label>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Style</label>
 									<select v-model="typography.fieldValue.fontStyle" class="settings-pane__select">
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
 										<option value="oblique">Oblique</option>
 									</select>
 								</div>
-								<div class="settings-pane__field"> <label class="settings-pane__sublabel">Weight</label>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Weight</label>
 									<select v-model="typography.fieldValue.fontWeight" class="settings-pane__select">
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
@@ -219,7 +294,6 @@
 								</div>
 							</div>
 						</div>
-
 					</div>
 				</div>
 
@@ -228,7 +302,11 @@
 					<select v-model="pageSettings.letterhead" class="settings-pane__select">
 						<option value="">None</option>
 						<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
-						<option v-for="letterhead in availableLetterheads" :key="letterhead" :value="letterhead">
+						<option
+							v-for="letterhead in availableLetterheads"
+							:key="letterhead"
+							:value="letterhead"
+						>
 							{{ letterhead }}
 						</option>
 					</select>
@@ -242,7 +320,6 @@ import { ref, watch, onMounted, computed } from "vue"
 import { ensureTypography, type PageSettings, type TypographySettings } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
 import { getLetterheads, getTypstLocalFonts } from "../api/crispy"
-
 
 interface Props {
 	pageSettings: PageSettings
@@ -302,7 +379,11 @@ async function fetchLetterheads() {
 	}
 }
 
-function parseSize(input: string | null | undefined): { value: number; unit: string; decimals: number } {
+function parseSize(input: string | null | undefined): {
+	value: number
+	unit: string
+	decimals: number
+} {
 	const raw = String(input || "").trim()
 	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i)
 	if (!match) return { value: 0, unit: "pt", decimals: 0 }
@@ -396,7 +477,9 @@ watch(
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease;
 }
 
 .settings-pane__help-btn:hover {
@@ -460,7 +543,9 @@ watch(
 	border-radius: 3px;
 	background: #fff;
 	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
 	box-sizing: border-box;
 }
 

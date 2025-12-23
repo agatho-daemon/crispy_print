@@ -9,7 +9,6 @@ import { loadLetterheadDoc, parseCrispyFormatDoc } from "../utils/formatLoader"
 import { getCrispyFormat, saveCrispyFormat } from "../api/crispy"
 import { withDoctype } from "../api/frappe"
 
-
 let storeInstance: ReturnType<typeof buildStore> | null = null
 
 interface CrispyFormat {
@@ -82,31 +81,31 @@ function buildStore() {
 				const templateFields: DocField[] = !crispyFormat.value?.__onload?.print_templates
 					? []
 					: crispyFormat.value.__onload.print_templates
-						.map((template: any) => {
-							let df: any
-							if (template.field) {
-								df = frappe.meta.get_docfield(meta.value.name, template.field)
-							} else {
-								const scrub =
-									typeof frappe.scrub === "function"
-										? frappe.scrub(template.name)
-										: template.name.toLowerCase().replace(/\s+/g, "_")
-								df = {
-									label: template.name,
-									fieldname: scrub,
+							.map((template: any) => {
+								let df: any
+								if (template.field) {
+									df = frappe.meta.get_docfield(meta.value.name, template.field)
+								} else {
+									const scrub =
+										typeof frappe.scrub === "function"
+											? frappe.scrub(template.name)
+											: template.name.toLowerCase().replace(/\s+/g, "_")
+									df = {
+										label: template.name,
+										fieldname: scrub,
+									}
 								}
-							}
 
-							if (!df?.fieldname) return null
+								if (!df?.fieldname) return null
 
-							return {
-								label: `${df.label} (Field Template)`,
-								fieldname: `${df.fieldname}_template`,
-								fieldtype: "Field Template",
-								options: template.name,
-							} as DocField
-						})
-						.filter(Boolean)
+								return {
+									label: `${df.label} (Field Template)`,
+									fieldname: `${df.fieldname}_template`,
+									fieldtype: "Field Template",
+									options: template.name,
+								} as DocField
+							})
+							.filter(Boolean)
 
 				fields.value = [...extras, ...templateFields, ...baseFields]
 			}

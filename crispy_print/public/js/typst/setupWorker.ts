@@ -5,7 +5,11 @@ import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import { applyFrappeFormattingToDoc } from "../utils/formatters"
 import type { CrispyLayout } from "../utils/layout"
-import { CrispyPreviewEvents, dispatchCrispyPreviewSource, dispatchCrispyPreviewStatus } from "../utils/events"
+import {
+	CrispyPreviewEvents,
+	dispatchCrispyPreviewSource,
+	dispatchCrispyPreviewStatus,
+} from "../utils/events"
 
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
@@ -53,7 +57,11 @@ export function setupWorker(
 		return `${doctype}::${docname}`
 	}
 
-	function fetchDoc(doctype: string, docname: string, opts: { force?: boolean } = {}): Promise<Record<string, any> | null> {
+	function fetchDoc(
+		doctype: string,
+		docname: string,
+		opts: { force?: boolean } = {}
+	): Promise<Record<string, any> | null> {
 		const key = cacheKey(doctype, docname)
 		const cached = docCache.get(key)
 		if (!opts.force && cached) return Promise.resolve(cached)
@@ -148,15 +156,16 @@ export function setupWorker(
 			const page = document.createElement("div")
 			page.className = "typst-page"
 			page.style.marginBottom = "1.5rem"
-			page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2)"
+			page.style.boxShadow =
+				"0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2)"
 
 			page.innerHTML = svg
-			const svgEl = page.querySelector("svg");
+			const svgEl = page.querySelector("svg")
 			if (svgEl) {
-				svgEl.style.width = "100%";
-				svgEl.style.height = "auto";
-				svgEl.removeAttribute("width");   // let viewBox control sizing
-				svgEl.removeAttribute("height");
+				svgEl.style.width = "100%"
+				svgEl.style.height = "auto"
+				svgEl.removeAttribute("width") // let viewBox control sizing
+				svgEl.removeAttribute("height")
 			}
 
 			container.appendChild(page)
@@ -323,7 +332,6 @@ export function setupWorker(
 
 			setCurrentDoc(currentDoctype, selectedDoc, { force: true })
 		})
-
 	}
 
 	const PREVIEW_REQUEST_ID = "preview"
@@ -478,7 +486,9 @@ export function setupWorker(
 			}
 			if (missingLayoutRetries < 5) {
 				missingLayoutRetries += 1
-				console.warn(`[Typst Preview] Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`)
+				console.warn(
+					`[Typst Preview] Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`
+				)
 				scheduleCompile("retry-missing-layout", 500 * missingLayoutRetries)
 			} else {
 				console.error("[Typst Preview] Max retries (5) reached. Disabling compilation.")
@@ -527,13 +537,13 @@ export function setupWorker(
 					typeof frappe === "undefined" || typeof frappe.format !== "function" || !frappe.meta
 						? null
 						: {
-							format: frappe.format.bind(frappe),
-							getDocfield: frappe.meta.get_docfield.bind(frappe.meta),
-							stripHtml:
-								frappe.utils && typeof frappe.utils.strip_html === "function"
-									? frappe.utils.strip_html.bind(frappe.utils)
-									: undefined,
-						},
+								format: frappe.format.bind(frappe),
+								getDocfield: frappe.meta.get_docfield.bind(frappe.meta),
+								stripHtml:
+									frappe.utils && typeof frappe.utils.strip_html === "function"
+										? frappe.utils.strip_html.bind(frappe.utils)
+										: undefined,
+							},
 			})
 		} catch (e) {
 			console.warn("[Typst Preview] Failed to apply Frappe formatting:", e)
@@ -560,7 +570,6 @@ export function setupWorker(
 				...pageSettings,
 				docHeader,
 			})
-
 		} catch (e: any) {
 			console.error("[Typst Preview] Translation error:", e)
 			if (statusEl) {

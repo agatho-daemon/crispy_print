@@ -130,7 +130,7 @@ self.addEventListener('message', async (event) => {
 });
 
 log('Typst worker loaded (server-side CLI bridge)');
-`;
+`
 
 	const blob = new Blob([workerCode], { type: "application/javascript" })
 	const workerUrl = URL.createObjectURL(blob)

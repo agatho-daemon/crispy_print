@@ -34,7 +34,9 @@ export async function saveCrispyFormat(
 	await setValue("Crispy Format", name, values)
 }
 
-export async function getCrispyFormatsForDoctype(doctype: string): Promise<Array<{ name: string; doc_type: string; is_default?: number }>> {
+export async function getCrispyFormatsForDoctype(
+	doctype: string
+): Promise<Array<{ name: string; doc_type: string; is_default?: number }>> {
 	const res = await call<Array<{ name: string; doc_type: string; is_default?: number }>>({
 		method: "crispy_print.api.get_crispy_formats_for_doctype",
 		args: { doctype },
@@ -77,4 +79,3 @@ export function encodePageSettings(settings: PageSettings): string {
 export function encodeLayout(layoutJson: CrispyLayout): string {
 	return JSON.stringify(layoutJson)
 }
-

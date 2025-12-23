@@ -89,4 +89,3 @@ export function applyFrappeFormattingToDoc(opts: {
 		filteredDoc[field.fieldname] = formatValue(filteredDoc[field.fieldname], df)
 	}
 }
-
