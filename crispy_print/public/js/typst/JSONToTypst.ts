@@ -352,7 +352,7 @@ class JSONTypstTranslator {
 		}
 
 		if (section.label) {
-			lines.push(`#text(..sectionLabelStyle)[${section.label}]`)
+			lines.push(`#block(spacing: 0.6em)[#text(..sectionLabelStyle)[${section.label}]]`)
 			lines.push("")
 		}
 
