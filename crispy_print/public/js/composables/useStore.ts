@@ -74,6 +74,7 @@ function buildStore() {
 				const extras: DocField[] = [
 					{ label: "DocType", fieldname: "doctype", fieldtype: "Data" },
 					{ label: "ID (name)", fieldname: "name", fieldtype: "Data" },
+					{ label: "Custom HTML", fieldname: "custom_html", fieldtype: "HTML" },
 					{ label: "Spacer", fieldname: "spacer", fieldtype: "Spacer" },
 					{ label: "Divider", fieldname: "divider", fieldtype: "Divider" },
 				]
