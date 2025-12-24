@@ -173,8 +173,8 @@ crispy_print/
 ### Key Components
 
 **Pages:**
-- **Crispy Print Builder** (`/app/crispy-print-builder`) - Visual layout editor with 4-column grid
-- **Typst Print Preview** (`/app/typst-print/{doctype}/{docname}/{format}`) - Document preview page
+- **Crispy Format Builder** (`/app/crispy-format-builder`) - Visual layout editor with 4-column grid
+- **Crispy Print Preview** (`/app/crispy-print/{doctype}/{docname}/{format}`) - Document preview page
 
 **Core Files:**
 - **`api.py`** - Backend API: Typst compilation, font discovery, letterhead handling
@@ -268,12 +268,12 @@ page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25)"
 
 Direct link to preview page:
 ```
-/app/typst-print/{doctype}/{docname}/{format_name}
+/app/crispy-print/{doctype}/{docname}/{format_name}
 ```
 
 Example:
 ```
-/app/typst-print/Sales%20Invoice/SI-2024-001/My%20Custom%20Format
+/app/crispy-print/Sales%20Invoice/SI-2024-001/My%20Custom%20Format
 ```
 
 ## API Reference

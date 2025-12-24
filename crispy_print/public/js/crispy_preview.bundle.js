@@ -12,7 +12,7 @@ if (typeof __VUE_PROD_HYDRATION_MISMATCH_DETAILS__ === "undefined") {
 	globalThis.__VUE_PROD_HYDRATION_MISMATCH_DETAILS__ = false
 }
 
-// Expose setupWorker globally for typst_print.js
+// Expose setupWorker globally for crispy_print.js
 window.setupWorker = setupWorker
 
 window.mountCrispyPreview = (selector = "#crispy-preview-root", props = {}) => {

@@ -1,15 +1,15 @@
-frappe.pages["typst-print"].on_page_load = function (wrapper) {
+frappe.pages["crispy-print"].on_page_load = function (wrapper) {
     frappe.ui.make_app_page({ parent: wrapper });
-    frappe.pages["typst-print"].print_view = new frappe.ui.CrispyPrintView(wrapper);
+    frappe.pages["crispy-print"].print_view = new frappe.ui.CrispyPrintView(wrapper);
 };
 
-frappe.pages["typst-print"].on_page_show = function () {
+frappe.pages["crispy-print"].on_page_show = function () {
     const route = frappe.get_route();
     const doctype = route[1];
     const docname = route.slice(2, 3).join(""); // keep simple join for performance
     const format = route[3];
 
-    const print_view = frappe.pages["typst-print"].print_view;
+    const print_view = frappe.pages["crispy-print"].print_view;
     if (!print_view || !doctype || !docname) return;
 
     // Let the Typst worker be the single source of truth for fetching the document (via API).
@@ -103,7 +103,7 @@ frappe.ui.CrispyPrintView = class {
         this.page.clear_menu();
         this.page.add_menu_item(__("Print Settings"), () => frappe.set_route("Form", "Print Settings"));
         if (format) {
-            this.page.add_menu_item(__("Customize"), () => frappe.set_route("crispy-print-builder", format));
+            this.page.add_menu_item(__("Customize"), () => frappe.set_route("crispy-format-builder", format));
         }
     }
 

@@ -185,7 +185,7 @@ export function setupWorker(
 
 	const handleRefresh = () => {
 		if (!currentDoctype || !currentDocname) {
-			// typst-print mode: a specific document is provided by the page
+			// crispy-print mode: a specific document is provided by the page
 			const doctype = adapter.getDoctype?.()
 			const docname = adapter.getDocname?.()
 			if (doctype && docname) {
@@ -205,7 +205,7 @@ export function setupWorker(
 	}
 	window.addEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
 
-	// PDF generation request (used by typst-print toolbar and any other UI)
+	// PDF generation request (used by crispy-print toolbar and any other UI)
 	const handlePdfRequest = (event: any) => {
 		const action = (event?.detail?.action || "view") as "view" | "download"
 
@@ -400,7 +400,7 @@ export function setupWorker(
 		const doctype = adapter.getDoctype?.()
 		const docname = adapter.getDocname?.()
 		if (doctype && docname) {
-			// typst-print mode: render a specific document without requiring sample selection
+			// crispy-print mode: render a specific document without requiring sample selection
 			setCurrentDoc(doctype, docname, { force: true })
 		} else if (doctype) {
 			setupSampleDocAutocomplete(doctype)

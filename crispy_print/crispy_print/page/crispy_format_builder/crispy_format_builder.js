@@ -1,25 +1,25 @@
-// crispy_print_builder.js
+// crispy_format_builder.js
 
-// Route: /app/crispy-print-builder
-frappe.pages["crispy-print-builder"].on_page_load = function (wrapper) {
+// Route: /app/crispy-format-builder
+frappe.pages["crispy-format-builder"].on_page_load = function (wrapper) {
 	frappe.ui.make_app_page({
 		parent: wrapper,
-		title: __("Crispy Print Builder"),
+		title: __("Crispy Format Builder"),
 		single_column: true,
 	});
 
 	// Hot reload in development
 	if (frappe.boot.developer_mode) {
 		frappe.hot_update = frappe.hot_update || [];
-		frappe.hot_update.push(() => load_crispy_print_builder(wrapper));
+		frappe.hot_update.push(() => load_crispy_format_builder(wrapper));
 	}
 };
 
-frappe.pages["crispy-print-builder"].on_page_show = function (wrapper) {
-	load_crispy_print_builder(wrapper);
+frappe.pages["crispy-format-builder"].on_page_show = function (wrapper) {
+	load_crispy_format_builder(wrapper);
 };
 
-function load_crispy_print_builder(wrapper) {
+function load_crispy_format_builder(wrapper) {
 	let route = frappe.get_route();
 	const parent = wrapper.querySelector(".layout-main-section");
 
@@ -78,7 +78,7 @@ function load_crispy_print_builder(wrapper) {
 
 			// Menu items
 			page.add_menu_item(__("Change Format"), () => {
-				frappe.set_route("crispy-print-builder");
+				frappe.set_route("crispy-format-builder");
 			});
 
 			// Watch dirty state to update page indicator
@@ -172,7 +172,7 @@ function load_crispy_print_builder(wrapper) {
 			primary_action_label: __("Edit"),
 			primary_action({ action, doctype, crispy_format, format_name }) {
 				if (action === "Edit") {
-					frappe.set_route("crispy-print-builder", crispy_format);
+					frappe.set_route("crispy-format-builder", crispy_format);
 				} else if (action === "Create") {
 					const primaryBtn = d.get_primary_button_element();
 					if (primaryBtn) {
@@ -185,7 +185,7 @@ function load_crispy_print_builder(wrapper) {
 							doc_type: doctype,
 						})
 						.then((doc) => {
-							frappe.set_route("crispy-print-builder", doc.name);
+							frappe.set_route("crispy-format-builder", doc.name);
 						})
 						.finally(() => {
 							const enabledPrimaryBtn = d.get_primary_button_element();

@@ -7,9 +7,9 @@
  "modified": "2025-11-20 06:24:12.618987",
  "modified_by": "Administrator",
  "module": "Crispy Print",
- "name": "crispy-print-builder",
+ "name": "crispy-format-builder",
  "owner": "Administrator",
- "page_name": "crispy-print-builder",
+ "page_name": "crispy-format-builder",
  "roles": [
   {
    "role": "System Manager"

@@ -295,7 +295,7 @@ const getPageSettings = () => ({
 const pageSettingsComputed = computed(() => getPageSettings())
 
 function triggerRefresh() {
-	// Manual refresh (refetch + recompile) for typst-print page.
+	// Manual refresh (refetch + recompile) for crispy-print page.
 	window.dispatchEvent(new CustomEvent("crispy-preview:refresh"))
 }
 
