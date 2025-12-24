@@ -118,7 +118,7 @@
    "label": "Default"
   },
   {
-   "default": "#grid(\n  columns: (1fr, 1fr),\n  align: (left, right),\n  [#text(font: \"Inter 18pt\", size 14, weight: 400)[#doc.doctype]],\n  [#text(font: \"Veneer Two\", size 18, weight: 400)[#doc.name]]\n)",
+   "default": "#grid(\n  columns: (1fr, 1fr),\n  align: (left, right),\n  [#text(font: \"Inter 18pt\", size: 14pt, weight: 800)[#doc.doctype]],\n  [#text(font: \"Veneer Two\", size: 18pt, red)[#doc.name]],\n)\n#align(center)[#line(\n  length: 100%,\n  stroke: 0.5pt + rgb(\"#00519B\"),\n)]\n#v(-1.0em)\n#set text(font: \"Helvetica\", size: 12pt)\n#set table(\n  stroke: 0.25pt,\n  inset: 8pt,\n  // fill: rgb(\"#b1f2eb\")\n)\n#set grid(\n  //stroke: 0.25pt,\n  inset: 8pt,\n  // fill: rgb(\"#b1f2eb\")\n)",
    "fieldname": "doc_header",
    "fieldtype": "Code",
    "label": "Document Header"
@@ -127,7 +127,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-18 09:26:39.582340",
+ "modified": "2025-12-24 07:16:51.483061",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",
