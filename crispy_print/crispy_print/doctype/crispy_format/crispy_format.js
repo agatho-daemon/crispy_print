@@ -8,7 +8,7 @@ frappe.ui.form.on("Crispy Format", {
 				frappe.msgprint(__("Please select DocType first"));
 				return;
 			}
-			frappe.set_route("crispy-print-builder", frm.doc.name);
+			frappe.set_route("crispy-format-builder", frm.doc.name);
 		});
 		// Show "Set as Default" button only if not already default
 		if (!frm.is_new() && !frm.doc.is_default) {

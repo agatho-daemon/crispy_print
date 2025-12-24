@@ -11,6 +11,6 @@ export function getRouteSafe(): string[] {
 
 export function getCrispyBuilderFormatName(route: FrappeRoute = getRouteSafe()): string | null {
 	const [page, format] = route
-	if (page !== "crispy-print-builder") return null
+	if (page !== "crispy-format-builder") return null
 	return format ? String(format) : null
 }

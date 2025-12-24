@@ -110,7 +110,7 @@ function buildStore() {
 				fields.value = [...extras, ...templateFields, ...baseFields]
 			}
 
-			// Parse + normalize persisted state (shared with typst-print)
+			// Parse + normalize persisted state (shared with crispy-print)
 			const parsed = parseCrispyFormatDoc(doc)
 
 			// Load or create layout

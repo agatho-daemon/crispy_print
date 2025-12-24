@@ -34,7 +34,7 @@
                              alt="Crispy Print"
                              title="Open Crispy Print Preview"/>`,
 						() => {
-							frappe.set_route("typst-print", frm.doctype, frm.docname)
+							frappe.set_route("crispy-print", frm.doctype, frm.docname)
 						}
 					)
 				},
