@@ -155,37 +155,104 @@
 												</div>
 												<div class="field-card__actions">
 													<button
-														class="lp-btn lp-btn--small lp-btn--icon"
 														type="button"
-														@click="cycleAlignment(field)"
-														:title="`Alignment: ${field.align || 'left'}`"
+														class="field-card__menu-btn"
+														title="Field menu"
+														@click.stop="
+															toggleFieldMenu(getFieldMenuId(section, colIndex, field), $event)
+														"
 													>
-														{{ getAlignIcon(field.align) }}
+														&#8943;
 													</button>
-													<button
-														class="lp-btn lp-btn--small lp-btn--icon lp-btn--label-toggle"
-														type="button"
-														@click="toggleFieldLabel(field)"
-														:title="field.label?.trim() ? 'Hide label' : 'Show label'"
-													>
-														Aa
-													</button>
-													<button
-														v-if="field.fieldtype === 'Table'"
-														class="lp-btn lp-btn--small"
-														type="button"
-														@click="configureColumns(field)"
-													>
-														Configure columns
-													</button>
-													<button
-														class="field-card__remove"
-														@click="removeField(column, fieldIndex)"
-														title="Remove"
-														type="button"
-													>
-														&#x2715;
-													</button>
+													<teleport to="body">
+														<div
+															v-if="openFieldMenuId === getFieldMenuId(section, colIndex, field)"
+															class="field-card__menu"
+															:style="fieldMenuStyle"
+															@click.stop
+														>
+															<button
+																type="button"
+																class="field-card__menu-item"
+																@click="toggleAlignSubmenu"
+															>
+																Align
+																<span class="field-card__menu-arrow">›</span>
+															</button>
+															<div
+																v-if="openFieldSubmenu === 'align'"
+																class="field-card__submenu"
+																@click.stop
+															>
+																<button
+																	type="button"
+																	class="field-card__menu-item"
+																	@click="setAlignment(field, 'left')"
+																>
+																	<span class="field-card__menu-check">{{
+																		getFieldAlign(field) === "left" ? "✓" : ""
+																	}}</span>
+																	Left
+																</button>
+																<button
+																	type="button"
+																	class="field-card__menu-item"
+																	@click="setAlignment(field, 'center')"
+																>
+																	<span class="field-card__menu-check">{{
+																		getFieldAlign(field) === "center" ? "✓" : ""
+																	}}</span>
+																	Center
+																</button>
+																<button
+																	type="button"
+																	class="field-card__menu-item"
+																	@click="setAlignment(field, 'right')"
+																>
+																	<span class="field-card__menu-check">{{
+																		getFieldAlign(field) === "right" ? "✓" : ""
+																	}}</span>
+																	Right
+																</button>
+															</div>
+
+															<button
+																type="button"
+																class="field-card__menu-item"
+																@click="onToggleFieldLabel(field)"
+															>
+																{{ (field.label ?? "").trim() ? "Hide label" : "Show label" }}
+															</button>
+
+															<button
+																v-if="field.fieldtype === 'Table'"
+																type="button"
+																class="field-card__menu-item"
+																@click="onConfigureColumns(field)"
+															>
+																Configure columns
+															</button>
+
+															<button
+																v-if="(field.fieldtype || '').toLowerCase() === 'typst'"
+																type="button"
+																class="field-card__menu-item"
+																@click="onEditTypstCode(field)"
+															>
+																Edit code
+															</button>
+
+															<div class="field-card__menu-divider"></div>
+
+															<button
+																type="button"
+																class="field-card__menu-item field-card__menu-item--danger"
+																@click="onRemoveField(column, fieldIndex)"
+															>
+																Remove
+															</button>
+														</div>
+													</teleport>
 												</div>
 											</div>
 											<div
@@ -259,6 +326,10 @@ const editingColumns = ref<TableColumn[]>([])
 const openSectionMenuId = ref<string | null>(null)
 const sectionMenuStyle = ref<Record<string, string>>({})
 
+const openFieldMenuId = ref<string | null>(null)
+const fieldMenuStyle = ref<Record<string, string>>({})
+const openFieldSubmenu = ref<"align" | null>(null)
+
 const sectionKey = (section: Section, index: number) => {
 	return (section as any).id || index
 }
@@ -270,6 +341,18 @@ function getSectionMenuId(section: Section, index: number) {
 function closeSectionMenu() {
 	openSectionMenuId.value = null
 	sectionMenuStyle.value = {}
+}
+
+function getFieldMenuId(section: Section, colIndex: number | string, field: Field) {
+	const sid = String(section.id ?? "section")
+	const fname = String(field.fieldname ?? "field")
+	return `${sid}:${String(colIndex)}:${fname}`
+}
+
+function closeFieldMenu() {
+	openFieldMenuId.value = null
+	openFieldSubmenu.value = null
+	fieldMenuStyle.value = {}
 }
 
 function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
@@ -289,6 +372,36 @@ function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
 	const left = rect.right
 
 	sectionMenuStyle.value = {
+		position: "fixed",
+		top: `${top}px`,
+		left: `${left}px`,
+		transform: "translateX(-100%)",
+		zIndex: "1000",
+	}
+}
+
+function toggleFieldMenu(id: string, event: MouseEvent) {
+	if (openFieldMenuId.value === id) {
+		closeFieldMenu()
+		return
+	}
+
+	closeSectionMenu()
+	openFieldMenuId.value = id
+	openFieldSubmenu.value = null
+
+	const target =
+		(event.currentTarget as HTMLElement | null) ||
+		((event.target as HTMLElement | null)?.closest?.(".field-card__menu-btn") as HTMLElement | null)
+
+	const rect = target?.getBoundingClientRect?.()
+	const estimatedMenuHeight = 280
+	const maxTop = Math.max(12, window.innerHeight - estimatedMenuHeight)
+
+	const top = Math.min((rect?.bottom ?? event.clientY) + 6, maxTop)
+	const left = rect?.right ?? event.clientX
+
+	fieldMenuStyle.value = {
 		position: "fixed",
 		top: `${top}px`,
 		left: `${left}px`,
@@ -322,9 +435,15 @@ onMounted(() => {
 	ensureAtLeastOneSection()
 })
 
-const onDocClick = () => closeSectionMenu()
+const onDocClick = () => {
+	closeSectionMenu()
+	closeFieldMenu()
+}
 const onKeyDown = (e: KeyboardEvent) => {
-	if (e.key === "Escape") closeSectionMenu()
+	if (e.key === "Escape") {
+		closeSectionMenu()
+		closeFieldMenu()
+	}
 }
 
 onMounted(() => {
@@ -436,32 +555,24 @@ function removeField(column: Column, fieldIndex: number) {
 	store.markDirty()
 }
 
-function cycleAlignment(field: Field) {
-	// Cycle through: left → center → right → left
-	const current = field.align || "left"
-	const alignments: Array<"left" | "center" | "right"> = ["left", "center", "right"]
-	const currentIndex = alignments.indexOf(current)
-	const nextIndex = (currentIndex + 1) % alignments.length
-	field.align = alignments[nextIndex]
-	store.markDirty()
-}
-
-function getAlignIcon(align?: "left" | "center" | "right"): string {
-	// Unicode alignment icons
-	switch (align) {
-		case "center":
-			return "≡" // Center align
-		case "right":
-			return "⇥" // Right align
-		default:
-			return "⇤" // Left align
-	}
-}
-
 function getDefaultAlignment(fieldtype?: string): "left" | "center" | "right" {
 	// Numeric fields default to right alignment, like Frappe
 	const numericTypes = ["Int", "Float", "Currency", "Percent"]
 	return numericTypes.includes(fieldtype || "") ? "right" : "left"
+}
+
+function getFieldAlign(field: Field): "left" | "center" | "right" {
+	return field.align || getDefaultAlignment(field.fieldtype)
+}
+
+function toggleAlignSubmenu() {
+	openFieldSubmenu.value = openFieldSubmenu.value === "align" ? null : "align"
+}
+
+function setAlignment(field: Field, align: "left" | "center" | "right") {
+	field.align = align
+	store.markDirty()
+	closeFieldMenu()
 }
 
 function togglePageBreak(section: Section) {
@@ -588,6 +699,11 @@ async function configureColumns(field: Field) {
 	columnEditor.value = { field }
 }
 
+async function onConfigureColumns(field: Field) {
+	await configureColumns(field)
+	closeFieldMenu()
+}
+
 function onColumnsUpdate(columns: TableColumn[]) {
 	if (!columnEditor.value) return
 	editingColumns.value = JSON.parse(JSON.stringify(columns || []))
@@ -622,6 +738,56 @@ function toggleFieldLabel(field: Field) {
 		field.label = getDefaultLabel(field)
 	}
 	store.markDirty()
+}
+
+function onToggleFieldLabel(field: Field) {
+	toggleFieldLabel(field)
+	closeFieldMenu()
+}
+
+function onRemoveField(column: Column, fieldIndex: number) {
+	removeField(column, fieldIndex)
+	closeFieldMenu()
+}
+
+function editTypstCode(field: Field) {
+	const existing = (field as any).typst_code || ""
+
+	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
+		const next = window.prompt("Edit Typst code", existing)
+		if (next === null) return
+		;(field as any).typst_code = next
+		store.markDirty()
+		return
+	}
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Edit Typst code"),
+		fields: [
+			{
+				fieldtype: "Code",
+				fieldname: "typst_code",
+				label: __("Typst code"),
+				options: "Rust",
+				reqd: 0,
+				default: existing,
+			},
+		],
+		primary_action_label: __("Apply"),
+		primary_action: (values: Record<string, any>) => {
+			const value = values.typst_code ?? ""
+			;(field as any).typst_code = value
+			store.markDirty()
+			dialog.hide()
+		},
+	})
+
+	dialog.show()
+}
+
+function onEditTypstCode(field: Field) {
+	editTypstCode(field)
+	closeFieldMenu()
 }
 </script>
 
@@ -763,7 +929,7 @@ function toggleFieldLabel(field: Field) {
 .section-grip {
 	cursor: grab;
 	color: #94a3b8;
-	font-size: 16px;
+	font-size: 24px;
 }
 
 .section-title-input {
@@ -931,6 +1097,7 @@ function toggleFieldLabel(field: Field) {
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 8px;
+	position: relative;
 }
 
 .field-card__info {
@@ -974,9 +1141,13 @@ function toggleFieldLabel(field: Field) {
 }
 
 .field-card__actions {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
-	gap: 8px;
+	justify-content: center;
+	position: absolute;
+	right: 4px;
+	top: 50%;
+	transform: translateY(-50%);
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.15s ease;
@@ -988,16 +1159,96 @@ function toggleFieldLabel(field: Field) {
 	pointer-events: auto;
 }
 
-.field-card__remove {
-	background: transparent;
+.field-card__menu-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
 	border: none;
+	background: transparent;
+	color: #475569;
 	cursor: pointer;
-	color: #cbd5e1;
-	transition: color 0.15s ease;
+	font-size: 18px;
+	line-height: 1;
+	transition: background-color 0.15s ease;
 }
 
-.field-card__remove:hover {
-	color: #e11d48;
+.field-card__menu-btn:hover {
+	background: rgba(241, 245, 249, 0.9);
+}
+
+.field-card__menu {
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	padding: 6px;
+	width: 220px;
+	max-width: calc(100vw - 32px);
+	box-shadow:
+		0 10px 25px rgba(148, 163, 184, 0.25),
+		0 8px 10px rgba(148, 163, 184, 0.15);
+}
+
+.field-card__menu-item {
+	width: 100%;
+	text-align: left;
+	border: 0;
+	background: transparent;
+	padding: 8px 10px;
+	border-radius: 8px;
+	font-size: 13px;
+	color: #0f172a;
+	cursor: pointer;
+	white-space: nowrap;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.field-card__menu-item:hover {
+	background: #f1f5f9;
+}
+
+.field-card__menu-divider {
+	height: 1px;
+	margin: 6px 6px;
+	background: #e2e8f0;
+}
+
+.field-card__menu-item--danger {
+	color: #b91c1c;
+}
+
+.field-card__menu-item--danger:hover {
+	background: #fee2e2;
+}
+
+.field-card__submenu {
+	position: absolute;
+	top: 6px;
+	left: calc(100% + 6px);
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	padding: 6px;
+	width: 180px;
+	box-shadow:
+		0 10px 25px rgba(148, 163, 184, 0.25),
+		0 8px 10px rgba(148, 163, 184, 0.15);
+}
+
+.field-card__menu-check {
+	width: 14px;
+	display: inline-flex;
+	justify-content: center;
+	color: #0f172a;
+}
+
+.field-card__menu-arrow {
+	margin-left: auto;
+	color: #94a3b8;
 }
 
 .field-card__columns {
