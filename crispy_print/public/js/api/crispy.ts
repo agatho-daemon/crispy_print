@@ -12,7 +12,7 @@ export interface CrispyFormatDoc {
 	doc_header?: string
 	layout_json?: string
 	page_settings?: string
-	typst_layout?: string
+	typst_code?: string
 	typst_preamble?: string
 	__onload?: any
 }
@@ -27,7 +27,7 @@ export async function saveCrispyFormat(
 		layout_json?: string
 		page_settings?: string
 		doc_header?: string
-		typst_layout?: string
+		typst_code?: string
 		typst_preamble?: string
 	}
 ): Promise<void> {

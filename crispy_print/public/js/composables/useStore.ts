@@ -17,7 +17,7 @@ interface CrispyFormat {
 	is_default?: number
 	doc_header?: string
 	typst_preamble?: string
-	typst_layout?: string
+	typst_code?: string
 	layout_json?: string
 	page_settings?: string
 	__onload?: any
@@ -166,12 +166,12 @@ function buildStore() {
 
 			// TODO: Generate Typst markup from layout
 			// For now, just store the JSON
-			const typstLayout = `// Generated Typst layout\n// TODO: Implement layout to Typst conversion`
+			const typstCode = `// Generated Typst layout\n// TODO: Implement layout to Typst conversion`
 
 			// Prepare update data
 			const updateData = {
 				layout_json: layoutJson,
-				typst_layout: typstLayout,
+				typst_code: typstCode,
 				page_settings: JSON.stringify(pageSettings.value),
 			}
 
