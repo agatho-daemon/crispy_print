@@ -18,7 +18,7 @@
   "typst_code_section",
   "typst_preamble",
   "doc_header",
-  "typst_layout",
+  "typst_code",
   "page_settings",
   "layout_json"
  ],
@@ -94,11 +94,6 @@
    "label": "Typst Code"
   },
   {
-   "fieldname": "typst_layout",
-   "fieldtype": "Code",
-   "label": "Typst Layout"
-  },
-  {
    "fieldname": "layout_json",
    "fieldtype": "Code",
    "hidden": 1,
@@ -122,12 +117,17 @@
    "fieldname": "doc_header",
    "fieldtype": "Code",
    "label": "Document Header"
+  },
+  {
+   "fieldname": "typst_code",
+   "fieldtype": "Code",
+   "label": "Typst code"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-24 07:16:51.483061",
+ "modified": "2025-12-25 09:47:29.280921",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",
