@@ -139,6 +139,7 @@
 			:format-name="selectedFormat"
 			:layout="layout"
 			:doc-header="docHeader"
+			:typst-preamble="typstPreamble"
 			:letterhead="letterheadDoc"
 			:doc-type="props.doctype || null"
 			:doc-name="props.docname || null"
@@ -181,12 +182,19 @@ const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 const layout = ref<any>(null)
 const loading = ref(true)
 const docHeader = ref("")
+const typstPreamble = ref("")
 const letterheadDoc = ref<any | null>(null)
 const changeKey = ref(0)
 
 // Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
 watch(
-	() => [layout.value, pageSettings.value, letterheadDoc.value, docHeader.value],
+	() => [
+		layout.value,
+		pageSettings.value,
+		letterheadDoc.value,
+		docHeader.value,
+		typstPreamble.value,
+	],
 	() => {
 		changeKey.value++
 	},
@@ -264,6 +272,7 @@ async function loadFormatSettings(formatName: string) {
 		// Store layout
 		layout.value = data.layout
 		docHeader.value = data.formatDoc.doc_header || ""
+		typstPreamble.value = data.formatDoc.typst_preamble || ""
 
 		loading.value = false
 	} catch (error) {
