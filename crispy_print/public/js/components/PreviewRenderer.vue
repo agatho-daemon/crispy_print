@@ -21,6 +21,7 @@ interface Props {
 	formatName: string | null
 	layout: any
 	docHeader: string
+	typstPreamble: string
 	pageSettings: any
 	letterhead: any
 	docType: string | null
@@ -39,6 +40,7 @@ function createAdapter() {
 	return {
 		getLayout: () => props.layout,
 		getDocHeader: () => props.docHeader,
+		getTypstPreamble: () => props.typstPreamble,
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
 		getDocname: () => props.docName,
@@ -60,7 +62,13 @@ function createAdapter() {
 
 					// Fallback for callers that don't provide changeKey.
 					const stop = watch(
-						() => [props.layout, props.pageSettings, props.letterhead, props.docHeader],
+						() => [
+							props.layout,
+							props.pageSettings,
+							props.letterhead,
+							props.docHeader,
+							props.typstPreamble,
+						],
 						() => callback(),
 						{ deep: true }
 					)

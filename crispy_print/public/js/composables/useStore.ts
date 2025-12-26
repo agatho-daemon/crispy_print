@@ -40,6 +40,7 @@ function buildStore() {
 	const formatName = computed(() => crispyFormat.value?.name || null)
 	const docType = computed(() => crispyFormat.value?.doc_type || null)
 	const docHeader = computed(() => crispyFormat.value?.doc_header || "")
+	const typstPreamble = computed(() => crispyFormat.value?.typst_preamble || "")
 
 	/**
 	 * Fetch Crispy Format document and load DocType metadata
@@ -256,6 +257,7 @@ function buildStore() {
 		formatName,
 		docType,
 		docHeader,
+		typstPreamble,
 
 		// Methods
 		fetch,

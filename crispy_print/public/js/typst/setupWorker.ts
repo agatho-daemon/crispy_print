@@ -14,6 +14,7 @@ import {
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
 	getDocHeader?: () => string | null | undefined
+	getTypstPreamble?: () => string | null | undefined
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
 	getDocname?: () => string | null | undefined
@@ -564,11 +565,16 @@ export function setupWorker(
 
 			const docHeader =
 				adapter && typeof adapter.getDocHeader === "function" ? adapter.getDocHeader() || "" : ""
+			const typstPreamble =
+				adapter && typeof adapter.getTypstPreamble === "function"
+					? adapter.getTypstPreamble() || ""
+					: ""
 
 			// Use filtered document instead of full sampleDocData
 			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, {
 				...pageSettings,
 				docHeader,
+				typstPreamble,
 			})
 		} catch (e: any) {
 			console.error("[Typst Preview] Translation error:", e)

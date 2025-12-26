@@ -180,6 +180,11 @@ class JSONTypstTranslator {
 
 		lines.push("// Add your custom styling below")
 		lines.push("")
+		const typstPreamble = (this.options.typstPreamble as string | undefined) || ""
+		if (typstPreamble && typstPreamble.trim()) {
+			lines.push(typstPreamble.trim())
+			lines.push("")
+		}
 		lines.push("// ========================================")
 		lines.push("// END USER CUSTOM SECTION")
 		lines.push("// ========================================")
