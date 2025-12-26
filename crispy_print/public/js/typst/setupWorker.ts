@@ -3,7 +3,6 @@
 import { translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
-import { applyFrappeFormattingToDoc } from "../utils/formatters"
 import type { CrispyLayout } from "../utils/layout"
 import {
 	CrispyPreviewEvents,
@@ -74,7 +73,7 @@ export function setupWorker(
 			}
 
 			frappe.call({
-				method: "frappe.client.get",
+				method: "crispy_print.api.get_formatted_doc",
 				args: { doctype, name: docname },
 				callback: (r: any) => {
 					if (r?.message && typeof r.message === "object") {
@@ -526,29 +525,7 @@ export function setupWorker(
 		// Filter document to only include used fields
 		const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
 
-		// Apply Frappe-style formatting (Currency/Date/Percent/etc.) so Typst output matches Frappe preview.
-		// We format *after* filtering to keep the payload small.
-		try {
-			applyFrappeFormattingToDoc({
-				layout: layout as any,
-				doctype: currentDoctype,
-				fullDoc: sampleDocData,
-				filteredDoc,
-				env:
-					typeof frappe === "undefined" || typeof frappe.format !== "function" || !frappe.meta
-						? null
-						: {
-								format: frappe.format.bind(frappe),
-								getDocfield: frappe.meta.get_docfield.bind(frappe.meta),
-								stripHtml:
-									frappe.utils && typeof frappe.utils.strip_html === "function"
-										? frappe.utils.strip_html.bind(frappe.utils)
-										: undefined,
-							},
-			})
-		} catch (e) {
-			console.warn("[Typst Preview] Failed to apply Frappe formatting:", e)
-		}
+		// Formatting is handled server-side (get_formatted_doc) for consistency across pages.
 
 		let typst: string
 		try {
