@@ -13,7 +13,7 @@ const log = (...args) => { if (ENABLE_WORKER_LOGS) console.log('[Typst Worker]',
 const warn = (...args) => console.warn('[Typst Worker]', ...args);
 const BASE_URL = ${JSON.stringify(baseUrl)};
 
-async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterheadImage = null) {
+async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterheadImage = null, qrData = null, qrFilename = null) {
   const apiUrl = BASE_URL + '/api/method/crispy_print.api.compile_typst';
   const body = {
     typst_source: typstSrc,
@@ -22,6 +22,10 @@ async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterh
 
   if (letterheadImage) {
     body.letterhead_image = letterheadImage;
+  }
+  if (qrData && qrFilename) {
+    body.qr_data = qrData;
+    body.qr_filename = qrFilename;
   }
 
   const response = await fetch(apiUrl, {
@@ -78,7 +82,7 @@ async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterh
 self.postMessage({ type: 'init', ok: true, wasmReady: false });
 
 self.addEventListener('message', async (event) => {
-  const { typstSrc, csrfToken, outputFormat, requestId, letterheadImage, seq } = event.data || {};
+  const { typstSrc, csrfToken, outputFormat, requestId, letterheadImage, qrData, qrFilename, seq } = event.data || {};
   const desiredFormat = (outputFormat || 'svg').toLowerCase();
 
   if (!typstSrc || !typstSrc.trim()) {
@@ -97,7 +101,7 @@ self.addEventListener('message', async (event) => {
     if (letterheadImage) {
       log(\`Including letterhead image: \${letterheadImage}\`);
     }
-    const result = await compileWithCLI(typstSrc, csrfToken, desiredFormat, letterheadImage);
+    const result = await compileWithCLI(typstSrc, csrfToken, desiredFormat, letterheadImage, qrData, qrFilename);
     const message = {
       type: 'compile',
       ok: true,

@@ -21,7 +21,9 @@ interface Props {
 	formatName: string | null
 	layout: any
 	docHeader: string
+	docFooter: string
 	typstPreamble: string
+	qrEnabled: boolean
 	pageSettings: any
 	letterhead: any
 	docType: string | null
@@ -40,7 +42,9 @@ function createAdapter() {
 	return {
 		getLayout: () => props.layout,
 		getDocHeader: () => props.docHeader,
+		getDocFooter: () => props.docFooter,
 		getTypstPreamble: () => props.typstPreamble,
+		getQrEnabled: () => props.qrEnabled,
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
 		getDocname: () => props.docName,
@@ -67,6 +71,7 @@ function createAdapter() {
 							props.pageSettings,
 							props.letterhead,
 							props.docHeader,
+							props.docFooter,
 							props.typstPreamble,
 						],
 						() => callback(),

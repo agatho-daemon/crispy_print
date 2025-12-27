@@ -10,6 +10,8 @@ export interface CrispyFormatDoc {
 	doc_type: string
 	is_default?: number
 	doc_header?: string
+	doc_footer?: string
+	qrcode?: number
 	layout_json?: string
 	page_settings?: string
 	typst_code?: string
@@ -27,6 +29,7 @@ export async function saveCrispyFormat(
 		layout_json?: string
 		page_settings?: string
 		doc_header?: string
+		doc_footer?: string
 		typst_code?: string
 		typst_preamble?: string
 	}

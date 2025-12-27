@@ -3,7 +3,9 @@
 		:format-name="store.formatName.value"
 		:layout="store.layout.value"
 		:doc-header="store.docHeader.value"
+		:doc-footer="store.docFooter.value"
 		:typst-preamble="store.typstPreamble.value"
+		:qr-enabled="qrEnabled"
 		:letterhead="store.letterhead.value"
 		:doc-type="store.docType.value"
 		:doc-name="null"
@@ -79,8 +81,10 @@
 <script setup lang="ts">
 import PreviewRenderer from "./PreviewRenderer.vue"
 import { useStore } from "../composables/useStore"
+import { computed } from "vue"
 
 const store = useStore()
+const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value)
 </script>
 
 <style scoped>

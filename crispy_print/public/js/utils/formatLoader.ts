@@ -25,6 +25,8 @@ export interface FormatData {
 	layout_json?: string
 	page_settings?: string
 	doc_header?: string
+	doc_footer?: string
+	qrcode?: number
 	typst_preamble?: string
 	is_default?: number
 }

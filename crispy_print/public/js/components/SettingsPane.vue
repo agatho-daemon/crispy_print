@@ -311,6 +311,10 @@
 						</option>
 					</select>
 				</div>
+				<div class="settings-pane__field settings-pane__field--inline">
+					<label class="settings-pane__label">Remove QRCode</label>
+					<input v-model="store.removeQr.value" type="checkbox" class="settings-pane__checkbox" />
+				</div>
 			</div>
 		</div>
 	</div>
@@ -320,6 +324,7 @@ import { ref, watch, onMounted, computed } from "vue"
 import { ensureTypography, type PageSettings, type TypographySettings } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
 import { getLetterheads, getTypstLocalFonts } from "../api/crispy"
+import { useStore } from "../composables/useStore"
 
 interface Props {
 	pageSettings: PageSettings
@@ -334,6 +339,7 @@ const availableLetterheads = ref<string[]>([])
 const loadingLetterheads = ref(false)
 const isPageSettingsExpanded = ref(false)
 const isTypographyExpanded = ref(false)
+const store = useStore()
 
 // Initialize typography with defaults if not present
 const typography = computed<TypographySettings>(() => {
@@ -527,6 +533,13 @@ watch(
 	gap: 0px;
 }
 
+.settings-pane__field--inline {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
 .settings-pane__label {
 	font-size: 13px;
 	font-weight: 600;
@@ -553,6 +566,12 @@ watch(
 .settings-pane__input:focus {
 	border-color: #a5b4fc;
 	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.settings-pane__checkbox {
+	width: 16px;
+	height: 16px;
+	accent-color: #4f46e5;
 }
 
 .settings-pane__margins {
