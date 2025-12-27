@@ -67,6 +67,10 @@
 							</option>
 						</select>
 					</div>
+					<div class="settings-pane__field settings-pane__field--inline">
+						<label class="settings-pane__label">Remove QRCode</label>
+						<input v-model="removeQr" type="checkbox" class="settings-pane__checkbox" />
+					</div>
 					<!-- Page Size -->
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">Page Size</label>
@@ -139,7 +143,9 @@
 			:format-name="selectedFormat"
 			:layout="layout"
 			:doc-header="docHeader"
+			:doc-footer="docFooter"
 			:typst-preamble="typstPreamble"
+			:qr-enabled="qrEnabledEffective"
 			:letterhead="letterheadDoc"
 			:doc-type="props.doctype || null"
 			:doc-name="props.docname || null"
@@ -182,9 +188,13 @@ const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 const layout = ref<any>(null)
 const loading = ref(true)
 const docHeader = ref("")
+const docFooter = ref("")
 const typstPreamble = ref("")
+const qrEnabled = ref(false)
+const removeQr = ref(false)
 const letterheadDoc = ref<any | null>(null)
 const changeKey = ref(0)
+const qrEnabledEffective = computed(() => qrEnabled.value && !removeQr.value)
 
 // Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
 watch(
@@ -193,7 +203,10 @@ watch(
 		pageSettings.value,
 		letterheadDoc.value,
 		docHeader.value,
+		docFooter.value,
 		typstPreamble.value,
+		qrEnabled.value,
+		removeQr.value,
 	],
 	() => {
 		changeKey.value++
@@ -272,7 +285,9 @@ async function loadFormatSettings(formatName: string) {
 		// Store layout
 		layout.value = data.layout
 		docHeader.value = data.formatDoc.doc_header || ""
+		docFooter.value = data.formatDoc.doc_footer || ""
 		typstPreamble.value = data.formatDoc.typst_preamble || ""
+		qrEnabled.value = Boolean(data.formatDoc.qrcode)
 
 		loading.value = false
 	} catch (error) {
@@ -478,6 +493,13 @@ defineExpose({
 	gap: 6px;
 }
 
+.settings-pane__field--inline {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
 .settings-pane__label {
 	font-size: 13px;
 	font-weight: 500;
@@ -500,6 +522,12 @@ defineExpose({
 .settings-pane__select:focus {
 	outline: none;
 	border-color: #3b82f6;
+}
+
+.settings-pane__checkbox {
+	width: 16px;
+	height: 16px;
+	accent-color: #2563eb;
 }
 
 .settings-pane__input--readonly {

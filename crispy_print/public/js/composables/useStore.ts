@@ -16,6 +16,8 @@ interface CrispyFormat {
 	doc_type: string
 	is_default?: number
 	doc_header?: string
+	doc_footer?: string
+	qrcode?: number
 	typst_preamble?: string
 	typst_code?: string
 	layout_json?: string
@@ -33,6 +35,7 @@ function buildStore() {
 	const dirty = ref(false)
 	const loading = ref(false)
 	const changeKey = ref(0)
+	const removeQr = ref(false)
 
 	const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 
@@ -40,6 +43,8 @@ function buildStore() {
 	const formatName = computed(() => crispyFormat.value?.name || null)
 	const docType = computed(() => crispyFormat.value?.doc_type || null)
 	const docHeader = computed(() => crispyFormat.value?.doc_header || "")
+	const docFooter = computed(() => crispyFormat.value?.doc_footer || "")
+	const qrEnabled = computed(() => Boolean(crispyFormat.value?.qrcode))
 	const typstPreamble = computed(() => crispyFormat.value?.typst_preamble || "")
 
 	/**
@@ -48,6 +53,7 @@ function buildStore() {
 	async function fetch(formatName: string) {
 		loading.value = true
 		changeKey.value = 0
+		removeQr.value = false
 
 		try {
 			// Fetch the Crispy Format document
@@ -241,6 +247,10 @@ function buildStore() {
 		}
 	)
 
+	watch(removeQr, () => {
+		changeKey.value++
+	})
+
 	const store = {
 		// State
 		crispyFormat,
@@ -257,7 +267,10 @@ function buildStore() {
 		formatName,
 		docType,
 		docHeader,
+		docFooter,
+		qrEnabled,
 		typstPreamble,
+		removeQr,
 
 		// Methods
 		fetch,

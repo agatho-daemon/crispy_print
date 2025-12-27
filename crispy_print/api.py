@@ -110,8 +110,41 @@ def _copy_letterhead_to_temp(letterhead_image, temp_dir):
 	return None
 
 
+def _write_qr_svg(qr_data, qr_filename, temp_dir):
+	"""
+	Generate a QR code SVG in the temp directory.
+
+	Args:
+	    qr_data (str): Payload to encode.
+	    qr_filename (str): Target filename (e.g. "DOC-0001-qr.svg").
+	    temp_dir (str): Temporary directory path.
+	"""
+	if not qr_data or not qr_filename:
+		return None
+
+	try:
+		import pyqrcode
+	except Exception as e:
+		frappe.log_error(f"PyQRCode not available: {e}", "QR Code Error")
+		return None
+
+	filename = Path(qr_filename).name
+	if not filename.lower().endswith(".svg"):
+		filename = f"{filename}.svg"
+
+	dest_path = Path(temp_dir) / filename
+
+	try:
+		qr = pyqrcode.create(str(qr_data))
+		qr.svg(str(dest_path), scale=4, quiet_zone=1)
+		return filename
+	except Exception as e:
+		frappe.log_error(f"Failed to generate QR SVG: {e}", "QR Code Error")
+		return None
+
+
 @frappe.whitelist()
-def compile_typst(typst_source, output_format="svg", letterhead_image=None):
+def compile_typst(typst_source, output_format="svg", letterhead_image=None, qr_data=None, qr_filename=None):
 	"""
 	Compile Typst source code using the local Typst CLI.
 
@@ -149,6 +182,8 @@ def compile_typst(typst_source, output_format="svg", letterhead_image=None):
 			# Handle letterhead image if provided
 			if letterhead_image:
 				_copy_letterhead_to_temp(letterhead_image, temp_dir)
+			if qr_data and qr_filename:
+				_write_qr_svg(qr_data, qr_filename, temp_dir)
 
 			# Write Typst source to temp file
 			src_path = Path(temp_dir) / "document.typ"

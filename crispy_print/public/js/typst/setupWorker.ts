@@ -13,7 +13,9 @@ import {
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
 	getDocHeader?: () => string | null | undefined
+	getDocFooter?: () => string | null | undefined
 	getTypstPreamble?: () => string | null | undefined
+	getQrEnabled?: () => boolean
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
 	getDocname?: () => string | null | undefined
@@ -52,9 +54,19 @@ export function setupWorker(
 	let currentDocname: string | null = null
 	let sampleDocSelected = false
 	const docCache = new Map<string, Record<string, any>>()
+	let qrEnabled = false
+	let docNameForQr = ""
+	let qrFilename = ""
 
 	function cacheKey(doctype: string, docname: string) {
 		return `${doctype}::${docname}`
+	}
+
+	function sanitizeFilename(value: string) {
+		return String(value || "")
+			.trim()
+			.replace(/[\/\\?%*:|"<>]/g, "-")
+			.replace(/\s+/g, "-")
 	}
 
 	function fetchDoc(
@@ -249,6 +261,8 @@ export function setupWorker(
 			requestId,
 			seq: nextSeq(requestId),
 			letterheadImage,
+			qrData: qrEnabled ? docNameForQr : null,
+			qrFilename: qrEnabled ? qrFilename : null,
 		})
 	}
 	window.addEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
@@ -462,6 +476,21 @@ export function setupWorker(
 		}, 150)
 	}
 
+	function resolveQrPayload() {
+		const enabled =
+			adapter && typeof adapter.getQrEnabled === "function"
+				? Boolean(adapter.getQrEnabled())
+				: false
+		const docName = (sampleDocData as any)?.name || currentDocname || ""
+		const filename = enabled && docName ? `${sanitizeFilename(docName)}-qr.svg` : ""
+
+		return {
+			qrEnabled: enabled,
+			qrData: enabled ? docName : null,
+			qrFilename: enabled ? filename : null,
+		}
+	}
+
 	function performCompilation() {
 		clearPreview()
 
@@ -542,16 +571,25 @@ export function setupWorker(
 
 			const docHeader =
 				adapter && typeof adapter.getDocHeader === "function" ? adapter.getDocHeader() || "" : ""
+			const docFooter =
+				adapter && typeof adapter.getDocFooter === "function" ? adapter.getDocFooter() || "" : ""
 			const typstPreamble =
 				adapter && typeof adapter.getTypstPreamble === "function"
 					? adapter.getTypstPreamble() || ""
 					: ""
+			const qrPayload = resolveQrPayload()
+			qrEnabled = qrPayload.qrEnabled
+			docNameForQr = qrPayload.qrData ? String(qrPayload.qrData) : ""
+			qrFilename = qrPayload.qrFilename ? String(qrPayload.qrFilename) : ""
 
 			// Use filtered document instead of full sampleDocData
 			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, {
 				...pageSettings,
 				docHeader,
+				docFooter,
 				typstPreamble,
+				qrEnabled,
+				qrFilename,
 			})
 		} catch (e: any) {
 			console.error("[Typst Preview] Translation error:", e)
@@ -598,6 +636,8 @@ export function setupWorker(
 			requestId: PREVIEW_REQUEST_ID,
 			seq: nextSeq(PREVIEW_REQUEST_ID),
 			letterheadImage,
+			qrData: qrEnabled ? docNameForQr : null,
+			qrFilename: qrEnabled ? qrFilename : null,
 		})
 	}
 
@@ -766,6 +806,7 @@ export function setupWorker(
 				requestId: VIEW_PDF_REQUEST_ID,
 				seq: nextSeq(VIEW_PDF_REQUEST_ID),
 				letterheadImage,
+				...resolveQrPayload(),
 			})
 		})
 
@@ -804,6 +845,7 @@ export function setupWorker(
 				requestId: DOWNLOAD_REQUEST_ID,
 				seq: nextSeq(DOWNLOAD_REQUEST_ID),
 				letterheadImage,
+				...resolveQrPayload(),
 			})
 		})
 

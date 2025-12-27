@@ -177,6 +177,9 @@ class JSONTypstTranslator {
 		lines.push(`  fill: rgb("${sectionLabel.color}")`)
 		lines.push(")")
 		lines.push("")
+		lines.push("#let header_block = []")
+		lines.push("#let footer_block = []")
+		lines.push("")
 
 		lines.push("// Add your custom styling below")
 		lines.push("")
@@ -320,12 +323,50 @@ class JSONTypstTranslator {
 			}
 		}
 
+		const docFooter = (this.options.docFooter as string | undefined) || ""
+		const qrEnabled = Boolean(this.options.qrEnabled)
+		const qrFilename = (this.options.qrFilename as string | undefined) || ""
+
 		const docHeader = (this.options.docHeader as string | undefined) || ""
 		if (docHeader && docHeader.trim()) {
 			lines.push("// Document Header")
 			lines.push(docHeader.trim())
 			lines.push("")
 		}
+
+		if (qrEnabled && qrFilename) {
+			lines.push(`#let qr_filename = "${qrFilename}"`)
+			lines.push("")
+		}
+
+		let resolvedFooter = docFooter
+		if (qrEnabled && qrFilename) {
+			resolvedFooter = resolvedFooter.replace(/#doc\.name-qr\.svg/g, qrFilename)
+		} else if (resolvedFooter) {
+			// Remove QR-specific lines when runtime QR is disabled.
+			resolvedFooter = resolvedFooter
+				.replace(/^.*qr_filename.*\n?/gm, "")
+				.replace(/^.*qr_path.*\n?/gm, "")
+				.replace(/^.*qr\\.svg.*\n?/gm, "")
+				.replace(/^.*#doc\.name-qr\.svg.*\n?/gm, "")
+		}
+
+		if (resolvedFooter && resolvedFooter.trim()) {
+			lines.push("// Document Footer")
+			lines.push(resolvedFooter.trim())
+			lines.push("")
+		}
+
+		if ((!resolvedFooter || !resolvedFooter.trim()) && qrEnabled && qrFilename) {
+			lines.push("// QR Code Footer")
+			lines.push("#let footer_block = block[")
+			lines.push(`  #image("${qrFilename}", width: 25mm)`)
+			lines.push("]")
+			lines.push("")
+		}
+
+		lines.push("#set page(header: header_block, footer: footer_block)")
+		lines.push("")
 
 		this.sections?.forEach((section, idx) => {
 			lines.push(this.translateSection(section, idx))
