@@ -334,39 +334,26 @@ class JSONTypstTranslator {
 			lines.push("")
 		}
 
-		if (qrEnabled && qrFilename) {
-			lines.push(`#let qr_filename = "${qrFilename}"`)
-			lines.push("")
-		}
-
-		let resolvedFooter = docFooter
-		if (qrEnabled && qrFilename) {
-			resolvedFooter = resolvedFooter.replace(/#doc\.name-qr\.svg/g, qrFilename)
-		} else if (resolvedFooter) {
-			// Remove QR-specific lines when runtime QR is disabled.
-			resolvedFooter = resolvedFooter
-				.replace(/^.*qr_filename.*\n?/gm, "")
-				.replace(/^.*qr_path.*\n?/gm, "")
-				.replace(/^.*qr\\.svg.*\n?/gm, "")
-				.replace(/^.*#doc\.name-qr\.svg.*\n?/gm, "")
-		}
-
-		if (resolvedFooter && resolvedFooter.trim()) {
+		if (docFooter && docFooter.trim()) {
 			lines.push("// Document Footer")
-			lines.push(resolvedFooter.trim())
-			lines.push("")
-		}
-
-		if ((!resolvedFooter || !resolvedFooter.trim()) && qrEnabled && qrFilename) {
-			lines.push("// QR Code Footer")
-			lines.push("#let footer_block = block[")
-			lines.push(`  #image("${qrFilename}", width: 25mm)`)
-			lines.push("]")
+			lines.push(docFooter.trim())
 			lines.push("")
 		}
 
 		lines.push("#set page(header: header_block, footer: footer_block)")
 		lines.push("")
+
+		const qrSettings = (this.options.qrSettings as Record<string, any> | undefined) || {}
+		const qrSize = Number(qrSettings.size) || 15
+		const qrDx = Number(qrSettings.dx) || 0
+		const qrDy = Number(qrSettings.dy) || 0
+		if (qrEnabled && qrFilename) {
+			lines.push("// QR Code Placement")
+			lines.push(
+				`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${qrFilename}", width: ${qrSize}mm))`
+			)
+			lines.push("")
+		}
 
 		this.sections?.forEach((section, idx) => {
 			lines.push(this.translateSection(section, idx))

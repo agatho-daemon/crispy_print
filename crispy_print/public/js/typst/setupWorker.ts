@@ -359,6 +359,7 @@ export function setupWorker(
 	let lastTypstCode = ""
 	let lastLayoutSerialized = ""
 	let lastPageSettingsSerialized = ""
+	let lastQrPayload = ""
 	let currentPdfBlob: Blob | null = null
 	let pendingPdfDownload = false
 	let compileTriggerTimeout: number | undefined
@@ -476,6 +477,35 @@ export function setupWorker(
 		}, 150)
 	}
 
+	function getQrSettings() {
+		if (!adapter || typeof adapter.getPageSettings !== "function") return {}
+		const pageSettings = adapter.getPageSettings() || {}
+		return pageSettings.qr || {}
+	}
+
+	function buildQrPayload(doc: Record<string, any> | null, fields: string[]) {
+		if (!doc) return ""
+		if (!fields.length) return String(doc.name || "")
+		const wantsTimestamp = fields.includes("timestamp")
+		const lines: string[] = []
+
+		if (wantsTimestamp) {
+			const date = doc.posting_date || ""
+			const time = doc.posting_time || "00:00:00"
+			if (date) {
+				lines.push(`timestamp: ${date}T${time}`)
+			}
+		}
+
+		fields.forEach((fieldname) => {
+			if (fieldname === "timestamp") return
+			const value = doc[fieldname]
+			lines.push(`${fieldname}: ${value ?? ""}`)
+		})
+
+		return lines.join("\n")
+	}
+
 	function resolveQrPayload() {
 		const enabled =
 			adapter && typeof adapter.getQrEnabled === "function"
@@ -483,11 +513,15 @@ export function setupWorker(
 				: false
 		const docName = (sampleDocData as any)?.name || currentDocname || ""
 		const filename = enabled && docName ? `${sanitizeFilename(docName)}-qr.svg` : ""
+		const qrSettings = getQrSettings()
+		const fieldList = Array.isArray(qrSettings.fields) ? qrSettings.fields : []
+		const payload = buildQrPayload(sampleDocData, fieldList)
 
 		return {
 			qrEnabled: enabled,
-			qrData: enabled ? docName : null,
+			qrData: enabled ? payload : null,
 			qrFilename: enabled ? filename : null,
+			qrSettings,
 		}
 	}
 
@@ -557,6 +591,7 @@ export function setupWorker(
 		// Formatting is handled server-side (get_formatted_doc) for consistency across pages.
 
 		let typst: string
+		let qrPayloadChanged = false
 		try {
 			let letterheadData: any = null
 			if (adapter && typeof adapter.getLetterhead === "function") {
@@ -581,6 +616,9 @@ export function setupWorker(
 			qrEnabled = qrPayload.qrEnabled
 			docNameForQr = qrPayload.qrData ? String(qrPayload.qrData) : ""
 			qrFilename = qrPayload.qrFilename ? String(qrPayload.qrFilename) : ""
+			const qrPayloadKey = qrPayload.qrData ? String(qrPayload.qrData) : ""
+			qrPayloadChanged = qrPayloadKey !== lastQrPayload
+			lastQrPayload = qrPayloadKey
 
 			// Use filtered document instead of full sampleDocData
 			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, {
@@ -590,6 +628,7 @@ export function setupWorker(
 				typstPreamble,
 				qrEnabled,
 				qrFilename,
+				qrSettings: qrPayload.qrSettings,
 			})
 		} catch (e: any) {
 			console.error("[Typst Preview] Translation error:", e)
@@ -604,7 +643,7 @@ export function setupWorker(
 			return
 		}
 
-		if (typst === lastTypstCode) {
+		if (typst === lastTypstCode && !qrPayloadChanged) {
 			if (statusEl) {
 				statusEl.textContent = "code unchanged"
 				statusEl.style.color = "#95a5a6"

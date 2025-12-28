@@ -14,6 +14,13 @@ export interface TypographySettings {
 	sectionLabel: TypographyStyle
 }
 
+export interface QrSettings {
+	dx: number
+	dy: number
+	size: number
+	fields: string[]
+}
+
 export const defaultTypography: TypographySettings = {
 	fieldLabel: {
 		fontFamily: "Inter",
@@ -52,6 +59,7 @@ export interface PageSettings {
 	language: string
 
 	typography?: TypographySettings
+	qr?: QrSettings
 }
 
 export const defaultPageSettings: PageSettings = {
@@ -61,6 +69,7 @@ export const defaultPageSettings: PageSettings = {
 	letterhead: "",
 	typography: undefined,
 	language: "en",
+	qr: { dx: 0, dy: 0, size: 15, fields: [] },
 }
 
 export function ensureTypography(pageSettings: PageSettings): TypographySettings {
@@ -68,6 +77,16 @@ export function ensureTypography(pageSettings: PageSettings): TypographySettings
 		pageSettings.typography = JSON.parse(JSON.stringify(defaultTypography))
 	}
 	return pageSettings.typography
+}
+
+export function ensureQrSettings(pageSettings: PageSettings): QrSettings {
+	if (!pageSettings.qr) {
+		pageSettings.qr = { dx: 0, dy: 0, size: 15, fields: [] }
+	}
+	if (!Array.isArray(pageSettings.qr.fields)) {
+		pageSettings.qr.fields = []
+	}
+	return pageSettings.qr
 }
 
 export function mergePageSettings(
@@ -86,5 +105,9 @@ export function mergePageSettings(
 		...safeOverrides,
 		margins: { ...base.margins, ...(safeOverrides.margins || {}) },
 		typography: safeOverrides.typography ?? base.typography,
+		qr: {
+			...(base.qr || { dx: 0, dy: 0, size: 15, fields: [] }),
+			...((safeOverrides as PageSettings).qr || {}),
+		},
 	}
 }

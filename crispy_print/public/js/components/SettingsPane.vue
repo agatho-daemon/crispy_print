@@ -315,16 +315,79 @@
 					<label class="settings-pane__label">Remove QRCode</label>
 					<input v-model="store.removeQr.value" type="checkbox" class="settings-pane__checkbox" />
 				</div>
+
+				<div v-if="!store.removeQr.value" class="settings-pane__section">
+					<div class="settings-pane__section-card">
+						<button
+							type="button"
+							class="settings-pane__section-header"
+							@click="isQrExpanded = !isQrExpanded"
+						>
+							<span>QR-Code</span>
+							<svg
+								class="settings-pane__chevron"
+								:class="{ 'settings-pane__chevron--expanded': isQrExpanded }"
+								viewBox="0 0 20 20"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M6 8l4 4 4-4" />
+							</svg>
+						</button>
+						<div v-if="isQrExpanded" class="settings-pane__section-content">
+							<p class="settings-pane__hint">Anchored to bottom-left using #place().</p>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">Size (mm)</label>
+								<input
+									v-model.number="qrSettings.size"
+									type="number"
+									class="settings-pane__input"
+								/>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">dx (mm)</label>
+								<input v-model.number="qrSettings.dx" type="number" class="settings-pane__input" />
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">dy (mm)</label>
+								<input v-model.number="qrSettings.dy" type="number" class="settings-pane__input" />
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">QR fields</label>
+								<div class="settings-pane__qr-row">
+									<button type="button" class="settings-pane__qr-btn" @click="showQrDialog = true">
+										Select fields
+									</button>
+									<span class="settings-pane__qr-summary">{{ qrFieldsSummary }}</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
+		<QrFieldsDialog
+			v-if="showQrDialog"
+			:fields="qrAvailableFields"
+			:model-value="qrSettings.fields"
+			@update:model-value="updateQrFields"
+			@close="showQrDialog = false"
+		/>
 	</div>
 </template>
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
-import { ensureTypography, type PageSettings, type TypographySettings } from "../utils/pageSettings"
+import {
+	ensureQrSettings,
+	ensureTypography,
+	type PageSettings,
+	type TypographySettings,
+} from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
 import { getLetterheads, getTypstLocalFonts } from "../api/crispy"
 import { useStore } from "../composables/useStore"
+import QrFieldsDialog from "./QrFieldsDialog.vue"
 
 interface Props {
 	pageSettings: PageSettings
@@ -339,12 +402,30 @@ const availableLetterheads = ref<string[]>([])
 const loadingLetterheads = ref(false)
 const isPageSettingsExpanded = ref(false)
 const isTypographyExpanded = ref(false)
+const isQrExpanded = ref(true)
 const store = useStore()
+const showQrDialog = ref(false)
 
 // Initialize typography with defaults if not present
 const typography = computed<TypographySettings>(() => {
 	return ensureTypography(props.pageSettings)
 })
+
+const qrSettings = computed(() => ensureQrSettings(props.pageSettings))
+
+const qrAvailableFields = computed(() => store.fields.value || [])
+
+const qrFieldsSummary = computed(() => {
+	const count = qrSettings.value.fields?.length || 0
+	if (!count) return "No fields selected"
+	if (count === 1) return "1 field selected"
+	return `${count} fields selected`
+})
+
+const updateQrFields = (fields: string[]) => {
+	qrSettings.value.fields = fields
+	props.markDirty()
+}
 
 // Fetch available fonts from Typst
 async function fetchFonts() {
@@ -572,6 +653,38 @@ watch(
 	width: 16px;
 	height: 16px;
 	accent-color: #4f46e5;
+}
+
+.settings-pane__hint {
+	margin: 0;
+	font-size: 12px;
+	color: #64748b;
+}
+
+.settings-pane__qr-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.settings-pane__qr-btn {
+	padding: 6px 10px;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	font-size: 12px;
+	cursor: pointer;
+	color: #1e293b;
+}
+
+.settings-pane__qr-btn:hover {
+	border-color: #cbd5f5;
+	background: #eef2ff;
+}
+
+.settings-pane__qr-summary {
+	font-size: 12px;
+	color: #475569;
 }
 
 .settings-pane__margins {
