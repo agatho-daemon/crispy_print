@@ -12,6 +12,7 @@
   "contract",
   "is_default",
   "qrcode",
+  "raw_typst",
   "column_break_gqub",
   "module",
   "section_break_bjol",
@@ -122,9 +123,11 @@
    "label": "Document Header"
   },
   {
+   "depends_on": "eval:doc.raw_typst == 1",
    "fieldname": "typst_code",
    "fieldtype": "Code",
-   "label": "Typst Code"
+   "label": "Typst Code",
+   "mandatory_depends_on": "eval:doc.raw_typst == 1"
   },
   {
    "fieldname": "doc_footer",
@@ -136,12 +139,18 @@
    "fieldname": "qrcode",
    "fieldtype": "Check",
    "label": "QR Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "raw_typst",
+   "fieldtype": "Check",
+   "label": "Raw Typst"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-26 08:27:45.150740",
+ "modified": "2025-12-29 06:13:59.579407",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",

@@ -297,20 +297,6 @@
 					</div>
 				</div>
 
-				<div class="settings-pane__field">
-					<label class="settings-pane__label">Letterhead / Logo</label>
-					<select v-model="pageSettings.letterhead" class="settings-pane__select">
-						<option value="">None</option>
-						<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
-						<option
-							v-for="letterhead in availableLetterheads"
-							:key="letterhead"
-							:value="letterhead"
-						>
-							{{ letterhead }}
-						</option>
-					</select>
-				</div>
 				<div class="settings-pane__field settings-pane__field--inline">
 					<label class="settings-pane__label">Remove QRCode</label>
 					<input v-model="store.removeQr.value" type="checkbox" class="settings-pane__checkbox" />
@@ -336,7 +322,7 @@
 							</svg>
 						</button>
 						<div v-if="isQrExpanded" class="settings-pane__section-content">
-							<p class="settings-pane__hint">Anchored to bottom-left using #place().</p>
+							<p class="settings-pane__hint">QR Code is anchored to bottom-left using #place().</p>
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">Size (mm)</label>
 								<input
@@ -365,6 +351,22 @@
 						</div>
 					</div>
 				</div>
+
+				<div class="settings-pane__field">
+					<label class="settings-pane__label">Letterhead / Logo</label>
+					<select v-model="pageSettings.letterhead" class="settings-pane__select">
+						<option value="">None</option>
+						<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
+						<option
+							v-for="letterhead in availableLetterheads"
+							:key="letterhead"
+							:value="letterhead"
+						>
+							{{ letterhead }}
+						</option>
+					</select>
+				</div>
+				
 			</div>
 		</div>
 		<QrFieldsDialog
@@ -402,7 +404,7 @@ const availableLetterheads = ref<string[]>([])
 const loadingLetterheads = ref(false)
 const isPageSettingsExpanded = ref(false)
 const isTypographyExpanded = ref(false)
-const isQrExpanded = ref(true)
+const isQrExpanded = ref(false)
 const store = useStore()
 const showQrDialog = ref(false)
 
