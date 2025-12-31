@@ -28,6 +28,8 @@ export interface FormatData {
 	doc_footer?: string
 	qrcode?: number
 	typst_preamble?: string
+	typst_code?: string
+	raw_typst?: number
 	is_default?: number
 }
 

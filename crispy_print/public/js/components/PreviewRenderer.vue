@@ -9,13 +9,21 @@
 					Preview output will render here.
 				</div>
 			</div>
+			<div v-if="errorPanel" class="preview-error">
+				<div class="preview-error__header">
+					<span class="preview-error__title">Typst Error</span>
+					<button class="preview-error__copy" type="button" @click="copyError">Copy</button>
+				</div>
+				<pre class="preview-error__body">{{ errorPanel }}</pre>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from "vue"
+import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { setupWorker } from "../typst/setupWorker"
+import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events"
 
 interface Props {
 	formatName: string | null
@@ -23,6 +31,8 @@ interface Props {
 	docHeader: string
 	docFooter: string
 	typstPreamble: string
+	typstCode?: string
+	rawTypst?: boolean
 	qrEnabled: boolean
 	pageSettings: any
 	letterhead: any
@@ -35,6 +45,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const previewPaneEl = ref<HTMLElement | null>(null)
+const errorPanel = ref<string | null>(null)
 let teardown: (() => void) | null = null
 
 function createAdapter() {
@@ -44,6 +55,8 @@ function createAdapter() {
 		getDocHeader: () => props.docHeader,
 		getDocFooter: () => props.docFooter,
 		getTypstPreamble: () => props.typstPreamble,
+		getTypstCode: () => props.typstCode || "",
+		getRawTypst: () => Boolean(props.rawTypst),
 		getQrEnabled: () => props.qrEnabled,
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
@@ -73,6 +86,8 @@ function createAdapter() {
 							props.docHeader,
 							props.docFooter,
 							props.typstPreamble,
+							props.typstCode,
+							props.rawTypst,
 						],
 						() => callback(),
 						{ deep: true }
@@ -102,8 +117,37 @@ watch(
 	{ immediate: true }
 )
 
+function onPreviewStatus(event: Event) {
+	const detail = (event as CustomEvent<CrispyPreviewStatusDetail>).detail
+	if (!detail) return
+	if (detail.status === "error") {
+		errorPanel.value = detail.message || "Typst compilation failed."
+	} else if (detail.status === "ready" || detail.status === "compiling") {
+		errorPanel.value = null
+	}
+}
+
+function copyError() {
+	if (!errorPanel.value) return
+	if (navigator?.clipboard?.writeText) {
+		navigator.clipboard.writeText(errorPanel.value)
+		return
+	}
+	const textarea = document.createElement("textarea")
+	textarea.value = errorPanel.value
+	document.body.appendChild(textarea)
+	textarea.select()
+	document.execCommand("copy")
+	document.body.removeChild(textarea)
+}
+
+onMounted(() => {
+	window.addEventListener(CrispyPreviewEvents.Status, onPreviewStatus)
+})
+
 onBeforeUnmount(() => {
 	if (teardown) teardown()
+	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus)
 })
 </script>
 
@@ -137,5 +181,52 @@ onBeforeUnmount(() => {
 #typst-svg-container.has-pages {
 	display: grid;
 	gap: 16px;
+}
+
+.preview-error {
+	margin-top: 16px;
+	border: 1px solid #fecaca;
+	background: #fff1f2;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 6px 16px rgba(239, 68, 68, 0.15);
+}
+
+.preview-error__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	background: #fee2e2;
+	border-bottom: 1px solid #fecaca;
+}
+
+.preview-error__title {
+	font-size: 12px;
+	font-weight: 700;
+	color: #991b1b;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.preview-error__copy {
+	border: 1px solid #fca5a5;
+	background: #fff;
+	color: #b91c1c;
+	border-radius: 6px;
+	padding: 4px 8px;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.preview-error__body {
+	margin: 0;
+	padding: 12px;
+	font-size: 12px;
+	line-height: 1.5;
+	color: #7f1d1d;
+	white-space: pre-wrap;
+	font-family:
+		"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 </style>

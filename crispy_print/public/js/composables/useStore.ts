@@ -18,6 +18,7 @@ interface CrispyFormat {
 	doc_header?: string
 	doc_footer?: string
 	qrcode?: number
+	raw_typst?: number
 	typst_preamble?: string
 	typst_code?: string
 	layout_json?: string
@@ -36,6 +37,8 @@ function buildStore() {
 	const loading = ref(false)
 	const changeKey = ref(0)
 	const removeQr = ref(false)
+	const rawTypst = ref(false)
+	const typstCode = ref("")
 
 	const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
 
@@ -59,6 +62,8 @@ function buildStore() {
 			// Fetch the Crispy Format document
 			const doc = await getCrispyFormat(formatName)
 			crispyFormat.value = doc
+			rawTypst.value = Boolean(doc.raw_typst)
+			typstCode.value = doc.typst_code || ""
 
 			// Load DocType metadata
 			if (doc.doc_type) {
@@ -160,7 +165,7 @@ function buildStore() {
 	 * Save changes to backend
 	 */
 	async function saveChanges() {
-		if (!crispyFormat.value || !layout.value) {
+		if (!crispyFormat.value || (!layout.value && !rawTypst.value)) {
 			console.warn("[Store] Nothing to save")
 			return
 		}
@@ -169,17 +174,14 @@ function buildStore() {
 
 		try {
 			// Serialize layout to JSON
-			const layoutJson = serializeLayout(layout.value)
-
-			// TODO: Generate Typst markup from layout
-			// For now, just store the JSON
-			const typstCode = `// Generated Typst layout\n// TODO: Implement layout to Typst conversion`
+			const layoutJson = layout.value ? serializeLayout(layout.value) : ""
 
 			// Prepare update data
 			const updateData = {
 				layout_json: layoutJson,
-				typst_code: typstCode,
+				typst_code: typstCode.value,
 				page_settings: JSON.stringify(pageSettings.value),
+				raw_typst: rawTypst.value ? 1 : 0,
 			}
 
 			await saveCrispyFormat(crispyFormat.value.name, updateData)
@@ -270,6 +272,8 @@ function buildStore() {
 		docFooter,
 		qrEnabled,
 		typstPreamble,
+		rawTypst,
+		typstCode,
 		removeQr,
 
 		// Methods

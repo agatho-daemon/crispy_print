@@ -68,10 +68,36 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
  * Filter document data to only include used fields
  * This creates a minimal doc object for Typst compilation
  */
-export function filterDocumentFields(doc: any, usedFields: Set<string>): any {
+export function filterDocumentFields(
+	doc: any,
+	usedFields: Set<string>,
+	options: { includeAllChildFieldsIfUnspecified?: boolean } = {}
+): any {
 	if (!doc || typeof doc !== "object") return doc
 
 	const filtered: any = {}
+	const directFields = new Set<string>()
+	const tableFieldMap = new Map<string, Set<string>>()
+
+	usedFields.forEach((fieldname) => {
+		if (!fieldname) return
+		const dotIndex = fieldname.indexOf(".")
+		if (dotIndex > 0) {
+			const parent = fieldname.slice(0, dotIndex)
+			const child = fieldname.slice(dotIndex + 1)
+			if (parent) {
+				directFields.add(parent)
+				if (child) {
+					if (!tableFieldMap.has(parent)) {
+						tableFieldMap.set(parent, new Set<string>())
+					}
+					tableFieldMap.get(parent)?.add(child)
+				}
+			}
+			return
+		}
+		directFields.add(fieldname)
+	})
 
 	// Always include essential top-level fields (used by `doc_header` and other helpers)
 	const essentialFields = ["name", "doctype", "title"]
@@ -82,23 +108,41 @@ export function filterDocumentFields(doc: any, usedFields: Set<string>): any {
 	})
 
 	// Copy only used fields
-	usedFields.forEach((fieldname) => {
+	directFields.forEach((fieldname) => {
 		if (fieldname in doc) {
 			const value = doc[fieldname]
 
 			// Handle child tables
 			if (Array.isArray(value)) {
+				const tableFields = tableFieldMap.get(fieldname)
+				const includeAllChildFields =
+					Boolean(options.includeAllChildFieldsIfUnspecified) &&
+					(!tableFields || tableFields.size === 0)
+
 				// For child tables, recursively filter child doc fields
 				filtered[fieldname] = value.map((childDoc) => {
 					if (!childDoc || typeof childDoc !== "object") return childDoc
 
 					// Extract fields used in table columns
 					const childFiltered: any = {}
-					usedFields.forEach((childField) => {
-						if (childField in childDoc) {
+					if (includeAllChildFields) {
+						Object.keys(childDoc).forEach((childField) => {
 							childFiltered[childField] = childDoc[childField]
+						})
+					} else {
+						directFields.forEach((childField) => {
+							if (childField in childDoc) {
+								childFiltered[childField] = childDoc[childField]
+							}
+						})
+						if (tableFields && tableFields.size) {
+							tableFields.forEach((childField) => {
+								if (childField in childDoc) {
+									childFiltered[childField] = childDoc[childField]
+								}
+							})
 						}
-					})
+					}
 
 					// Always include essential child table fields
 					const essentialChildFields = [

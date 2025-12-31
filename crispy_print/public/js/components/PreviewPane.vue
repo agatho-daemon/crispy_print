@@ -5,6 +5,8 @@
 		:doc-header="store.docHeader.value"
 		:doc-footer="store.docFooter.value"
 		:typst-preamble="store.typstPreamble.value"
+		:typst-code="store.typstCode.value"
+		:raw-typst="store.rawTypst.value"
 		:qr-enabled="qrEnabled"
 		:letterhead="store.letterhead.value"
 		:doc-type="store.docType.value"

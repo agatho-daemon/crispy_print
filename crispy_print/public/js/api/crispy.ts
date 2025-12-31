@@ -12,6 +12,7 @@ export interface CrispyFormatDoc {
 	doc_header?: string
 	doc_footer?: string
 	qrcode?: number
+	raw_typst?: number
 	layout_json?: string
 	page_settings?: string
 	typst_code?: string
@@ -32,6 +33,7 @@ export async function saveCrispyFormat(
 		doc_footer?: string
 		typst_code?: string
 		typst_preamble?: string
+		raw_typst?: number
 	}
 ): Promise<void> {
 	await setValue("Crispy Format", name, values)
