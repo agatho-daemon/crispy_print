@@ -1,7 +1,8 @@
 <template>
 	<div id="crispy-print-root" class="crispy-layout">
 		<FieldsPane class="pane pane--fields" :fields="store.fields" :loading="store.loading" />
-		<LayoutPane class="pane pane--layout" />
+		<LayoutPane v-if="!store.rawTypst.value" class="pane pane--layout" />
+		<TypstCodePane v-else class="pane pane--layout" />
 		<PreviewPane class="pane pane--preview" />
 		<SettingsPane
 			class="pane pane--settings"
@@ -15,6 +16,7 @@
 import { onMounted } from "vue"
 import FieldsPane from "../components/FieldsPane.vue"
 import LayoutPane from "../components/LayoutPane.vue"
+import TypstCodePane from "../components/TypstCodePane.vue"
 import PreviewPane from "../components/PreviewPane.vue"
 import SettingsPane from "../components/SettingsPane.vue"
 import { useStore } from "../composables/useStore"

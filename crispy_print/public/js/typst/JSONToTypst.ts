@@ -26,6 +26,65 @@ export function translateJSONToTypst(
 	return translator.translate()
 }
 
+export function buildDocDictionary(realDocData: RealDocData, doctype = "Document") {
+	const lines: string[] = []
+
+	if (realDocData) {
+		lines.push("// Document data dictionary (real document data)")
+		lines.push("#let doc = (")
+
+		Object.keys(realDocData).forEach((key, idx, arr) => {
+			const value = (realDocData as Record<string, any>)[key]
+			const isLast = idx === arr.length - 1
+
+			if (value === null || value === undefined) {
+				lines.push(`  ${key}: ""${isLast ? "" : ","}`)
+			} else if (Array.isArray(value)) {
+				lines.push(`  ${key}: (`)
+				value.forEach((row: any) => {
+					if (typeof row === "object" && row !== null) {
+						lines.push(`    (`)
+						Object.entries(row).forEach(([colKey, colVal], colIdx, colArr) => {
+							const isLastCol = colIdx === colArr.length - 1
+							const escapedVal = String(colVal || "").replace(/"/g, '\\"')
+							lines.push(`      ${colKey}: "${escapedVal}"${isLastCol ? "" : ","}`)
+						})
+						lines.push(`    ),`)
+					}
+				})
+				lines.push(`  )${isLast ? "" : ","}`)
+			} else if (typeof value === "string") {
+				let cleanValue = value
+					.replace(/<br\s*\/?>\s*\n/gi, "\n")
+					.replace(/<br\s*\/?>/gi, "\n")
+					.replace(/<[^>]+>/g, "")
+					.replace(/"/g, '\\"')
+					.replace(/\n/g, "\\n")
+				lines.push(`  ${key}: "${cleanValue}"${isLast ? "" : ","}`)
+			} else if (typeof value === "number") {
+				lines.push(`  ${key}: ${value}${isLast ? "" : ","}`)
+			} else if (typeof value === "boolean") {
+				lines.push(`  ${key}: ${value ? "true" : "false"}${isLast ? "" : ","}`)
+			} else {
+				lines.push(`  ${key}: "${String(value)}"${isLast ? "" : ","}`)
+			}
+		})
+
+		lines.push(")")
+		lines.push("")
+		return lines.join("\n")
+	}
+
+	lines.push("// Document data dictionary (mock preview data)")
+	lines.push("#let doc = (")
+	lines.push(`  name: "DOC-00001",`)
+	lines.push(`  doctype: "${doctype}",`)
+	lines.push(`  title: "Document Title",`)
+	lines.push(")")
+	lines.push("")
+	return lines.join("\n")
+}
+
 class JSONTypstTranslator {
 	layout: LayoutWithOptionalSections
 	letterhead: any

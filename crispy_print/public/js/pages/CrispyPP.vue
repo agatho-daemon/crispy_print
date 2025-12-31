@@ -145,6 +145,8 @@
 			:doc-header="docHeader"
 			:doc-footer="docFooter"
 			:typst-preamble="typstPreamble"
+			:typst-code="typstCode"
+			:raw-typst="rawTypst"
 			:qr-enabled="qrEnabledEffective"
 			:letterhead="letterheadDoc"
 			:doc-type="props.doctype || null"
@@ -190,6 +192,8 @@ const loading = ref(true)
 const docHeader = ref("")
 const docFooter = ref("")
 const typstPreamble = ref("")
+const typstCode = ref("")
+const rawTypst = ref(false)
 const qrEnabled = ref(false)
 const removeQr = ref(false)
 const letterheadDoc = ref<any | null>(null)
@@ -205,6 +209,8 @@ watch(
 		docHeader.value,
 		docFooter.value,
 		typstPreamble.value,
+		typstCode.value,
+		rawTypst.value,
 		qrEnabled.value,
 		removeQr.value,
 	],
@@ -287,6 +293,8 @@ async function loadFormatSettings(formatName: string) {
 		docHeader.value = data.formatDoc.doc_header || ""
 		docFooter.value = data.formatDoc.doc_footer || ""
 		typstPreamble.value = data.formatDoc.typst_preamble || ""
+		typstCode.value = data.formatDoc.typst_code || ""
+		rawTypst.value = Boolean(data.formatDoc.raw_typst)
 		qrEnabled.value = Boolean(data.formatDoc.qrcode)
 
 		loading.value = false

@@ -366,7 +366,6 @@
 						</option>
 					</select>
 				</div>
-				
 			</div>
 		</div>
 		<QrFieldsDialog

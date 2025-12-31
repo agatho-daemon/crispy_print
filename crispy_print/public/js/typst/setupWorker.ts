@@ -1,8 +1,9 @@
 // Typst Preview worker wiring for Crispy Print (Vue + Vite)
 
-import { translateJSONToTypst } from "./JSONToTypst"
+import { buildDocDictionary, translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
+import { extractUsedFieldsFromTypstSource } from "../utils/typstFieldExtractor"
 import type { CrispyLayout } from "../utils/layout"
 import {
 	CrispyPreviewEvents,
@@ -15,6 +16,8 @@ export interface TypstAdapter {
 	getDocHeader?: () => string | null | undefined
 	getDocFooter?: () => string | null | undefined
 	getTypstPreamble?: () => string | null | undefined
+	getTypstCode?: () => string | null | undefined
+	getRawTypst?: () => boolean
 	getQrEnabled?: () => boolean
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
@@ -525,6 +528,85 @@ export function setupWorker(
 		}
 	}
 
+	function buildPageSettingsBlock(options: {
+		pageSettings?: Record<string, any> | null
+		letterheadData?: Record<string, any> | null
+	}) {
+		const lines: string[] = []
+		const pageSettings = options.pageSettings || {}
+		const margins = pageSettings.margins || {}
+		const pageSize = String(pageSettings.pageSize || "A4").toLowerCase()
+		const orientation = String(pageSettings.orientation || "portrait")
+		const marginValue = (value: any, fallback: number) => {
+			const num = Number(value)
+			return Number.isFinite(num) ? num : fallback
+		}
+		const marginTop = marginValue(margins.top, 25)
+		const marginBottom = marginValue(margins.bottom, 20)
+		const marginLeft = marginValue(margins.left, 20)
+		const marginRight = marginValue(margins.right, 20)
+		const letterheadImage = options.letterheadData?.image || ""
+		const letterheadFilename = letterheadImage ? String(letterheadImage).split("/").pop() : ""
+
+		lines.push("// Page settings (from Settings pane)")
+		lines.push("#set page(")
+		lines.push(`  paper: "${pageSize}",`)
+		if (orientation === "landscape") {
+			lines.push("  flipped: true,")
+		}
+		lines.push(
+			`  margin: (top: ${marginTop}mm, bottom: ${marginBottom}mm, left: ${marginLeft}mm, right: ${marginRight}mm),`
+		)
+		if (letterheadFilename) {
+			lines.push(`  background: image("${letterheadFilename}", width: 100%)`)
+		}
+		lines.push(")")
+		lines.push("")
+
+		return lines.join("\n").trim()
+	}
+
+	function buildHeaderFooterBlock(options: {
+		docHeader?: string
+		docFooter?: string
+		qrEnabled?: boolean
+		qrFilename?: string | null
+		qrSettings?: Record<string, any> | null
+	}) {
+		const lines: string[] = []
+
+		lines.push("#let header_block = []")
+		lines.push("#let footer_block = []")
+		lines.push("")
+
+		if (options.docHeader && options.docHeader.trim()) {
+			lines.push("// Document Header")
+			lines.push(options.docHeader.trim())
+			lines.push("")
+		}
+		if (options.docFooter && options.docFooter.trim()) {
+			lines.push("// Document Footer")
+			lines.push(options.docFooter.trim())
+			lines.push("")
+		}
+		lines.push("#set page(header: header_block, footer: footer_block)")
+		lines.push("")
+
+		const qrSettings = options.qrSettings || {}
+		const qrSize = Number(qrSettings.size) || 15
+		const qrDx = Number(qrSettings.dx) || 0
+		const qrDy = Number(qrSettings.dy) || 0
+		if (options.qrEnabled && options.qrFilename) {
+			lines.push("// QR Code Placement")
+			lines.push(
+				`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${options.qrFilename}", width: ${qrSize}mm))`
+			)
+			lines.push("")
+		}
+
+		return lines.join("\n").trim()
+	}
+
 	function performCompilation() {
 		clearPreview()
 
@@ -539,9 +621,11 @@ export function setupWorker(
 			return
 		}
 
+		const rawTypst =
+			adapter && typeof adapter.getRawTypst === "function" ? adapter.getRawTypst() : false
 		const layout = getLayout()
 
-		if (!layout) {
+		if (!layout && !rawTypst) {
 			console.error("[Typst Preview] No layout found from adapter")
 			if (statusEl) {
 				statusEl.textContent = "waiting for layout..."
@@ -565,7 +649,7 @@ export function setupWorker(
 		}
 		missingLayoutRetries = 0
 
-		const layoutSerialized = serializeLayout(layout)
+		const layoutSerialized = rawTypst ? "" : serializeLayout(layout)
 
 		// Also check page settings for changes
 		let pageSettingsSerialized = ""
@@ -581,14 +665,6 @@ export function setupWorker(
 		// Always compile on trigger; skip unchanged guard to honor debounced triggers
 		lastLayoutSerialized = layoutSerialized
 		lastPageSettingsSerialized = pageSettingsSerialized
-
-		// Extract fields actually used in the layout
-		const usedFields = extractUsedFields(layout)
-
-		// Filter document to only include used fields
-		const filteredDoc = filterDocumentFields(sampleDocData, usedFields)
-
-		// Formatting is handled server-side (get_formatted_doc) for consistency across pages.
 
 		let typst: string
 		let qrPayloadChanged = false
@@ -612,6 +688,19 @@ export function setupWorker(
 				adapter && typeof adapter.getTypstPreamble === "function"
 					? adapter.getTypstPreamble() || ""
 					: ""
+			const typstCode =
+				adapter && typeof adapter.getTypstCode === "function" ? adapter.getTypstCode() || "" : ""
+			const typstFieldSource = [docHeader, docFooter, typstPreamble, typstCode]
+				.filter(Boolean)
+				.join("\n")
+			const usedFields = rawTypst
+				? extractUsedFieldsFromTypstSource(typstFieldSource)
+				: extractUsedFields(layout)
+			const filteredDoc = rawTypst
+				? filterDocumentFields(sampleDocData, usedFields, {
+						includeAllChildFieldsIfUnspecified: true,
+					})
+				: filterDocumentFields(sampleDocData, usedFields)
 			const qrPayload = resolveQrPayload()
 			qrEnabled = qrPayload.qrEnabled
 			docNameForQr = qrPayload.qrData ? String(qrPayload.qrData) : ""
@@ -621,21 +710,51 @@ export function setupWorker(
 			lastQrPayload = qrPayloadKey
 
 			// Use filtered document instead of full sampleDocData
-			typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, {
-				...pageSettings,
-				docHeader,
-				docFooter,
-				typstPreamble,
-				qrEnabled,
-				qrFilename,
-				qrSettings: qrPayload.qrSettings,
-			})
+			if (rawTypst) {
+				const parts: string[] = []
+				const pageSettingsBlock = buildPageSettingsBlock({
+					pageSettings,
+					letterheadData,
+				})
+				if (pageSettingsBlock) {
+					parts.push(pageSettingsBlock)
+				}
+				parts.push(buildDocDictionary(filteredDoc, printFormatName))
+				if (typstPreamble && typstPreamble.trim()) {
+					parts.push(typstPreamble.trim())
+				}
+				const headerFooterBlock = buildHeaderFooterBlock({
+					docHeader,
+					docFooter,
+					qrEnabled,
+					qrFilename,
+					qrSettings: qrPayload.qrSettings,
+				})
+				if (headerFooterBlock) {
+					parts.push(headerFooterBlock)
+				}
+				if (typstCode && typstCode.trim()) {
+					parts.push(typstCode.trim())
+				}
+				typst = parts.join("\n\n")
+			} else {
+				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, {
+					...pageSettings,
+					docHeader,
+					docFooter,
+					typstPreamble,
+					qrEnabled,
+					qrFilename,
+					qrSettings: qrPayload.qrSettings,
+				})
+			}
 		} catch (e: any) {
 			console.error("[Typst Preview] Translation error:", e)
 			if (statusEl) {
 				statusEl.textContent = "translation error"
 				statusEl.style.color = "#e74c3c"
 			}
+			dispatchStatus("error", e?.message || String(e))
 			frappe?.show_alert({
 				message: __("Translation failed: {0}", [e.message || e]),
 				indicator: "red",
@@ -702,6 +821,7 @@ export function setupWorker(
 					statusEl.textContent = isDownload || isViewPdf ? "pdf error" : "error"
 					statusEl.style.color = "#e74c3c"
 				}
+				dispatchStatus("error", error?.message || String(error || "Typst compilation failed"))
 				frappe?.show_alert({
 					message: __("Typst compilation failed: {0}", [error?.message || error]),
 					indicator: "red",
