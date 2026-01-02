@@ -306,6 +306,7 @@ import type {
 	TableColumn,
 } from "../utils/layout"
 import { getTableColumns } from "../utils/layout"
+import { getDefaultAlignment } from "../utils/tableColumns"
 
 type Section = LayoutSection & {
 	id?: number
@@ -553,12 +554,6 @@ function onRemoveLastColumn(section: Section) {
 function removeField(column: Column, fieldIndex: number) {
 	column.fields.splice(fieldIndex, 1)
 	store.markDirty()
-}
-
-function getDefaultAlignment(fieldtype?: string): "left" | "center" | "right" {
-	// Numeric fields default to right alignment, like Frappe
-	const numericTypes = ["Int", "Float", "Currency", "Percent"]
-	return numericTypes.includes(fieldtype || "") ? "right" : "left"
 }
 
 function getFieldAlign(field: Field): "left" | "center" | "right" {
