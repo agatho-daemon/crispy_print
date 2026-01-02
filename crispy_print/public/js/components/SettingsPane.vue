@@ -297,6 +297,104 @@
 					</div>
 				</div>
 
+				<div class="settings-pane__section-card">
+					<button
+						type="button"
+						class="settings-pane__section-header"
+						@click="isBrandingExpanded = !isBrandingExpanded"
+					>
+						<span>Letterhead / Logo</span>
+						<svg
+							:class="[
+								'settings-pane__chevron',
+								{ 'settings-pane__chevron--expanded': isBrandingExpanded },
+							]"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+
+					<div v-if="isBrandingExpanded" class="settings-pane__section-content">
+						<div class="settings-pane__field">
+							<label class="settings-pane__label">Type</label>
+							<select v-model="brandingMode" class="settings-pane__select">
+								<option value="none">None</option>
+								<option value="letterhead">Letterhead</option>
+								<option value="logo">Logo</option>
+							</select>
+						</div>
+
+						<div v-if="brandingMode === 'letterhead'" class="settings-pane__field">
+							<label class="settings-pane__label">Letterhead</label>
+							<select v-model="pageSettings.letterhead" class="settings-pane__select">
+								<option value="">None</option>
+								<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
+								<option
+									v-for="letterhead in availableLetterheads"
+									:key="letterhead"
+									:value="letterhead"
+								>
+									{{ letterhead }}
+								</option>
+							</select>
+						</div>
+
+						<div v-if="brandingMode === 'logo'">
+							<p class="settings-pane__hint">Logo is anchored to top-left using #place().</p>
+							<div class="settings-pane__field">
+								<label class="settings-pane__label">Company</label>
+								<select v-model="logoSettings.company" class="settings-pane__select">
+									<option value="">Select company</option>
+									<option v-if="loadingCompanies" disabled>Loading companies...</option>
+									<option
+										v-for="company in availableCompanies"
+										:key="company.name"
+										:value="company.name"
+									>
+										{{ company.abbr ? `${company.abbr} - ${company.name}` : company.name }}
+									</option>
+								</select>
+							</div>
+							<p v-if="logoSettings.company && !logoSettings.image" class="settings-pane__hint">
+								Selected company has no logo set.
+							</p>
+							<div class="settings-pane__grid">
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Size (mm)</label>
+									<input
+										v-model.number="logoSettings.size"
+										type="number"
+										class="settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">dx (mm)</label>
+									<input
+										v-model.number="logoSettings.dx"
+										type="number"
+										class="settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">dy (mm)</label>
+									<input
+										v-model.number="logoSettings.dy"
+										type="number"
+										class="settings-pane__input"
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<div class="settings-pane__field settings-pane__field--inline">
 					<label class="settings-pane__label">Remove QRCode</label>
 					<input v-model="store.removeQr.value" type="checkbox" class="settings-pane__checkbox" />
@@ -351,21 +449,6 @@
 						</div>
 					</div>
 				</div>
-
-				<div class="settings-pane__field">
-					<label class="settings-pane__label">Letterhead / Logo</label>
-					<select v-model="pageSettings.letterhead" class="settings-pane__select">
-						<option value="">None</option>
-						<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
-						<option
-							v-for="letterhead in availableLetterheads"
-							:key="letterhead"
-							:value="letterhead"
-						>
-							{{ letterhead }}
-						</option>
-					</select>
-				</div>
 			</div>
 		</div>
 		<QrFieldsDialog
@@ -380,13 +463,14 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
 import {
+	ensureLogoSettings,
 	ensureQrSettings,
 	ensureTypography,
 	type PageSettings,
 	type TypographySettings,
 } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
-import { getLetterheads, getTypstLocalFonts } from "../api/crispy"
+import { getCompanies, getLetterheads, getTypstLocalFonts, type CompanyOption } from "../api/crispy"
 import { useStore } from "../composables/useStore"
 import QrFieldsDialog from "./QrFieldsDialog.vue"
 
@@ -401,8 +485,11 @@ const availableFonts = ref<string[]>([])
 const loadingFonts = ref(false)
 const availableLetterheads = ref<string[]>([])
 const loadingLetterheads = ref(false)
+const availableCompanies = ref<CompanyOption[]>([])
+const loadingCompanies = ref(false)
 const isPageSettingsExpanded = ref(false)
 const isTypographyExpanded = ref(false)
+const isBrandingExpanded = ref(false)
 const isQrExpanded = ref(false)
 const store = useStore()
 const showQrDialog = ref(false)
@@ -411,6 +498,8 @@ const showQrDialog = ref(false)
 const typography = computed<TypographySettings>(() => {
 	return ensureTypography(props.pageSettings)
 })
+
+const logoSettings = computed(() => ensureLogoSettings(props.pageSettings))
 
 const qrSettings = computed(() => ensureQrSettings(props.pageSettings))
 
@@ -427,6 +516,25 @@ const updateQrFields = (fields: string[]) => {
 	qrSettings.value.fields = fields
 	props.markDirty()
 }
+
+const brandingMode = computed<string>({
+	get: () => {
+		const mode = props.pageSettings.brandingMode
+		if (mode === "letterhead" || mode === "logo" || mode === "none") {
+			return mode
+		}
+		if (props.pageSettings.logo?.company || props.pageSettings.logo?.image) {
+			return "logo"
+		}
+		if (props.pageSettings.letterhead) {
+			return "letterhead"
+		}
+		return "none"
+	},
+	set: (value) => {
+		props.pageSettings.brandingMode = value as "letterhead" | "logo" | "none"
+	},
+})
 
 // Fetch available fonts from Typst
 async function fetchFonts() {
@@ -445,6 +553,30 @@ async function fetchFonts() {
 		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"]
 	} finally {
 		loadingFonts.value = false
+	}
+}
+
+function resolveCompanyLogo(companyName: string): string {
+	if (!companyName) return ""
+	const match = availableCompanies.value.find((company) => company.name === companyName)
+	return match?.company_logo || ""
+}
+
+// Fetch available companies (for logo selection)
+async function fetchCompanies() {
+	if (typeof frappe === "undefined") {
+		availableCompanies.value = []
+		return
+	}
+
+	loadingCompanies.value = true
+	try {
+		availableCompanies.value = await getCompanies()
+	} catch (error) {
+		console.error("[SettingsPane] Failed to fetch companies:", error)
+		availableCompanies.value = []
+	} finally {
+		loadingCompanies.value = false
 	}
 }
 
@@ -511,6 +643,7 @@ const fieldValueFontSizePt = computed<number>({
 onMounted(() => {
 	fetchFonts()
 	fetchLetterheads()
+	fetchCompanies()
 })
 
 watch(
@@ -518,6 +651,18 @@ watch(
 	() => props.markDirty(),
 	{ deep: true }
 )
+
+watch(
+	() => logoSettings.value.company,
+	(newCompany) => {
+		logoSettings.value.image = resolveCompanyLogo(newCompany)
+	}
+)
+
+watch(availableCompanies, () => {
+	if (!logoSettings.value.company) return
+	logoSettings.value.image = resolveCompanyLogo(logoSettings.value.company)
+})
 </script>
 
 <style scoped>

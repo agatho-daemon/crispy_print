@@ -21,6 +21,14 @@ export interface QrSettings {
 	fields: string[]
 }
 
+export interface LogoSettings {
+	company: string
+	image: string
+	size: number
+	dx: number
+	dy: number
+}
+
 export const defaultTypography: TypographySettings = {
 	fieldLabel: {
 		fontFamily: "Inter",
@@ -56,6 +64,8 @@ export interface PageSettings {
 	}
 	letterhead?: string
 	letterheadData?: any
+	brandingMode?: "letterhead" | "logo" | "none"
+	logo?: LogoSettings
 	language: string
 
 	typography?: TypographySettings
@@ -67,6 +77,8 @@ export const defaultPageSettings: PageSettings = {
 	orientation: "portrait",
 	margins: { top: 25, bottom: 20, left: 20, right: 20 },
 	letterhead: "",
+	brandingMode: "letterhead",
+	logo: { company: "", image: "", size: 25, dx: 0, dy: 0 },
 	typography: undefined,
 	language: "en",
 	qr: { dx: 0, dy: 0, size: 15, fields: [] },
@@ -89,6 +101,18 @@ export function ensureQrSettings(pageSettings: PageSettings): QrSettings {
 	return pageSettings.qr
 }
 
+export function ensureLogoSettings(pageSettings: PageSettings): LogoSettings {
+	if (!pageSettings.logo) {
+		pageSettings.logo = { company: "", image: "", size: 25, dx: 0, dy: 0 }
+	}
+	pageSettings.logo.company = pageSettings.logo.company || ""
+	pageSettings.logo.image = pageSettings.logo.image || ""
+	pageSettings.logo.size = Number.isFinite(pageSettings.logo.size) ? pageSettings.logo.size : 25
+	pageSettings.logo.dx = Number.isFinite(pageSettings.logo.dx) ? pageSettings.logo.dx : 0
+	pageSettings.logo.dy = Number.isFinite(pageSettings.logo.dy) ? pageSettings.logo.dy : 0
+	return pageSettings.logo
+}
+
 export function mergePageSettings(
 	base: PageSettings = defaultPageSettings,
 	overrides: Partial<PageSettings> = {}
@@ -108,6 +132,10 @@ export function mergePageSettings(
 		qr: {
 			...(base.qr || { dx: 0, dy: 0, size: 15, fields: [] }),
 			...((safeOverrides as PageSettings).qr || {}),
+		},
+		logo: {
+			...(base.logo || { company: "", image: "", size: 25, dx: 0, dy: 0 }),
+			...((safeOverrides as PageSettings).logo || {}),
 		},
 	}
 }
