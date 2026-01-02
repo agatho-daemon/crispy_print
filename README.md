@@ -1,15 +1,14 @@
-# WIP Project
+# Credits
 
-**This entire project is a work in progress. Hence, it is heavily logging to js console.**
+Many thanks to the many different AI tools that helped me with this project.
 
-The project is an idea, that was born out of the need to have a modern print format designer for Frappe applications, using the [Typst](https://typst.app/) typesetting system. The goal is to provide a user-friendly interface for creating and managing print formats that can be used across various Frappe DocTypes.
+# Crispy Print
 
-As a mildly experienced Frappe developer, I am excited to explore the possibilities of this project and contribute to its development. The project is currently in its early stages, and I welcome any feedback or suggestions from the community.
+Modern print format designer for Frappe using the [Typst](https://typst.app/) typesetting system. Build PDF‑native print formats with a Vue 3 visual builder and real‑time preview.
 
-Many thanks for the many different AI tools that I have used to help me with this project.
+## Project Status
 
-
-## Crispy Print
+**Alpha / Work in progress.** Expect frequent changes and console logging while features are still settling.
 
 A Frappe v15+ app that provides a modern print format designer using [Typst](https://typst.app/) - a modern typesetting system. Build beautiful, PDF-native print formats with a Vue 3-powered visual builder and real-time preview.
 
@@ -27,18 +26,17 @@ A Frappe v15+ app that provides a modern print format designer using [Typst](htt
 
 ### System Dependencies
 
-**Typst CLI** must be installed on your system:
+**Typst CLI** must be installed on your system.
 
-#### macOS (via Homebrew)
+#### macOS (Homebrew)
 ```bash
 brew install typst
 ```
 
-#### Ubuntu/Debian
+#### Ubuntu
 ```bash
-# Install from official releases
-wget https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
-tar -xf typst-x86_64-unknown-linux-musl.tar.xz
+curl -L -o typst.tar.xz https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
+tar -xf typst.tar.xz
 sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
 ```
 
@@ -188,21 +186,21 @@ crispy_print/
 
 ## Development
 
-### IDE Type Support (Optional)
+### Frontend Dependencies
 
-For TypeScript/Vue IntelliSense in VS Code:
+For TypeScript/Vue IntelliSense in VS Code and the color picker bundle (`@simonwep/pickr`):
 
 ```bash
 cd apps/crispy_print/crispy_print/public/js
 yarn install
 ```
 
-This installs local type definitions for IDE support only:
+This installs local dependencies used by the frontend bundle:
 - `package.json`, `yarn.lock` - Type dependencies
 - `tsconfig.json` - TypeScript configuration
 - `node_modules/` - Type definitions
 
-**Note:** Not required for building - only for IDE autocomplete.
+**Note:** Required for building.
 
 ### Building
 
