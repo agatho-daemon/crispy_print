@@ -111,6 +111,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue"
 import draggable from "vuedraggable"
 import type { TableColumn } from "../utils/layout"
+import { getDefaultAlignment } from "../utils/tableColumns"
 
 interface Props {
 	modelValue: TableColumn[]
@@ -251,11 +252,6 @@ function getAlignIcon(align?: "left" | "center" | "right"): string {
 		default:
 			return "⇤"
 	}
-}
-
-function getDefaultAlignment(fieldtype?: string): "left" | "center" | "right" {
-	const numericTypes = ["Int", "Float", "Currency", "Percent"]
-	return numericTypes.includes(fieldtype || "") ? "right" : "left"
 }
 
 function validateWidths(cols: TableColumn[]) {
