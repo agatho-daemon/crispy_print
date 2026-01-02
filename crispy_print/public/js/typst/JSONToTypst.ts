@@ -436,6 +436,11 @@ class JSONTypstTranslator {
 		const lines: string[] = []
 		const label = section.label || `Section ${index + 1}`
 
+		if (section.page_break && index > 0) {
+			lines.push("#pagebreak()")
+			lines.push("")
+		}
+
 		lines.push(`// Section: ${label}`)
 
 		if (!section.columns || section.columns.length === 0) {

@@ -36,6 +36,7 @@ export interface LayoutSection {
 	label: string
 	columns: LayoutColumn[]
 	id?: number
+	page_break?: boolean
 }
 
 export interface CrispyLayout {
