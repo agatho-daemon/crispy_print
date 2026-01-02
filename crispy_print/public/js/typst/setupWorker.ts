@@ -4,7 +4,13 @@ import { buildDocDictionary, translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import { extractUsedFieldsFromTypstSource } from "../utils/typstFieldExtractor"
-import type { CrispyLayout } from "../utils/layout"
+import { serializeLayout, type CrispyLayout } from "../utils/layout"
+import {
+	buildForegroundPlacements,
+	getLetterheadFilename,
+	resolveBrandingImage,
+	resolveBrandingMode,
+} from "./branding"
 import {
 	CrispyPreviewEvents,
 	dispatchCrispyPreviewSource,
@@ -457,10 +463,10 @@ export function setupWorker(
 		return adapter.getLayout()
 	}
 
-	function serializeLayout(layout: CrispyLayout | null | undefined) {
+	function serializeLayoutSafe(layout: CrispyLayout | null | undefined) {
 		if (!layout) return ""
 		try {
-			return JSON.stringify(layout)
+			return serializeLayout(layout)
 		} catch (e) {
 			console.error("[Typst Preview] Failed to serialize layout:", e)
 			return ""
@@ -528,42 +534,6 @@ export function setupWorker(
 		}
 	}
 
-	function resolveBrandingMode(
-		pageSettings?: Record<string, any> | null,
-		letterheadData?: Record<string, any> | null
-	): "letterhead" | "logo" | "none" {
-		const raw = String(pageSettings?.brandingMode || "").toLowerCase()
-		if (raw === "letterhead" || raw === "logo" || raw === "none") {
-			return raw
-		}
-		if (pageSettings?.logo?.image || pageSettings?.logo?.company) {
-			return "logo"
-		}
-		if (letterheadData && (letterheadData as any).image) {
-			return "letterhead"
-		}
-		if (pageSettings?.letterhead) {
-			return "letterhead"
-		}
-		return "none"
-	}
-
-	function resolveBrandingImage(
-		pageSettings?: Record<string, any> | null,
-		letterheadData?: Record<string, any> | null
-	): string | null {
-		const mode = resolveBrandingMode(pageSettings, letterheadData)
-		if (mode === "logo") {
-			const image = pageSettings?.logo?.image
-			return image ? String(image) : null
-		}
-		if (mode === "letterhead") {
-			const image = (letterheadData as any)?.image
-			return image ? String(image) : null
-		}
-		return null
-	}
-
 	function buildPageSettingsBlock(options: {
 		pageSettings?: Record<string, any> | null
 		letterheadData?: Record<string, any> | null
@@ -585,29 +555,14 @@ export function setupWorker(
 		const marginLeft = marginValue(margins.left, 20)
 		const marginRight = marginValue(margins.right, 20)
 		const brandingMode = resolveBrandingMode(pageSettings, options.letterheadData)
-		const letterheadImage = brandingMode === "letterhead" ? options.letterheadData?.image || "" : ""
-		const letterheadFilename = letterheadImage ? String(letterheadImage).split("/").pop() : ""
-		const logoSettings = pageSettings.logo || {}
-		const logoImage = brandingMode === "logo" ? String(logoSettings.image || "") : ""
-		const logoFilename = logoImage ? logoImage.split("/").pop() : ""
-		const logoSize = Number(logoSettings.size) || 25
-		const logoDx = Number(logoSettings.dx) || 0
-		const logoDy = Number(logoSettings.dy) || 0
-		const qrSettings = options.qrSettings || {}
-		const qrSize = Number(qrSettings.size) || 15
-		const qrDx = Number(qrSettings.dx) || 0
-		const qrDy = Number(qrSettings.dy) || 0
-		const foregroundLines: string[] = []
-		if (logoFilename) {
-			foregroundLines.push(
-				`#place(top + left, dx: ${logoDx}mm, dy: ${logoDy}mm, image("${logoFilename}", width: ${logoSize}mm))`
-			)
-		}
-		if (options.qrEnabled && options.qrFilename) {
-			foregroundLines.push(
-				`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${options.qrFilename}", width: ${qrSize}mm))`
-			)
-		}
+		const letterheadFilename = getLetterheadFilename(pageSettings, options.letterheadData)
+		const foregroundLines = buildForegroundPlacements({
+			pageSettings,
+			brandingMode,
+			qrEnabled: options.qrEnabled,
+			qrFilename: options.qrFilename,
+			qrSettings: options.qrSettings,
+		})
 
 		lines.push("// Page settings (from Settings pane)")
 		lines.push("#set page(")
@@ -618,6 +573,8 @@ export function setupWorker(
 		lines.push(
 			`  margin: (top: ${marginTop}mm, bottom: ${marginBottom}mm, left: ${marginLeft}mm, right: ${marginRight}mm),`
 		)
+		lines.push("  header: header_block,")
+		lines.push("  footer: footer_block,")
 		if (letterheadFilename) {
 			lines.push(`  background: image("${letterheadFilename}", width: 100%)`)
 		}
@@ -653,7 +610,6 @@ export function setupWorker(
 		}
 		lines.push("#set page(header: header_block, footer: footer_block)")
 		lines.push("")
-
 		return lines.join("\n").trim()
 	}
 
@@ -699,7 +655,7 @@ export function setupWorker(
 		}
 		missingLayoutRetries = 0
 
-		const layoutSerialized = rawTypst ? "" : serializeLayout(layout)
+		const layoutSerialized = rawTypst ? "" : serializeLayoutSafe(layout)
 
 		// Also check page settings for changes
 		let pageSettingsSerialized = ""

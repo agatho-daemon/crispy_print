@@ -2,6 +2,7 @@
 // Translates layout from Crispy builder + optional letterhead into Typst source
 
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
+import { buildForegroundPlacements, getLetterheadFilename, resolveBrandingMode } from "./branding"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
 	sections?: LayoutSection[]
@@ -154,20 +155,10 @@ class JSONTypstTranslator {
 			? this.resolveMargins(this.options.margins)
 			: this.resolveMargins(this.options.pageMargins)
 
-		const explicitBrandingMode = String(this.options.brandingMode || "").toLowerCase()
-		const brandingMode =
-			explicitBrandingMode === "letterhead" ||
-			explicitBrandingMode === "logo" ||
-			explicitBrandingMode === "none"
-				? explicitBrandingMode
-				: this.letterhead && (this.letterhead as any).image
-					? "letterhead"
-					: "none"
+		const brandingMode = resolveBrandingMode(this.options, this.letterhead)
+		const letterheadFilename = getLetterheadFilename(this.options, this.letterhead)
 
-		if (brandingMode === "letterhead" && this.letterhead && (this.letterhead as any).image) {
-			const imagePath = (this.letterhead as any).image as string
-			const filename = imagePath.split("/").pop()
-
+		if (brandingMode === "letterhead" && letterheadFilename) {
 			if ((this.letterhead as any).letter_head_name) {
 				lines.push(`// Letterhead: ${(this.letterhead as any).letter_head_name}`)
 			}
@@ -179,9 +170,7 @@ class JSONTypstTranslator {
 			lines.push(
 				`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right}),`
 			)
-			if (filename) {
-				lines.push(`  background: image("${filename}", width: 100%)`)
-			}
+			lines.push(`  background: image("${letterheadFilename}", width: 100%)`)
 			lines.push(")")
 		} else {
 			lines.push("#set page(")
@@ -412,37 +401,15 @@ class JSONTypstTranslator {
 		lines.push("#set page(header: header_block, footer: footer_block)")
 		lines.push("")
 
-		const explicitBrandingMode = String(this.options.brandingMode || "").toLowerCase()
-		const brandingMode =
-			explicitBrandingMode === "letterhead" ||
-			explicitBrandingMode === "logo" ||
-			explicitBrandingMode === "none"
-				? explicitBrandingMode
-				: this.letterhead && (this.letterhead as any).image
-					? "letterhead"
-					: "none"
-		const logoSettings = (this.options.logo || {}) as any
-		const logoImage = brandingMode === "logo" ? String(logoSettings.image || "") : ""
-		const logoFilename = logoImage ? logoImage.split("/").pop() : ""
-		const logoSize = Number(logoSettings.size) || 25
-		const logoDx = Number(logoSettings.dx) || 0
-		const logoDy = Number(logoSettings.dy) || 0
-
+		const brandingMode = resolveBrandingMode(this.options, this.letterhead)
 		const qrSettings = (this.options.qrSettings as Record<string, any> | undefined) || {}
-		const qrSize = Number(qrSettings.size) || 15
-		const qrDx = Number(qrSettings.dx) || 0
-		const qrDy = Number(qrSettings.dy) || 0
-		const foregroundLines: string[] = []
-		if (logoFilename) {
-			foregroundLines.push(
-				`#place(top + left, dx: ${logoDx}mm, dy: ${logoDy}mm, image("${logoFilename}", width: ${logoSize}mm))`
-			)
-		}
-		if (qrEnabled && qrFilename) {
-			foregroundLines.push(
-				`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${qrFilename}", width: ${qrSize}mm))`
-			)
-		}
+		const foregroundLines = buildForegroundPlacements({
+			pageSettings: this.options,
+			brandingMode,
+			qrEnabled,
+			qrFilename,
+			qrSettings,
+		})
 		if (foregroundLines.length) {
 			lines.push("// Foreground placements (logo / QR)")
 			lines.push("#set page(foreground: [")

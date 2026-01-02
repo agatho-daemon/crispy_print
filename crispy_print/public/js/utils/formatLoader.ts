@@ -138,6 +138,11 @@ export async function loadLetterheadDoc(letterheadName: string): Promise<any | n
 	}
 }
 
+export async function resolveLetterheadDoc(letterheadName?: string | null): Promise<any | null> {
+	if (!letterheadName) return null
+	return loadLetterheadDoc(letterheadName)
+}
+
 export function clearLetterheadCache(letterheadName?: string) {
 	if (!letterheadCache) return
 	if (!letterheadName) {

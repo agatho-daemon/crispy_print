@@ -470,7 +470,8 @@ import {
 	type TypographySettings,
 } from "../utils/pageSettings"
 import ColorInput from "./ColorInput.vue"
-import { getCompanies, getLetterheads, getTypstLocalFonts, type CompanyOption } from "../api/crispy"
+import { getTypstLocalFonts } from "../api/crispy"
+import { useBrandingData } from "../composables/useBrandingData"
 import { useStore } from "../composables/useStore"
 import QrFieldsDialog from "./QrFieldsDialog.vue"
 
@@ -483,10 +484,15 @@ const props = defineProps<Props>()
 
 const availableFonts = ref<string[]>([])
 const loadingFonts = ref(false)
-const availableLetterheads = ref<string[]>([])
-const loadingLetterheads = ref(false)
-const availableCompanies = ref<CompanyOption[]>([])
-const loadingCompanies = ref(false)
+const {
+	availableLetterheads,
+	loadingLetterheads,
+	availableCompanies,
+	loadingCompanies,
+	resolveCompanyLogo,
+	fetchLetterheads,
+	fetchCompanies,
+} = useBrandingData()
 const isPageSettingsExpanded = ref(false)
 const isTypographyExpanded = ref(false)
 const isBrandingExpanded = ref(false)
@@ -553,49 +559,6 @@ async function fetchFonts() {
 		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"]
 	} finally {
 		loadingFonts.value = false
-	}
-}
-
-function resolveCompanyLogo(companyName: string): string {
-	if (!companyName) return ""
-	const match = availableCompanies.value.find((company) => company.name === companyName)
-	return match?.company_logo || ""
-}
-
-// Fetch available companies (for logo selection)
-async function fetchCompanies() {
-	if (typeof frappe === "undefined") {
-		availableCompanies.value = []
-		return
-	}
-
-	loadingCompanies.value = true
-	try {
-		availableCompanies.value = await getCompanies()
-	} catch (error) {
-		console.error("[SettingsPane] Failed to fetch companies:", error)
-		availableCompanies.value = []
-	} finally {
-		loadingCompanies.value = false
-	}
-}
-
-// Fetch available letterheads
-async function fetchLetterheads() {
-	if (typeof frappe === "undefined") {
-		// Dev mode fallback
-		availableLetterheads.value = []
-		return
-	}
-
-	loadingLetterheads.value = true
-	try {
-		availableLetterheads.value = await getLetterheads()
-	} catch (error) {
-		console.error("[SettingsPane] Failed to fetch letterheads:", error)
-		availableLetterheads.value = []
-	} finally {
-		loadingLetterheads.value = false
 	}
 }
 
