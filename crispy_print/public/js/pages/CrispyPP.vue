@@ -247,14 +247,13 @@ import { ref, onMounted, watch, computed } from "vue"
 import {
 	getFormatsForDoctype,
 	loadFormatData,
-	getLetterheads,
-	loadLetterheadDoc,
+	resolveLetterheadDoc,
 	type FormatInfo,
 } from "../utils/formatLoader"
-import { getCompanies, type CompanyOption } from "../api/crispy"
 import { defaultPageSettings, ensureLogoSettings, type PageSettings } from "../utils/pageSettings"
 import PreviewRenderer from "../components/PreviewRenderer.vue"
 import { pickFormatName } from "../utils/formatSelection"
+import { useBrandingData } from "../composables/useBrandingData"
 
 interface Props {
 	doctype?: string
@@ -266,10 +265,15 @@ const props = defineProps<Props>()
 
 // Format selection
 const availableFormats = ref<FormatInfo[]>([])
-const availableLetterheads = ref<string[]>([])
-const loadingLetterheads = ref(false)
-const availableCompanies = ref<CompanyOption[]>([])
-const loadingCompanies = ref(false)
+const {
+	availableLetterheads,
+	loadingLetterheads,
+	availableCompanies,
+	loadingCompanies,
+	resolveCompanyLogo,
+	fetchLetterheads,
+	fetchCompanies,
+} = useBrandingData()
 const selectedFormat = ref<string>("")
 
 // Settings state (single in-memory copy; PP does not persist)
@@ -392,11 +396,7 @@ async function loadFormatSettings(formatName: string) {
 		pageSettings.value = data.pageSettings || { ...defaultPageSettings }
 
 		// Preload letterhead data if the format has one set
-		if (pageSettings.value.letterhead) {
-			letterheadDoc.value = await loadLetterheadDoc(pageSettings.value.letterhead)
-		} else {
-			letterheadDoc.value = null
-		}
+		letterheadDoc.value = await resolveLetterheadDoc(pageSettings.value.letterhead)
 
 		// Store layout
 		layout.value = data.layout
@@ -415,41 +415,6 @@ async function loadFormatSettings(formatName: string) {
 			indicator: "red",
 		})
 		loading.value = false
-	}
-}
-
-function resolveCompanyLogo(companyName: string): string {
-	if (!companyName) return ""
-	const match = availableCompanies.value.find((company) => company.name === companyName)
-	return match?.company_logo || ""
-}
-
-async function fetchLetterheads() {
-	loadingLetterheads.value = true
-	try {
-		availableLetterheads.value = await getLetterheads()
-	} catch (error) {
-		console.error("[CrispyPP] Failed to fetch letterheads:", error)
-		availableLetterheads.value = []
-	} finally {
-		loadingLetterheads.value = false
-	}
-}
-
-async function fetchCompanies() {
-	if (typeof frappe === "undefined") {
-		availableCompanies.value = []
-		return
-	}
-
-	loadingCompanies.value = true
-	try {
-		availableCompanies.value = await getCompanies()
-	} catch (error) {
-		console.error("[CrispyPP] Failed to fetch companies:", error)
-		availableCompanies.value = []
-	} finally {
-		loadingCompanies.value = false
 	}
 }
 
@@ -487,11 +452,7 @@ const getLetterhead = () => {
 watch(
 	() => pageSettings.value.letterhead,
 	async (newLetterhead) => {
-		if (newLetterhead) {
-			letterheadDoc.value = await loadLetterheadDoc(newLetterhead)
-		} else {
-			letterheadDoc.value = null
-		}
+		letterheadDoc.value = await resolveLetterheadDoc(newLetterhead)
 	}
 )
 
