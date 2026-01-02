@@ -154,7 +154,17 @@ class JSONTypstTranslator {
 			? this.resolveMargins(this.options.margins)
 			: this.resolveMargins(this.options.pageMargins)
 
-		if (this.letterhead && (this.letterhead as any).image) {
+		const explicitBrandingMode = String(this.options.brandingMode || "").toLowerCase()
+		const brandingMode =
+			explicitBrandingMode === "letterhead" ||
+			explicitBrandingMode === "logo" ||
+			explicitBrandingMode === "none"
+				? explicitBrandingMode
+				: this.letterhead && (this.letterhead as any).image
+					? "letterhead"
+					: "none"
+
+		if (brandingMode === "letterhead" && this.letterhead && (this.letterhead as any).image) {
 			const imagePath = (this.letterhead as any).image as string
 			const filename = imagePath.split("/").pop()
 
@@ -402,15 +412,44 @@ class JSONTypstTranslator {
 		lines.push("#set page(header: header_block, footer: footer_block)")
 		lines.push("")
 
+		const explicitBrandingMode = String(this.options.brandingMode || "").toLowerCase()
+		const brandingMode =
+			explicitBrandingMode === "letterhead" ||
+			explicitBrandingMode === "logo" ||
+			explicitBrandingMode === "none"
+				? explicitBrandingMode
+				: this.letterhead && (this.letterhead as any).image
+					? "letterhead"
+					: "none"
+		const logoSettings = (this.options.logo || {}) as any
+		const logoImage = brandingMode === "logo" ? String(logoSettings.image || "") : ""
+		const logoFilename = logoImage ? logoImage.split("/").pop() : ""
+		const logoSize = Number(logoSettings.size) || 25
+		const logoDx = Number(logoSettings.dx) || 0
+		const logoDy = Number(logoSettings.dy) || 0
+
 		const qrSettings = (this.options.qrSettings as Record<string, any> | undefined) || {}
 		const qrSize = Number(qrSettings.size) || 15
 		const qrDx = Number(qrSettings.dx) || 0
 		const qrDy = Number(qrSettings.dy) || 0
+		const foregroundLines: string[] = []
+		if (logoFilename) {
+			foregroundLines.push(
+				`#place(top + left, dx: ${logoDx}mm, dy: ${logoDy}mm, image("${logoFilename}", width: ${logoSize}mm))`
+			)
+		}
 		if (qrEnabled && qrFilename) {
-			lines.push("// QR Code Placement")
-			lines.push(
+			foregroundLines.push(
 				`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${qrFilename}", width: ${qrSize}mm))`
 			)
+		}
+		if (foregroundLines.length) {
+			lines.push("// Foreground placements (logo / QR)")
+			lines.push("#set page(foreground: [")
+			foregroundLines.forEach((line) => {
+				lines.push(`  ${line}`)
+			})
+			lines.push("])")
 			lines.push("")
 		}
 

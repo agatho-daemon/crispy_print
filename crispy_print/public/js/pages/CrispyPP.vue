@@ -45,92 +45,176 @@
 						</select>
 					</div>
 
-					<!-- Language -->
-					<div class="settings-pane__field">
-						<label class="settings-pane__label">Language</label>
-						<select v-model="pageSettings.language" class="settings-pane__select">
-							<option value="en">English</option>
-							<option value="ar">Arabic</option>
-							<option value="fr">French</option>
-							<option value="de">German</option>
-							<option value="es">Spanish</option>
-						</select>
-					</div>
+					<div class="settings-pane__section-card">
+						<button
+							type="button"
+							class="settings-pane__section-header"
+							@click="isOverridesExpanded = !isOverridesExpanded"
+						>
+							<span>Preview Overrides</span>
+							<svg
+								:class="[
+									'settings-pane__chevron',
+									{ 'settings-pane__chevron--expanded': isOverridesExpanded },
+								]"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
+						<div v-if="isOverridesExpanded" class="settings-pane__section-content">
+							<p class="settings-pane__hint">
+								Preview-only changes. The saved format is unchanged.
+							</p>
 
-					<!-- Letter Head -->
-					<div class="settings-pane__field">
-						<label class="settings-pane__label">Letter Head</label>
-						<select v-model="pageSettings.letterhead" class="settings-pane__select">
-							<option value="">None</option>
-							<option v-for="lh in availableLetterheads" :key="lh" :value="lh">
-								{{ lh }}
-							</option>
-						</select>
-					</div>
-					<div class="settings-pane__field settings-pane__field--inline">
-						<label class="settings-pane__label">Remove QRCode</label>
-						<input v-model="removeQr" type="checkbox" class="settings-pane__checkbox" />
-					</div>
-					<!-- Page Size -->
-					<div class="settings-pane__field">
-						<label class="settings-pane__label">Page Size</label>
-						<select v-model="pageSettings.pageSize" class="settings-pane__select">
-							<option value="A3">A3 (297 × 420 mm)</option>
-							<option value="A4">A4 (210 × 297 mm)</option>
-							<option value="A5">A5 (148 × 210 mm)</option>
-							<option value="Letter">Letter (8.5 × 11 in)</option>
-							<option value="Legal">Legal (8.5 × 14 in)</option>
-						</select>
-					</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__label">Language</label>
+								<select v-model="pageSettings.language" class="settings-pane__select">
+									<option value="en">English</option>
+									<option value="ar">Arabic</option>
+									<option value="fr">French</option>
+									<option value="de">German</option>
+									<option value="es">Spanish</option>
+								</select>
+							</div>
 
-					<!-- Orientation -->
-					<div class="settings-pane__field">
-						<label class="settings-pane__label">Orientation</label>
-						<select v-model="pageSettings.orientation" class="settings-pane__select">
-							<option value="portrait">Portrait</option>
-							<option value="landscape">Landscape</option>
-						</select>
-					</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__label">Branding</label>
+								<select v-model="brandingMode" class="settings-pane__select">
+									<option value="none">None</option>
+									<option value="letterhead">Letterhead</option>
+									<option value="logo">Logo</option>
+								</select>
+							</div>
 
-					<!-- Margins -->
-					<div class="settings-pane__field">
-						<label class="settings-pane__label">Margins (mm)</label>
-						<div class="settings-pane__margins">
-							<div class="settings-pane__margin-input">
-								<span class="settings-pane__margin-prefix">T</span>
-								<input
-									v-model.number="pageSettings.margins.top"
-									type="number"
-									placeholder="Top"
-									class="settings-pane__input"
-								/>
+							<div v-if="brandingMode === 'letterhead'" class="settings-pane__field">
+								<label class="settings-pane__label">Letter Head</label>
+								<select v-model="pageSettings.letterhead" class="settings-pane__select">
+									<option value="">None</option>
+									<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
+									<option v-for="lh in availableLetterheads" :key="lh" :value="lh">
+										{{ lh }}
+									</option>
+								</select>
 							</div>
-							<div class="settings-pane__margin-input">
-								<span class="settings-pane__margin-prefix">B</span>
-								<input
-									v-model.number="pageSettings.margins.bottom"
-									type="number"
-									placeholder="Bottom"
-									class="settings-pane__input"
-								/>
+
+							<div v-if="brandingMode === 'logo'">
+								<p class="settings-pane__hint">Logo is anchored to top-left using #place().</p>
+								<div class="settings-pane__field">
+									<label class="settings-pane__label">Company</label>
+									<select v-model="logoSettings.company" class="settings-pane__select">
+										<option value="">Select company</option>
+										<option v-if="loadingCompanies" disabled>Loading companies...</option>
+										<option
+											v-for="company in availableCompanies"
+											:key="company.name"
+											:value="company.name"
+										>
+											{{ company.abbr ? `${company.abbr} - ${company.name}` : company.name }}
+										</option>
+									</select>
+								</div>
+								<p v-if="logoSettings.company && !logoSettings.image" class="settings-pane__hint">
+									Selected company has no logo set.
+								</p>
+								<div class="settings-pane__grid">
+									<div class="settings-pane__field">
+										<label class="settings-pane__sublabel">Size (mm)</label>
+										<input
+											v-model.number="logoSettings.size"
+											type="number"
+											class="settings-pane__input"
+										/>
+									</div>
+									<div class="settings-pane__field">
+										<label class="settings-pane__sublabel">dx (mm)</label>
+										<input
+											v-model.number="logoSettings.dx"
+											type="number"
+											class="settings-pane__input"
+										/>
+									</div>
+									<div class="settings-pane__field">
+										<label class="settings-pane__sublabel">dy (mm)</label>
+										<input
+											v-model.number="logoSettings.dy"
+											type="number"
+											class="settings-pane__input"
+										/>
+									</div>
+								</div>
 							</div>
-							<div class="settings-pane__margin-input">
-								<span class="settings-pane__margin-prefix">L</span>
-								<input
-									v-model.number="pageSettings.margins.left"
-									type="number"
-									placeholder="Left"
-									class="settings-pane__input"
-								/>
+
+							<div class="settings-pane__field settings-pane__field--inline">
+								<label class="settings-pane__label">Remove QRCode</label>
+								<input v-model="removeQr" type="checkbox" class="settings-pane__checkbox" />
 							</div>
-							<div class="settings-pane__margin-input">
-								<span class="settings-pane__margin-prefix">R</span>
-								<input
-									v-model.number="pageSettings.margins.right"
-									type="number"
-									placeholder="Right"
-									class="settings-pane__input"
-								/>
+
+							<div class="settings-pane__field">
+								<label class="settings-pane__label">Page Size</label>
+								<select v-model="pageSettings.pageSize" class="settings-pane__select">
+									<option value="A3">A3 (297 × 420 mm)</option>
+									<option value="A4">A4 (210 × 297 mm)</option>
+									<option value="A5">A5 (148 × 210 mm)</option>
+									<option value="Letter">Letter (8.5 × 11 in)</option>
+									<option value="Legal">Legal (8.5 × 14 in)</option>
+								</select>
+							</div>
+
+							<div class="settings-pane__field">
+								<label class="settings-pane__label">Orientation</label>
+								<select v-model="pageSettings.orientation" class="settings-pane__select">
+									<option value="portrait">Portrait</option>
+									<option value="landscape">Landscape</option>
+								</select>
+							</div>
+
+							<div class="settings-pane__field">
+								<label class="settings-pane__label">Margins (mm)</label>
+								<div class="settings-pane__margins">
+									<div class="settings-pane__margin-input">
+										<span class="settings-pane__margin-prefix">T</span>
+										<input
+											v-model.number="pageSettings.margins.top"
+											type="number"
+											placeholder="Top"
+											class="settings-pane__input"
+										/>
+									</div>
+									<div class="settings-pane__margin-input">
+										<span class="settings-pane__margin-prefix">B</span>
+										<input
+											v-model.number="pageSettings.margins.bottom"
+											type="number"
+											placeholder="Bottom"
+											class="settings-pane__input"
+										/>
+									</div>
+									<div class="settings-pane__margin-input">
+										<span class="settings-pane__margin-prefix">L</span>
+										<input
+											v-model.number="pageSettings.margins.left"
+											type="number"
+											placeholder="Left"
+											class="settings-pane__input"
+										/>
+									</div>
+									<div class="settings-pane__margin-input">
+										<span class="settings-pane__margin-prefix">R</span>
+										<input
+											v-model.number="pageSettings.margins.right"
+											type="number"
+											placeholder="Right"
+											class="settings-pane__input"
+										/>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -167,7 +251,8 @@ import {
 	loadLetterheadDoc,
 	type FormatInfo,
 } from "../utils/formatLoader"
-import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
+import { getCompanies, type CompanyOption } from "../api/crispy"
+import { defaultPageSettings, ensureLogoSettings, type PageSettings } from "../utils/pageSettings"
 import PreviewRenderer from "../components/PreviewRenderer.vue"
 import { pickFormatName } from "../utils/formatSelection"
 
@@ -182,6 +267,9 @@ const props = defineProps<Props>()
 // Format selection
 const availableFormats = ref<FormatInfo[]>([])
 const availableLetterheads = ref<string[]>([])
+const loadingLetterheads = ref(false)
+const availableCompanies = ref<CompanyOption[]>([])
+const loadingCompanies = ref(false)
 const selectedFormat = ref<string>("")
 
 // Settings state (single in-memory copy; PP does not persist)
@@ -198,7 +286,29 @@ const qrEnabled = ref(false)
 const removeQr = ref(false)
 const letterheadDoc = ref<any | null>(null)
 const changeKey = ref(0)
+const OVERRIDES_STORAGE_KEY = "crispy-print:pp:preview-overrides-expanded"
+const isOverridesExpanded = ref(false)
 const qrEnabledEffective = computed(() => qrEnabled.value && !removeQr.value)
+const logoSettings = computed(() => ensureLogoSettings(pageSettings.value))
+
+const brandingMode = computed<string>({
+	get: () => {
+		const mode = pageSettings.value.brandingMode
+		if (mode === "letterhead" || mode === "logo" || mode === "none") {
+			return mode
+		}
+		if (pageSettings.value.logo?.company || pageSettings.value.logo?.image) {
+			return "logo"
+		}
+		if (pageSettings.value.letterhead) {
+			return "letterhead"
+		}
+		return "none"
+	},
+	set: (value) => {
+		pageSettings.value.brandingMode = value as "letterhead" | "logo" | "none"
+	},
+})
 
 // Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
 watch(
@@ -244,8 +354,8 @@ async function initializeData() {
 
 		availableFormats.value = formatsWithDefault
 
-		// Load letterheads
-		availableLetterheads.value = await getLetterheads()
+		await fetchLetterheads()
+		await fetchCompanies()
 
 		// Determine which format to use
 		const formatToLoad = pickFormatName(formatsWithDefault, props.format || null)
@@ -308,6 +418,41 @@ async function loadFormatSettings(formatName: string) {
 	}
 }
 
+function resolveCompanyLogo(companyName: string): string {
+	if (!companyName) return ""
+	const match = availableCompanies.value.find((company) => company.name === companyName)
+	return match?.company_logo || ""
+}
+
+async function fetchLetterheads() {
+	loadingLetterheads.value = true
+	try {
+		availableLetterheads.value = await getLetterheads()
+	} catch (error) {
+		console.error("[CrispyPP] Failed to fetch letterheads:", error)
+		availableLetterheads.value = []
+	} finally {
+		loadingLetterheads.value = false
+	}
+}
+
+async function fetchCompanies() {
+	if (typeof frappe === "undefined") {
+		availableCompanies.value = []
+		return
+	}
+
+	loadingCompanies.value = true
+	try {
+		availableCompanies.value = await getCompanies()
+	} catch (error) {
+		console.error("[CrispyPP] Failed to fetch companies:", error)
+		availableCompanies.value = []
+	} finally {
+		loadingCompanies.value = false
+	}
+}
+
 // Handle format change
 async function onFormatChange() {
 	await loadFormatSettings(selectedFormat.value)
@@ -350,10 +495,33 @@ watch(
 	}
 )
 
+watch(
+	() => logoSettings.value.company,
+	(newCompany) => {
+		logoSettings.value.image = resolveCompanyLogo(newCompany)
+	}
+)
+
+watch(availableCompanies, () => {
+	if (!logoSettings.value.company) return
+	logoSettings.value.image = resolveCompanyLogo(logoSettings.value.company)
+})
+
 // No explicit preview events needed: PreviewRenderer/setupWorker reacts to prop changes directly.
 
 onMounted(async () => {
+	if (typeof window !== "undefined") {
+		const stored = window.localStorage.getItem(OVERRIDES_STORAGE_KEY)
+		if (stored !== null) {
+			isOverridesExpanded.value = stored === "true"
+		}
+	}
 	await initializeData()
+})
+
+watch(isOverridesExpanded, (next) => {
+	if (typeof window === "undefined") return
+	window.localStorage.setItem(OVERRIDES_STORAGE_KEY, String(next))
 })
 
 // Generate and open PDF in new tab
@@ -538,6 +706,12 @@ defineExpose({
 	accent-color: #2563eb;
 }
 
+.settings-pane__hint {
+	margin: 0;
+	font-size: 12px;
+	color: #64748b;
+}
+
 .settings-pane__input--readonly {
 	background: #f9fafb;
 	color: #6b7280;
@@ -546,6 +720,62 @@ defineExpose({
 
 .settings-pane__select {
 	cursor: pointer;
+}
+
+.settings-pane__section-card {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.settings-pane__section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	margin: 0;
+	padding: 10px 12px;
+	font-size: 13px;
+	font-weight: 700;
+	color: #1e293b;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.settings-pane__chevron {
+	width: 16px;
+	height: 16px;
+	transition: transform 0.2s ease;
+}
+
+.settings-pane__chevron--expanded {
+	transform: rotate(-180deg);
+}
+
+.settings-pane__section-content {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px 12px 14px;
+	background: #f8fafc;
+	border-top: 1px solid #e2e8f0;
+}
+
+.settings-pane__grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 8px;
+}
+
+.settings-pane__sublabel {
+	font-size: 11px;
+	font-weight: 500;
+	color: #64748b;
+	margin-bottom: 0px;
 }
 
 .settings-pane__margins {

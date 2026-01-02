@@ -20,6 +20,12 @@ export interface CrispyFormatDoc {
 	__onload?: any
 }
 
+export interface CompanyOption {
+	name: string
+	abbr?: string
+	company_logo?: string
+}
+
 export async function getCrispyFormat(name: string): Promise<CrispyFormatDoc> {
 	return await getDoc<CrispyFormatDoc>("Crispy Format", name)
 }
@@ -68,6 +74,13 @@ export async function getLetterheads(): Promise<string[]> {
 
 export async function getLetterheadDoc(name: string): Promise<any> {
 	return await getDoc<any>("Letter Head", name)
+}
+
+export async function getCompanies(): Promise<CompanyOption[]> {
+	return await getList<CompanyOption>("Company", {
+		fields: ["name", "abbr", "company_logo"],
+		order_by: "name asc",
+	})
 }
 
 export async function getTypstLocalFonts(): Promise<string[]> {

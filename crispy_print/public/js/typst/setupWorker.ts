@@ -248,13 +248,13 @@ export function setupWorker(
 
 		pendingPdfDownload = action === "download"
 
-		let letterheadImage: string | null = null
-		if (adapter && typeof adapter.getLetterhead === "function") {
-			const letterhead = adapter.getLetterhead()
-			if (letterhead && (letterhead as any).image) {
-				letterheadImage = (letterhead as any).image
-			}
-		}
+		const pageSettings =
+			adapter && typeof adapter.getPageSettings === "function"
+				? adapter.getPageSettings() || {}
+				: {}
+		const letterheadData =
+			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
+		const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
 
 		const requestId = pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
 		worker.postMessage({
@@ -263,7 +263,7 @@ export function setupWorker(
 			outputFormat: "pdf",
 			requestId,
 			seq: nextSeq(requestId),
-			letterheadImage,
+			letterheadImage: brandingImage,
 			qrData: qrEnabled ? docNameForQr : null,
 			qrFilename: qrEnabled ? qrFilename : null,
 		})
@@ -528,9 +528,48 @@ export function setupWorker(
 		}
 	}
 
+	function resolveBrandingMode(
+		pageSettings?: Record<string, any> | null,
+		letterheadData?: Record<string, any> | null
+	): "letterhead" | "logo" | "none" {
+		const raw = String(pageSettings?.brandingMode || "").toLowerCase()
+		if (raw === "letterhead" || raw === "logo" || raw === "none") {
+			return raw
+		}
+		if (pageSettings?.logo?.image || pageSettings?.logo?.company) {
+			return "logo"
+		}
+		if (letterheadData && (letterheadData as any).image) {
+			return "letterhead"
+		}
+		if (pageSettings?.letterhead) {
+			return "letterhead"
+		}
+		return "none"
+	}
+
+	function resolveBrandingImage(
+		pageSettings?: Record<string, any> | null,
+		letterheadData?: Record<string, any> | null
+	): string | null {
+		const mode = resolveBrandingMode(pageSettings, letterheadData)
+		if (mode === "logo") {
+			const image = pageSettings?.logo?.image
+			return image ? String(image) : null
+		}
+		if (mode === "letterhead") {
+			const image = (letterheadData as any)?.image
+			return image ? String(image) : null
+		}
+		return null
+	}
+
 	function buildPageSettingsBlock(options: {
 		pageSettings?: Record<string, any> | null
 		letterheadData?: Record<string, any> | null
+		qrEnabled?: boolean
+		qrFilename?: string | null
+		qrSettings?: Record<string, any> | null
 	}) {
 		const lines: string[] = []
 		const pageSettings = options.pageSettings || {}
@@ -545,8 +584,30 @@ export function setupWorker(
 		const marginBottom = marginValue(margins.bottom, 20)
 		const marginLeft = marginValue(margins.left, 20)
 		const marginRight = marginValue(margins.right, 20)
-		const letterheadImage = options.letterheadData?.image || ""
+		const brandingMode = resolveBrandingMode(pageSettings, options.letterheadData)
+		const letterheadImage = brandingMode === "letterhead" ? options.letterheadData?.image || "" : ""
 		const letterheadFilename = letterheadImage ? String(letterheadImage).split("/").pop() : ""
+		const logoSettings = pageSettings.logo || {}
+		const logoImage = brandingMode === "logo" ? String(logoSettings.image || "") : ""
+		const logoFilename = logoImage ? logoImage.split("/").pop() : ""
+		const logoSize = Number(logoSettings.size) || 25
+		const logoDx = Number(logoSettings.dx) || 0
+		const logoDy = Number(logoSettings.dy) || 0
+		const qrSettings = options.qrSettings || {}
+		const qrSize = Number(qrSettings.size) || 15
+		const qrDx = Number(qrSettings.dx) || 0
+		const qrDy = Number(qrSettings.dy) || 0
+		const foregroundLines: string[] = []
+		if (logoFilename) {
+			foregroundLines.push(
+				`#place(top + left, dx: ${logoDx}mm, dy: ${logoDy}mm, image("${logoFilename}", width: ${logoSize}mm))`
+			)
+		}
+		if (options.qrEnabled && options.qrFilename) {
+			foregroundLines.push(
+				`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${options.qrFilename}", width: ${qrSize}mm))`
+			)
+		}
 
 		lines.push("// Page settings (from Settings pane)")
 		lines.push("#set page(")
@@ -560,19 +621,20 @@ export function setupWorker(
 		if (letterheadFilename) {
 			lines.push(`  background: image("${letterheadFilename}", width: 100%)`)
 		}
+		if (foregroundLines.length) {
+			lines.push("  foreground: [")
+			foregroundLines.forEach((line) => {
+				lines.push(`    ${line}`)
+			})
+			lines.push("  ]")
+		}
 		lines.push(")")
 		lines.push("")
 
 		return lines.join("\n").trim()
 	}
 
-	function buildHeaderFooterBlock(options: {
-		docHeader?: string
-		docFooter?: string
-		qrEnabled?: boolean
-		qrFilename?: string | null
-		qrSettings?: Record<string, any> | null
-	}) {
+	function buildHeaderFooterBlock(options: { docHeader?: string; docFooter?: string }) {
 		const lines: string[] = []
 
 		lines.push("#let header_block = []")
@@ -591,18 +653,6 @@ export function setupWorker(
 		}
 		lines.push("#set page(header: header_block, footer: footer_block)")
 		lines.push("")
-
-		const qrSettings = options.qrSettings || {}
-		const qrSize = Number(qrSettings.size) || 15
-		const qrDx = Number(qrSettings.dx) || 0
-		const qrDy = Number(qrSettings.dy) || 0
-		if (options.qrEnabled && options.qrFilename) {
-			lines.push("// QR Code Placement")
-			lines.push(
-				`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${options.qrFilename}", width: ${qrSize}mm))`
-			)
-			lines.push("")
-		}
 
 		return lines.join("\n").trim()
 	}
@@ -669,16 +719,16 @@ export function setupWorker(
 		let typst: string
 		let qrPayloadChanged = false
 		try {
-			let letterheadData: any = null
-			if (adapter && typeof adapter.getLetterhead === "function") {
-				letterheadData = adapter.getLetterhead()
-			}
+			const letterheadCandidate =
+				adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
 
 			// Get page settings to pass to translator
 			let pageSettings: any = {}
 			if (adapter && adapter.getPageSettings) {
 				pageSettings = adapter.getPageSettings() || {}
 			}
+			const brandingMode = resolveBrandingMode(pageSettings, letterheadCandidate)
+			const letterheadData = brandingMode === "letterhead" ? letterheadCandidate : null
 
 			const docHeader =
 				adapter && typeof adapter.getDocHeader === "function" ? adapter.getDocHeader() || "" : ""
@@ -715,6 +765,9 @@ export function setupWorker(
 				const pageSettingsBlock = buildPageSettingsBlock({
 					pageSettings,
 					letterheadData,
+					qrEnabled,
+					qrFilename,
+					qrSettings: qrPayload.qrSettings,
 				})
 				if (pageSettingsBlock) {
 					parts.push(pageSettingsBlock)
@@ -723,13 +776,7 @@ export function setupWorker(
 				if (typstPreamble && typstPreamble.trim()) {
 					parts.push(typstPreamble.trim())
 				}
-				const headerFooterBlock = buildHeaderFooterBlock({
-					docHeader,
-					docFooter,
-					qrEnabled,
-					qrFilename,
-					qrSettings: qrPayload.qrSettings,
-				})
+				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
 				if (headerFooterBlock) {
 					parts.push(headerFooterBlock)
 				}
@@ -779,13 +826,13 @@ export function setupWorker(
 		if (downloadBtn) downloadBtn.disabled = true
 		currentPdfBlob = null
 
-		let letterheadImage: string | null = null
-		if (adapter && typeof adapter.getLetterhead === "function") {
-			const letterhead = adapter.getLetterhead()
-			if (letterhead && (letterhead as any).image) {
-				letterheadImage = (letterhead as any).image
-			}
-		}
+		const pageSettings =
+			adapter && typeof adapter.getPageSettings === "function"
+				? adapter.getPageSettings() || {}
+				: {}
+		const letterheadData =
+			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
+		const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
 
 		worker.postMessage({
 			typstSrc: typst,
@@ -793,7 +840,7 @@ export function setupWorker(
 			outputFormat: previewOutputFormat,
 			requestId: PREVIEW_REQUEST_ID,
 			seq: nextSeq(PREVIEW_REQUEST_ID),
-			letterheadImage,
+			letterheadImage: brandingImage,
 			qrData: qrEnabled ? docNameForQr : null,
 			qrFilename: qrEnabled ? qrFilename : null,
 		})
@@ -950,13 +997,13 @@ export function setupWorker(
 			viewPdfBtn.disabled = true
 			if (downloadBtn) downloadBtn.disabled = true
 
-			let letterheadImage: string | null = null
-			if (adapter && typeof adapter.getLetterhead === "function") {
-				const letterhead = adapter.getLetterhead()
-				if (letterhead && (letterhead as any).image) {
-					letterheadImage = (letterhead as any).image
-				}
-			}
+			const pageSettings =
+				adapter && typeof adapter.getPageSettings === "function"
+					? adapter.getPageSettings() || {}
+					: {}
+			const letterheadData =
+				adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
+			const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
 
 			worker.postMessage({
 				typstSrc: lastTypstCode,
@@ -964,7 +1011,7 @@ export function setupWorker(
 				outputFormat: "pdf",
 				requestId: VIEW_PDF_REQUEST_ID,
 				seq: nextSeq(VIEW_PDF_REQUEST_ID),
-				letterheadImage,
+				letterheadImage: brandingImage,
 				...resolveQrPayload(),
 			})
 		})
@@ -989,13 +1036,13 @@ export function setupWorker(
 			downloadBtn.disabled = true
 			pendingPdfDownload = true
 
-			let letterheadImage: string | null = null
-			if (adapter && typeof adapter.getLetterhead === "function") {
-				const letterhead = adapter.getLetterhead()
-				if (letterhead && (letterhead as any).image) {
-					letterheadImage = (letterhead as any).image
-				}
-			}
+			const pageSettings =
+				adapter && typeof adapter.getPageSettings === "function"
+					? adapter.getPageSettings() || {}
+					: {}
+			const letterheadData =
+				adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
+			const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
 
 			worker.postMessage({
 				typstSrc: lastTypstCode,
@@ -1003,7 +1050,7 @@ export function setupWorker(
 				outputFormat: "pdf",
 				requestId: DOWNLOAD_REQUEST_ID,
 				seq: nextSeq(DOWNLOAD_REQUEST_ID),
-				letterheadImage,
+				letterheadImage: brandingImage,
 				...resolveQrPayload(),
 			})
 		})
