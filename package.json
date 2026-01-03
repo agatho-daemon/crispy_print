@@ -1,7 +1,13 @@
 {
   "name": "crispy_print",
   "private": true,
+  "description": "Typst-based print format builder for Frappe",
   "scripts": {
-	"postinstall": "cd crispy_print/public/js && yarn install --check-files"
+    "postinstall": "cd crispy_print/public/js && yarn install --check-files",
+    "test": "cd crispy_print/public/js && yarn test:unit"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
   }
 }
