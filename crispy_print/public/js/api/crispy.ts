@@ -1,5 +1,4 @@
 // Crispy Print API wrappers (typed).
-// Keep all method strings + response shapes in one place for reuse and testing.
 
 import { call, getDoc, getList, setValue } from "./frappe"
 import type { PageSettings } from "../utils/pageSettings"
