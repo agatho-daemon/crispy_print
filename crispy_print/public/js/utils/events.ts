@@ -1,5 +1,4 @@
 // Shared event names + helpers for Crispy Print.
-// Keeps page JS and Vue components consistent and testable.
 
 export type CrispyPreviewStatus = "fetching" | "compiling" | "ready" | "error"
 

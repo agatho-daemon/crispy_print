@@ -1,0 +1,7 @@
+{
+  "name": "crispy_print",
+  "private": true,
+  "scripts": {
+	"postinstall": "cd crispy_print/public/js && yarn install --check-files"
+  }
+}

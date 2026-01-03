@@ -65,9 +65,9 @@ tar -xf typst.tar.xz
 sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
 ```
 
-#### Windows (via Scoop)
+#### Windows
 ```powershell
-scoop install typst
+winget install --id Typst.Typst
 ```
 
 Or download from [Typst Releases](https://github.com/typst/typst/releases)

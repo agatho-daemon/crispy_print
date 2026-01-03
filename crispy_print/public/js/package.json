@@ -20,7 +20,7 @@
 		"vuedraggable": "^4.1.0"
 	},
 	"dependencies": {
-		"@simonwep/pickr": "1.9.1"
+		"@simonwep/pickr": "^1.9.1"
 	},
 	"scripts": {
 		"lint": "eslint . --ext .js,.ts,.vue",
