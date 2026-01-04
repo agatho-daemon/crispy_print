@@ -48,8 +48,6 @@
 
 			<div class="preview-pane__controls">
 				<div class="preview-pane__controls-row">
-					<span id="typst-status" class="preview-status">idle</span>
-
 					<div class="preview-search">
 						<div class="preview-search__input-wrap">
 							<div class="awesomplete">
@@ -63,6 +61,8 @@
 							</div>
 						</div>
 					</div>
+
+					<span id="typst-status" class="preview-status">idle</span>
 
 					<div class="preview-pane__spacer"></div>
 
@@ -172,6 +172,8 @@ const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value)
 .preview-status {
 	font-size: 12px;
 	color: #64748b;
+	min-width: 120px;
+	white-space: nowrap;
 }
 
 .preview-pane__spacer {

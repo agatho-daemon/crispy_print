@@ -304,12 +304,15 @@ watch(
 .table-dialog__card {
 	width: 100%;
 	max-width: 768px;
+	max-height: 90vh;
 	background: #fff;
 	border-radius: 16px;
 	box-shadow:
 		0 25px 50px rgba(15, 23, 42, 0.25),
 		0 10px 20px rgba(15, 23, 42, 0.18);
 	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 .table-dialog__header {
@@ -356,6 +359,8 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+	overflow: hidden;
+	flex: 1;
 }
 
 .table-dialog__row {
@@ -378,6 +383,8 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+	overflow: auto;
+	padding-right: 4px;
 }
 
 .table-dialog__item {
@@ -512,6 +519,7 @@ watch(
 	text-align: center;
 	font-size: 14px;
 	color: #94a3b8;
+	flex-shrink: 0;
 }
 
 .table-dialog__add {
@@ -520,6 +528,9 @@ watch(
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
+	flex-shrink: 0;
+	padding-top: 8px;
+	border-top: 1px solid #e2e8f0;
 }
 
 .table-dialog__add-label {

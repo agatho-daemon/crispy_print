@@ -66,6 +66,8 @@ export function setupWorker(
 	let qrEnabled = false
 	let docNameForQr = ""
 	let qrFilename = ""
+	let skipNextInput = false
+	let autocompleteInitialized = false
 
 	function cacheKey(doctype: string, docname: string) {
 		return `${doctype}::${docname}`
@@ -292,69 +294,177 @@ export function setupWorker(
 			return
 		}
 
-		currentDoctype = doctype
-		currentDocname = null
-
-		sampleDocInput.placeholder = `Search ${doctype}...`
-		sampleDocInput.setAttribute("data-doctype", doctype)
-		sampleDocInput.value = ""
-		sampleDocData = null
-		sampleDocSelected = false
-
-		awesomplete = new Awesomplete(sampleDocInput, {
-			minChars: 0,
-			maxItems: 20,
-			autoFirst: true,
-			filter: () => true,
-		})
-
-		function searchDocs(txt: string) {
-			frappe.call({
-				method: "frappe.desk.search.search_link",
-				args: {
-					doctype,
-					txt: txt || "",
-					page_length: 20,
-				},
-				callback: (r: any) => {
-					if (r.message && r.message.length) {
-						awesomplete.list = r.message.map((d: any) => ({
-							label: d.value + (d.description ? " - " + __(d.description) : ""),
-							value: d.value,
-						}))
-					}
-				},
-			})
+		// Guard: prevent duplicate initialization for same doctype
+		if (currentDoctype === doctype && autocompleteInitialized) {
+			console.log("[Autocomplete] Already initialized for", doctype)
+			return
 		}
 
-		sampleDocInput.addEventListener("focus", () => {
-			searchDocs(sampleDocInput.value)
-		})
+		// Clean up previous Awesomplete instance
+		if (awesomplete) {
+			console.log("[Autocomplete] Destroying previous instance")
+			awesomplete.destroy()
+			awesomplete = null
+		}
 
-		sampleDocInput.addEventListener(
-			"input",
-			frappe.utils.debounce(() => {
-				sampleDocSelected = false
-				sampleDocData = null
-				searchDocs(sampleDocInput.value)
-			}, 300)
-		)
-
-		sampleDocInput.addEventListener("awesomplete-selectcomplete", () => {
-			const selectedDoc = sampleDocInput.value
-			sampleDocSelected = false
-			currentDocname = selectedDoc
-
-			if (!selectedDoc || !currentDoctype) {
-				console.warn("[Typst Preview] No document or doctype selected")
+		// Remove old event listeners by cloning the input element
+		if (autocompleteInitialized && sampleDocInput.parentNode) {
+			const newInput = sampleDocInput.cloneNode(true) as HTMLInputElement
+			sampleDocInput.parentNode.replaceChild(newInput, sampleDocInput)
+			// Update reference to the new input
+			const refreshedInput = previewPane.querySelector<HTMLInputElement>("#typst-sample-doc-input")
+			if (!refreshedInput) {
+				console.error("[Autocomplete] Failed to get refreshed input element")
 				return
 			}
+			// Update the closure reference (this is a bit tricky, but we're in the same scope)
+			// The parent function has sampleDocInput - we can't reassign it from here
+			// So we'll work with refreshedInput for the rest of this function
+			const workingInput = refreshedInput
 
-			statusEl && (statusEl.textContent = "fetching document...")
-			if (statusEl) statusEl.style.color = "#3498db"
+			currentDoctype = doctype
+			currentDocname = null
+			autocompleteInitialized = true
+			skipNextInput = false
 
-			setCurrentDoc(currentDoctype, selectedDoc, { force: true })
-		})
+			workingInput.placeholder = `Search ${doctype}...`
+			workingInput.setAttribute("data-doctype", doctype)
+			workingInput.value = ""
+			sampleDocData = null
+			sampleDocSelected = false
+
+			awesomplete = new Awesomplete(workingInput, {
+				minChars: 0,
+				maxItems: 20,
+				autoFirst: true,
+				filter: () => true,
+			})
+
+			function searchDocs(txt: string) {
+				frappe.call({
+					method: "frappe.desk.search.search_link",
+					args: {
+						doctype,
+						txt: txt || "",
+						page_length: 20,
+					},
+					callback: (r: any) => {
+						if (r.message && r.message.length) {
+							awesomplete.list = r.message.map((d: any) => ({
+								label: d.value + (d.description ? " - " + __(d.description) : ""),
+								value: d.value,
+							}))
+						}
+					},
+				})
+			}
+
+			workingInput.addEventListener("focus", () => {
+				searchDocs(workingInput.value)
+			})
+
+			workingInput.addEventListener(
+				"input",
+				frappe.utils.debounce(() => {
+					if (skipNextInput) {
+						skipNextInput = false
+						return
+					}
+					sampleDocSelected = false
+					sampleDocData = null
+					searchDocs(workingInput.value)
+				}, 300)
+			)
+
+			workingInput.addEventListener("awesomplete-selectcomplete", () => {
+				skipNextInput = true // Prevent input handler from re-triggering
+				const selectedDoc = workingInput.value
+				sampleDocSelected = false
+				currentDocname = selectedDoc
+
+				if (!selectedDoc || !currentDoctype) {
+					console.warn("[Typst Preview] No document or doctype selected")
+					return
+				}
+
+				statusEl && (statusEl.textContent = "fetching document...")
+				if (statusEl) statusEl.style.color = "#3498db"
+
+				setCurrentDoc(currentDoctype, selectedDoc, { force: true })
+			})
+		} else {
+			// First initialization
+			currentDoctype = doctype
+			currentDocname = null
+			autocompleteInitialized = true
+			skipNextInput = false
+
+			sampleDocInput.placeholder = `Search ${doctype}...`
+			sampleDocInput.setAttribute("data-doctype", doctype)
+			sampleDocInput.value = ""
+			sampleDocData = null
+			sampleDocSelected = false
+
+			awesomplete = new Awesomplete(sampleDocInput, {
+				minChars: 0,
+				maxItems: 20,
+				autoFirst: true,
+				filter: () => true,
+			})
+
+			function searchDocs(txt: string) {
+				frappe.call({
+					method: "frappe.desk.search.search_link",
+					args: {
+						doctype,
+						txt: txt || "",
+						page_length: 20,
+					},
+					callback: (r: any) => {
+						if (r.message && r.message.length) {
+							awesomplete.list = r.message.map((d: any) => ({
+								label: d.value + (d.description ? " - " + __(d.description) : ""),
+								value: d.value,
+							}))
+						}
+					},
+				})
+			}
+
+			sampleDocInput.addEventListener("focus", () => {
+				searchDocs(sampleDocInput.value)
+			})
+
+			sampleDocInput.addEventListener(
+				"input",
+				frappe.utils.debounce(() => {
+					if (skipNextInput) {
+						skipNextInput = false
+						return
+					}
+					sampleDocSelected = false
+					sampleDocData = null
+					searchDocs(sampleDocInput.value)
+				}, 300)
+			)
+
+			sampleDocInput.addEventListener("awesomplete-selectcomplete", () => {
+				skipNextInput = true // Prevent input handler from re-triggering
+				const selectedDoc = sampleDocInput.value
+				sampleDocSelected = false
+				currentDocname = selectedDoc
+
+				if (!selectedDoc || !currentDoctype) {
+					console.warn("[Typst Preview] No document or doctype selected")
+					return
+				}
+
+				statusEl && (statusEl.textContent = "fetching document...")
+				if (statusEl) statusEl.style.color = "#3498db"
+
+				setCurrentDoc(currentDoctype, selectedDoc, { force: true })
+			})
+		}
 	}
 
 	const PREVIEW_REQUEST_ID = "preview"
@@ -426,15 +536,14 @@ export function setupWorker(
 		if (doctype && docname) {
 			// crispy-print mode: render a specific document without requiring sample selection
 			setCurrentDoc(doctype, docname, { force: true })
-		} else if (doctype) {
-			setupSampleDocAutocomplete(doctype)
-		} else {
-			console.warn("[Typst Preview] No doctype found, skipping sample doc setup")
 		}
+		// Note: Don't call setupSampleDocAutocomplete here - let the watcher handle it
 
 		if (adapter.hookDoctypeChanges) {
 			unsubscribeDoctype = adapter.hookDoctypeChanges((nextDoctype) => {
 				if (nextDoctype && nextDoctype !== currentDoctype) {
+					// Reset initialization flag when doctype changes
+					autocompleteInitialized = false
 					setupSampleDocAutocomplete(nextDoctype)
 				}
 			})
@@ -608,8 +717,6 @@ export function setupWorker(
 			lines.push(options.docFooter.trim())
 			lines.push("")
 		}
-		lines.push("#set page(header: header_block, footer: footer_block)")
-		lines.push("")
 		return lines.join("\n").trim()
 	}
 
@@ -718,6 +825,11 @@ export function setupWorker(
 			// Use filtered document instead of full sampleDocData
 			if (rawTypst) {
 				const parts: string[] = []
+				parts.push(buildDocDictionary(filteredDoc, printFormatName))
+				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
+				if (headerFooterBlock) {
+					parts.push(headerFooterBlock)
+				}
 				const pageSettingsBlock = buildPageSettingsBlock({
 					pageSettings,
 					letterheadData,
@@ -728,13 +840,8 @@ export function setupWorker(
 				if (pageSettingsBlock) {
 					parts.push(pageSettingsBlock)
 				}
-				parts.push(buildDocDictionary(filteredDoc, printFormatName))
 				if (typstPreamble && typstPreamble.trim()) {
 					parts.push(typstPreamble.trim())
-				}
-				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
-				if (headerFooterBlock) {
-					parts.push(headerFooterBlock)
 				}
 				if (typstCode && typstCode.trim()) {
 					parts.push(typstCode.trim())
