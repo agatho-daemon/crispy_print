@@ -63,4 +63,43 @@ describe("Typst edge cases", () => {
 		)
 		expect(typst).toContain("#pagebreak()")
 	})
+
+	it("escapes special characters in labels", () => {
+		const typst = translateJSONToTypst(
+			{
+				sections: [
+					{
+						label: "Section [A]",
+						columns: [
+							{
+								label: "",
+								fields: [
+									{
+										fieldname: "title",
+										fieldtype: "Data",
+										label: "Consider Tax or Charge for [X]",
+									},
+									{
+										fieldname: "items",
+										fieldtype: "Table",
+										label: "Items",
+										table_columns: [
+											{ fieldname: "col_a", label: "Add or Deduct [Y]", fieldtype: "Data" },
+										],
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			null,
+			"Document",
+			{ name: "DOC-1", title: "Doc", items: [{ col_a: "A" }] },
+			{}
+		)
+		expect(typst).toContain("Section \\[A\\]")
+		expect(typst).toContain("Consider Tax or Charge for \\[X\\]")
+		expect(typst).toContain("Add or Deduct \\[Y\\]")
+	})
 })

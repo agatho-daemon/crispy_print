@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "prompt",
- "creation": "2025-11-19 06:14:30.149322",
+ "creation": "2026-01-02 09:27:21.834714",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -132,6 +132,7 @@
    "mandatory_depends_on": "eval:doc.raw_typst == 1"
   },
   {
+   "default": "#let footer_block = align(right + horizon)[\n  #set text(lang: \"ar\",size: 8pt)\n  #context counter(page).display(\"1 of 1\", both: true)\n]",
    "description": "See Typst Help below for examples and usage.",
    "fieldname": "doc_footer",
    "fieldtype": "Code",
@@ -159,7 +160,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-02 08:54:09.054536",
+ "modified": "2026-01-04 07:49:51.961867",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",

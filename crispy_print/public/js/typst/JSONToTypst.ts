@@ -118,6 +118,15 @@ class JSONTypstTranslator {
 		return parts.join("\n\n")
 	}
 
+	escapeTypstText(value: string) {
+		return String(value || "")
+			.replace(/\\/g, "\\\\")
+			.replace(/\[/g, "\\[")
+			.replace(/\]/g, "\\]")
+			.replace(/#/g, "\\#")
+			.replace(/\*/g, "\\*")
+	}
+
 	// Convert font weight name to numeric value for Typst
 	fontWeightToNumber(weight: string): number {
 		const weightMap: Record<string, number> = {
@@ -143,48 +152,7 @@ class JSONTypstTranslator {
 			"// ✏️ Document formatting, branding, and styling",
 			"// ========================================",
 			"",
-			"// Page setup",
 		]
-
-		// Get page settings from options
-		const pageSize = this.options.pageSize || "A4"
-		const orientation = this.options.orientation || "portrait"
-
-		// Use margins from options or fall back to pageMargins
-		const margins = this.options.margins
-			? this.resolveMargins(this.options.margins)
-			: this.resolveMargins(this.options.pageMargins)
-
-		const brandingMode = resolveBrandingMode(this.options, this.letterhead)
-		const letterheadFilename = getLetterheadFilename(this.options, this.letterhead)
-
-		if (brandingMode === "letterhead" && letterheadFilename) {
-			if ((this.letterhead as any).letter_head_name) {
-				lines.push(`// Letterhead: ${(this.letterhead as any).letter_head_name}`)
-			}
-			lines.push("#set page(")
-			lines.push(`  paper: "${pageSize.toLowerCase()}",`)
-			if (orientation === "landscape") {
-				lines.push("  flipped: true,")
-			}
-			lines.push(
-				`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right}),`
-			)
-			lines.push(`  background: image("${letterheadFilename}", width: 100%)`)
-			lines.push(")")
-		} else {
-			lines.push("#set page(")
-			lines.push(`  paper: "${pageSize.toLowerCase()}",`)
-			if (orientation === "landscape") {
-				lines.push("  flipped: true,")
-			}
-			lines.push(
-				`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right})`
-			)
-			lines.push(")")
-		}
-
-		lines.push("")
 
 		// Typography styles for labels and values
 		const typography = this.options.typography || {}
@@ -269,6 +237,57 @@ class JSONTypstTranslator {
 			left: asMm(values.left, defaults.left),
 			right: asMm(values.right, defaults.right),
 		}
+	}
+
+	buildPageSetupBlock() {
+		const lines: string[] = []
+		const pageSize = this.options.pageSize || "A4"
+		const orientation = this.options.orientation || "portrait"
+		const margins = this.options.margins
+			? this.resolveMargins(this.options.margins)
+			: this.resolveMargins(this.options.pageMargins)
+
+		const brandingMode = resolveBrandingMode(this.options, this.letterhead)
+		const letterheadFilename = getLetterheadFilename(this.options, this.letterhead)
+		const qrEnabled = Boolean(this.options.qrEnabled)
+		const qrFilename = (this.options.qrFilename as string | undefined) || ""
+		const qrSettings = (this.options.qrSettings as Record<string, any> | undefined) || {}
+		const foregroundLines = buildForegroundPlacements({
+			pageSettings: this.options,
+			brandingMode,
+			qrEnabled,
+			qrFilename,
+			qrSettings,
+		})
+
+		lines.push("// Page setup")
+		lines.push("#set page(")
+		lines.push(`  paper: "${pageSize.toLowerCase()}",`)
+		if (orientation === "landscape") {
+			lines.push("  flipped: true,")
+		}
+		lines.push(
+			`  margin: (top: ${margins.top}, bottom: ${margins.bottom}, left: ${margins.left}, right: ${margins.right}),`
+		)
+		lines.push("  header: header_block,")
+		lines.push("  footer: footer_block,")
+		if (brandingMode === "letterhead" && letterheadFilename) {
+			if ((this.letterhead as any).letter_head_name) {
+				lines.push(`  // Letterhead: ${(this.letterhead as any).letter_head_name}`)
+			}
+			lines.push(`  background: image("${letterheadFilename}", width: 100%),`)
+		}
+		if (foregroundLines.length) {
+			lines.push("  foreground: [")
+			foregroundLines.forEach((line) => {
+				lines.push(`    ${line}`)
+			})
+			lines.push("  ],")
+		}
+		lines.push(")")
+		lines.push("")
+
+		return lines.join("\n")
 	}
 
 	generateAutoSection() {
@@ -382,9 +401,6 @@ class JSONTypstTranslator {
 		}
 
 		const docFooter = (this.options.docFooter as string | undefined) || ""
-		const qrEnabled = Boolean(this.options.qrEnabled)
-		const qrFilename = (this.options.qrFilename as string | undefined) || ""
-
 		const docHeader = (this.options.docHeader as string | undefined) || ""
 		if (docHeader && docHeader.trim()) {
 			lines.push("// Document Header")
@@ -398,27 +414,7 @@ class JSONTypstTranslator {
 			lines.push("")
 		}
 
-		lines.push("#set page(header: header_block, footer: footer_block)")
-		lines.push("")
-
-		const brandingMode = resolveBrandingMode(this.options, this.letterhead)
-		const qrSettings = (this.options.qrSettings as Record<string, any> | undefined) || {}
-		const foregroundLines = buildForegroundPlacements({
-			pageSettings: this.options,
-			brandingMode,
-			qrEnabled,
-			qrFilename,
-			qrSettings,
-		})
-		if (foregroundLines.length) {
-			lines.push("// Foreground placements (logo / QR)")
-			lines.push("#set page(foreground: [")
-			foregroundLines.forEach((line) => {
-				lines.push(`  ${line}`)
-			})
-			lines.push("])")
-			lines.push("")
-		}
+		lines.push(this.buildPageSetupBlock())
 
 		this.sections?.forEach((section, idx) => {
 			lines.push(this.translateSection(section, idx))
@@ -435,6 +431,7 @@ class JSONTypstTranslator {
 	translateSection(section: LayoutSection, index: number) {
 		const lines: string[] = []
 		const label = section.label || `Section ${index + 1}`
+		const safeLabel = this.escapeTypstText(label)
 
 		if (section.page_break && index > 0) {
 			lines.push("#pagebreak()")
@@ -455,7 +452,7 @@ class JSONTypstTranslator {
 		}
 
 		if (section.label) {
-			lines.push(`#block(spacing: 0.6em)[#text(..sectionLabelStyle)[${section.label}]]`)
+			lines.push(`#block(spacing: 0.6em)[#text(..sectionLabelStyle)[${safeLabel}]]`)
 			lines.push("")
 		}
 
@@ -493,13 +490,17 @@ class JSONTypstTranslator {
 
 		const fieldtype = field.fieldtype || "Data"
 		const fieldname = field.fieldname || "unknown"
-		const label = (field.label ?? "").trim()
+		const label = this.escapeTypstText((field.label ?? "").trim())
 
 		switch (fieldtype) {
 			case "Section Break":
 				return `// Section Break: ${label || fieldname}`
 			case "Column Break":
 				return `// Column Break`
+			case "Typst": {
+				const code = String((field as any).typst_code || "").trim()
+				return code ? code : `// Custom Typst (empty)`
+			}
 			case "Custom HTML":
 				if ((field as any).html || field.options) {
 					return this.convertHTMLToTypst((field as any).html || field.options || "")
@@ -532,10 +533,10 @@ class JSONTypstTranslator {
 				// Label always left-aligned, value respects field alignment
 				if (align === "left") {
 					// Both left-aligned - simple format
-					return `#text(..fieldLabelStyle)[${label}]#linebreak()#text(..fieldValueStyle)[#doc.${fieldname}]#parbreak()`
+				return `#text(..fieldLabelStyle)[${label}]#linebreak()#text(..fieldValueStyle)[#doc.${fieldname}]#parbreak()`
 				}
 				// Label left, value aligned separately
-				return `#text(..fieldLabelStyle)[${label}]#linebreak()#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]#parbreak()`
+			return `#text(..fieldLabelStyle)[${label}]#linebreak()#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]#parbreak()`
 		}
 	}
 
@@ -549,6 +550,7 @@ class JSONTypstTranslator {
 		const lines: string[] = []
 		const fieldname = field.fieldname || "items"
 		const label = field.label || "Table"
+		const safeLabel = this.escapeTypstText(label)
 
 		lines.push(`// Table: ${label}`)
 
@@ -571,7 +573,9 @@ class JSONTypstTranslator {
 			})
 			lines.push(`    align: (${alignments.join(", ")}),`)
 
-			const headerCells = columns.map((col) => `[*${col.label}*]`).join(", ")
+			const headerCells = columns
+				.map((col) => `[*${this.escapeTypstText(col.label || "")}*]`)
+				.join(", ")
 			lines.push(`    ${headerCells},`)
 
 			// Row data - map each row to all its column values and flatten
