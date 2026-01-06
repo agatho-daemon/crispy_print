@@ -100,7 +100,9 @@ All Python dependencies are managed via `pyproject.toml` and installed automatic
    - Go to **Crispy Format** list
    - Click **New**
    - Select **DocType** (e.g., Sales Invoice)
-   - Click **Open Builder**
+   - Click **Set as Default** (optional)
+      > ⚠️ **important**: You must set at least one format as default. The `typst` print button appears on the _document form_ only when a default format exists. 
+   - Click **Edit Format**
    - Drag fields onto the layout
    - **Save** and test with a document!
 
@@ -530,7 +532,7 @@ def get_typst_local_fonts() -> list[str]
 **Example:**
 ```python
 fonts = frappe.call('crispy_print.api.get_typst_local_fonts')
-# ['Inter', 'Roboto', 'Liberation Sans', ...]
+# ['EB Garamon', 'Roboto', 'Liberation Sans', ...]
 ```
 
 ---
