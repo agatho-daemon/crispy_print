@@ -4,7 +4,7 @@ import { nextTick, reactive, ref } from "vue"
 import SettingsPane from "../../components/SettingsPane.vue"
 
 vi.mock("../../api/crispy", () => ({
-	getTypstLocalFonts: vi.fn(async () => ["Inter", "Serif"]),
+	getTypstLocalFonts: vi.fn(async () => ["Inter 18pt", "Serif"]),
 }))
 
 vi.mock("../../composables/useBrandingData", () => ({

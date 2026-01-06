@@ -118,7 +118,6 @@
    "label": "Default"
   },
   {
-   "default": "#grid(\n  columns: (1fr, 1fr),\n  align: (left, right),\n  [#text(font: \"Inter 18pt\", size: 14pt, weight: 800)[#doc.doctype]],\n  [#text(font: \"Veneer Two\", size: 18pt, red)[#doc.name]],\n)\n#align(center)[#line(\n  length: 100%,\n  stroke: 0.5pt + rgb(\"#00519B\"),\n)]\n#v(-1.0em)",
    "description": "See Typst Help below for examples and usage.",
    "fieldname": "doc_header",
    "fieldtype": "Code",
@@ -132,7 +131,7 @@
    "mandatory_depends_on": "eval:doc.raw_typst == 1"
   },
   {
-   "default": "#let footer_block = align(right + horizon)[\n  #set text(lang: \"ar\",size: 8pt)\n  #context counter(page).display(\"1 of 1\", both: true)\n]",
+   "default": "#let footer_block = align(right + horizon)[\n  #set text(size: 8pt)\n  #context counter(page).display(\"1 of 1\", both: true)\n]",
    "description": "See Typst Help below for examples and usage.",
    "fieldname": "doc_footer",
    "fieldtype": "Code",
@@ -160,7 +159,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-04 07:49:51.961867",
+ "modified": "2026-01-06 05:44:12.299251",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",

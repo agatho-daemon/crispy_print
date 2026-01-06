@@ -157,21 +157,21 @@ class JSONTypstTranslator {
 		// Typography styles for labels and values
 		const typography = this.options.typography || {}
 		const fieldLabel = typography.fieldLabel || {
-			fontFamily: "Inter",
+			fontFamily: "Inter 18pt",
 			fontSize: "8pt",
 			fontStyle: "normal",
 			fontWeight: "semibold",
 			color: "#64748b",
 		}
 		const fieldValue = typography.fieldValue || {
-			fontFamily: "Inter",
+			fontFamily: "Inter 18pt",
 			fontSize: "10pt",
 			fontStyle: "normal",
 			fontWeight: "regular",
 			color: "#0f172a",
 		}
 		const sectionLabel = typography.sectionLabel || {
-			fontFamily: "Inter",
+			fontFamily: "Inter 18pt",
 			fontSize: "14pt",
 			fontStyle: "normal",
 			fontWeight: "bold",

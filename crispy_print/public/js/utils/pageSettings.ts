@@ -31,21 +31,21 @@ export interface LogoSettings {
 
 export const defaultTypography: TypographySettings = {
 	fieldLabel: {
-		fontFamily: "Inter",
+		fontFamily: "Inter 18pt",
 		fontSize: "8pt",
 		fontStyle: "normal",
 		fontWeight: "semibold",
 		color: "#64748b",
 	},
 	fieldValue: {
-		fontFamily: "Inter",
+		fontFamily: "Inter 18pt",
 		fontSize: "10pt",
 		fontStyle: "normal",
 		fontWeight: "regular",
 		color: "#0f172a",
 	},
 	sectionLabel: {
-		fontFamily: "Inter",
+		fontFamily: "Inter 18pt",
 		fontSize: "14pt",
 		fontStyle: "normal",
 		fontWeight: "bold",
