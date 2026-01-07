@@ -369,7 +369,13 @@ function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
 	if (!target) return
 
 	const rect = target.getBoundingClientRect()
-	const top = rect.bottom + 6
+	const menuHeight = 280 // Approximate menu height
+	const viewportHeight = window.innerHeight
+
+	// Check if menu would overflow bottom of viewport
+	const shouldFlipUp = rect.bottom + menuHeight + 6 > viewportHeight
+
+	const top = shouldFlipUp ? rect.top - menuHeight - 6 : rect.bottom + 6
 	const left = rect.right
 
 	sectionMenuStyle.value = {

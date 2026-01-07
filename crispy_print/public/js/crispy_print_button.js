@@ -7,7 +7,6 @@
 		freeze: false,
 		callback: (r) => {
 			const doctypes = r.message || []
-			console.log("[CrispyPrint] Registering buttons for doctypes:", doctypes)
 			if (doctypes.length > 0) {
 				ns.registerButtonsFor(doctypes)
 			}
