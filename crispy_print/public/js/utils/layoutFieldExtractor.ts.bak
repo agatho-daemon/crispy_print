@@ -64,8 +64,8 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
 		}
 
 		// Custom Typst field - extract field references from Typst code
-		if (field.fieldtype === "Typst" && field.raw_typst_field) {
-			const typstCode = String(field.raw_typst_field)
+		if (field.fieldtype === "Typst" && (field as any).typst_code) {
+			const typstCode = String((field as any).typst_code)
 			const extractedFields = extractUsedFieldsFromTypstSource(typstCode)
 			extractedFields.forEach((fieldname) => usedFields.add(fieldname))
 		}
