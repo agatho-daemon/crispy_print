@@ -314,8 +314,7 @@ class JSONTypstTranslator {
 							})
 						} else if (
 							field.fieldtype !== "Section Break" &&
-							field.fieldtype !== "Column Break" &&
-							field.fieldtype !== "Custom HTML"
+							field.fieldtype !== "Column Break"
 						) {
 							allFields.push(field.fieldname)
 						}
@@ -501,11 +500,6 @@ class JSONTypstTranslator {
 				const code = String(field.raw_typst_field || "").trim()
 				return code ? code : `// Custom Typst (empty)`
 			}
-			case "Custom HTML":
-				if ((field as any).html || field.options) {
-					return this.convertHTMLToTypst((field as any).html || field.options || "")
-				}
-				return `// Custom HTML (empty)`
 			case "Table":
 				return this.translateTable(field)
 			case "HTML":
@@ -589,25 +583,6 @@ class JSONTypstTranslator {
 		}
 
 		return lines.join("\n")
-	}
-	convertHTMLToTypst(html: string) {
-		if (!html || !html.trim()) return "// (empty HTML)"
-		let typst = html
-			.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "= $1")
-			.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "== $1")
-			.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "=== $1")
-			.replace(/<strong[^>]*>(.*?)<\/strong>/gi, "*$1*")
-			.replace(/<b[^>]*>(.*?)<\/b>/gi, "*$1*")
-			.replace(/<em[^>]*>(.*?)<\/em>/gi, "_$1_")
-			.replace(/<i[^>]*>(.*?)<\/i>/gi, "_$1_")
-			.replace(/<br\s*\/?>/gi, " \\\n")
-			.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n\n")
-			.replace(/<div[^>]*>(.*?)<\/div>/gi, "$1\n")
-			.replace(/<[^>]+>/g, "")
-
-		typst = typst.replace(/\{\{\s*doc\.(\w+)\s*\}\}/g, "#doc.$1").replace(/\{%.*?%\}/g, "")
-
-		return typst.trim()
 	}
 }
 

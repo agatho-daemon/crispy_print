@@ -9,25 +9,27 @@ Modern print format designer for Frappe using the [Typst](https://typst.app/) ty
 
 ## Project Status
 
-**Alpha / Work in progress.** Expect frequent changes and console logging while features are still settling.
+**Alpha / Work in progress.** Expect frequent changes while features are still settling.
 
 > **Why Typst instead of HTML/CSS?** Typst provides superior PDF typography, precise layout control, and professional typesetting features that are difficult to achieve with browser-based rendering. Perfect for invoices, reports, certificates, and other print-critical documents.
 
 ## Table of Contents
 
 - [Features](#features)
-- [Quick Start](#quick-start)
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [Quick Start](#quick-start)
 - [Usage](#usage)
 - [Font Configuration](#font-configuration)
 - [Architecture](#architecture)
 - [Development](#development)
 - [API Reference](#api-reference)
 - [Known Limitations](#known-limitations)
+- [Roadmap](#roadmap)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Testing](#testing)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Features
@@ -37,38 +39,31 @@ Modern print format designer for Frappe using the [Typst](https://typst.app/) ty
 - **Native PDF Generation** - High-quality PDFs via Typst CLI (no browser printing)
 - **DocType Integration** - Create custom formats for any Frappe DocType
 - **Letterhead Support** - Use Letter Head documents with automatic image handling
+- **Logo Support** - Add company logo to page.
 - **Custom Fonts** - Support for system fonts, custom fonts, and bundled fonts
 - **Print Preview Page** - Dedicated preview page for testing formats with actual documents
 - **QR Code Integration** - Automatic QR code generation for documents
 - **Raw Typst Mode** - Advanced users can write Typst markup directly
 
-### Crispy Requirements
+## Requirements
 
-- **CPU:** 2+ cores recommended
-- **RAM:** 2GB minimum, 4GB+ recommended
-- **Disk:** 500MB for app + fonts
-- **OS:** Linux, macOS, or Windows (via WSL)
+### Typst CLI (Required)
 
-### System Dependencies
-
-**Typst CLI** (required) - Must be installed on your system.
+**Typst must be installed on your system before installing the app.**
 
 #### macOS (Homebrew)
 ```bash
 brew install typst
 ```
 
-#### Ubuntu/Debian Linux
+#### Linux (Ubuntu/Debian) & Windows WSL
 ```bash
 curl -L -o typst.tar.xz https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
 tar -xf typst.tar.xz
 sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
 ```
 
-#### Windows
-```powershell
-winget install --id Typst.Typst
-```
+> **Windows users:** Frappe requires WSL. Install Typst inside your WSL environment using the Linux commands above.
 
 Or download from [Typst Releases](https://github.com/typst/typst/releases)
 
@@ -78,94 +73,32 @@ typst --version
 # Should output: typst 0.11.0 or higher
 ```
 
-### Python Dependencies
+### Frappe Compatibility
 
-- **Frappe:** v15 or later (required)
-- **Python:** 3.10+ (required)
-- **Node.js:** 18+ (for development only)
-- **Yarn:** Latest (for development only)
-
-All Python dependencies are managed via `pyproject.toml` and installed automatically
-   ```
-
-2. **Install the app**
-   ```bash
-   cd ~/frappe-bench
-   bench get-app https://github.com/agatho-daemon/crispy_print --branch develop
-   bench --site your-site install-app crispy_print
-   bench restart
-   ```
-
-3. **Create your first format**
-   - Go to **Crispy Format** list
-   - Click **New**
-   - Select **DocType** (e.g., Sales Invoice)
-   - Click **Set as Default** (optional)
-      > ⚠️ **important**: You must set at least one format as default. The `typst` print button appears on the _document form_ only when a default format exists. 
-   - Click **Edit Format**
-   - Drag fields onto the layout
-   - **Save** and test with a document!
-
-## Requirements
-
-### System Dependencies
-
-**Typst CLI** must be installed on your system.
-
-#### macOS (Homebrew)
-```bash
-brew install typst
-```
-
-#### Ubuntu
-```bash
-curl -L -o typst.tar.xz https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz
-tar -xf typst.tar.xz
-sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
-```
-
-#### Verify Installation
-```bash
-typst --version
-```
-
-### Python Dependencies
-
-This app requires Frappe v15 or later. All Python dependencies are managed via `pyproject.toml`.
+- **Frappe:** v15 or later (all Python/Node.js dependencies already satisfied)
 
 ## Installation
 
-### 1. Install Typst CLI First
+### 1. Install Typst CLI
 
-See [System Dependencies](#system-dependencies) above.
+See [Requirements](#requirements) above - Typst must be installed first.
 
-### 2. Install the App
-
-Using the [bench](https://github.com/frappe/bench) CLI:
+### 2. Get and Install the App
 
 ```bash
-cd ~/frappe-bench  # Or your bench path
+cd ~/frappe-bench
 bench get-app https://github.com/agatho-daemon/crispy_print --branch develop
 bench --site your-site install-app crispy_print
-```
-
-### 3. Restart Bench
-
-```bash
 bench restart
 ```
 
-### 4. Verify Installation
-
-Check that the app is installed:
+### 3. Verify Installation
 
 ```bash
-bench --site your-site list-apps
-# Should show: crispy_print
-```
+# Check app is installed
+bench --site your-site list-apps | grep crispy_print
 
-Test Typst integration:
-```bash
+# Test Typst integration
 bench --site your-site console
 ```
 ```python
@@ -174,7 +107,7 @@ bench --site your-site console
 >>> print(len(fonts), "fonts available")
 ```
 
-### 5. Build Assets (Development)
+### 4. Build Assets (Development Only)
 
 If you're developing the app:
 
@@ -183,6 +116,62 @@ cd apps/crispy_print/crispy_print/public/js
 yarn install
 cd ~/frappe-bench
 bench build --app crispy_print
+```
+
+## Quick Start
+
+### Creating Your First Print Format
+
+> ⚠️ **CRITICAL:** You must set at least one format as **Default** for a DocType. The Typst print button appears on document forms **only when a default format exists** for that DocType.
+
+**Step-by-step:**
+
+1. **Create a new format**
+   - Navigate to: **Desk** → **Crispy Print** → **Crispy Format**
+   - Click **New**
+   - Enter **Name** (e.g., "Sales Invoice Modern")
+   - Select **DocType** (e.g., "Sales Invoice")
+   - Select **Module** (e.g., "Crispy Print")
+   - **Save**
+
+2. **Set as default** ⚠️ **(Required for button to appear!)**
+   - Check the **"Set as Default"** checkbox
+   - **Save** again
+
+3. **Design your layout**
+   - Click **Open Builder** button
+   - **Add sections:** Click "+ Add Section"
+   - **Drag fields:** From right pane to layout grid
+   - **Configure fields:** Click field to edit label, style, alignment
+   - **Add tables:** Drag table fields (e.g., "items") for line items
+   - **Adjust columns:** Split sections into 1-4 columns
+
+4. **Configure page settings** (left sidebar)
+   - **Paper Size:** A4, Letter, etc.
+   - **Margins:** Adjust spacing
+   - **Fonts:** Select font family
+   - **Letterhead:** Optional background image
+   - **QR Code:** Enable for verification
+
+5. **Save and test**
+   - Click **Save**
+   - Open any document of that DocType (e.g., Sales Invoice)
+   - Look for **Typst** button in toolbar (top-right)
+   - Click to preview and download PDF
+
+### Using Your Print Format
+
+Once a default format exists, the **Typst** button appears automatically on all documents of that DocType.
+
+**From Document:**
+1. Open document (e.g., SI-2024-001)
+2. Click **Typst** button in toolbar
+3. Preview opens with your default format
+4. Click **Download PDF**
+
+**Direct URL:**
+```
+/app/crispy-print/{doctype}/{docname}/{format_name}
 ```
 
 ## Font Configuration
@@ -409,85 +398,20 @@ page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25)"
 
 ## Usage
 
-### Creating Your First Print Format
+### Print Format Workflow
 
-**Step-by-step guide:**
+The typical workflow for using Crispy Print:
 
-1. **Navigate to Crispy Format List**
-   - Click **Desk** → **Crispy Print** → **Crispy Format**
-   - Or search "Crispy Format" in Awesomebar
+1. **Create format** → Design in builder → Save
+2. **Set as default** → To enable Typst button for DocType
+3. **Open document** → Click `typst` button → Download PDF
 
-2. **Create New Format**
-   - Click **New**
-   - Enter a **Name** (e.g., "Sales Invoice Modern")
-   - Select **DocType** (e.g., "Sales Invoice")
-   - Select **Module** (e.g., "Crispy Print")
+### Advanced: Creating Formats Without Default
 
-3. **Open the Builder**
-   - Click **Open Builder** button
-   - Visual editor opens in new page
+You can create multiple formats for the same DocType without setting them as default:
 
-4. **Design Your Layout**
-   - **Add Sections:** Click "+ Add Section" 
-   - **Drag Fields:** From right pane to layout
-   - **Configure Fields:** Click field to edit label, style, alignment
-   - **Add Tables:** Drag table fields for line items
-   - **Adjust Columns:** Split sections into 1-4 columns
-
-5. **Configure Page Settings** (left sidebar)
-   - **Paper Size:** A4, A3, Letter, etc.
-   - **Margins:** Top, bottom, left, right
-   - **Fonts:** Select font family and sizes
-   - **Letterhead:** Choose from Letter Head documents
-   - **QR Code:** Enable and configure placement
-
-6. **Preview**
-   - Changes update in real-time (SVG preview)
-   - Switch to **Typst Code** tab to see generated markup
-
-7. **Save Format**
-   - Click **Save** button
-   - Optionally set as **Default** for the DocType
-
-### Using a Print Format
-
-**Method 1: From Document**
-
-1. Open any document (e.g., Sales Invoice SI-2024-001)
-2. Look for **Typst** button in toolbar (top-right area)
-3. Click to open print preview
-4. Select your format from dropdown
-5. Click **Download PDF**
-
-**Method 2: Direct Preview Page**
-
-Navigate to:
-```
-/app/crispy-print/{doctype}/{docname}/{format_name}
-```
-
-Example:
-```
-/app/crispy-print/Sales%20Invoice/SI-2024-001/Sales%20Invoice%20Modern
-```
-
-**Method 3: API Call**
-
-```python
-import frappe
-
-# Get formatted document data
-doc_data = frappe.call('crispy_print.api.get_formatted_doc', 
-    doctype='Sales Invoice', 
-    name='SI-2024-001')
-
-# Compile to PDF
-result = frappe.call('crispy_print.api.compile_typst',
-    typst_source=your_typst_markup,
-    output_format='pdf')
-
-pdf_bytes = base64.b64decode(result['pdf_data'])
-```
+- Access via direct URL: `/app/crispy-print/{doctype}/{docname}/{format_name}`
+- Or programmatically via API (see [API Reference](#api-reference))
 
 ### Common Layout Recipes
 
@@ -681,7 +605,7 @@ As an **alpha release**, Crispy Print has several known limitations:
 ### System & Dependencies
 
 - **Typst CLI Required**: Must be installed separately; app won't work without it
-- **Frappe v15+ Only**: Not compatible with older Frappe versions
+- **Frappe v15+ Only**: Not  tested for compatibility with older Frappe versions
 - **Server-Side Rendering**: All PDF compilation happens on the server (no client-side rendering)
 - **Font Discovery**: Depends on system font configuration and `TYPST_FONT_PATHS` environment variable
 
@@ -691,7 +615,6 @@ As an **alpha release**, Crispy Print has several known limitations:
 - **Limited Field Types**: Currently supports basic fields; complex custom fields may not render correctly
 - **Fixed Grid System**: 4-column layout structure cannot be customized
 - **No Conditional Visibility**: Cannot hide/show elements based on document conditions
-- **Single-Page Builder**: Multi-page layouts must be designed with manual page breaks
 
 ### Typst Integration
 
@@ -699,26 +622,25 @@ As an **alpha release**, Crispy Print has several known limitations:
   - Requires knowledge of Typst syntax
   - No visual preview while editing raw code
   - Syntax errors not caught until compilation
+  - 🔄 **Tip:** Use the **Refresh** button in the preview pane to recompile after editing raw Typst code
 - **QR Code Format**: Only SVG format supported (no PNG/bitmap QR codes)
-- **HTML to Typst**: Limited conversion of complex HTML in Text Editor fields (basic tags only)
 - **Table Styling**: Limited compared to full Typst table capabilities
 
-### Print Output
+### PDF Generation
 
-- **Browser PDF Preview**: Uses SVG rendering in browser, not native PDF viewer
-- **Large Documents**: Documents with 500+ table rows may experience slow compilation
+- **Browser Preview**: SVG rendering in browser preview (actual PDF downloads are native Typst output)
 - **Image Formats**: Letterhead images must be in formats supported by Typst (PNG, JPEG, SVG)
 - **No Real-Time Collaboration**: Multiple users cannot edit the same format simultaneously
+- **Text Editor / HTML Fields**: Content is converted to plain text (HTML stripped) before rendering
 
 ### Letterhead & Branding
 
 - **No Built-in Letterhead Editor**: Must use existing Frappe Letter Head documents
-- **Single Letterhead per Format**: Cannot switch letterheads dynamically per document
 - **Fixed Branding Position**: Logo and QR code placements use absolute positioning
 
 ### Data & Compatibility
 
-- **No Multi-Language Support**: Print formats are single-language only
+- **LTR Languages Only**: Builder UI and text direction currently support left-to-right languages only (English, Spanish, French, etc.). RTL support (Arabic, Hebrew) not yet implemented. Multi-language content is possible via Raw Typst Mode if document fields contain the target language data.
 - **No Jinja Support**: Completely different from standard Frappe Print Formats - uses JSON layouts instead of Jinja templates
 - **No Python Scripts**: Cannot execute custom Python code like standard Print Formats
 - **Export Only**: Formats cannot be imported/exported between sites (yet)
@@ -792,25 +714,14 @@ If Typst button doesn't show or format isn't available:
 
 Solution: Install Typst CLI (see [Requirements](#requirements))
 
-*# Credits
-
-Built with the assistance of various AI tools. Special thanks to:
-- [Typst](https://typst.app/) - Modern typesetting system
-- [Frappe Framework](https://frappeframework.com/) - Full-stack web framework
-- [Vue 3](https://vuejs.org/) - Progressive JavaScript framework
-
----
-
-**Star this repo if you find it useful!** ⭐*"Compilation timed out"**
+**"Compilation timed out"**
 
 Causes:
-- Document too complex (500+ table rows)
 - Server under heavy load
 - Infinite loop in raw Typst code
 
 Solutions:
 - Simplify layout
-- Paginate large tables
 - Check raw Typst syntax
 
 **"Letterhead image not found"**
@@ -899,10 +810,11 @@ pre-commit install
 
 ## CI/CD
 
-GitHub Actions workflows:
-- **CI** - Runs 90 unit tests on `develop` branch
-- **Linters** - Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on PRs
-- **Test Coverage** - ~75% estimated coverage across codebase
+This project has pre-configured GitHub Actions workflows (currently disabled):
+- **CI** - Would run 90 unit tests on `develop` branch
+- **Linters** - Would run [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on PRs
+
+**Currently:** Tests are run manually by developers using `yarn test:unit` (frontend) and `bench run-tests` (backend).
 
 If PDF generation takes more than 5 seconds:
 
@@ -945,4 +857,15 @@ GitHub Actions workflows:
 
 MIT
 
-#
+## Credits
+
+Built with the assistance of various AI tools. Special thanks to:
+
+[![Typst](https://img.shields.io/badge/Typst-239DAD?style=for-the-badge&logo=typst&logoColor=white)](https://typst.app/)
+[![Frappe](https://img.shields.io/badge/Frappe-0089FF?style=for-the-badge&logo=frappe&logoColor=white)](https://frappeframework.com/)
+[![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+
+---
+
+**Star this repo if you find it useful!** ⭐
+
