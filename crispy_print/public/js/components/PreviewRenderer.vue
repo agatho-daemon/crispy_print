@@ -146,7 +146,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-	console.log("[PreviewRenderer] Component unmounting - cleaning up")
 	if (teardown) teardown()
 	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus)
 })

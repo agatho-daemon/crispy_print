@@ -71,8 +71,6 @@ export function setupWorker(
 
 	// Cleanup function exported for external use (e.g., component unmount)
 	function cleanupAutocomplete() {
-		console.log("[Autocomplete] Cleaning up autocomplete instance")
-
 		if (awesomplete) {
 			awesomplete.destroy()
 			awesomplete = null
@@ -378,13 +376,11 @@ export function setupWorker(
 
 		// Guard: prevent duplicate initialization for same doctype
 		if (currentDoctype === doctype && autocompleteInitialized) {
-			console.log("[Autocomplete] Already initialized for", doctype)
 			return
 		}
 
 		// Clean up previous Awesomplete instance
 		if (awesomplete) {
-			console.log("[Autocomplete] Destroying previous instance")
 			awesomplete.destroy()
 			awesomplete = null
 		}
