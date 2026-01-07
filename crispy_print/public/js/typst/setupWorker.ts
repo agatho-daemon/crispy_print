@@ -69,6 +69,23 @@ export function setupWorker(
 	let skipNextInput = false
 	let autocompleteInitialized = false
 
+	// Cleanup function exported for external use (e.g., component unmount)
+	function cleanupAutocomplete() {
+		console.log("[Autocomplete] Cleaning up autocomplete instance")
+
+		if (awesomplete) {
+			awesomplete.destroy()
+			awesomplete = null
+		}
+
+		currentDoctype = null
+		autocompleteInitialized = false
+		skipNextInput = false
+		sampleDocSelected = false
+		sampleDocData = null
+		currentDocname = null
+	}
+
 	function cacheKey(doctype: string, docname: string) {
 		return `${doctype}::${docname}`
 	}
@@ -541,10 +558,16 @@ export function setupWorker(
 
 		if (adapter.hookDoctypeChanges) {
 			unsubscribeDoctype = adapter.hookDoctypeChanges((nextDoctype) => {
-				if (nextDoctype && nextDoctype !== currentDoctype) {
-					// Reset initialization flag when doctype changes
-					autocompleteInitialized = false
-					setupSampleDocAutocomplete(nextDoctype)
+				if (nextDoctype) {
+					if (nextDoctype !== currentDoctype) {
+						console.log(`[Worker] DocType changed: ${currentDoctype} → ${nextDoctype}`)
+						// Reset and reinitialize for new doctype
+						autocompleteInitialized = false
+						setupSampleDocAutocomplete(nextDoctype)
+					} else {
+						// Same doctype, ensure it's initialized (handles page navigation back)
+						setupSampleDocAutocomplete(nextDoctype)
+					}
 				}
 			})
 		}
@@ -1190,6 +1213,10 @@ export function setupWorker(
 		window.removeEventListener(CrispyPreviewEvents.Refresh, handleRefresh)
 		window.removeEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
 		window.removeEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
+
+		// Cleanup autocomplete
+		cleanupAutocomplete()
+
 		if (worker) {
 			cleanup()
 		}
