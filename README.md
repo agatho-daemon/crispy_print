@@ -730,7 +730,15 @@ As an **alpha release**, Crispy Print has several known limitations:
 - **SVG Preview Size**: Multi-page SVG previews can be memory-intensive in browser
 - **Font Loading**: Large custom font collections may slow down font discovery API
 
-### Roadmap Features (Not Yet Implemented)
+### Roadmap
+
+#### alpha.2 (Next Release)
+
+- [ ] Batch printing from list view
+- [ ] Progress indicator for multi-document compilation
+- [ ] Configurable batch size limits
+
+#### Future Features (Not Yet Implemented)
 
 The following features are planned but not yet available:
 
