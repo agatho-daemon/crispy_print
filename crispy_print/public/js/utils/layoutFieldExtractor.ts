@@ -56,8 +56,8 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
 
 			// Add all columns from table
 			field.table_columns.forEach((col) => {
-				if (col.fieldname) {
-					usedFields.add(col.fieldname)
+				if (col.fieldname && field.fieldname) {
+					usedFields.add(`${field.fieldname}.${col.fieldname}`)
 				}
 			})
 		}
@@ -139,6 +139,8 @@ export function filterDocumentFields(
 							tableFields.forEach((childField) => {
 								if (childField in childDoc) {
 									childFiltered[childField] = childDoc[childField]
+								} else {
+									childFiltered[childField] = ""
 								}
 							})
 						}
