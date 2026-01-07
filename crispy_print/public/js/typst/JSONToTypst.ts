@@ -498,7 +498,7 @@ class JSONTypstTranslator {
 			case "Column Break":
 				return `// Column Break`
 			case "Typst": {
-				const code = String((field as any).typst_code || "").trim()
+				const code = String(field.raw_typst_field || "").trim()
 				return code ? code : `// Custom Typst (empty)`
 			}
 			case "Custom HTML":

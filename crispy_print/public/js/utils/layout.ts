@@ -25,6 +25,7 @@ export interface LayoutField {
 	align?: "left" | "center" | "right"
 	table_columns?: TableColumn[]
 	field_template?: string
+	raw_typst_field?: string
 }
 
 export interface LayoutColumn {

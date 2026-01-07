@@ -746,23 +746,23 @@ function onRemoveField(column: Column, fieldIndex: number) {
 }
 
 function editTypstCode(field: Field) {
-	const existing = (field as any).typst_code || ""
+	const existing = field.raw_typst_field || ""
 
 	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
-		const next = window.prompt("Edit Typst code", existing)
+		const next = window.prompt("Edit Raw Typst Field", existing)
 		if (next === null) return
-		;(field as any).typst_code = next
+		field.raw_typst_field = next
 		store.markDirty()
 		return
 	}
 
 	const dialog = new frappe.ui.Dialog({
-		title: __("Edit Typst code"),
+		title: __("Edit Raw Typst Field"),
 		fields: [
 			{
 				fieldtype: "Code",
-				fieldname: "typst_code",
-				label: __("Typst code"),
+				fieldname: "raw_typst_field",
+				label: __("Raw Typst Field"),
 				options: "Rust",
 				reqd: 0,
 				default: existing,
@@ -770,8 +770,8 @@ function editTypstCode(field: Field) {
 		],
 		primary_action_label: __("Apply"),
 		primary_action: (values: Record<string, any>) => {
-			const value = values.typst_code ?? ""
-			;(field as any).typst_code = value
+			const value = values.raw_typst_field ?? ""
+			field.raw_typst_field = value
 			store.markDirty()
 			dialog.hide()
 		},
