@@ -132,6 +132,71 @@ export function setupWorker(
 		dispatchCrispyPreviewStatus({ status, message })
 	}
 
+	/**
+	 * Parse and format Typst error messages from server responses
+	 * Handles nested JSON, escaped strings, and Unicode box drawing characters
+	 */
+	function parseTypstError(error: any): string {
+		try {
+			let errorStr = String(error?.message || error || "Typst compilation failed")
+
+			// Unescape the string - may be double or triple escaped from JSON
+			// Replace escaped newlines with actual newlines
+			errorStr = errorStr.replace(/\\n/g, "\n")
+
+			// Replace escaped quotes
+			errorStr = errorStr.replace(/\\"/g, '"')
+
+			// Replace escaped backslashes (but do this after other replacements)
+			errorStr = errorStr.replace(/\\\\/g, "\\")
+
+			// Replace Unicode box drawing characters
+			errorStr = errorStr.replace(/\\u250c/g, "┌")
+			errorStr = errorStr.replace(/\\u2500/g, "─")
+			errorStr = errorStr.replace(/\\u2502/g, "│")
+
+			// Try to extract just the Typst error part, ignoring Python tracebacks
+			const typstErrorMatch = errorStr.match(
+				/Typst compilation failed:\s*(.+?)(?=\n\nDuring handling|$)/s
+			)
+			if (typstErrorMatch) {
+				errorStr = typstErrorMatch[1].trim()
+			}
+
+			// Look for the actual error message
+			const errorMatch = errorStr.match(/error:\s*(.+?)(?=\n|$)/)
+			const errorMessage = errorMatch ? errorMatch[1].trim() : "Compilation error"
+
+			// Extract file location and line number
+			const locationMatch = errorStr.match(/document\.typ:(\d+):(\d+)/)
+			const location = locationMatch ? `Line ${locationMatch[1]}, Column ${locationMatch[2]}` : ""
+
+			// Try to extract the code snippet
+			const snippetMatch = errorStr.match(/(\d+)\s*│\s*(.+?)(?=\n|$)/m)
+			const snippet = snippetMatch ? snippetMatch[2].trim() : ""
+
+			// Build formatted error message
+			const parts: string[] = []
+
+			parts.push(`Error: ${errorMessage}`)
+
+			if (location) {
+				parts.push(`Location: ${location}`)
+			}
+
+			if (snippet) {
+				parts.push("")
+				parts.push("Code:")
+				parts.push(`  ${snippet}`)
+			}
+
+			return parts.join("\n")
+		} catch (e) {
+			// Fallback: return original error as string
+			return String(error?.message || error || "Compilation failed")
+		}
+	}
+
 	function setCurrentDoc(doctype: string, docname: string, opts: { force?: boolean } = {}) {
 		currentDoctype = doctype
 		currentDocname = docname
@@ -753,7 +818,7 @@ export function setupWorker(
 				statusEl.textContent = "select a document"
 				statusEl.style.color = "#e67e22"
 			}
-			dispatchStatus("error", "no document")
+			// Don't dispatch error - just waiting for user to select a document
 			return
 		}
 
@@ -883,15 +948,13 @@ export function setupWorker(
 			}
 		} catch (e: any) {
 			console.error("[Typst Preview] Translation error:", e)
+			const formattedError = parseTypstError(e)
 			if (statusEl) {
 				statusEl.textContent = "translation error"
 				statusEl.style.color = "#e74c3c"
 			}
-			dispatchStatus("error", e?.message || String(e))
-			frappe?.show_alert({
-				message: __("Translation failed: {0}", [e.message || e]),
-				indicator: "red",
-			})
+			dispatchStatus("error", formattedError)
+			// Don't show frappe alert - error will be displayed in preview pane
 			return
 		}
 
@@ -950,15 +1013,13 @@ export function setupWorker(
 		if (type === "compile" || !type) {
 			if (!ok) {
 				console.error("[Typst Preview] Compilation failed:", error)
+				const formattedError = parseTypstError(error)
 				if (statusEl) {
 					statusEl.textContent = isDownload || isViewPdf ? "pdf error" : "error"
 					statusEl.style.color = "#e74c3c"
 				}
-				dispatchStatus("error", error?.message || String(error || "Typst compilation failed"))
-				frappe?.show_alert({
-					message: __("Typst compilation failed: {0}", [error?.message || error]),
-					indicator: "red",
-				})
+				dispatchStatus("error", formattedError)
+				// Don't show frappe alert - error will be displayed in preview pane
 				if (isDownload && downloadBtn) {
 					downloadBtn.disabled = false
 					pendingPdfDownload = false
