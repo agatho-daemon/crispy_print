@@ -26,6 +26,12 @@ export interface LayoutField {
 	table_columns?: TableColumn[]
 	field_template?: string
 	raw_typst_field?: string
+	// Spacer configuration
+	spacer_value?: string // e.g., "1em", "2cm", "10pt"
+	// Divider configuration
+	divider_length?: string // e.g., "100%", "80%", "10cm"
+	divider_stroke?: string // e.g., "0.5pt", "1pt", "2pt"
+	divider_color?: string // e.g., "gray", "#333", "rgb(0,0,0)"
 }
 
 export interface LayoutColumn {

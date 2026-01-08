@@ -56,9 +56,10 @@ export function buildDocDictionary(realDocData: RealDocData, doctype = "Document
 				lines.push(`  )${isLast ? "" : ","}`)
 			} else if (typeof value === "string") {
 				let cleanValue = value
-					.replace(/<br\s*\/?>\s*\n/gi, "\n")
-					.replace(/<br\s*\/?>/gi, "\n")
-					.replace(/<[^>]+>/g, "")
+					.replace(/(<br\s*\/?>\s*)+/gi, "\n") // Consecutive <br> → single \n
+					.replace(/<[^>]+>/g, "") // Strip HTML tags
+					.replace(/\n{2,}/g, "\n") // Collapse consecutive newlines
+					.trim()
 					.replace(/"/g, '\\"')
 					.replace(/\n/g, "\\n")
 				lines.push(`  ${key}: "${cleanValue}"${isLast ? "" : ","}`)
@@ -312,10 +313,7 @@ class JSONTypstTranslator {
 								fieldname: field.fieldname,
 								columns: field.table_columns || [],
 							})
-						} else if (
-							field.fieldtype !== "Section Break" &&
-							field.fieldtype !== "Column Break"
-						) {
+						} else if (field.fieldtype !== "Section Break" && field.fieldtype !== "Column Break") {
 							allFields.push(field.fieldname)
 						}
 					}
@@ -351,9 +349,10 @@ class JSONTypstTranslator {
 						lines.push(`  )${isLast ? "" : ","}`)
 					} else if (typeof value === "string") {
 						let cleanValue = value
-							.replace(/<br\s*\/?>\s*\n/gi, "\n")
-							.replace(/<br\s*\/?>/gi, "\n")
-							.replace(/<[^>]+>/g, "")
+							.replace(/(<br\s*\/?>\s*)+/gi, "\n") // Consecutive <br> → single \n
+							.replace(/<[^>]+>/g, "") // Strip HTML tags
+							.replace(/\n{2,}/g, "\n") // Collapse consecutive newlines
+							.trim()
 							.replace(/"/g, '\\"')
 							.replace(/\n/g, "\\n")
 						lines.push(`  ${key}: "${cleanValue}"${isLast ? "" : ","}`)
@@ -455,33 +454,98 @@ class JSONTypstTranslator {
 			lines.push("")
 		}
 
-		if (section.columns.length === 1) {
-			const column = section.columns[0]
-			if (column.fields && column.fields.length > 0) {
-				column.fields.forEach((field) => {
-					lines.push(this.translateField(field))
-				})
-			}
-		} else {
+		lines.push(`#v(8pt) // Spacing after section`)
+		lines.push("")
+
+		// All sections use grid (unified approach for consistent spacing)
+		const maxRows = Math.max(...section.columns.map((col) => col.fields?.length || 0))
+		const numCols = section.columns.length
+
+		// Only create grid if there are rows
+		if (maxRows > 0) {
 			lines.push(`#grid(`)
 			lines.push(`  columns: (${section.columns.map(() => "1fr").join(", ")}),`)
-			lines.push(`  gutter: 1cm,`)
 
-			section.columns.forEach((column, colIdx) => {
-				lines.push(`  [`)
-				if (column.fields && column.fields.length > 0) {
-					column.fields.forEach((field) => {
-						lines.push(`    ${this.translateField(field)}`)
-					})
+			// Iterate row by row (row-major order)
+			for (let rowIdx = 0; rowIdx < maxRows; rowIdx++) {
+				for (let colIdx = 0; colIdx < numCols; colIdx++) {
+					const column = section.columns[colIdx]
+					const field = column.fields?.[rowIdx]
+
+					const isLastCell = rowIdx === maxRows - 1 && colIdx === numCols - 1
+
+					if (field) {
+						const cellContent = this.translateFieldAsCell(field)
+						lines.push(`  ${cellContent}${isLastCell ? "" : ","}`)
+					} else {
+						// Empty cell for alignment
+						lines.push(`  [#none]${isLastCell ? "" : ","}`)
+					}
 				}
-				lines.push(`  ]${colIdx < section.columns.length - 1 ? "," : ""}`)
-			})
+			}
 
 			lines.push(`)`)
+		} else {
+			lines.push("// (no fields in columns)")
 		}
-
-		lines.push("")
 		return lines.join("\n")
+	}
+
+	translateFieldAsCell(field: LayoutField): string {
+		// Translate field as a grid cell (wrapped in [], no #parbreak())
+		const fieldtype = field.fieldtype || "Data"
+		const fieldname = field.fieldname || "unknown"
+		const label = this.escapeTypstText((field.label ?? "").trim())
+
+		switch (fieldtype) {
+			case "Section Break":
+				return `[] // Section Break: ${label || fieldname}`
+			case "Column Break":
+				return `[] // Column Break`
+			case "Typst": {
+				const code = String(field.raw_typst_field || "").trim()
+				return code ? `[${code}]` : `[] // Custom Typst (empty)`
+			}
+			case "Spacer": {
+				const value = field.spacer_value || "1em"
+				return `[#v(${value})]`
+			}
+			case "Divider": {
+				const length = field.divider_length || "100%"
+				const stroke = field.divider_stroke || "0.5pt"
+				const color = field.divider_color || "gray"
+				const colorValue = color.startsWith("#") ? `rgb("${color.substring(1)}")` : color
+				return `[#line(length: ${length}, stroke: ${stroke} + ${colorValue})]`
+			}
+			case "Empty":
+				return `[#none]`
+			case "Table":
+				return `[${this.translateTable(field)}]`
+			case "HTML":
+				return `[] // HTML field: ${fieldname}`
+			default:
+				if ((field as any).print_hide) {
+					return `[] // ${label || fieldname} (hidden)`
+				}
+
+				if (this.realDocData && !(fieldname in (this.realDocData as Record<string, any>))) {
+					return `[] // ${label || fieldname} (field not in document)`
+				}
+
+				const align = field.align || this.getDefaultAlignment(fieldtype)
+
+				if (!label) {
+					if (align === "left") {
+						return `[#text(..fieldValueStyle)[#doc.${fieldname}]]`
+					}
+					return `[#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]]`
+				}
+
+				if (align === "left") {
+					return `[#text(..fieldLabelStyle)[${label}]#linebreak()#text(..fieldValueStyle)[#doc.${fieldname}]]`
+				}
+				return `[#text(..fieldLabelStyle)[${label}]#linebreak()#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]]`
+		}
 	}
 
 	translateField(field?: LayoutField) {
@@ -500,6 +564,20 @@ class JSONTypstTranslator {
 				const code = String(field.raw_typst_field || "").trim()
 				return code ? code : `// Custom Typst (empty)`
 			}
+			case "Spacer": {
+				const value = field.spacer_value || "1em"
+				return `#v(${value})`
+			}
+			case "Divider": {
+				const length = field.divider_length || "100%"
+				const stroke = field.divider_stroke || "0.5pt"
+				const color = field.divider_color || "gray"
+				// Use rgb() only for hex colors, named colors go directly
+				const colorValue = color.startsWith("#") ? `rgb("${color.substring(1)}")` : color
+				return `#line(length: ${length}, stroke: ${stroke} + ${colorValue})`
+			}
+			case "Empty":
+				return `[#none]`
 			case "Table":
 				return this.translateTable(field)
 			case "HTML":

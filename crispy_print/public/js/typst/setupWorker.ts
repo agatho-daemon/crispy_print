@@ -621,7 +621,6 @@ export function setupWorker(
 			unsubscribeDoctype = adapter.hookDoctypeChanges((nextDoctype) => {
 				if (nextDoctype) {
 					if (nextDoctype !== currentDoctype) {
-						console.log(`[Worker] DocType changed: ${currentDoctype} → ${nextDoctype}`)
 						// Reset and reinitialize for new doctype
 						autocompleteInitialized = false
 						setupSampleDocAutocomplete(nextDoctype)
