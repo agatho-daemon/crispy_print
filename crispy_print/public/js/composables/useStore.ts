@@ -86,10 +86,10 @@ function buildStore() {
 				const extras: DocField[] = [
 					{ label: "DocType", fieldname: "doctype", fieldtype: "Data" },
 					{ label: "ID (name)", fieldname: "name", fieldtype: "Data" },
-					{ label: "Custom Typst", fieldname: "custom_typst", fieldtype: "Typst" },
-					{ label: "Spacer", fieldname: "spacer", fieldtype: "Spacer" },
-					{ label: "Divider", fieldname: "divider", fieldtype: "Divider" },
-				]
+				{ label: "Custom Typst", fieldname: "_typst_snippet", fieldtype: "Typst" },
+				{ label: "Spacer", fieldname: "spacer", fieldtype: "Spacer" },
+				{ label: "Divider", fieldname: "divider", fieldtype: "Divider" },
+			]
 
 				const templateFields: DocField[] = !crispyFormat.value?.__onload?.print_templates
 					? []

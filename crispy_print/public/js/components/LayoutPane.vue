@@ -795,6 +795,7 @@ function onEditTypstCode(field: Field) {
 <style scoped>
 /* LayoutPane.vue */
 .layout-pane {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
