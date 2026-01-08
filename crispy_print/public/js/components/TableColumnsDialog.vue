@@ -291,7 +291,7 @@ watch(
 <style scoped>
 /* TableColumnsDialog.vue */
 .table-dialog {
-	position: fixed;
+	position: absolute;
 	inset: 0;
 	z-index: 50;
 	display: flex;
@@ -304,7 +304,7 @@ watch(
 .table-dialog__card {
 	width: 100%;
 	max-width: 768px;
-	max-height: 90vh;
+	max-height: 70vh;
 	background: #fff;
 	border-radius: 16px;
 	box-shadow:
