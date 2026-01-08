@@ -242,6 +242,24 @@
 																Edit code
 															</button>
 
+															<button
+																v-if="(field.fieldtype || '').toLowerCase() === 'spacer'"
+																type="button"
+																class="field-card__menu-item"
+																@click="onEditSpacer(field)"
+															>
+																Configure spacer
+															</button>
+
+															<button
+																v-if="(field.fieldtype || '').toLowerCase() === 'divider'"
+																type="button"
+																class="field-card__menu-item"
+																@click="onEditDivider(field)"
+															>
+																Configure divider
+															</button>
+
 															<div class="field-card__menu-divider"></div>
 
 															<button
@@ -788,6 +806,188 @@ function editTypstCode(field: Field) {
 
 function onEditTypstCode(field: Field) {
 	editTypstCode(field)
+	closeFieldMenu()
+}
+
+function editSpacer(field: Field) {
+	const existing = field.spacer_value || "1em"
+
+	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
+		const next = window.prompt("Enter spacer value (e.g., 1em, 2cm, 10pt):", existing)
+		if (next === null) return
+		field.spacer_value = next
+		store.markDirty()
+		return
+	}
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Configure Spacer"),
+		fields: [
+			{
+				fieldtype: "Data",
+				fieldname: "spacer_value",
+				label: __("Spacer Value"),
+				description: __("Typst units: 1em, 2cm, 10pt, 5mm, etc."),
+				reqd: 1,
+				default: existing,
+			},
+		],
+		primary_action_label: __("Apply"),
+		primary_action: (values: Record<string, any>) => {
+			field.spacer_value = values.spacer_value || "1em"
+			store.markDirty()
+			dialog.hide()
+		},
+	})
+
+	dialog.show()
+}
+
+function onEditSpacer(field: Field) {
+	editSpacer(field)
+	closeFieldMenu()
+}
+
+function editDivider(field: Field) {
+	const existingLength = field.divider_length || "100%"
+	const existingStroke = field.divider_stroke || "0.5pt"
+	let existingColor = field.divider_color || "gray"
+
+	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
+		const length = window.prompt("Enter divider length (e.g., 100%, 10cm):", existingLength)
+		if (length === null) return
+		const stroke = window.prompt("Enter stroke width (e.g., 0.5pt, 1pt):", existingStroke)
+		if (stroke === null) return
+		const color = window.prompt("Enter color (e.g., gray, #333, rgb(0,0,0)):", existingColor)
+		if (color === null) return
+
+		field.divider_length = length
+		field.divider_stroke = stroke
+		field.divider_color = color
+		store.markDirty()
+		return
+	}
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Configure Divider"),
+		fields: [
+			{
+				fieldtype: "Data",
+				fieldname: "divider_length",
+				label: __("Length"),
+				description: __("Typst units: 100%, 80%, 10cm, etc."),
+				reqd: 1,
+				default: existingLength,
+			},
+			{
+				fieldtype: "Data",
+				fieldname: "divider_stroke",
+				label: __("Stroke Width"),
+				description: __("Typst units: 0.5pt, 1pt, 2pt, etc."),
+				reqd: 1,
+				default: existingStroke,
+			},
+			{
+				fieldtype: "HTML",
+				fieldname: "color_picker_html",
+				options: `<div class="form-group">
+					<label class="control-label">${__("Color")}</label>
+					<div id="divider-color-picker"></div>
+				</div>`,
+			},
+		],
+		primary_action_label: __("Apply"),
+		primary_action: (values: Record<string, any>) => {
+			field.divider_length = values.divider_length || "100%"
+			field.divider_stroke = values.divider_stroke || "0.5pt"
+			field.divider_color = existingColor // Will be updated by Pickr
+			store.markDirty()
+			dialog.hide()
+		},
+	})
+
+	dialog.show()
+
+	// Mount Pickr after dialog is shown
+	setTimeout(() => {
+		const container = document.getElementById("divider-color-picker")
+		if (!container) {
+			console.error("Pickr container not found")
+			return
+		}
+
+		// Import Pickr and its CSS dynamically
+		Promise.all([import("@simonwep/pickr"), import("@simonwep/pickr/dist/themes/nano.min.css")])
+			.then(([module]) => {
+				const Pickr = module.default
+
+				const pickr = Pickr.create({
+					el: container,
+					theme: "nano",
+					default: existingColor,
+					swatches: [
+						"#ef4444",
+						"#f97316",
+						"#f59e0b",
+						"#eab308",
+						"#84cc16",
+						"#22c55e",
+						"#10b981",
+						"#14b8a6",
+						"#06b6d4",
+						"#0ea5e9",
+						"#3b82f6",
+						"#6366f1",
+						"#8b5cf6",
+						"#a855f7",
+						"#d946ef",
+						"#ec4899",
+						"#000000",
+						"#333333",
+						"#666666",
+						"#999999",
+						"#cccccc",
+						"#ffffff",
+					],
+					components: {
+						preview: true,
+						opacity: false,
+						hue: true,
+						interaction: {
+							hex: true,
+							rgba: false,
+							hsla: false,
+							input: true,
+							clear: false,
+							save: true,
+						},
+					},
+				})
+
+				pickr.on("save", (color: any) => {
+					existingColor = color.toHEXA().toString()
+					field.divider_color = existingColor
+					pickr.hide()
+				})
+
+				pickr.on("change", (color: any) => {
+					existingColor = color.toHEXA().toString()
+					field.divider_color = existingColor
+				})
+
+				// Cleanup when dialog is hidden
+				dialog.$wrapper.on("hidden.bs.modal", () => {
+					pickr?.destroyAndRemove()
+				})
+			})
+			.catch((error) => {
+				console.error("Failed to load Pickr:", error)
+			})
+	}, 300)
+}
+
+function onEditDivider(field: Field) {
+	editDivider(field)
 	closeFieldMenu()
 }
 </script>

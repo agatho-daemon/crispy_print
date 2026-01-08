@@ -9,9 +9,9 @@ export interface FrappeFormattingEnv {
 
 function fallbackStripHtml(value: string) {
 	return value
-		.replace(/<br\s*\/?>\s*\n/gi, "\n")
-		.replace(/<br\s*\/?>/gi, "\n")
+		.replace(/(<br\s*\/?>\s*)+/gi, "\n") // Consecutive <br> tags → single \n
 		.replace(/<[^>]+>/g, "")
+		.replace(/\n{2,}/g, "\n") // Collapse multiple consecutive newlines to single \n
 }
 
 export function applyFrappeFormattingToDoc(opts: {
@@ -22,11 +22,26 @@ export function applyFrappeFormattingToDoc(opts: {
 	env: FrappeFormattingEnv | null | undefined
 }): void {
 	const { layout, doctype, fullDoc, filteredDoc, env } = opts
-	if (!layout || !doctype || !fullDoc || !filteredDoc || !env) return
+
+	if (!layout || !doctype || !fullDoc || !filteredDoc || !env) {
+		return
+	}
 
 	const normalizeFieldtype = (df: any) => String(df?.fieldtype || "").replace(/\s+/g, "")
 	const shouldFormatFieldtype = (fieldtype: string) =>
 		["Currency", "Int", "Float", "Percent", "Date", "Datetime", "Time"].includes(fieldtype)
+
+	const shouldCleanupText = (fieldtype: string) =>
+		[
+			"SmallText",
+			"Text",
+			"TextEditor",
+			"LongText",
+			"HTML",
+			"HTMLEditor",
+			"ReadOnly",
+			"Data",
+		].includes(fieldtype)
 
 	const stripHtml = (value: any) => {
 		if (typeof value !== "string") return value
@@ -35,7 +50,9 @@ export function applyFrappeFormattingToDoc(opts: {
 
 	const formatValue = (value: any, df: any) => {
 		// `only_value` avoids HTML wrappers (right-align spans, etc.)
-		return stripHtml(env.format(value, df, { only_value: 1 }, fullDoc))
+		const formatted = stripHtml(env.format(value, df, { only_value: 1 }, fullDoc))
+		// Additional cleanup: collapse consecutive newlines
+		return typeof formatted === "string" ? formatted.replace(/\n{2,}/g, "\n").trim() : formatted
 	}
 
 	const walkFields = (): LayoutField[] => {
@@ -85,7 +102,21 @@ export function applyFrappeFormattingToDoc(opts: {
 		if (!(field.fieldname in filteredDoc)) continue
 
 		const ft = normalizeFieldtype(df)
-		if (!shouldFormatFieldtype(ft)) continue
-		filteredDoc[field.fieldname] = formatValue(filteredDoc[field.fieldname], df)
+
+		// Format numeric/date fields
+		if (shouldFormatFieldtype(ft)) {
+			filteredDoc[field.fieldname] = formatValue(filteredDoc[field.fieldname], df)
+			continue
+		}
+
+		// Clean up text fields (strip HTML, collapse newlines)
+		if (shouldCleanupText(ft)) {
+			const value = filteredDoc[field.fieldname]
+			if (typeof value === "string") {
+				filteredDoc[field.fieldname] = stripHtml(value)
+					.replace(/\n{2,}/g, "\n")
+					.trim()
+			}
+		}
 	}
 }
