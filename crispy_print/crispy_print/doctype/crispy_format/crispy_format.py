@@ -7,6 +7,13 @@ from frappe.query_builder import DocType
 
 
 class CrispyFormat(Document):
+	def before_insert(self):
+		"""Clear is_default when duplicating a format"""
+		# When duplicating via Frappe's "Duplicate" feature, is_default shouldn't carry over
+		# Only one format can be default per DocType
+		if self.is_default:
+			self.is_default = 0
+
 	def validate(self):
 		"""Clear other defaults when this format is set as default"""
 		if self.is_default:
@@ -35,15 +42,21 @@ class CrispyFormat(Document):
 
 	def clear_other_defaults(self):
 		"""Clear is_default on other formats for this DocType"""
+		# Get all other default formats for this DocType
 		CrispyFormat = DocType("Crispy Format")
 
-		(
-			frappe.qb.update(CrispyFormat)
-			.set(CrispyFormat.is_default, 0)
+		other_defaults = (
+			frappe.qb.from_(CrispyFormat)
+			.select(CrispyFormat.name)
 			.where(CrispyFormat.doc_type == self.doc_type)
 			.where(CrispyFormat.name != self.name)
-			.run()
+			.where(CrispyFormat.is_default == 1)
+			.run(as_dict=True)
 		)
+
+		# Clear is_default using frappe.db.set_value for proper transaction handling
+		for record in other_defaults:
+			frappe.db.set_value("Crispy Format", record.name, "is_default", 0, update_modified=False)
 
 
 @frappe.whitelist()
