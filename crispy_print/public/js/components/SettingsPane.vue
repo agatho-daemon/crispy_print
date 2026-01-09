@@ -611,7 +611,12 @@ onMounted(() => {
 
 watch(
 	() => props.pageSettings,
-	() => props.markDirty(),
+	() => {
+		// Don't mark dirty during initial load
+		if (!store.loading.value && !store.initializing.value) {
+			props.markDirty()
+		}
+	},
 	{ deep: true }
 )
 

@@ -1,7 +1,7 @@
 // composables/useStore.ts
 // State management for Crispy Print Format Builder
 
-import { ref, computed, watch } from "vue"
+import { ref, computed, watch, nextTick } from "vue"
 import { createDefaultLayout, serializeLayout } from "../utils/layout"
 import type { CrispyLayout, DocField } from "../utils/layout"
 import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
@@ -35,6 +35,7 @@ function buildStore() {
 	const letterhead = ref<any>(null)
 	const dirty = ref(false)
 	const loading = ref(false)
+	const initializing = ref(false) // Prevents dirty marking during init
 	const changeKey = ref(0)
 	const removeQr = ref(false)
 	const rawTypst = ref(false)
@@ -55,8 +56,10 @@ function buildStore() {
 	 */
 	async function fetch(formatName: string) {
 		loading.value = true
+		initializing.value = true
 		changeKey.value = 0
 		removeQr.value = false
+		dirty.value = false // Set clean state BEFORE triggering any reactive updates
 
 		try {
 			// Fetch the Crispy Format document
@@ -127,6 +130,7 @@ function buildStore() {
 			const parsed = parseCrispyFormatDoc(doc)
 
 			// Load or create layout
+			const hadNoLayout = !parsed.layout
 			layout.value = parsed.layout || getDefaultLayout()
 
 			// Load page settings (already merged with defaults by parser)
@@ -137,15 +141,20 @@ function buildStore() {
 				letterhead.value = await resolveLetterheadDoc(pageSettings.value.letterhead)
 			}
 
-			dirty.value = false
+			// Auto-save if this was the first time (no layout_json in DB)
+			if (hadNoLayout && layout.value) {
+				await saveChanges()
+			}
 		} catch (error) {
 			console.error("[Store] Failed to fetch Crispy Format:", error)
 			frappe.throw(__("Failed to load Crispy Format"))
 		} finally {
 			loading.value = false
+			// Use nextTick to ensure initializing flag persists through all queued watchers
+			await nextTick()
+			initializing.value = false
 		}
 	}
-
 	/**
 	 * Create default layout from DocType metadata
 	 */
@@ -203,6 +212,11 @@ function buildStore() {
 	 * Mark as dirty when layout changes
 	 */
 	function markDirty() {
+		// Don't mark dirty during initial load
+		if (loading.value || initializing.value) {
+			return
+		}
+
 		dirty.value = true
 		changeKey.value++
 	}
@@ -254,6 +268,7 @@ function buildStore() {
 		pageSettings,
 		dirty,
 		loading,
+		initializing,
 		changeKey,
 
 		// Computed
@@ -278,7 +293,7 @@ function buildStore() {
 }
 
 export function useStore() {
-	if (storeInstance) {
+	if (storeInstance !== null) {
 		return storeInstance
 	}
 	storeInstance = buildStore()

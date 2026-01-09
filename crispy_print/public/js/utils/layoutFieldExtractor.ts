@@ -55,10 +55,15 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
 				usedFields.add(field.fieldname)
 			}
 
-			// Add all columns from table
+			// Add all columns from table (both namespaced and bare)
 			field.table_columns.forEach((col) => {
-				if (col.fieldname && field.fieldname) {
-					usedFields.add(`${field.fieldname}.${col.fieldname}`)
+				if (col.fieldname) {
+					// Add bare column name for table rendering
+					usedFields.add(col.fieldname)
+					// Add namespaced column for filtering
+					if (field.fieldname) {
+						usedFields.add(`${field.fieldname}.${col.fieldname}`)
+					}
 				}
 			})
 		}

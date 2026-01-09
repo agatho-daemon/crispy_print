@@ -3,7 +3,7 @@
 Modern print format designer for Frappe using the [Typst](https://typst.app/) typesetting system. Build PDF‑native print formats with a Vue 3 visual builder and real-time preview.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-90%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-96%20passing-brightgreen)]()
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Frappe](https://img.shields.io/badge/frappe-v15+-orange.svg)](https://frappeframework.com/)
 
@@ -360,9 +360,9 @@ bench --site your-site run-tests --doctype "Crispy Format"
 ```
 
 **Test Coverage:**
-- **Frontend:** 61 tests across 26 test files (100% passing)
+- **Frontend:** 67 tests across 27 test files (100% passing)
 - **Backend:** 29 tests across 2 test files (100% passing)
-- **Total:** 90 tests
+- **Total:** 96 tests
 
 See [TEST_COVERAGE.md](TEST_COVERAGE.md) for details.
 
@@ -611,7 +611,6 @@ As an **alpha release**, Crispy Print has several known limitations:
 
 ### Layout Builder
 
-- **No Undo/Redo**: Layout changes cannot be undone (planned for future release)
 - **Limited Field Types**: Currently supports basic fields; complex custom fields may not render correctly
 - **Fixed Grid System**: 4-column layout structure cannot be customized
 - **No Conditional Visibility**: Cannot hide/show elements based on document conditions
@@ -668,7 +667,6 @@ The following features are planned but not yet available:
 - [ ] Custom page break controls
 - [ ] Multi-language format support
 - [ ] Format import/export
-- [ ] Undo/redo in layout builder
 - [ ] Real-time collaboration
 - [ ] Advanced table styling options
 - [ ] Client-side PDF rendering
@@ -787,7 +785,7 @@ A: Not yet. Single language per format. Multi-language support is planned.
 
 This app includes comprehensive test coverage:
 
-- **90 total tests** (61 frontend + 29 backend)
+- **96 total tests** (67 frontend + 29 backend)
 - **100% pass rate**
 - **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
 
