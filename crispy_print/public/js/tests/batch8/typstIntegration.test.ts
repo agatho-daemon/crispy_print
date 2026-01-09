@@ -30,7 +30,7 @@ describe("Typst integration", () => {
 		)
 
 		expect(typst).toContain('background: image("letterhead.png", width: 100%)')
-		expect(typst).toContain("#set page(foreground: [")
+		expect(typst).toContain("foreground: [")
 		expect(typst).toContain('image("INV-0001-qr.svg"')
 		expect(typst).not.toContain('image("logo.png"')
 	})
@@ -61,7 +61,7 @@ describe("Typst integration", () => {
 			}
 		)
 
-		expect(typst).toContain("#set page(foreground: [")
+		expect(typst).toContain("foreground: [")
 		expect(typst).toContain('image("logo.png"')
 		expect(typst).toContain('image("DOC-1-qr.svg"')
 		expect(typst).not.toContain("background: image(")

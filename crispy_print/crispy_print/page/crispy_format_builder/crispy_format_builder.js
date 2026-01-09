@@ -85,16 +85,13 @@ function load_crispy_format_builder(wrapper) {
 			if (window.Vue && window.Vue.watch) {
 				window.Vue.watch(
 					() => store.dirty.value,
-					(dirty) => {
-						if (dirty) {
-							page.set_indicator(__("Not Saved"), "orange");
-							if (reset_changes_btn) {
-								reset_changes_btn.style.display = "";
-							}
-						} else {
-							page.clear_indicator();
-							if (reset_changes_btn) {
-								reset_changes_btn.style.display = "none";
+				(dirty) => {
+					if (dirty) {
+						page.set_indicator(__("Not Saved"), "orange");
+						if (reset_changes_btn) {
+							reset_changes_btn.style.display = "";
+						}
+					} else {
 							}
 						}
 					}
