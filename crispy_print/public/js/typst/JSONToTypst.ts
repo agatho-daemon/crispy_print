@@ -34,26 +34,24 @@ export function buildDocDictionary(realDocData: RealDocData, doctype = "Document
 		lines.push("// Document data dictionary (real document data)")
 		lines.push("#let doc = (")
 
-		Object.keys(realDocData).forEach((key, idx, arr) => {
+		Object.keys(realDocData).forEach((key) => {
 			const value = (realDocData as Record<string, any>)[key]
-			const isLast = idx === arr.length - 1
 
 			if (value === null || value === undefined) {
-				lines.push(`  ${key}: ""${isLast ? "" : ","}`)
+				lines.push(`  ${key}: "",`)
 			} else if (Array.isArray(value)) {
 				lines.push(`  ${key}: (`)
 				value.forEach((row: any) => {
 					if (typeof row === "object" && row !== null) {
 						lines.push(`    (`)
-						Object.entries(row).forEach(([colKey, colVal], colIdx, colArr) => {
-							const isLastCol = colIdx === colArr.length - 1
+						Object.entries(row).forEach(([colKey, colVal]) => {
 							const escapedVal = String(colVal || "").replace(/"/g, '\\"')
-							lines.push(`      ${colKey}: "${escapedVal}"${isLastCol ? "" : ","}`)
+							lines.push(`      ${colKey}: "${escapedVal}",`)
 						})
 						lines.push(`    ),`)
 					}
 				})
-				lines.push(`  )${isLast ? "" : ","}`)
+				lines.push(`  ),`)
 			} else if (typeof value === "string") {
 				let cleanValue = value
 					.replace(/(<br\s*\/?>\s*)+/gi, "\n") // Consecutive <br> → single \n
@@ -62,13 +60,13 @@ export function buildDocDictionary(realDocData: RealDocData, doctype = "Document
 					.trim()
 					.replace(/"/g, '\\"')
 					.replace(/\n/g, "\\n")
-				lines.push(`  ${key}: "${cleanValue}"${isLast ? "" : ","}`)
+				lines.push(`  ${key}: "${cleanValue}",`)
 			} else if (typeof value === "number") {
-				lines.push(`  ${key}: ${value}${isLast ? "" : ","}`)
+				lines.push(`  ${key}: ${value},`)
 			} else if (typeof value === "boolean") {
-				lines.push(`  ${key}: ${value ? "true" : "false"}${isLast ? "" : ","}`)
+				lines.push(`  ${key}: ${value ? "true" : "false"},`)
 			} else {
-				lines.push(`  ${key}: "${String(value)}"${isLast ? "" : ","}`)
+				lines.push(`  ${key}: "${String(value)}",`)
 			}
 		})
 
@@ -326,27 +324,25 @@ class JSONTypstTranslator {
 				lines.push("// Document data dictionary (real document data)")
 				lines.push("#let doc = (")
 
-				Object.keys(this.realDocData).forEach((key, idx, arr) => {
+				Object.keys(this.realDocData).forEach((key) => {
 					const value = (this.realDocData as Record<string, any>)[key]
-					const isLast = idx === arr.length - 1
 
 					if (value === null || value === undefined) {
-						lines.push(`  ${key}: ""${isLast ? "" : ","}`)
+						lines.push(`  ${key}: "",`)
 					} else if (Array.isArray(value)) {
 						lines.push(`  ${key}: (`)
 						// Keep arrays as arrays even when only one row exists; trailing comma is allowed in Typst tuples
 						value.forEach((row: any) => {
 							if (typeof row === "object" && row !== null) {
 								lines.push(`    (`)
-								Object.entries(row).forEach(([colKey, colVal], colIdx, colArr) => {
-									const isLastCol = colIdx === colArr.length - 1
+								Object.entries(row).forEach(([colKey, colVal]) => {
 									const escapedVal = String(colVal || "").replace(/"/g, '\\"')
-									lines.push(`      ${colKey}: "${escapedVal}"${isLastCol ? "" : ","}`)
+									lines.push(`      ${colKey}: "${escapedVal}",`)
 								})
 								lines.push(`    ),`)
 							}
 						})
-						lines.push(`  )${isLast ? "" : ","}`)
+						lines.push(`  ),`)
 					} else if (typeof value === "string") {
 						let cleanValue = value
 							.replace(/(<br\s*\/?>\s*)+/gi, "\n") // Consecutive <br> → single \n
@@ -355,13 +351,13 @@ class JSONTypstTranslator {
 							.trim()
 							.replace(/"/g, '\\"')
 							.replace(/\n/g, "\\n")
-						lines.push(`  ${key}: "${cleanValue}"${isLast ? "" : ","}`)
+						lines.push(`  ${key}: "${cleanValue}",`)
 					} else if (typeof value === "number") {
-						lines.push(`  ${key}: ${value}${isLast ? "" : ","}`)
+						lines.push(`  ${key}: ${value},`)
 					} else if (typeof value === "boolean") {
-						lines.push(`  ${key}: ${value ? "true" : "false"}${isLast ? "" : ","}`)
+						lines.push(`  ${key}: ${value ? "true" : "false"},`)
 					} else {
-						lines.push(`  ${key}: "${String(value)}"${isLast ? "" : ","}`)
+						lines.push(`  ${key}: "${String(value)}",`)
 					}
 				})
 
@@ -378,19 +374,17 @@ class JSONTypstTranslator {
 					lines.push(`  ${fieldname}: "${fieldname}",`)
 				})
 
-				tableFields.forEach((table, idx) => {
-					const isLast = idx === tableFields.length - 1
+				tableFields.forEach((table) => {
 					lines.push(`  ${table.fieldname}: (`)
 					for (let rowIdx = 0; rowIdx < 2; rowIdx++) {
 						lines.push(`    (`)
-						table.columns.forEach((col, colIdx) => {
-							const isLastCol = colIdx === table.columns.length - 1
+						table.columns.forEach((col) => {
 							const colName = col.fieldname || "col"
-							lines.push(`      ${colName}: "Row ${rowIdx + 1} ${colName}"${isLastCol ? "" : ","}`)
+							lines.push(`      ${colName}: "Row ${rowIdx + 1} ${colName}",`)
 						})
-						lines.push(`    )${rowIdx === 1 ? "" : ","}`)
+						lines.push(`    ),`)
 					}
-					lines.push(`  )${isLast ? "" : ","}`)
+					lines.push(`  ),`)
 				})
 
 				lines.push(")")
@@ -472,14 +466,12 @@ class JSONTypstTranslator {
 					const column = section.columns[colIdx]
 					const field = column.fields?.[rowIdx]
 
-					const isLastCell = rowIdx === maxRows - 1 && colIdx === numCols - 1
-
 					if (field) {
 						const cellContent = this.translateFieldAsCell(field)
-						lines.push(`  ${cellContent}${isLastCell ? "" : ","}`)
+						lines.push(this.formatGridCellLine(cellContent))
 					} else {
 						// Empty cell for alignment
-						lines.push(`  [#none]${isLastCell ? "" : ","}`)
+						lines.push(this.formatGridCellLine("[#none]"))
 					}
 				}
 			}
@@ -546,6 +538,17 @@ class JSONTypstTranslator {
 				}
 				return `[#text(..fieldLabelStyle)[${label}]#linebreak()#align(${align})[#text(..fieldValueStyle)[#doc.${fieldname}]]]`
 		}
+	}
+
+	private formatGridCellLine(cellContent: string): string {
+		const commentIndex = cellContent.indexOf("//")
+		if (commentIndex === -1) {
+			return `  ${cellContent},`
+		}
+
+		const beforeComment = cellContent.slice(0, commentIndex).trimEnd()
+		const comment = cellContent.slice(commentIndex)
+		return `  ${beforeComment}, ${comment}`
 	}
 
 	translateField(field?: LayoutField) {
