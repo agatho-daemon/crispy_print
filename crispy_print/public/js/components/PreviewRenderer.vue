@@ -93,7 +93,7 @@ function createAdapter() {
 						{ deep: true }
 					)
 					return () => stop()
-				}
+			  }
 			: undefined,
 		hookDoctypeChanges: (callback: (doctype: string | null | undefined) => void) => {
 			const stop = watch(
@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
 	line-height: 1.5;
 	color: #7f1d1d;
 	white-space: pre-wrap;
-	font-family:
-		"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+		monospace;
 }
 </style>

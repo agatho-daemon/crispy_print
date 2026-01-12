@@ -796,9 +796,7 @@ defineExpose({
 /* Typst page styling (will be populated by setupWorker) */
 :global(.typst-page) {
 	margin-bottom: 1.5rem;
-	box-shadow:
-		0 4px 12px rgba(148, 163, 184, 0.25),
-		0 2px 6px rgba(148, 163, 184, 0.2);
+	box-shadow: 0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2);
 	background: white;
 }
 

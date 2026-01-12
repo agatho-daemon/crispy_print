@@ -5,22 +5,18 @@ frappe.ui.form.on("Crispy Format", {
 	refresh(frm) {
 		frm.add_custom_button(__("Edit Format"), function () {
 			if (!frm.doc.doc_type) {
-				frappe.msgprint(__("Please select DocType first"));
-				return;
+				frappe.msgprint(__("Please select DocType first"))
+				return
 			}
-			frappe.set_route("crispy-format-builder", frm.doc.name);
-		});
+			frappe.set_route("crispy-format-builder", frm.doc.name)
+		})
 		// Show "Set as Default" button only if not already default
 		if (!frm.is_new() && !frm.doc.is_default) {
-			frm.add_custom_button(__("Set as Default"),
-			() => {
-				const format_label = frm.doc.name;
+			frm.add_custom_button(__("Set as Default"), () => {
+				const format_label = frm.doc.name
 
 				frappe.confirm(
-					__("Set {0} as the default Crispy Format for {1}?", [
-						format_label,
-						frm.doc.doc_type,
-					]),
+					__("Set {0} as the default Crispy Format for {1}?", [format_label, frm.doc.doc_type]),
 					() => {
 						frappe.call({
 							method: "crispy_print.crispy_print.doctype.crispy_format.crispy_format.make_default",
@@ -31,12 +27,12 @@ frappe.ui.form.on("Crispy Format", {
 								frappe.call({
 									method: "crispy_print.api.get_default_doctypes",
 									callback(r) {
-										const doctypes = r.message || [];
+										const doctypes = r.message || []
 										if (window.typstPrint?.registerButtonsFor) {
-											window.typstPrint.registerButtonsFor(doctypes);
+											window.typstPrint.registerButtonsFor(doctypes)
 										}
 									},
-								});
+								})
 
 								if (r.message?.success) {
 									frm.reload_doc()
@@ -59,10 +55,7 @@ frappe.ui.form.on("Crispy Format", {
 		}
 
 		if (frm.doc.is_default) {
-			frm.dashboard.set_headline(
-				__("Default format for {0}", [frm.doc.doc_type]),
-				"green"
-			)
+			frm.dashboard.set_headline(__("Default format for {0}", [frm.doc.doc_type]), "green")
 		}
 	},
-});
+})

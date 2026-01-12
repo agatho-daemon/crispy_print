@@ -5,8 +5,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import frappe
-from frappe.query_builder import DocType
 from frappe import _
+from frappe.query_builder import DocType
 
 
 @frappe.whitelist()

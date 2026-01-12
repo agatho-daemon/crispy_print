@@ -149,9 +149,7 @@ function onDrop(event: DragEvent) {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition:
-		background-color 0.2s ease,
-		border-color 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .typst-code-pane__help-btn:hover {
@@ -168,9 +166,7 @@ function onDrop(event: DragEvent) {
 	font-size: 12px;
 	line-height: 1.6;
 	color: #334155;
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .typst-code-pane__help-list {
@@ -193,8 +189,8 @@ function onDrop(event: DragEvent) {
 	border: 1px solid #e2e8f0;
 	border-radius: 8px;
 	padding: 12px;
-	font-family:
-		"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+		monospace;
 	font-size: 12px;
 	line-height: 1.5;
 	color: #0f172a;
