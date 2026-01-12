@@ -346,10 +346,6 @@ def get_formatted_doc(doctype: str, name: str) -> dict:
 	return data
 
 
-import frappe
-from frappe.query_builder import DocType
-
-
 @frappe.whitelist()
 def get_crispy_formats_for_doctype(doctype):
 	"""Get all enabled Crispy Formats for a given DocType.
@@ -385,7 +381,7 @@ def get_crispy_formats_for_doctype(doctype):
 				valid_formats.append(fmt)
 		except (json.JSONDecodeError, Exception) as e:
 			frappe.log_error(
-				f"Invalid layout_json for Crispy Format {fmt.name}: {str(e)}",
+				f"Invalid layout_json for Crispy Format {fmt.name}: {e!s}",
 				"Crispy Print Format Validation",
 			)
 			continue
