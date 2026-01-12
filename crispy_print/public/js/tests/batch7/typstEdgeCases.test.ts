@@ -43,6 +43,7 @@ describe("Typst edge cases", () => {
 								fields: [{ fieldname: "intro", fieldtype: "Data" }],
 							},
 						],
+						page_break: true,
 					},
 					{
 						label: "One",
@@ -52,7 +53,6 @@ describe("Typst edge cases", () => {
 								fields: [{ fieldname: "title", fieldtype: "Data" }],
 							},
 						],
-						page_break: true,
 					},
 				],
 			},

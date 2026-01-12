@@ -22,6 +22,8 @@ vi.mock("../../composables/useBrandingData", () => ({
 vi.mock("../../composables/useStore", () => ({
 	useStore: () => ({
 		fields: ref([]),
+		loading: ref(false),
+		initializing: ref(false),
 		removeQr: ref(false),
 	}),
 }))
@@ -53,6 +55,7 @@ describe("SettingsPane", () => {
 		const brandingHeader = headers.find((btn) => btn.text().includes("Letterhead / Logo"))
 		expect(brandingHeader).toBeTruthy()
 		await brandingHeader!.trigger("click")
+		await nextTick()
 
 		const selects = wrapper.findAll("select")
 		const brandingSelect = selects.find((select) => select.find('option[value="logo"]').exists())
