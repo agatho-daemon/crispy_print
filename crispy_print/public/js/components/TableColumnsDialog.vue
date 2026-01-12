@@ -307,9 +307,7 @@ watch(
 	max-height: 70vh;
 	background: #fff;
 	border-radius: 16px;
-	box-shadow:
-		0 25px 50px rgba(15, 23, 42, 0.25),
-		0 10px 20px rgba(15, 23, 42, 0.18);
+	box-shadow: 0 25px 50px rgba(15, 23, 42, 0.25), 0 10px 20px rgba(15, 23, 42, 0.18);
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
@@ -344,9 +342,7 @@ watch(
 	padding: 8px;
 	color: #94a3b8;
 	cursor: pointer;
-	transition:
-		background-color 0.15s ease,
-		color 0.15s ease;
+	transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .table-dialog__close:hover {
@@ -419,9 +415,7 @@ watch(
 	border-radius: 10px;
 	background: #fff;
 	outline: none;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .table-dialog__input:focus {
@@ -458,9 +452,7 @@ watch(
 	font-weight: bold;
 	color: #334155;
 	cursor: pointer;
-	transition:
-		border-color 0.15s ease,
-		background-color 0.15s ease;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .table-dialog__align-btn:hover {
@@ -477,10 +469,7 @@ watch(
 	border-radius: 8px;
 	background: #fff;
 	outline: none;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease,
-		color 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
 
 .table-dialog__width-input:focus {
@@ -500,9 +489,7 @@ watch(
 	padding: 6px;
 	color: #94a3b8;
 	cursor: pointer;
-	transition:
-		background-color 0.15s ease,
-		color 0.15s ease;
+	transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .table-dialog__remove:hover {
@@ -549,9 +536,7 @@ watch(
 	border-radius: 10px;
 	background: #fff;
 	outline: none;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .table-dialog__select:focus {
@@ -568,9 +553,7 @@ watch(
 	border-radius: 10px;
 	padding: 8px 14px;
 	cursor: pointer;
-	transition:
-		background-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .table-dialog__add-btn:hover {
@@ -600,9 +583,7 @@ watch(
 	border-radius: 10px;
 	padding: 8px 12px;
 	cursor: pointer;
-	transition:
-		background-color 0.15s ease,
-		color 0.15s ease;
+	transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .table-dialog__footer-btn:hover {

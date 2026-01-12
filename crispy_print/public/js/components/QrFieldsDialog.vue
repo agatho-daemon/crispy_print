@@ -139,9 +139,7 @@ const apply = () => {
 	background: #fff;
 	border-radius: 12px;
 	border: 1px solid #e2e8f0;
-	box-shadow:
-		0 20px 40px rgba(15, 23, 42, 0.2),
-		0 8px 16px rgba(15, 23, 42, 0.12);
+	box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2), 0 8px 16px rgba(15, 23, 42, 0.12);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;

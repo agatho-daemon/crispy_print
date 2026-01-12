@@ -14,11 +14,16 @@
 		"isolatedModules": true,
 		"jsx": "preserve",
 		"types": ["node"],
-		"baseUrl": ".",
+		"baseUrl": "crispy_print/public/js",
 		"paths": {
 			"*": ["./*"]
 		}
 	},
-	"include": ["**/*.ts", "**/*.d.ts", "**/*.tsx", "**/*.vue"],
-	"exclude": ["node_modules"]
+	"include": [
+		"crispy_print/public/js/**/*.ts",
+		"crispy_print/public/js/**/*.d.ts",
+		"crispy_print/public/js/**/*.tsx",
+		"crispy_print/public/js/**/*.vue"
+	],
+	"exclude": ["crispy_print/public/js/node_modules"]
 }

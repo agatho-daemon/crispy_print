@@ -5,6 +5,6 @@ export default defineConfig({
 	plugins: [vue()],
 	test: {
 		environment: "jsdom",
-		include: ["tests/**/*.test.ts"],
+		include: ["crispy_print/public/js/tests/**/*.test.ts"],
 	},
 })

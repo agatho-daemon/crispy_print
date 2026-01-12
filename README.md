@@ -653,16 +653,13 @@ As an **alpha release**, Crispy Print has several known limitations:
 
 ### Roadmap
 
-#### alpha.2 (Next Release)
-
-- [ ] Batch printing from list view
-- [ ] Progress indicator for multi-document compilation
-- [ ] Configurable batch size limits
-
 #### Future Features (Not Yet Implemented)
 
 The following features are planned but not yet available:
 
+- [ ] Batch printing from list view
+- [ ] Progress indicator for multi-document compilation
+- [ ] Configurable batch size limits
 - [ ] Conditional field visibility rules
 - [ ] Custom page break controls
 - [ ] Multi-language format support

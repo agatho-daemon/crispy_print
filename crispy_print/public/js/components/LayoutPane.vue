@@ -1046,9 +1046,7 @@ function onEditDivider(field: Field) {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition:
-		background-color 0.2s ease,
-		border-color 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .layout-pane__help-btn:hover {
@@ -1065,9 +1063,7 @@ function onEditDivider(field: Field) {
 	font-size: 12px;
 	line-height: 1.6;
 	color: #334155;
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .layout-pane__help-list {
@@ -1109,9 +1105,7 @@ function onEditDivider(field: Field) {
 	background: #fff;
 	padding: 16px;
 	border-radius: 12px;
-	box-shadow:
-		0 8px 20px rgba(226, 232, 240, 0.55),
-		0 2px 6px rgba(148, 163, 184, 0.25);
+	box-shadow: 0 8px 20px rgba(226, 232, 240, 0.55), 0 2px 6px rgba(148, 163, 184, 0.25);
 }
 
 .section-card__header {
@@ -1144,9 +1138,7 @@ function onEditDivider(field: Field) {
 	border-radius: 8px;
 	outline: none;
 	background: #fff;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .section-title-input:focus {
@@ -1174,9 +1166,7 @@ function onEditDivider(field: Field) {
 	cursor: pointer;
 	font-size: 18px;
 	line-height: 1;
-	transition:
-		background-color 0.2s ease,
-		border-color 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .section-card__menu-btn:hover {
@@ -1190,9 +1180,7 @@ function onEditDivider(field: Field) {
 	padding: 6px;
 	width: 260px;
 	max-width: calc(100vw - 32px);
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .section-card__menu-item {
@@ -1250,9 +1238,7 @@ function onEditDivider(field: Field) {
 	border-radius: 12px;
 	background: #fafafa;
 	padding: 10px;
-	transition:
-		border-color 0.15s ease,
-		background-color 0.15s ease;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .section-column--empty:hover,
@@ -1283,9 +1269,7 @@ function onEditDivider(field: Field) {
 	background: rgba(255, 255, 255, 0.9);
 	padding: 12px;
 	border-radius: 8px;
-	transition:
-		border-color 0.15s ease,
-		background-color 0.15s ease;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .field-card:hover,
@@ -1388,9 +1372,7 @@ function onEditDivider(field: Field) {
 	padding: 6px;
 	width: 220px;
 	max-width: calc(100vw - 32px);
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .field-card__menu-item {
@@ -1436,9 +1418,7 @@ function onEditDivider(field: Field) {
 	background: #fff;
 	padding: 6px;
 	width: 180px;
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .field-card__menu-check {
@@ -1487,10 +1467,7 @@ function onEditDivider(field: Field) {
 	border-radius: 8px;
 	padding: 6px 12px;
 	cursor: pointer;
-	transition:
-		border-color 0.15s ease,
-		background-color 0.15s ease,
-		color 0.15s ease;
+	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .lp-btn:hover {

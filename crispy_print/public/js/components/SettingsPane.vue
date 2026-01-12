@@ -678,9 +678,7 @@ watch(availableCompanies, () => {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition:
-		background-color 0.2s ease,
-		border-color 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .settings-pane__help-btn:hover {
@@ -697,9 +695,7 @@ watch(availableCompanies, () => {
 	font-size: 12px;
 	line-height: 1.6;
 	color: #334155;
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .settings-pane__help-list {
@@ -751,9 +747,7 @@ watch(availableCompanies, () => {
 	border-radius: 3px;
 	background: #fff;
 	outline: none;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 	box-sizing: border-box;
 }
 

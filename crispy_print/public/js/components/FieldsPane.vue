@@ -137,9 +137,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition:
-		background-color 0.2s ease,
-		border-color 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .fields-pane__help-btn:hover {
@@ -156,9 +154,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	font-size: 12px;
 	line-height: 1.6;
 	color: #334155;
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .fields-pane__help-list {
@@ -187,9 +183,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	color: #0f172a;
 	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 	outline: none;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .search-input:focus {
@@ -230,9 +224,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	border: 1px dashed #e2e8f0;
 	border-radius: 6px;
 	background: #fff;
-	transition:
-		border-color 0.15s ease,
-		background-color 0.15s ease;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
 	cursor: grab;
 }
 

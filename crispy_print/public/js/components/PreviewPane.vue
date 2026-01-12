@@ -125,9 +125,7 @@ const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value)
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition:
-		background-color 0.2s ease,
-		border-color 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .preview-pane__help-btn:hover {
@@ -144,9 +142,7 @@ const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value)
 	font-size: 12px;
 	line-height: 1.6;
 	color: #334155;
-	box-shadow:
-		0 10px 25px rgba(148, 163, 184, 0.25),
-		0 8px 10px rgba(148, 163, 184, 0.15);
+	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .preview-pane__help-list {
@@ -197,9 +193,7 @@ const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value)
 	border: 1px solid #e2e8f0;
 	border-radius: 6px;
 	outline: none;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .preview-search__input:focus {
@@ -216,9 +210,7 @@ const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value)
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
-	transition:
-		background-color 0.2s ease,
-		border-color 0.2s ease;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .preview-btn:hover {

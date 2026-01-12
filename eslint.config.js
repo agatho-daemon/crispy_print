@@ -16,7 +16,7 @@ module.exports = [
 
 	// App source (JS/TS/Vue)
 	{
-		files: ["**/*.{js,ts,vue}"],
+		files: ["crispy_print/public/js/**/*.{js,ts,vue}"],
 		languageOptions: {
 			ecmaVersion: "latest",
 			sourceType: "module",

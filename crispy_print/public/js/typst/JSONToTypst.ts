@@ -408,8 +408,9 @@ class JSONTypstTranslator {
 
 		lines.push(this.buildPageSetupBlock())
 
+		const lastSectionIndex = (this.sections?.length || 1) - 1
 		this.sections?.forEach((section, idx) => {
-			lines.push(this.translateSection(section, idx))
+			lines.push(this.translateSection(section, idx, idx === lastSectionIndex))
 		})
 
 		lines.push("")
@@ -420,26 +421,30 @@ class JSONTypstTranslator {
 		return lines.join("\n")
 	}
 
-	translateSection(section: LayoutSection, index: number) {
+	translateSection(section: LayoutSection, index: number, isLastSection: boolean) {
 		const lines: string[] = []
 		const label = section.label || `Section ${index + 1}`
 		const safeLabel = this.escapeTypstText(label)
 
-		if (section.page_break && index > 0) {
-			lines.push("#pagebreak()")
-			lines.push("")
+		const appendPageBreak = () => {
+			if (section.page_break && !isLastSection) {
+				lines.push("")
+				lines.push("#pagebreak()")
+			}
 		}
 
 		lines.push(`// Section: ${label}`)
 
 		if (!section.columns || section.columns.length === 0) {
 			lines.push("// (empty section)")
+			appendPageBreak()
 			return lines.join("\n")
 		}
 
 		const hasFields = section.columns?.some((col) => col.fields && col.fields.length > 0) || false
 		if (!hasFields) {
 			lines.push("// (no fields)")
+			appendPageBreak()
 			return lines.join("\n")
 		}
 
@@ -448,7 +453,7 @@ class JSONTypstTranslator {
 			lines.push("")
 		}
 
-		lines.push(`#v(8pt) // Spacing after section`)
+		// lines.push(`#v(8pt) // Spacing after section`)
 		lines.push("")
 
 		// All sections use grid (unified approach for consistent spacing)
@@ -467,6 +472,21 @@ class JSONTypstTranslator {
 					const field = column.fields?.[rowIdx]
 
 					if (field) {
+						if (field.fieldtype === "Table") {
+							const fieldname = field.fieldname || "items"
+							const label = field.label || "Table"
+
+							lines.push(`  // Table: ${label}`)
+
+							if (this.realDocData && !(fieldname in (this.realDocData as Record<string, any>))) {
+								lines.push(`  // Table field "${fieldname}" not in document`)
+							}
+
+							if (!field.table_columns || field.table_columns.length === 0) {
+								lines.push(`  // TODO: Table ${fieldname} has no columns defined`)
+							}
+						}
+
 						const cellContent = this.translateFieldAsCell(field)
 						lines.push(this.formatGridCellLine(cellContent))
 					} else {
@@ -480,6 +500,7 @@ class JSONTypstTranslator {
 		} else {
 			lines.push("// (no fields in columns)")
 		}
+		appendPageBreak()
 		return lines.join("\n")
 	}
 
@@ -512,7 +533,7 @@ class JSONTypstTranslator {
 			case "Empty":
 				return `[#none]`
 			case "Table":
-				return `[${this.translateTable(field)}]`
+				return `[${this.translateTable(field, { includeComment: false })}]`
 			case "HTML":
 				return `[] // HTML field: ${fieldname}`
 			default:
@@ -621,16 +642,20 @@ class JSONTypstTranslator {
 		return numericTypes.includes(fieldtype) ? "right" : "left"
 	}
 
-	translateTable(field: LayoutField) {
+	translateTable(field: LayoutField, options: { includeComment?: boolean } = {}) {
 		const lines: string[] = []
 		const fieldname = field.fieldname || "items"
 		const label = field.label || "Table"
-		const safeLabel = this.escapeTypstText(label)
+		const includeComment = options.includeComment !== false
 
-		lines.push(`// Table: ${label}`)
+		if (includeComment) {
+			lines.push(`// Table: ${label}`)
+		}
 
 		if (this.realDocData && !(fieldname in (this.realDocData as Record<string, any>))) {
-			lines.push(`// Table field "${fieldname}" not in document`)
+			if (includeComment) {
+				lines.push(`// Table field "${fieldname}" not in document`)
+			}
 			return lines.join("\n")
 		}
 
@@ -660,7 +685,9 @@ class JSONTypstTranslator {
 			lines.push(`  )`)
 			lines.push(`]`)
 		} else {
-			lines.push(`// TODO: Table ${fieldname} has no columns defined`)
+			if (includeComment) {
+				lines.push(`// TODO: Table ${fieldname} has no columns defined`)
+			}
 		}
 
 		return lines.join("\n")
