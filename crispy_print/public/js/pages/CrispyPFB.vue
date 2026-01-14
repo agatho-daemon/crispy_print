@@ -13,29 +13,29 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue"
-import FieldsPane from "../components/FieldsPane.vue"
-import LayoutPane from "../components/LayoutPane.vue"
-import TypstCodePane from "../components/TypstCodePane.vue"
-import PreviewPane from "../components/PreviewPane.vue"
-import SettingsPane from "../components/SettingsPane.vue"
-import { useStore } from "../composables/useStore"
-import { getCrispyBuilderFormatName } from "../utils/routes"
+import { onMounted } from "vue";
+import FieldsPane from "../components/FieldsPane.vue";
+import LayoutPane from "../components/LayoutPane.vue";
+import TypstCodePane from "../components/TypstCodePane.vue";
+import PreviewPane from "../components/PreviewPane.vue";
+import SettingsPane from "../components/SettingsPane.vue";
+import { useStore } from "../composables/useStore";
+import { getCrispyBuilderFormatName } from "../utils/routes";
 
-const store = useStore()
-const pageSettings = store.pageSettings
+const store = useStore();
+const pageSettings = store.pageSettings;
 
 onMounted(async () => {
-	const formatName = getCrispyBuilderFormatName()
-	if (formatName) await store.fetch(formatName)
-})
+	const formatName = getCrispyBuilderFormatName();
+	if (formatName) await store.fetch(formatName);
+});
 
 // Watch for route changes
 if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	frappe.router.on("change", async () => {
-		const formatName = getCrispyBuilderFormatName()
-		if (formatName) await store.fetch(formatName)
-	})
+		const formatName = getCrispyBuilderFormatName();
+		if (formatName) await store.fetch(formatName);
+	});
 }
 </script>
 

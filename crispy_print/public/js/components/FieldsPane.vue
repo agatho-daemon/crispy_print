@@ -39,7 +39,9 @@
 
 		<div class="fields-list">
 			<div v-if="filteredFields.length === 0" class="empty-state">
-				<p v-if="searchQuery" class="empty-message">No fields match "{{ searchQuery }}!"</p>
+				<p v-if="searchQuery" class="empty-message">
+					No fields match "{{ searchQuery }}!"
+				</p>
 				<p v-else class="empty-message">No fields available yet!</p>
 			</div>
 
@@ -60,36 +62,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, unref, type MaybeRef } from "vue"
-import type { DocField } from "../utils/layout"
+import { computed, ref, unref, type MaybeRef } from "vue";
+import type { DocField } from "../utils/layout";
 
 interface Props {
-	fields: MaybeRef<DocField[]>
-	loading?: MaybeRef<boolean>
+	fields: MaybeRef<DocField[]>;
+	loading?: MaybeRef<boolean>;
 }
 
-const props = withDefaults(defineProps<Props>(), { loading: false })
-const searchQuery = ref("")
-const loading = computed(() => unref(props.loading))
+const props = withDefaults(defineProps<Props>(), { loading: false });
+const searchQuery = ref("");
+const loading = computed(() => unref(props.loading));
 
 const filteredFields = computed(() => {
-	const all = unref(props.fields)
-	if (!searchQuery.value) return all
+	const all = unref(props.fields);
+	if (!searchQuery.value) return all;
 
-	const query = searchQuery.value.toLowerCase()
+	const query = searchQuery.value.toLowerCase();
 	return all.filter((field) => {
-		const label = field.label?.toLowerCase() || ""
-		const name = field.fieldname?.toLowerCase() || ""
-		const type = field.fieldtype?.toLowerCase() || ""
-		return label.includes(query) || name.includes(query) || type.includes(query)
-	})
-})
+		const label = field.label?.toLowerCase() || "";
+		const name = field.fieldname?.toLowerCase() || "";
+		const type = field.fieldtype?.toLowerCase() || "";
+		return label.includes(query) || name.includes(query) || type.includes(query);
+	});
+});
 
 function onFieldDragStart(event: DragEvent, field: DocField) {
 	if (event.dataTransfer) {
-		event.dataTransfer.effectAllowed = "copy"
-		event.dataTransfer.setData("application/json", JSON.stringify(field))
-		event.dataTransfer.setData("text/plain", field.fieldname)
+		event.dataTransfer.effectAllowed = "copy";
+		event.dataTransfer.setData("application/json", JSON.stringify(field));
+		event.dataTransfer.setData("text/plain", field.fieldname);
 	}
 }
 </script>

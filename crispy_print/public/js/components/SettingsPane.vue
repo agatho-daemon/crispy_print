@@ -64,7 +64,10 @@
 
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">Orientation</label>
-							<select v-model="pageSettings.orientation" class="settings-pane__select">
+							<select
+								v-model="pageSettings.orientation"
+								class="settings-pane__select"
+							>
 								<option value="portrait">Portrait</option>
 								<option value="landscape">Landscape</option>
 							</select>
@@ -148,7 +151,11 @@
 										v-model="typography.sectionLabel.fontFamily"
 										class="settings-pane__select"
 									>
-										<option v-for="font in availableFonts" :key="font" :value="font">
+										<option
+											v-for="font in availableFonts"
+											:key="font"
+											:value="font"
+										>
 											{{ font }}
 										</option>
 									</select>
@@ -165,7 +172,10 @@
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Style</label>
-									<select v-model="typography.sectionLabel.fontStyle" class="settings-pane__select">
+									<select
+										v-model="typography.sectionLabel.fontStyle"
+										class="settings-pane__select"
+									>
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
 										<option value="oblique">Oblique</option>
@@ -200,8 +210,15 @@
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Family</label>
-									<select v-model="typography.fieldLabel.fontFamily" class="settings-pane__select">
-										<option v-for="font in availableFonts" :key="font" :value="font">
+									<select
+										v-model="typography.fieldLabel.fontFamily"
+										class="settings-pane__select"
+									>
+										<option
+											v-for="font in availableFonts"
+											:key="font"
+											:value="font"
+										>
 											{{ font }}
 										</option>
 									</select>
@@ -218,7 +235,10 @@
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Style</label>
-									<select v-model="typography.fieldLabel.fontStyle" class="settings-pane__select">
+									<select
+										v-model="typography.fieldLabel.fontStyle"
+										class="settings-pane__select"
+									>
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
 										<option value="oblique">Oblique</option>
@@ -226,7 +246,10 @@
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Weight</label>
-									<select v-model="typography.fieldLabel.fontWeight" class="settings-pane__select">
+									<select
+										v-model="typography.fieldLabel.fontWeight"
+										class="settings-pane__select"
+									>
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
 										<option value="light">Light</option>
@@ -250,8 +273,15 @@
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Family</label>
-									<select v-model="typography.fieldValue.fontFamily" class="settings-pane__select">
-										<option v-for="font in availableFonts" :key="font" :value="font">
+									<select
+										v-model="typography.fieldValue.fontFamily"
+										class="settings-pane__select"
+									>
+										<option
+											v-for="font in availableFonts"
+											:key="font"
+											:value="font"
+										>
 											{{ font }}
 										</option>
 									</select>
@@ -268,7 +298,10 @@
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Style</label>
-									<select v-model="typography.fieldValue.fontStyle" class="settings-pane__select">
+									<select
+										v-model="typography.fieldValue.fontStyle"
+										class="settings-pane__select"
+									>
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
 										<option value="oblique">Oblique</option>
@@ -276,7 +309,10 @@
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Weight</label>
-									<select v-model="typography.fieldValue.fontWeight" class="settings-pane__select">
+									<select
+										v-model="typography.fieldValue.fontWeight"
+										class="settings-pane__select"
+									>
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
 										<option value="light">Light</option>
@@ -333,9 +369,14 @@
 
 						<div v-if="brandingMode === 'letterhead'" class="settings-pane__field">
 							<label class="settings-pane__label">Letterhead</label>
-							<select v-model="pageSettings.letterhead" class="settings-pane__select">
+							<select
+								v-model="pageSettings.letterhead"
+								class="settings-pane__select"
+							>
 								<option value="">None</option>
-								<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
+								<option v-if="loadingLetterheads" disabled>
+									Loading letterheads...
+								</option>
 								<option
 									v-for="letterhead in availableLetterheads"
 									:key="letterhead"
@@ -347,22 +388,36 @@
 						</div>
 
 						<div v-if="brandingMode === 'logo'">
-							<p class="settings-pane__hint">Logo is anchored to top-left using #place().</p>
+							<p class="settings-pane__hint">
+								Logo is anchored to top-left using #place().
+							</p>
 							<div class="settings-pane__field">
 								<label class="settings-pane__label">Company</label>
-								<select v-model="logoSettings.company" class="settings-pane__select">
+								<select
+									v-model="logoSettings.company"
+									class="settings-pane__select"
+								>
 									<option value="">Select company</option>
-									<option v-if="loadingCompanies" disabled>Loading companies...</option>
+									<option v-if="loadingCompanies" disabled>
+										Loading companies...
+									</option>
 									<option
 										v-for="company in availableCompanies"
 										:key="company.name"
 										:value="company.name"
 									>
-										{{ company.abbr ? `${company.abbr} - ${company.name}` : company.name }}
+										{{
+											company.abbr
+												? `${company.abbr} - ${company.name}`
+												: company.name
+										}}
 									</option>
 								</select>
 							</div>
-							<p v-if="logoSettings.company && !logoSettings.image" class="settings-pane__hint">
+							<p
+								v-if="logoSettings.company && !logoSettings.image"
+								class="settings-pane__hint"
+							>
 								Selected company has no logo set.
 							</p>
 							<div class="settings-pane__grid">
@@ -397,7 +452,11 @@
 
 				<div class="settings-pane__field settings-pane__field--inline">
 					<label class="settings-pane__label">Remove QRCode</label>
-					<input v-model="store.removeQr.value" type="checkbox" class="settings-pane__checkbox" />
+					<input
+						v-model="store.removeQr.value"
+						type="checkbox"
+						class="settings-pane__checkbox"
+					/>
 				</div>
 
 				<div v-if="!store.removeQr.value" class="settings-pane__section">
@@ -420,7 +479,9 @@
 							</svg>
 						</button>
 						<div v-if="isQrExpanded" class="settings-pane__section-content">
-							<p class="settings-pane__hint">QR Code is anchored to bottom-left using #place().</p>
+							<p class="settings-pane__hint">
+								QR Code is anchored to bottom-left using #place().
+							</p>
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">Size (mm)</label>
 								<input
@@ -431,19 +492,33 @@
 							</div>
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">dx (mm)</label>
-								<input v-model.number="qrSettings.dx" type="number" class="settings-pane__input" />
+								<input
+									v-model.number="qrSettings.dx"
+									type="number"
+									class="settings-pane__input"
+								/>
 							</div>
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">dy (mm)</label>
-								<input v-model.number="qrSettings.dy" type="number" class="settings-pane__input" />
+								<input
+									v-model.number="qrSettings.dy"
+									type="number"
+									class="settings-pane__input"
+								/>
 							</div>
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">QR fields</label>
 								<div class="settings-pane__qr-row">
-									<button type="button" class="settings-pane__qr-btn" @click="showQrDialog = true">
+									<button
+										type="button"
+										class="settings-pane__qr-btn"
+										@click="showQrDialog = true"
+									>
 										Select fields
 									</button>
-									<span class="settings-pane__qr-summary">{{ qrFieldsSummary }}</span>
+									<span class="settings-pane__qr-summary">{{
+										qrFieldsSummary
+									}}</span>
 								</div>
 							</div>
 						</div>
@@ -461,29 +536,29 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from "vue"
+import { ref, watch, onMounted, computed } from "vue";
 import {
 	ensureLogoSettings,
 	ensureQrSettings,
 	ensureTypography,
 	type PageSettings,
 	type TypographySettings,
-} from "../utils/pageSettings"
-import ColorInput from "./ColorInput.vue"
-import { getTypstLocalFonts } from "../api/crispy"
-import { useBrandingData } from "../composables/useBrandingData"
-import { useStore } from "../composables/useStore"
-import QrFieldsDialog from "./QrFieldsDialog.vue"
+} from "../utils/pageSettings";
+import ColorInput from "./ColorInput.vue";
+import { getTypstLocalFonts } from "../api/crispy";
+import { useBrandingData } from "../composables/useBrandingData";
+import { useStore } from "../composables/useStore";
+import QrFieldsDialog from "./QrFieldsDialog.vue";
 
 interface Props {
-	pageSettings: PageSettings
-	markDirty: () => void
+	pageSettings: PageSettings;
+	markDirty: () => void;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const availableFonts = ref<string[]>([])
-const loadingFonts = ref(false)
+const availableFonts = ref<string[]>([]);
+const loadingFonts = ref(false);
 const {
 	availableLetterheads,
 	loadingLetterheads,
@@ -492,145 +567,145 @@ const {
 	resolveCompanyLogo,
 	fetchLetterheads,
 	fetchCompanies,
-} = useBrandingData()
-const isPageSettingsExpanded = ref(false)
-const isTypographyExpanded = ref(false)
-const isBrandingExpanded = ref(false)
-const isQrExpanded = ref(false)
-const store = useStore()
-const showQrDialog = ref(false)
+} = useBrandingData();
+const isPageSettingsExpanded = ref(false);
+const isTypographyExpanded = ref(false);
+const isBrandingExpanded = ref(false);
+const isQrExpanded = ref(false);
+const store = useStore();
+const showQrDialog = ref(false);
 
 // Initialize typography with defaults if not present
 const typography = computed<TypographySettings>(() => {
-	return ensureTypography(props.pageSettings)
-})
+	return ensureTypography(props.pageSettings);
+});
 
-const logoSettings = computed(() => ensureLogoSettings(props.pageSettings))
+const logoSettings = computed(() => ensureLogoSettings(props.pageSettings));
 
-const qrSettings = computed(() => ensureQrSettings(props.pageSettings))
+const qrSettings = computed(() => ensureQrSettings(props.pageSettings));
 
-const qrAvailableFields = computed(() => store.fields.value || [])
+const qrAvailableFields = computed(() => store.fields.value || []);
 
 const qrFieldsSummary = computed(() => {
-	const count = qrSettings.value.fields?.length || 0
-	if (!count) return "No fields selected"
-	if (count === 1) return "1 field selected"
-	return `${count} fields selected`
-})
+	const count = qrSettings.value.fields?.length || 0;
+	if (!count) return "No fields selected";
+	if (count === 1) return "1 field selected";
+	return `${count} fields selected`;
+});
 
 const updateQrFields = (fields: string[]) => {
-	qrSettings.value.fields = fields
-	props.markDirty()
-}
+	qrSettings.value.fields = fields;
+	props.markDirty();
+};
 
 const brandingMode = computed<string>({
 	get: () => {
-		const mode = props.pageSettings.brandingMode
+		const mode = props.pageSettings.brandingMode;
 		if (mode === "letterhead" || mode === "logo" || mode === "none") {
-			return mode
+			return mode;
 		}
 		if (props.pageSettings.logo?.company || props.pageSettings.logo?.image) {
-			return "logo"
+			return "logo";
 		}
 		if (props.pageSettings.letterhead) {
-			return "letterhead"
+			return "letterhead";
 		}
-		return "none"
+		return "none";
 	},
 	set: (value) => {
-		props.pageSettings.brandingMode = value as "letterhead" | "logo" | "none"
+		props.pageSettings.brandingMode = value as "letterhead" | "logo" | "none";
 	},
-})
+});
 
 // Fetch available fonts from Typst
 async function fetchFonts() {
 	if (typeof frappe === "undefined") {
 		// Dev mode fallback
-		availableFonts.value = ["Arial", "Helvetica", "Times New Roman", "Courier"]
-		return
+		availableFonts.value = ["Arial", "Helvetica", "Times New Roman", "Courier"];
+		return;
 	}
 
-	loadingFonts.value = true
+	loadingFonts.value = true;
 	try {
-		availableFonts.value = await getTypstLocalFonts()
+		availableFonts.value = await getTypstLocalFonts();
 	} catch (error) {
-		console.error("[SettingsPane] Failed to fetch fonts:", error)
+		console.error("[SettingsPane] Failed to fetch fonts:", error);
 		// Fallback fonts
-		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"]
+		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"];
 	} finally {
-		loadingFonts.value = false
+		loadingFonts.value = false;
 	}
 }
 
 function parseSize(input: string | null | undefined): {
-	value: number
-	unit: string
-	decimals: number
+	value: number;
+	unit: string;
+	decimals: number;
 } {
-	const raw = String(input || "").trim()
-	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i)
-	if (!match) return { value: 0, unit: "pt", decimals: 0 }
-	const value = Number(match[1])
-	const unit = (match[2] || "pt").toLowerCase()
-	const decimals = (match[1].split(".")[1] || "").length
-	return { value: Number.isFinite(value) ? value : 0, unit, decimals }
+	const raw = String(input || "").trim();
+	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i);
+	if (!match) return { value: 0, unit: "pt", decimals: 0 };
+	const value = Number(match[1]);
+	const unit = (match[2] || "pt").toLowerCase();
+	const decimals = (match[1].split(".")[1] || "").length;
+	return { value: Number.isFinite(value) ? value : 0, unit, decimals };
 }
 
 function formatPt(value: number): string {
-	const safe = Math.max(1, value)
-	const num = safe.toFixed(2).replace(/\.?0+$/, "")
-	return `${num}pt`
+	const safe = Math.max(1, value);
+	const num = safe.toFixed(2).replace(/\.?0+$/, "");
+	return `${num}pt`;
 }
 
 const sectionLabelFontSizePt = computed<number>({
 	get: () => Math.max(1, parseSize(typography.value.sectionLabel.fontSize).value || 0),
 	set: (value) => {
-		typography.value.sectionLabel.fontSize = formatPt(value)
+		typography.value.sectionLabel.fontSize = formatPt(value);
 	},
-})
+});
 
 const fieldLabelFontSizePt = computed<number>({
 	get: () => Math.max(1, parseSize(typography.value.fieldLabel.fontSize).value || 0),
 	set: (value) => {
-		typography.value.fieldLabel.fontSize = formatPt(value)
+		typography.value.fieldLabel.fontSize = formatPt(value);
 	},
-})
+});
 
 const fieldValueFontSizePt = computed<number>({
 	get: () => Math.max(1, parseSize(typography.value.fieldValue.fontSize).value || 0),
 	set: (value) => {
-		typography.value.fieldValue.fontSize = formatPt(value)
+		typography.value.fieldValue.fontSize = formatPt(value);
 	},
-})
+});
 
 onMounted(() => {
-	fetchFonts()
-	fetchLetterheads()
-	fetchCompanies()
-})
+	fetchFonts();
+	fetchLetterheads();
+	fetchCompanies();
+});
 
 watch(
 	() => props.pageSettings,
 	() => {
 		// Don't mark dirty during initial load
 		if (!store.loading.value && !store.initializing.value) {
-			props.markDirty()
+			props.markDirty();
 		}
 	},
 	{ deep: true }
-)
+);
 
 watch(
 	() => logoSettings.value.company,
 	(newCompany) => {
-		logoSettings.value.image = resolveCompanyLogo(newCompany)
+		logoSettings.value.image = resolveCompanyLogo(newCompany);
 	}
-)
+);
 
 watch(availableCompanies, () => {
-	if (!logoSettings.value.company) return
-	logoSettings.value.image = resolveCompanyLogo(logoSettings.value.company)
-})
+	if (!logoSettings.value.company) return;
+	logoSettings.value.image = resolveCompanyLogo(logoSettings.value.company);
+});
 </script>
 
 <style scoped>

@@ -4,7 +4,9 @@
 			<div class="layout-pane__header-row">
 				<h3 class="layout-pane__title">Layout Builder</h3>
 				<div class="layout-pane__controls">
-					<button class="lp-btn lp-btn--secondary" @click="resetLayout">Reset to Default</button>
+					<button class="lp-btn lp-btn--secondary" @click="resetLayout">
+						Reset to Default
+					</button>
 					<div class="layout-pane__spacer"></div>
 					<div>
 						<button
@@ -19,8 +21,13 @@
 						<div id="layout-help" popover class="layout-pane__help-popover">
 							<ul class="layout-pane__help-list">
 								<li>Drag fields from Fields pane into columns.</li>
-								<li>Use handles to reorder sections, columns, and fields in place.</li>
-								<li>Use the &#8943; menu on a section for add/remove/page break/orientation.</li>
+								<li>
+									Use handles to reorder sections, columns, and fields in place.
+								</li>
+								<li>
+									Use the &#8943; menu on a section for add/remove/page
+									break/orientation.
+								</li>
 							</ul>
 						</div>
 					</div>
@@ -62,7 +69,10 @@
 									&#8943;
 								</button>
 								<div
-									v-if="openSectionMenuId === getSectionMenuId(section, sectionIndex)"
+									v-if="
+										openSectionMenuId ===
+										getSectionMenuId(section, sectionIndex)
+									"
 									class="section-card__menu"
 									:style="sectionMenuStyle"
 									@click.stop
@@ -102,7 +112,11 @@
 										class="section-card__menu-item"
 										@click="onTogglePageBreak(section)"
 									>
-										{{ section.page_break ? "Remove page break" : "Add page break" }}
+										{{
+											section.page_break
+												? "Remove page break"
+												: "Add page break"
+										}}
 									</button>
 									<button
 										type="button"
@@ -127,7 +141,10 @@
 							<div
 								v-for="(column, colIndex) in section.columns"
 								:key="colIndex"
-								:class="['section-column', { 'section-column--empty': !column.fields.length }]"
+								:class="[
+									'section-column',
+									{ 'section-column--empty': !column.fields.length },
+								]"
 								@dragover.prevent
 								@drop="onDropField($event, column)"
 							>
@@ -143,7 +160,9 @@
 										<div class="field-card">
 											<div class="field-card__row">
 												<div class="field-card__info">
-													<span class="field-grip" title="Drag field"> &#8942; </span>
+													<span class="field-grip" title="Drag field">
+														&#8942;
+													</span>
 													<input
 														v-model="field.label"
 														type="text"
@@ -159,14 +178,28 @@
 														class="field-card__menu-btn"
 														title="Field menu"
 														@click.stop="
-															toggleFieldMenu(getFieldMenuId(section, colIndex, field), $event)
+															toggleFieldMenu(
+																getFieldMenuId(
+																	section,
+																	colIndex,
+																	field
+																),
+																$event
+															)
 														"
 													>
 														&#8943;
 													</button>
 													<teleport to="body">
 														<div
-															v-if="openFieldMenuId === getFieldMenuId(section, colIndex, field)"
+															v-if="
+																openFieldMenuId ===
+																getFieldMenuId(
+																	section,
+																	colIndex,
+																	field
+																)
+															"
 															class="field-card__menu"
 															:style="fieldMenuStyle"
 															@click.stop
@@ -177,7 +210,10 @@
 																@click="toggleAlignSubmenu"
 															>
 																Align
-																<span class="field-card__menu-arrow">›</span>
+																<span
+																	class="field-card__menu-arrow"
+																	>›</span
+																>
 															</button>
 															<div
 																v-if="openFieldSubmenu === 'align'"
@@ -187,31 +223,64 @@
 																<button
 																	type="button"
 																	class="field-card__menu-item"
-																	@click="setAlignment(field, 'left')"
+																	@click="
+																		setAlignment(field, 'left')
+																	"
 																>
-																	<span class="field-card__menu-check">{{
-																		getFieldAlign(field) === "left" ? "✓" : ""
-																	}}</span>
+																	<span
+																		class="field-card__menu-check"
+																		>{{
+																			getFieldAlign(
+																				field
+																			) === "left"
+																				? "✓"
+																				: ""
+																		}}</span
+																	>
 																	Left
 																</button>
 																<button
 																	type="button"
 																	class="field-card__menu-item"
-																	@click="setAlignment(field, 'center')"
+																	@click="
+																		setAlignment(
+																			field,
+																			'center'
+																		)
+																	"
 																>
-																	<span class="field-card__menu-check">{{
-																		getFieldAlign(field) === "center" ? "✓" : ""
-																	}}</span>
+																	<span
+																		class="field-card__menu-check"
+																		>{{
+																			getFieldAlign(
+																				field
+																			) === "center"
+																				? "✓"
+																				: ""
+																		}}</span
+																	>
 																	Center
 																</button>
 																<button
 																	type="button"
 																	class="field-card__menu-item"
-																	@click="setAlignment(field, 'right')"
+																	@click="
+																		setAlignment(
+																			field,
+																			'right'
+																		)
+																	"
 																>
-																	<span class="field-card__menu-check">{{
-																		getFieldAlign(field) === "right" ? "✓" : ""
-																	}}</span>
+																	<span
+																		class="field-card__menu-check"
+																		>{{
+																			getFieldAlign(
+																				field
+																			) === "right"
+																				? "✓"
+																				: ""
+																		}}</span
+																	>
 																	Right
 																</button>
 															</div>
@@ -221,7 +290,11 @@
 																class="field-card__menu-item"
 																@click="onToggleFieldLabel(field)"
 															>
-																{{ (field.label ?? "").trim() ? "Hide label" : "Show label" }}
+																{{
+																	(field.label ?? "").trim()
+																		? "Hide label"
+																		: "Show label"
+																}}
 															</button>
 
 															<button
@@ -234,7 +307,11 @@
 															</button>
 
 															<button
-																v-if="(field.fieldtype || '').toLowerCase() === 'typst'"
+																v-if="
+																	(
+																		field.fieldtype || ''
+																	).toLowerCase() === 'typst'
+																"
 																type="button"
 																class="field-card__menu-item"
 																@click="onEditTypstCode(field)"
@@ -243,7 +320,11 @@
 															</button>
 
 															<button
-																v-if="(field.fieldtype || '').toLowerCase() === 'spacer'"
+																v-if="
+																	(
+																		field.fieldtype || ''
+																	).toLowerCase() === 'spacer'
+																"
 																type="button"
 																class="field-card__menu-item"
 																@click="onEditSpacer(field)"
@@ -252,7 +333,11 @@
 															</button>
 
 															<button
-																v-if="(field.fieldtype || '').toLowerCase() === 'divider'"
+																v-if="
+																	(
+																		field.fieldtype || ''
+																	).toLowerCase() === 'divider'
+																"
 																type="button"
 																class="field-card__menu-item"
 																@click="onEditDivider(field)"
@@ -260,12 +345,19 @@
 																Configure divider
 															</button>
 
-															<div class="field-card__menu-divider"></div>
+															<div
+																class="field-card__menu-divider"
+															></div>
 
 															<button
 																type="button"
 																class="field-card__menu-item field-card__menu-item--danger"
-																@click="onRemoveField(column, fieldIndex)"
+																@click="
+																	onRemoveField(
+																		column,
+																		fieldIndex
+																	)
+																"
 															>
 																Remove
 															</button>
@@ -274,7 +366,10 @@
 												</div>
 											</div>
 											<div
-												v-if="field.fieldtype === 'Table' && field.table_columns?.length"
+												v-if="
+													field.fieldtype === 'Table' &&
+													field.table_columns?.length
+												"
 												class="field-card__columns"
 											>
 												<div
@@ -312,89 +407,89 @@
 </template>
 
 <script setup lang="ts">
-import draggable from "vuedraggable"
-import { onBeforeUnmount, onMounted, ref, watch } from "vue"
-import { useStore } from "../composables/useStore"
-import TableColumnsDialog from "../components/TableColumnsDialog.vue"
+import draggable from "vuedraggable";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useStore } from "../composables/useStore";
+import TableColumnsDialog from "../components/TableColumnsDialog.vue";
 import type {
 	LayoutSection,
 	LayoutColumn,
 	LayoutField,
 	DocField,
 	TableColumn,
-} from "../utils/layout"
-import { getTableColumns } from "../utils/layout"
-import { getDefaultAlignment } from "../utils/tableColumns"
+} from "../utils/layout";
+import { getTableColumns } from "../utils/layout";
+import { getDefaultAlignment } from "../utils/tableColumns";
 
 type Section = LayoutSection & {
-	id?: number
-	page_break?: boolean
-	field_orientation?: "left-right" | "top-down"
-}
-type Column = LayoutColumn
-type Field = LayoutField
+	id?: number;
+	page_break?: boolean;
+	field_orientation?: "left-right" | "top-down";
+};
+type Column = LayoutColumn;
+type Field = LayoutField;
 type TableEditorContext = {
-	field: Field
-}
+	field: Field;
+};
 
-const store = useStore()
-const layout = store.layout
-const columnEditor = ref<TableEditorContext | null>(null)
-const editingColumns = ref<TableColumn[]>([])
+const store = useStore();
+const layout = store.layout;
+const columnEditor = ref<TableEditorContext | null>(null);
+const editingColumns = ref<TableColumn[]>([]);
 
-const openSectionMenuId = ref<string | null>(null)
-const sectionMenuStyle = ref<Record<string, string>>({})
+const openSectionMenuId = ref<string | null>(null);
+const sectionMenuStyle = ref<Record<string, string>>({});
 
-const openFieldMenuId = ref<string | null>(null)
-const fieldMenuStyle = ref<Record<string, string>>({})
-const openFieldSubmenu = ref<"align" | null>(null)
+const openFieldMenuId = ref<string | null>(null);
+const fieldMenuStyle = ref<Record<string, string>>({});
+const openFieldSubmenu = ref<"align" | null>(null);
 
 const sectionKey = (section: Section, index: number) => {
-	return (section as any).id || index
-}
+	return (section as any).id || index;
+};
 
 function getSectionMenuId(section: Section, index: number) {
-	return String(section.id || index)
+	return String(section.id || index);
 }
 
 function closeSectionMenu() {
-	openSectionMenuId.value = null
-	sectionMenuStyle.value = {}
+	openSectionMenuId.value = null;
+	sectionMenuStyle.value = {};
 }
 
 function getFieldMenuId(section: Section, colIndex: number | string, field: Field) {
-	const sid = String(section.id ?? "section")
-	const fname = String(field.fieldname ?? "field")
-	return `${sid}:${String(colIndex)}:${fname}`
+	const sid = String(section.id ?? "section");
+	const fname = String(field.fieldname ?? "field");
+	return `${sid}:${String(colIndex)}:${fname}`;
 }
 
 function closeFieldMenu() {
-	openFieldMenuId.value = null
-	openFieldSubmenu.value = null
-	fieldMenuStyle.value = {}
+	openFieldMenuId.value = null;
+	openFieldSubmenu.value = null;
+	fieldMenuStyle.value = {};
 }
 
 function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
-	const id = getSectionMenuId(section, index)
+	const id = getSectionMenuId(section, index);
 	if (openSectionMenuId.value === id) {
-		closeSectionMenu()
-		return
+		closeSectionMenu();
+		return;
 	}
 
-	openSectionMenuId.value = id
+	openSectionMenuId.value = id;
 
-	const target = event.currentTarget as HTMLElement | null
-	if (!target) return
+	const target = event.currentTarget as HTMLElement | null;
+	if (!target) return;
 
-	const rect = target.getBoundingClientRect()
-	const menuHeight = 280 // Approximate menu height
-	const viewportHeight = window.innerHeight
+	const rect = target.getBoundingClientRect();
+	const menuHeight = 280; // Approximate menu height
+	const viewportHeight = window.innerHeight;
 
 	// Check if menu would overflow bottom of viewport
-	const shouldFlipUp = rect.bottom + menuHeight + 6 > viewportHeight
+	const shouldFlipUp = rect.bottom + menuHeight + 6 > viewportHeight;
 
-	const top = shouldFlipUp ? rect.top - menuHeight - 6 : rect.bottom + 6
-	const left = rect.right
+	const top = shouldFlipUp ? rect.top - menuHeight - 6 : rect.bottom + 6;
+	const left = rect.right;
 
 	sectionMenuStyle.value = {
 		position: "fixed",
@@ -402,29 +497,31 @@ function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
 		left: `${left}px`,
 		transform: "translateX(-100%)",
 		zIndex: "1000",
-	}
+	};
 }
 
 function toggleFieldMenu(id: string, event: MouseEvent) {
 	if (openFieldMenuId.value === id) {
-		closeFieldMenu()
-		return
+		closeFieldMenu();
+		return;
 	}
 
-	closeSectionMenu()
-	openFieldMenuId.value = id
-	openFieldSubmenu.value = null
+	closeSectionMenu();
+	openFieldMenuId.value = id;
+	openFieldSubmenu.value = null;
 
 	const target =
 		(event.currentTarget as HTMLElement | null) ||
-		((event.target as HTMLElement | null)?.closest?.(".field-card__menu-btn") as HTMLElement | null)
+		((event.target as HTMLElement | null)?.closest?.(
+			".field-card__menu-btn"
+		) as HTMLElement | null);
 
-	const rect = target?.getBoundingClientRect?.()
-	const estimatedMenuHeight = 280
-	const maxTop = Math.max(12, window.innerHeight - estimatedMenuHeight)
+	const rect = target?.getBoundingClientRect?.();
+	const estimatedMenuHeight = 280;
+	const maxTop = Math.max(12, window.innerHeight - estimatedMenuHeight);
 
-	const top = Math.min((rect?.bottom ?? event.clientY) + 6, maxTop)
-	const left = rect?.right ?? event.clientX
+	const top = Math.min((rect?.bottom ?? event.clientY) + 6, maxTop);
+	const left = rect?.right ?? event.clientX;
 
 	fieldMenuStyle.value = {
 		position: "fixed",
@@ -432,96 +529,96 @@ function toggleFieldMenu(id: string, event: MouseEvent) {
 		left: `${left}px`,
 		transform: "translateX(-100%)",
 		zIndex: "1000",
-	}
+	};
 }
 
 function ensureLayout() {
 	if (!layout.value || !layout.value.sections?.length) {
-		if (!store.meta.value) return
-		const fresh = store.getDefaultLayout()
+		if (!store.meta.value) return;
+		const fresh = store.getDefaultLayout();
 		if (fresh) {
-			store.layout.value = fresh
-			store.markDirty()
+			store.layout.value = fresh;
+			store.markDirty();
 		}
 	}
 }
 
 function ensureAtLeastOneSection() {
 	if (!layout.value) {
-		layout.value = { sections: [] }
+		layout.value = { sections: [] };
 	}
 	if (!layout.value.sections?.length) {
-		layout.value.sections = [createEmptySection()]
+		layout.value.sections = [createEmptySection()];
 	}
 }
 
 onMounted(() => {
-	ensureLayout()
-	ensureAtLeastOneSection()
-})
+	ensureLayout();
+	ensureAtLeastOneSection();
+});
 
 const onDocClick = () => {
-	closeSectionMenu()
-	closeFieldMenu()
-}
+	closeSectionMenu();
+	closeFieldMenu();
+};
 const onKeyDown = (e: KeyboardEvent) => {
 	if (e.key === "Escape") {
-		closeSectionMenu()
-		closeFieldMenu()
+		closeSectionMenu();
+		closeFieldMenu();
 	}
-}
+};
 
 onMounted(() => {
-	document.addEventListener("click", onDocClick)
-	document.addEventListener("keydown", onKeyDown)
-})
+	document.addEventListener("click", onDocClick);
+	document.addEventListener("keydown", onKeyDown);
+});
 
 onBeforeUnmount(() => {
-	document.removeEventListener("click", onDocClick)
-	document.removeEventListener("keydown", onKeyDown)
-})
+	document.removeEventListener("click", onDocClick);
+	document.removeEventListener("keydown", onKeyDown);
+});
 
 watch(
 	() => store.meta.value,
 	() => {
-		ensureLayout()
-		ensureAtLeastOneSection()
+		ensureLayout();
+		ensureAtLeastOneSection();
 	},
 	{ immediate: false }
-)
+);
 
 function addSection() {
 	if (!layout.value) {
-		layout.value = { sections: [] }
+		layout.value = { sections: [] };
 	}
-	layout.value.sections.push(createEmptySection())
-	store.markDirty()
+	layout.value.sections.push(createEmptySection());
+	store.markDirty();
 }
 
 function addSectionAbove(index: number) {
 	if (!layout.value) {
-		layout.value = { sections: [] }
+		layout.value = { sections: [] };
 	}
-	layout.value.sections.splice(Math.max(0, index), 0, createEmptySection())
-	store.markDirty()
+	layout.value.sections.splice(Math.max(0, index), 0, createEmptySection());
+	store.markDirty();
 }
 
 function onAddSectionAbove(index: number) {
-	addSectionAbove(index)
-	closeSectionMenu()
+	addSectionAbove(index);
+	closeSectionMenu();
 }
 
 function addSectionBelow(index: number) {
 	if (!layout.value) {
-		layout.value = { sections: [] }
+		layout.value = { sections: [] };
 	}
-	layout.value.sections.splice(Math.max(0, index + 1), 0, createEmptySection())
-	store.markDirty()
+	layout.value.sections.splice(Math.max(0, index + 1), 0, createEmptySection());
+	store.markDirty();
 }
 
 function onAddSectionBelow(index: number) {
-	addSectionBelow(index)
-	closeSectionMenu()
+	addSectionBelow(index);
+	closeSectionMenu();
 }
 
 function createEmptySection(): Section {
@@ -530,153 +627,155 @@ function createEmptySection(): Section {
 		columns: [{ label: "", fields: [] }],
 		id: Date.now() + Math.random(),
 		field_orientation: "left-right",
-	}
+	};
 }
 
 function removeSection(index: number) {
-	layout.value?.sections.splice(index, 1)
-	store.markDirty()
+	layout.value?.sections.splice(index, 1);
+	store.markDirty();
 }
 
 function onRemoveSection(index: number) {
-	removeSection(index)
-	closeSectionMenu()
+	removeSection(index);
+	closeSectionMenu();
 }
 
 function addColumn(section: Section) {
-	if (!section.columns) section.columns = []
+	if (!section.columns) section.columns = [];
 	if (section.columns.length >= 4) {
-		return
+		return;
 	}
-	section.columns.push({ label: "", fields: [] })
-	store.markDirty()
+	section.columns.push({ label: "", fields: [] });
+	store.markDirty();
 }
 
 function onAddColumn(section: Section) {
-	addColumn(section)
-	closeSectionMenu()
+	addColumn(section);
+	closeSectionMenu();
 }
 
 function removeColumn(section: Section, colIndex: number) {
-	if (section.columns.length <= 1) return
-	const removed = section.columns.splice(colIndex, 1)[0]
-	const targetIndex = Math.max(colIndex - 1, 0)
-	section.columns[targetIndex].fields.push(...removed.fields)
-	store.markDirty()
+	if (section.columns.length <= 1) return;
+	const removed = section.columns.splice(colIndex, 1)[0];
+	const targetIndex = Math.max(colIndex - 1, 0);
+	section.columns[targetIndex].fields.push(...removed.fields);
+	store.markDirty();
 }
 
 function removeLastColumn(section: Section) {
-	if (section.columns.length <= 1) return
-	removeColumn(section, section.columns.length - 1)
+	if (section.columns.length <= 1) return;
+	removeColumn(section, section.columns.length - 1);
 }
 
 function onRemoveLastColumn(section: Section) {
-	removeLastColumn(section)
-	closeSectionMenu()
+	removeLastColumn(section);
+	closeSectionMenu();
 }
 
 function removeField(column: Column, fieldIndex: number) {
-	column.fields.splice(fieldIndex, 1)
-	store.markDirty()
+	column.fields.splice(fieldIndex, 1);
+	store.markDirty();
 }
 
 function getFieldAlign(field: Field): "left" | "center" | "right" {
-	return field.align || getDefaultAlignment(field.fieldtype)
+	return field.align || getDefaultAlignment(field.fieldtype);
 }
 
 function toggleAlignSubmenu() {
-	openFieldSubmenu.value = openFieldSubmenu.value === "align" ? null : "align"
+	openFieldSubmenu.value = openFieldSubmenu.value === "align" ? null : "align";
 }
 
 function setAlignment(field: Field, align: "left" | "center" | "right") {
-	field.align = align
-	store.markDirty()
-	closeFieldMenu()
+	field.align = align;
+	store.markDirty();
+	closeFieldMenu();
 }
 
 function togglePageBreak(section: Section) {
-	;(section as any).page_break = !(section as any).page_break
-	store.markDirty()
+	(section as any).page_break = !(section as any).page_break;
+	store.markDirty();
 }
 
 function onTogglePageBreak(section: Section) {
-	togglePageBreak(section)
-	closeSectionMenu()
+	togglePageBreak(section);
+	closeSectionMenu();
 }
 
 function toggleFieldOrientation(section: Section) {
-	const current = section.field_orientation || "left-right"
-	section.field_orientation = current === "left-right" ? "top-down" : "left-right"
-	store.markDirty()
+	const current = section.field_orientation || "left-right";
+	section.field_orientation = current === "left-right" ? "top-down" : "left-right";
+	store.markDirty();
 }
 
 function onToggleFieldOrientation(section: Section) {
-	toggleFieldOrientation(section)
-	closeSectionMenu()
+	toggleFieldOrientation(section);
+	closeSectionMenu();
 }
 
 function getFieldOrientationLabel(section: Section) {
-	return (section.field_orientation || "left-right") === "left-right" ? "Left-Right" : "Top-Down"
+	return (section.field_orientation || "left-right") === "left-right"
+		? "Left-Right"
+		: "Top-Down";
 }
 
 async function ensureTableColumns(field: Field) {
 	if (field.fieldtype !== "Table" || (field.table_columns && field.table_columns.length)) {
-		return
+		return;
 	}
 	if (!field.options) {
-		field.table_columns = []
-		return
+		field.table_columns = [];
+		return;
 	}
 	try {
 		if (typeof frappe !== "undefined" && frappe.model?.with_doctype) {
 			await new Promise<void>((resolve) => {
-				frappe.model.with_doctype(field.options, () => resolve())
-			})
+				frappe.model.with_doctype(field.options, () => resolve());
+			});
 		}
-		field.table_columns = getTableColumns(field.options)
+		field.table_columns = getTableColumns(field.options);
 	} catch (e) {
-		field.table_columns = []
-		console.warn("Failed to load table columns", e)
+		field.table_columns = [];
+		console.warn("Failed to load table columns", e);
 	}
 }
 
 async function onDropField(event: DragEvent, column: Column) {
-	if (!event.dataTransfer) return
+	if (!event.dataTransfer) return;
 	try {
-		const data = event.dataTransfer.getData("application/json")
-		if (!data) return
-		const parsed: DocField = JSON.parse(data)
-		if (!parsed.fieldname) return
+		const data = event.dataTransfer.getData("application/json");
+		if (!data) return;
+		const parsed: DocField = JSON.parse(data);
+		if (!parsed.fieldname) return;
 
 		const field: LayoutField = {
 			fieldname: parsed.fieldname,
 			label: parsed.label || parsed.fieldname,
 			fieldtype: parsed.fieldtype || "Data",
 			align: getDefaultAlignment(parsed.fieldtype), // Add default alignment
-		}
+		};
 
 		if (parsed.fieldtype === "Table") {
-			field.table_columns = []
-			field.options = parsed.options
-			await ensureTableColumns(field)
+			field.table_columns = [];
+			field.options = parsed.options;
+			await ensureTableColumns(field);
 		}
 
-		column.fields.push(field)
-		store.markDirty()
+		column.fields.push(field);
+		store.markDirty();
 	} catch (e) {
-		console.warn("Failed to drop field", e)
+		console.warn("Failed to drop field", e);
 	}
 }
 
 function resetLayout() {
 	const confirmReset = () => {
-		const fresh = store.getDefaultLayout()
+		const fresh = store.getDefaultLayout();
 		if (fresh) {
-			store.layout.value = fresh
-			ensureAtLeastOneSection()
-			store.markDirty()
+			store.layout.value = fresh;
+			ensureAtLeastOneSection();
+			store.markDirty();
 		}
-	}
+	};
 
 	if (typeof frappe !== "undefined" && typeof frappe.confirm === "function") {
 		frappe.confirm(
@@ -685,8 +784,8 @@ function resetLayout() {
 			),
 			() => confirmReset(),
 			() => {}
-		)
-		return
+		);
+		return;
 	}
 
 	if (
@@ -694,90 +793,90 @@ function resetLayout() {
 			"Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
 		)
 	) {
-		return
+		return;
 	}
-	const fresh = store.getDefaultLayout()
+	const fresh = store.getDefaultLayout();
 	if (fresh) {
-		store.layout.value = fresh
-		ensureAtLeastOneSection()
-		store.markDirty()
+		store.layout.value = fresh;
+		ensureAtLeastOneSection();
+		store.markDirty();
 	}
 }
 
 function gridStyle(section: Section) {
-	const cols = Math.max(1, section.columns.length)
+	const cols = Math.max(1, section.columns.length);
 	return {
 		gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-	}
+	};
 }
 
 async function configureColumns(field: Field) {
-	if (field.fieldtype !== "Table") return
-	await ensureTableColumns(field)
-	editingColumns.value = JSON.parse(JSON.stringify(field.table_columns || []))
-	columnEditor.value = { field }
+	if (field.fieldtype !== "Table") return;
+	await ensureTableColumns(field);
+	editingColumns.value = JSON.parse(JSON.stringify(field.table_columns || []));
+	columnEditor.value = { field };
 }
 
 async function onConfigureColumns(field: Field) {
-	await configureColumns(field)
-	closeFieldMenu()
+	await configureColumns(field);
+	closeFieldMenu();
 }
 
 function onColumnsUpdate(columns: TableColumn[]) {
-	if (!columnEditor.value) return
-	editingColumns.value = JSON.parse(JSON.stringify(columns || []))
-	columnEditor.value.field.table_columns = columns
-	store.markDirty()
+	if (!columnEditor.value) return;
+	editingColumns.value = JSON.parse(JSON.stringify(columns || []));
+	columnEditor.value.field.table_columns = columns;
+	store.markDirty();
 }
 
 function closeColumnEditor() {
-	columnEditor.value = null
+	columnEditor.value = null;
 }
 
 function markDirty() {
-	store.markDirty()
+	store.markDirty();
 }
 
 function onLabelEnter(event: KeyboardEvent) {
-	const el = event.target as HTMLInputElement | null
-	el?.blur()
+	const el = event.target as HTMLInputElement | null;
+	el?.blur();
 }
 
 function getDefaultLabel(field: Field): string {
-	const meta = store.meta.value as any
-	const df = meta?.fields?.find?.((f: any) => f?.fieldname === field.fieldname)
-	return df?.label || field.fieldname
+	const meta = store.meta.value as any;
+	const df = meta?.fields?.find?.((f: any) => f?.fieldname === field.fieldname);
+	return df?.label || field.fieldname;
 }
 
 function toggleFieldLabel(field: Field) {
-	const current = (field.label || "").trim()
+	const current = (field.label || "").trim();
 	if (current) {
-		field.label = ""
+		field.label = "";
 	} else {
-		field.label = getDefaultLabel(field)
+		field.label = getDefaultLabel(field);
 	}
-	store.markDirty()
+	store.markDirty();
 }
 
 function onToggleFieldLabel(field: Field) {
-	toggleFieldLabel(field)
-	closeFieldMenu()
+	toggleFieldLabel(field);
+	closeFieldMenu();
 }
 
 function onRemoveField(column: Column, fieldIndex: number) {
-	removeField(column, fieldIndex)
-	closeFieldMenu()
+	removeField(column, fieldIndex);
+	closeFieldMenu();
 }
 
 function editTypstCode(field: Field) {
-	const existing = field.raw_typst_field || ""
+	const existing = field.raw_typst_field || "";
 
 	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
-		const next = window.prompt("Edit Raw Typst Field", existing)
-		if (next === null) return
-		field.raw_typst_field = next
-		store.markDirty()
-		return
+		const next = window.prompt("Edit Raw Typst Field", existing);
+		if (next === null) return;
+		field.raw_typst_field = next;
+		store.markDirty();
+		return;
 	}
 
 	const dialog = new frappe.ui.Dialog({
@@ -794,30 +893,30 @@ function editTypstCode(field: Field) {
 		],
 		primary_action_label: __("Apply"),
 		primary_action: (values: Record<string, any>) => {
-			const value = values.raw_typst_field ?? ""
-			field.raw_typst_field = value
-			store.markDirty()
-			dialog.hide()
+			const value = values.raw_typst_field ?? "";
+			field.raw_typst_field = value;
+			store.markDirty();
+			dialog.hide();
 		},
-	})
+	});
 
-	dialog.show()
+	dialog.show();
 }
 
 function onEditTypstCode(field: Field) {
-	editTypstCode(field)
-	closeFieldMenu()
+	editTypstCode(field);
+	closeFieldMenu();
 }
 
 function editSpacer(field: Field) {
-	const existing = field.spacer_value || "1em"
+	const existing = field.spacer_value || "1em";
 
 	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
-		const next = window.prompt("Enter spacer value (e.g., 1em, 2cm, 10pt):", existing)
-		if (next === null) return
-		field.spacer_value = next
-		store.markDirty()
-		return
+		const next = window.prompt("Enter spacer value (e.g., 1em, 2cm, 10pt):", existing);
+		if (next === null) return;
+		field.spacer_value = next;
+		store.markDirty();
+		return;
 	}
 
 	const dialog = new frappe.ui.Dialog({
@@ -834,38 +933,38 @@ function editSpacer(field: Field) {
 		],
 		primary_action_label: __("Apply"),
 		primary_action: (values: Record<string, any>) => {
-			field.spacer_value = values.spacer_value || "1em"
-			store.markDirty()
-			dialog.hide()
+			field.spacer_value = values.spacer_value || "1em";
+			store.markDirty();
+			dialog.hide();
 		},
-	})
+	});
 
-	dialog.show()
+	dialog.show();
 }
 
 function onEditSpacer(field: Field) {
-	editSpacer(field)
-	closeFieldMenu()
+	editSpacer(field);
+	closeFieldMenu();
 }
 
 function editDivider(field: Field) {
-	const existingLength = field.divider_length || "100%"
-	const existingStroke = field.divider_stroke || "0.5pt"
-	let existingColor = field.divider_color || "gray"
+	const existingLength = field.divider_length || "100%";
+	const existingStroke = field.divider_stroke || "0.5pt";
+	let existingColor = field.divider_color || "gray";
 
 	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
-		const length = window.prompt("Enter divider length (e.g., 100%, 10cm):", existingLength)
-		if (length === null) return
-		const stroke = window.prompt("Enter stroke width (e.g., 0.5pt, 1pt):", existingStroke)
-		if (stroke === null) return
-		const color = window.prompt("Enter color (e.g., gray, #333, rgb(0,0,0)):", existingColor)
-		if (color === null) return
+		const length = window.prompt("Enter divider length (e.g., 100%, 10cm):", existingLength);
+		if (length === null) return;
+		const stroke = window.prompt("Enter stroke width (e.g., 0.5pt, 1pt):", existingStroke);
+		if (stroke === null) return;
+		const color = window.prompt("Enter color (e.g., gray, #333, rgb(0,0,0)):", existingColor);
+		if (color === null) return;
 
-		field.divider_length = length
-		field.divider_stroke = stroke
-		field.divider_color = color
-		store.markDirty()
-		return
+		field.divider_length = length;
+		field.divider_stroke = stroke;
+		field.divider_color = color;
+		store.markDirty();
+		return;
 	}
 
 	const dialog = new frappe.ui.Dialog({
@@ -898,28 +997,31 @@ function editDivider(field: Field) {
 		],
 		primary_action_label: __("Apply"),
 		primary_action: (values: Record<string, any>) => {
-			field.divider_length = values.divider_length || "100%"
-			field.divider_stroke = values.divider_stroke || "0.5pt"
-			field.divider_color = existingColor // Will be updated by Pickr
-			store.markDirty()
-			dialog.hide()
+			field.divider_length = values.divider_length || "100%";
+			field.divider_stroke = values.divider_stroke || "0.5pt";
+			field.divider_color = existingColor; // Will be updated by Pickr
+			store.markDirty();
+			dialog.hide();
 		},
-	})
+	});
 
-	dialog.show()
+	dialog.show();
 
 	// Mount Pickr after dialog is shown
 	setTimeout(() => {
-		const container = document.getElementById("divider-color-picker")
+		const container = document.getElementById("divider-color-picker");
 		if (!container) {
-			console.error("Pickr container not found")
-			return
+			console.error("Pickr container not found");
+			return;
 		}
 
 		// Import Pickr and its CSS dynamically
-		Promise.all([import("@simonwep/pickr"), import("@simonwep/pickr/dist/themes/nano.min.css")])
+		Promise.all([
+			import("@simonwep/pickr"),
+			import("@simonwep/pickr/dist/themes/nano.min.css"),
+		])
 			.then(([module]) => {
-				const Pickr = module.default
+				const Pickr = module.default;
 
 				const pickr = Pickr.create({
 					el: container,
@@ -962,33 +1064,33 @@ function editDivider(field: Field) {
 							save: true,
 						},
 					},
-				})
+				});
 
 				pickr.on("save", (color: any) => {
-					existingColor = color.toHEXA().toString()
-					field.divider_color = existingColor
-					pickr.hide()
-				})
+					existingColor = color.toHEXA().toString();
+					field.divider_color = existingColor;
+					pickr.hide();
+				});
 
 				pickr.on("change", (color: any) => {
-					existingColor = color.toHEXA().toString()
-					field.divider_color = existingColor
-				})
+					existingColor = color.toHEXA().toString();
+					field.divider_color = existingColor;
+				});
 
 				// Cleanup when dialog is hidden
 				dialog.$wrapper.on("hidden.bs.modal", () => {
-					pickr?.destroyAndRemove()
-				})
+					pickr?.destroyAndRemove();
+				});
 			})
 			.catch((error) => {
-				console.error("Failed to load Pickr:", error)
-			})
-	}, 300)
+				console.error("Failed to load Pickr:", error);
+			});
+	}, 300);
 }
 
 function onEditDivider(field: Field) {
-	editDivider(field)
-	closeFieldMenu()
+	editDivider(field);
+	closeFieldMenu();
 }
 </script>
 
