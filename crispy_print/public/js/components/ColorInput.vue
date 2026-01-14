@@ -5,24 +5,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onUnmounted } from "vue"
-import Pickr from "@simonwep/pickr"
-import "@simonwep/pickr/dist/themes/nano.min.css" // Or classic.min.css, monolith.min.css
+import { ref, onMounted, watch, onUnmounted } from "vue";
+import Pickr from "@simonwep/pickr";
+import "@simonwep/pickr/dist/themes/nano.min.css"; // Or classic.min.css, monolith.min.css
 
 interface Props {
-	modelValue: string
+	modelValue: string;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-	"update:modelValue": [value: string]
-}>()
+	"update:modelValue": [value: string];
+}>();
 
-const pickrContainer = ref<HTMLElement>()
-let pickr: Pickr | null = null
+const pickrContainer = ref<HTMLElement>();
+let pickr: Pickr | null = null;
 
 onMounted(() => {
-	if (!pickrContainer.value) return
+	if (!pickrContainer.value) return;
 
 	pickr = Pickr.create({
 		el: pickrContainer.value,
@@ -78,35 +78,35 @@ onMounted(() => {
 				save: true,
 			},
 		},
-	})
+	});
 
 	// Update parent when color changes
 	pickr.on("save", (color: any) => {
-		const hexColor = color.toHEXA().toString()
-		emit("update:modelValue", hexColor)
-		pickr?.hide()
-	})
+		const hexColor = color.toHEXA().toString();
+		emit("update:modelValue", hexColor);
+		pickr?.hide();
+	});
 
 	pickr.on("change", (color: any) => {
-		const hexColor = color.toHEXA().toString()
-		emit("update:modelValue", hexColor)
-	})
-})
+		const hexColor = color.toHEXA().toString();
+		emit("update:modelValue", hexColor);
+	});
+});
 
 // Watch for external changes
 watch(
 	() => props.modelValue,
 	(newValue) => {
 		if (pickr && newValue) {
-			pickr.setColor(newValue)
+			pickr.setColor(newValue);
 		}
 	}
-)
+);
 
 // Cleanup on unmount
 onUnmounted(() => {
-	pickr?.destroyAndRemove()
-})
+	pickr?.destroyAndRemove();
+});
 </script>
 
 <style scoped>

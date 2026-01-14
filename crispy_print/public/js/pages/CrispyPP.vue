@@ -24,7 +24,11 @@
 						>
 							?
 						</button>
-						<div id="preview-settings-help" popover class="settings-pane__help-popover">
+						<div
+							id="preview-settings-help"
+							popover
+							class="settings-pane__help-popover"
+						>
 							<ul class="settings-pane__help-list">
 								<li>Configure page settings and document options.</li>
 								<li>Changes apply immediately to the preview.</li>
@@ -38,8 +42,16 @@
 					<!-- Print Format -->
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">Print Format</label>
-						<select v-model="selectedFormat" class="settings-pane__select" @change="onFormatChange">
-							<option v-for="fmt in availableFormats" :key="fmt.name" :value="fmt.name">
+						<select
+							v-model="selectedFormat"
+							class="settings-pane__select"
+							@change="onFormatChange"
+						>
+							<option
+								v-for="fmt in availableFormats"
+								:key="fmt.name"
+								:value="fmt.name"
+							>
 								{{ fmt.name }}{{ fmt.is_default ? " (Default)" : "" }}
 							</option>
 						</select>
@@ -75,7 +87,10 @@
 
 							<div class="settings-pane__field">
 								<label class="settings-pane__label">Language</label>
-								<select v-model="pageSettings.language" class="settings-pane__select">
+								<select
+									v-model="pageSettings.language"
+									class="settings-pane__select"
+								>
 									<option value="en">English</option>
 									<option value="ar">Arabic</option>
 									<option value="fr">French</option>
@@ -95,32 +110,55 @@
 
 							<div v-if="brandingMode === 'letterhead'" class="settings-pane__field">
 								<label class="settings-pane__label">Letter Head</label>
-								<select v-model="pageSettings.letterhead" class="settings-pane__select">
+								<select
+									v-model="pageSettings.letterhead"
+									class="settings-pane__select"
+								>
 									<option value="">None</option>
-									<option v-if="loadingLetterheads" disabled>Loading letterheads...</option>
-									<option v-for="lh in availableLetterheads" :key="lh" :value="lh">
+									<option v-if="loadingLetterheads" disabled>
+										Loading letterheads...
+									</option>
+									<option
+										v-for="lh in availableLetterheads"
+										:key="lh"
+										:value="lh"
+									>
 										{{ lh }}
 									</option>
 								</select>
 							</div>
 
 							<div v-if="brandingMode === 'logo'">
-								<p class="settings-pane__hint">Logo is anchored to top-left using #place().</p>
+								<p class="settings-pane__hint">
+									Logo is anchored to top-left using #place().
+								</p>
 								<div class="settings-pane__field">
 									<label class="settings-pane__label">Company</label>
-									<select v-model="logoSettings.company" class="settings-pane__select">
+									<select
+										v-model="logoSettings.company"
+										class="settings-pane__select"
+									>
 										<option value="">Select company</option>
-										<option v-if="loadingCompanies" disabled>Loading companies...</option>
+										<option v-if="loadingCompanies" disabled>
+											Loading companies...
+										</option>
 										<option
 											v-for="company in availableCompanies"
 											:key="company.name"
 											:value="company.name"
 										>
-											{{ company.abbr ? `${company.abbr} - ${company.name}` : company.name }}
+											{{
+												company.abbr
+													? `${company.abbr} - ${company.name}`
+													: company.name
+											}}
 										</option>
 									</select>
 								</div>
-								<p v-if="logoSettings.company && !logoSettings.image" class="settings-pane__hint">
+								<p
+									v-if="logoSettings.company && !logoSettings.image"
+									class="settings-pane__hint"
+								>
 									Selected company has no logo set.
 								</p>
 								<div class="settings-pane__grid">
@@ -153,12 +191,19 @@
 
 							<div class="settings-pane__field settings-pane__field--inline">
 								<label class="settings-pane__label">Remove QRCode</label>
-								<input v-model="removeQr" type="checkbox" class="settings-pane__checkbox" />
+								<input
+									v-model="removeQr"
+									type="checkbox"
+									class="settings-pane__checkbox"
+								/>
 							</div>
 
 							<div class="settings-pane__field">
 								<label class="settings-pane__label">Page Size</label>
-								<select v-model="pageSettings.pageSize" class="settings-pane__select">
+								<select
+									v-model="pageSettings.pageSize"
+									class="settings-pane__select"
+								>
 									<option value="A3">A3 (297 × 420 mm)</option>
 									<option value="A4">A4 (210 × 297 mm)</option>
 									<option value="A5">A5 (148 × 210 mm)</option>
@@ -169,7 +214,10 @@
 
 							<div class="settings-pane__field">
 								<label class="settings-pane__label">Orientation</label>
-								<select v-model="pageSettings.orientation" class="settings-pane__select">
+								<select
+									v-model="pageSettings.orientation"
+									class="settings-pane__select"
+								>
 									<option value="portrait">Portrait</option>
 									<option value="landscape">Landscape</option>
 								</select>
@@ -243,28 +291,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from "vue"
+import { ref, onMounted, watch, computed } from "vue";
 import {
 	getFormatsForDoctype,
 	loadFormatData,
 	resolveLetterheadDoc,
 	type FormatInfo,
-} from "../utils/formatLoader"
-import { defaultPageSettings, ensureLogoSettings, type PageSettings } from "../utils/pageSettings"
-import PreviewRenderer from "../components/PreviewRenderer.vue"
-import { pickFormatName } from "../utils/formatSelection"
-import { useBrandingData } from "../composables/useBrandingData"
+} from "../utils/formatLoader";
+import { defaultPageSettings, ensureLogoSettings, type PageSettings } from "../utils/pageSettings";
+import PreviewRenderer from "../components/PreviewRenderer.vue";
+import { pickFormatName } from "../utils/formatSelection";
+import { useBrandingData } from "../composables/useBrandingData";
 
 interface Props {
-	doctype?: string
-	docname?: string
-	format?: string
+	doctype?: string;
+	docname?: string;
+	format?: string;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Format selection
-const availableFormats = ref<FormatInfo[]>([])
+const availableFormats = ref<FormatInfo[]>([]);
 const {
 	availableLetterheads,
 	loadingLetterheads,
@@ -273,46 +321,46 @@ const {
 	resolveCompanyLogo,
 	fetchLetterheads,
 	fetchCompanies,
-} = useBrandingData()
-const selectedFormat = ref<string>("")
+} = useBrandingData();
+const selectedFormat = ref<string>("");
 
 // Settings state (single in-memory copy; PP does not persist)
-const pageSettings = ref<PageSettings>({ ...defaultPageSettings })
+const pageSettings = ref<PageSettings>({ ...defaultPageSettings });
 
-const layout = ref<any>(null)
-const loading = ref(true)
-const docHeader = ref("")
-const docFooter = ref("")
-const typstPreamble = ref("")
-const typstCode = ref("")
-const rawTypst = ref(false)
-const qrEnabled = ref(false)
-const removeQr = ref(false)
-const letterheadDoc = ref<any | null>(null)
-const changeKey = ref(0)
-const OVERRIDES_STORAGE_KEY = "crispy-print:pp:preview-overrides-expanded"
-const isOverridesExpanded = ref(false)
-const qrEnabledEffective = computed(() => qrEnabled.value && !removeQr.value)
-const logoSettings = computed(() => ensureLogoSettings(pageSettings.value))
+const layout = ref<any>(null);
+const loading = ref(true);
+const docHeader = ref("");
+const docFooter = ref("");
+const typstPreamble = ref("");
+const typstCode = ref("");
+const rawTypst = ref(false);
+const qrEnabled = ref(false);
+const removeQr = ref(false);
+const letterheadDoc = ref<any | null>(null);
+const changeKey = ref(0);
+const OVERRIDES_STORAGE_KEY = "crispy-print:pp:preview-overrides-expanded";
+const isOverridesExpanded = ref(false);
+const qrEnabledEffective = computed(() => qrEnabled.value && !removeQr.value);
+const logoSettings = computed(() => ensureLogoSettings(pageSettings.value));
 
 const brandingMode = computed<string>({
 	get: () => {
-		const mode = pageSettings.value.brandingMode
+		const mode = pageSettings.value.brandingMode;
 		if (mode === "letterhead" || mode === "logo" || mode === "none") {
-			return mode
+			return mode;
 		}
 		if (pageSettings.value.logo?.company || pageSettings.value.logo?.image) {
-			return "logo"
+			return "logo";
 		}
 		if (pageSettings.value.letterhead) {
-			return "letterhead"
+			return "letterhead";
 		}
-		return "none"
+		return "none";
 	},
 	set: (value) => {
-		pageSettings.value.brandingMode = value as "letterhead" | "logo" | "none"
+		pageSettings.value.brandingMode = value as "letterhead" | "logo" | "none";
 	},
-})
+});
 
 // Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
 watch(
@@ -329,179 +377,183 @@ watch(
 		removeQr.value,
 	],
 	() => {
-		changeKey.value++
+		changeKey.value++;
 	},
 	{ deep: true }
-)
+);
 
 // Initialize: Load available formats and letterheads
 async function initializeData() {
 	if (!props.doctype) {
-		console.warn("[CrispyPP] No doctype specified")
-		loading.value = false
-		return
+		console.warn("[CrispyPP] No doctype specified");
+		loading.value = false;
+		return;
 	}
 
 	try {
-		loading.value = true
+		loading.value = true;
 
 		// Load available formats for this doctype
-		const formats = await getFormatsForDoctype(props.doctype)
+		const formats = await getFormatsForDoctype(props.doctype);
 
 		// Check is_default flag for each format
 		const formatsWithDefault = await Promise.all(
 			formats.map(async (fmt) => {
-				const isDefault = await frappe.db.get_value("Crispy Format", fmt.name, "is_default")
-				return { ...fmt, is_default: isDefault.message.is_default }
+				const isDefault = await frappe.db.get_value(
+					"Crispy Format",
+					fmt.name,
+					"is_default"
+				);
+				return { ...fmt, is_default: isDefault.message.is_default };
 			})
-		)
+		);
 
-		availableFormats.value = formatsWithDefault
+		availableFormats.value = formatsWithDefault;
 
-		await fetchLetterheads()
-		await fetchCompanies()
+		await fetchLetterheads();
+		await fetchCompanies();
 
 		// Determine which format to use
-		const formatToLoad = pickFormatName(formatsWithDefault, props.format || null)
+		const formatToLoad = pickFormatName(formatsWithDefault, props.format || null);
 
 		if (formatToLoad) {
-			selectedFormat.value = formatToLoad
-			await loadFormatSettings(formatToLoad)
+			selectedFormat.value = formatToLoad;
+			await loadFormatSettings(formatToLoad);
 		} else {
-			console.warn("[CrispyPP] No formats available for doctype:", props.doctype)
-			loading.value = false
+			console.warn("[CrispyPP] No formats available for doctype:", props.doctype);
+			loading.value = false;
 		}
 	} catch (error) {
-		console.error("[CrispyPP] Error initializing:", error)
+		console.error("[CrispyPP] Error initializing:", error);
 		frappe.show_alert({
 			message: __("Failed to initialize preview: {0}", [error.message]),
 			indicator: "red",
-		})
-		loading.value = false
+		});
+		loading.value = false;
 	}
 }
 
 // Load settings for a specific format
 async function loadFormatSettings(formatName: string) {
 	try {
-		loading.value = true
+		loading.value = true;
 
-		const data = await loadFormatData(formatName)
+		const data = await loadFormatData(formatName);
 
 		if (!data) {
-			throw new Error("Failed to load format data")
+			throw new Error("Failed to load format data");
 		}
 
 		// Overwrite in-memory page settings (ephemeral)
-		pageSettings.value = data.pageSettings || { ...defaultPageSettings }
+		pageSettings.value = data.pageSettings || { ...defaultPageSettings };
 
 		// Preload letterhead data if the format has one set
-		letterheadDoc.value = await resolveLetterheadDoc(pageSettings.value.letterhead)
+		letterheadDoc.value = await resolveLetterheadDoc(pageSettings.value.letterhead);
 
 		// Store layout
-		layout.value = data.layout
-		docHeader.value = data.formatDoc.doc_header || ""
-		docFooter.value = data.formatDoc.doc_footer || ""
-		typstPreamble.value = data.formatDoc.typst_preamble || ""
-		typstCode.value = data.formatDoc.typst_code || ""
-		rawTypst.value = Boolean(data.formatDoc.raw_typst)
-		qrEnabled.value = Boolean(data.formatDoc.qrcode)
+		layout.value = data.layout;
+		docHeader.value = data.formatDoc.doc_header || "";
+		docFooter.value = data.formatDoc.doc_footer || "";
+		typstPreamble.value = data.formatDoc.typst_preamble || "";
+		typstCode.value = data.formatDoc.typst_code || "";
+		rawTypst.value = Boolean(data.formatDoc.raw_typst);
+		qrEnabled.value = Boolean(data.formatDoc.qrcode);
 
-		loading.value = false
+		loading.value = false;
 	} catch (error) {
-		console.error("[CrispyPP] Error loading format settings:", error)
+		console.error("[CrispyPP] Error loading format settings:", error);
 		frappe.show_alert({
 			message: __("Failed to load format: {0}", [error.message]),
 			indicator: "red",
-		})
-		loading.value = false
+		});
+		loading.value = false;
 	}
 }
 
 // Handle format change
 async function onFormatChange() {
-	await loadFormatSettings(selectedFormat.value)
+	await loadFormatSettings(selectedFormat.value);
 }
 
 async function resetFormat() {
-	if (!selectedFormat.value) return
-	await loadFormatSettings(selectedFormat.value)
+	if (!selectedFormat.value) return;
+	await loadFormatSettings(selectedFormat.value);
 }
 
 // Expose settings getters for external access
 const getPageSettings = () => ({
 	...pageSettings.value,
 	letterheadImage: letterheadDoc.value?.image || null, // Include image path for change detection
-})
+});
 
-const pageSettingsComputed = computed(() => getPageSettings())
+const pageSettingsComputed = computed(() => getPageSettings());
 
 function triggerRefresh() {
 	// Manual refresh (refetch + recompile) for crispy-print page.
-	window.dispatchEvent(new CustomEvent("crispy-preview:refresh"))
+	window.dispatchEvent(new CustomEvent("crispy-preview:refresh"));
 }
 
-const getLayout = () => layout.value
+const getLayout = () => layout.value;
 const getLetterhead = () => {
 	// Return the letterhead object with image path
 	// setupWorker expects an object with .image property
-	return letterheadDoc.value
-}
+	return letterheadDoc.value;
+};
 
 // Fetch letterhead data when letterhead selection changes
 watch(
 	() => pageSettings.value.letterhead,
 	async (newLetterhead) => {
-		letterheadDoc.value = await resolveLetterheadDoc(newLetterhead)
+		letterheadDoc.value = await resolveLetterheadDoc(newLetterhead);
 	}
-)
+);
 
 watch(
 	() => logoSettings.value.company,
 	(newCompany) => {
-		logoSettings.value.image = resolveCompanyLogo(newCompany)
+		logoSettings.value.image = resolveCompanyLogo(newCompany);
 	}
-)
+);
 
 watch(availableCompanies, () => {
-	if (!logoSettings.value.company) return
-	logoSettings.value.image = resolveCompanyLogo(logoSettings.value.company)
-})
+	if (!logoSettings.value.company) return;
+	logoSettings.value.image = resolveCompanyLogo(logoSettings.value.company);
+});
 
 // No explicit preview events needed: PreviewRenderer/setupWorker reacts to prop changes directly.
 
 onMounted(async () => {
 	if (typeof window !== "undefined") {
-		const stored = window.localStorage.getItem(OVERRIDES_STORAGE_KEY)
+		const stored = window.localStorage.getItem(OVERRIDES_STORAGE_KEY);
 		if (stored !== null) {
-			isOverridesExpanded.value = stored === "true"
+			isOverridesExpanded.value = stored === "true";
 		}
 	}
-	await initializeData()
-})
+	await initializeData();
+});
 
 watch(isOverridesExpanded, (next) => {
-	if (typeof window === "undefined") return
-	window.localStorage.setItem(OVERRIDES_STORAGE_KEY, String(next))
-})
+	if (typeof window === "undefined") return;
+	window.localStorage.setItem(OVERRIDES_STORAGE_KEY, String(next));
+});
 
 // Generate and open PDF in new tab
 async function generatePDF() {
 	window.dispatchEvent(
 		new CustomEvent("crispy-preview:request-pdf", { detail: { action: "view" } })
-	)
+	);
 }
 
 async function downloadPDF() {
 	window.dispatchEvent(
 		new CustomEvent("crispy-preview:request-pdf", { detail: { action: "download" } })
-	)
+	);
 }
 
 // Simple readiness check: we consider Typst ready if a prior compile set code in worker
 function lastTypstReady() {
 	// We can't read lastTypstCode from worker here; rely on layout present and prior refresh
-	return Boolean(layout.value)
+	return Boolean(layout.value);
 }
 
 // Expose methods for parent access
@@ -513,7 +565,7 @@ defineExpose({
 	initializeData,
 	generatePDF,
 	downloadPDF,
-})
+});
 </script>
 
 <style scoped>

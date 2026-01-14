@@ -21,10 +21,14 @@
 						class="typst-code-pane__help-popover"
 					>
 						<ul class="typst-code-pane__help-list">
-							<li>Raw Typst mode; drag fields into the editor to insert `#doc.fieldname`.</li>
+							<li>
+								Raw Typst mode; drag fields into the editor to insert
+								`#doc.fieldname`.
+							</li>
 							<li>Use Refresh in the preview pane to compile changes.</li>
 							<li>
-								Optional: add `// fields: customer, items.item_code` to narrow payload fields.
+								Optional: add `// fields: customer, items.item_code` to narrow
+								payload fields.
 							</li>
 						</ul>
 					</div>
@@ -35,7 +39,10 @@
 			<textarea
 				ref="editorRef"
 				v-model="typstCode"
-				:class="['typst-code-pane__editor', { 'typst-code-pane__editor--drag': isDragOver }]"
+				:class="[
+					'typst-code-pane__editor',
+					{ 'typst-code-pane__editor--drag': isDragOver },
+				]"
 				spellcheck="false"
 				placeholder="Write Typst code here... (drag fields in to insert #doc.fieldname)"
 				@dragover.prevent="onDragOver"
@@ -47,60 +54,60 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
-import { useStore } from "../composables/useStore"
+import { computed, ref } from "vue";
+import { useStore } from "../composables/useStore";
 
-const store = useStore()
-const editorRef = ref<HTMLTextAreaElement | null>(null)
-const isDragOver = ref(false)
+const store = useStore();
+const editorRef = ref<HTMLTextAreaElement | null>(null);
+const isDragOver = ref(false);
 
 const typstCode = computed({
 	get: () => store.typstCode.value,
 	set: (value: string) => {
-		store.typstCode.value = value
+		store.typstCode.value = value;
 	},
-})
+});
 
 function insertSnippet(snippet: string) {
-	const editor = editorRef.value
+	const editor = editorRef.value;
 	if (!editor) {
-		typstCode.value = `${typstCode.value}${snippet}`
-		return
+		typstCode.value = `${typstCode.value}${snippet}`;
+		return;
 	}
 
-	const start = editor.selectionStart ?? editor.value.length
-	const end = editor.selectionEnd ?? editor.value.length
-	editor.setRangeText(snippet, start, end, "end")
-	typstCode.value = editor.value
-	editor.focus()
+	const start = editor.selectionStart ?? editor.value.length;
+	const end = editor.selectionEnd ?? editor.value.length;
+	editor.setRangeText(snippet, start, end, "end");
+	typstCode.value = editor.value;
+	editor.focus();
 }
 
 function onDragOver() {
-	isDragOver.value = true
+	isDragOver.value = true;
 }
 
 function onDragLeave() {
-	isDragOver.value = false
+	isDragOver.value = false;
 }
 
 function onDrop(event: DragEvent) {
-	isDragOver.value = false
-	if (!event.dataTransfer) return
-	const raw = event.dataTransfer.getData("application/json")
-	let fieldname = ""
+	isDragOver.value = false;
+	if (!event.dataTransfer) return;
+	const raw = event.dataTransfer.getData("application/json");
+	let fieldname = "";
 	if (raw) {
 		try {
-			const parsed = JSON.parse(raw)
-			fieldname = parsed?.fieldname || ""
+			const parsed = JSON.parse(raw);
+			fieldname = parsed?.fieldname || "";
 		} catch {
-			fieldname = ""
+			fieldname = "";
 		}
 	}
 	if (!fieldname) {
-		fieldname = event.dataTransfer.getData("text/plain") || ""
+		fieldname = event.dataTransfer.getData("text/plain") || "";
 	}
-	if (!fieldname) return
-	insertSnippet(`#doc.${fieldname}`)
+	if (!fieldname) return;
+	insertSnippet(`#doc.${fieldname}`);
 }
 </script>
 

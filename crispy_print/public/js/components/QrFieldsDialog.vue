@@ -6,7 +6,9 @@
 					<h3 class="qr-dialog__title">QR Code Fields</h3>
 					<p class="qr-dialog__subtitle">Choose fields to include in the QR payload.</p>
 				</div>
-				<button class="qr-dialog__close" type="button" @click="$emit('close')">&#x2715;</button>
+				<button class="qr-dialog__close" type="button" @click="$emit('close')">
+					&#x2715;
+				</button>
 			</div>
 			<div class="qr-dialog__body">
 				<div class="qr-dialog__search">
@@ -18,7 +20,11 @@
 					/>
 				</div>
 				<div class="qr-dialog__list">
-					<label v-for="field in filteredFields" :key="field.fieldname" class="qr-dialog__item">
+					<label
+						v-for="field in filteredFields"
+						:key="field.fieldname"
+						class="qr-dialog__item"
+					>
 						<input
 							v-model="localSelection"
 							class="qr-dialog__checkbox"
@@ -33,8 +39,14 @@
 				<p v-if="!filteredFields.length" class="qr-dialog__empty">No fields found.</p>
 			</div>
 			<div class="qr-dialog__footer">
-				<button class="qr-dialog__btn" type="button" @click="$emit('close')">Cancel</button>
-				<button class="qr-dialog__btn qr-dialog__btn--primary" type="button" @click="apply">
+				<button class="qr-dialog__btn" type="button" @click="$emit('close')">
+					Cancel
+				</button>
+				<button
+					class="qr-dialog__btn qr-dialog__btn--primary"
+					type="button"
+					@click="apply"
+				>
 					Apply
 				</button>
 			</div>
@@ -43,29 +55,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue"
-import type { DocField } from "../utils/layout"
+import { ref, computed, watch } from "vue";
+import type { DocField } from "../utils/layout";
 
 interface Props {
-	fields: DocField[]
-	modelValue: string[]
+	fields: DocField[];
+	modelValue: string[];
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-	(e: "update:modelValue", value: string[]): void
-	(e: "close"): void
-}>()
+	(e: "update:modelValue", value: string[]): void;
+	(e: "close"): void;
+}>();
 
-const query = ref("")
-const localSelection = ref<string[]>([...(props.modelValue || [])])
+const query = ref("");
+const localSelection = ref<string[]>([...(props.modelValue || [])]);
 
 watch(
 	() => props.modelValue,
 	(value) => {
-		localSelection.value = [...(value || [])]
+		localSelection.value = [...(value || [])];
 	}
-)
+);
 
 const virtualFields: DocField[] = [
 	{
@@ -73,10 +85,10 @@ const virtualFields: DocField[] = [
 		label: "Posting Timestamp",
 		fieldtype: "Datetime",
 	},
-]
+];
 
 const filteredFields = computed(() => {
-	const term = query.value.trim().toLowerCase()
+	const term = query.value.trim().toLowerCase();
 	const allowFieldnames = new Set([
 		"name",
 		"company",
@@ -106,20 +118,20 @@ const filteredFields = computed(() => {
 		"base_rounded_total",
 		"return_against",
 		"is_return",
-	])
+	]);
 	return [...virtualFields, ...(props.fields || [])]
 		.filter((field) => field.fieldname && allowFieldnames.has(field.fieldname))
 		.filter((field) => {
-			if (!term) return true
-			const label = (field.label || "").toLowerCase()
-			return label.includes(term) || field.fieldname.toLowerCase().includes(term)
-		})
-})
+			if (!term) return true;
+			const label = (field.label || "").toLowerCase();
+			return label.includes(term) || field.fieldname.toLowerCase().includes(term);
+		});
+});
 
 const apply = () => {
-	emit("update:modelValue", [...localSelection.value])
-	emit("close")
-}
+	emit("update:modelValue", [...localSelection.value]);
+	emit("close");
+};
 </script>
 
 <style scoped>

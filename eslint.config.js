@@ -1,8 +1,8 @@
-const vue = require("eslint-plugin-vue")
-const tsPlugin = require("@typescript-eslint/eslint-plugin")
-const tsParser = require("@typescript-eslint/parser")
-const vueParser = require("vue-eslint-parser")
-const prettier = require("eslint-config-prettier")
+const vue = require("eslint-plugin-vue");
+const tsPlugin = require("@typescript-eslint/eslint-plugin");
+const tsParser = require("@typescript-eslint/parser");
+const vueParser = require("vue-eslint-parser");
+const prettier = require("eslint-config-prettier");
 
 /** @type {import("eslint").Linter.FlatConfig[]} */
 module.exports = [
@@ -11,7 +11,8 @@ module.exports = [
 	},
 
 	// Vue recommended (flat config)
-	...((vue.configs && (vue.configs["flat/vue3-recommended"] || vue.configs["flat/recommended"])) ||
+	...((vue.configs &&
+		(vue.configs["flat/vue3-recommended"] || vue.configs["flat/recommended"])) ||
 		[]),
 
 	// App source (JS/TS/Vue)
@@ -49,4 +50,4 @@ module.exports = [
 			"vue/no-v-html": "off",
 		},
 	},
-]
+];

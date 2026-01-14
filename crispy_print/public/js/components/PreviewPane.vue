@@ -67,10 +67,20 @@
 					<div class="preview-pane__spacer"></div>
 
 					<div class="preview-actions">
-						<button id="typst-refresh" class="preview-btn" type="button" title="Refresh preview">
+						<button
+							id="typst-refresh"
+							class="preview-btn"
+							type="button"
+							title="Refresh preview"
+						>
 							Refresh
 						</button>
-						<button id="typst-view-code" class="preview-btn" type="button" title="View Typst code">
+						<button
+							id="typst-view-code"
+							class="preview-btn"
+							type="button"
+							title="View Typst code"
+						>
 							View code
 						</button>
 					</div>
@@ -81,12 +91,12 @@
 </template>
 
 <script setup lang="ts">
-import PreviewRenderer from "./PreviewRenderer.vue"
-import { useStore } from "../composables/useStore"
-import { computed } from "vue"
+import PreviewRenderer from "./PreviewRenderer.vue";
+import { useStore } from "../composables/useStore";
+import { computed } from "vue";
 
-const store = useStore()
-const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value)
+const store = useStore();
+const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value);
 </script>
 
 <style scoped>

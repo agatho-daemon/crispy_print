@@ -8,7 +8,9 @@
 						Drag to reorder. Widths use Typst units: auto, 1fr, 2fr, 100pt, 50%, etc.
 					</p>
 				</div>
-				<button class="table-dialog__close" @click="$emit('close')" type="button">&#x2715;</button>
+				<button class="table-dialog__close" @click="$emit('close')" type="button">
+					&#x2715;
+				</button>
 			</div>
 
 			<div class="table-dialog__body">
@@ -48,7 +50,11 @@
 									type="text"
 									placeholder="auto"
 									class="table-dialog__width-input"
-									:class="column.invalid_width ? 'table-dialog__width-input--invalid' : ''"
+									:class="
+										column.invalid_width
+											? 'table-dialog__width-input--invalid'
+											: ''
+									"
 									title="Typst width: auto, 1fr, 2fr, 100pt, etc."
 								/>
 								<button
@@ -70,7 +76,11 @@
 
 				<div class="table-dialog__add">
 					<label class="table-dialog__add-label" for="add-column">Add column</label>
-					<select id="add-column" v-model="pendingFieldname" class="table-dialog__select">
+					<select
+						id="add-column"
+						v-model="pendingFieldname"
+						class="table-dialog__select"
+					>
 						<option value="" disabled>Select field</option>
 						<option
 							v-for="option in availableColumns"
@@ -108,93 +118,93 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue"
-import draggable from "vuedraggable"
-import type { TableColumn } from "../utils/layout"
-import { getDefaultAlignment } from "../utils/tableColumns"
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import draggable from "vuedraggable";
+import type { TableColumn } from "../utils/layout";
+import { getDefaultAlignment } from "../utils/tableColumns";
 
 interface Props {
-	modelValue: TableColumn[]
-	doctype: string
+	modelValue: TableColumn[];
+	doctype: string;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-	(e: "update:modelValue", value: TableColumn[]): void
-	(e: "close"): void
-}>()
+	(e: "update:modelValue", value: TableColumn[]): void;
+	(e: "close"): void;
+}>();
 
-const cloneColumns = (cols?: TableColumn[] | null) => JSON.parse(JSON.stringify(cols || []))
-const localColumns = ref<TableColumn[]>(cloneColumns(props.modelValue || []))
-const childMeta = ref<any>(null)
-const pendingFieldname = ref<string>("")
-const syncingFromProp = ref(false)
-const validationMessage = ref<string>("")
-let validationDebounceTimer: ReturnType<typeof setTimeout> | null = null
+const cloneColumns = (cols?: TableColumn[] | null) => JSON.parse(JSON.stringify(cols || []));
+const localColumns = ref<TableColumn[]>(cloneColumns(props.modelValue || []));
+const childMeta = ref<any>(null);
+const pendingFieldname = ref<string>("");
+const syncingFromProp = ref(false);
+const validationMessage = ref<string>("");
+let validationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const hasInvalidWidths = computed(() => {
-	return localColumns.value.some((col: any) => col.invalid_width)
-})
+	return localColumns.value.some((col: any) => col.invalid_width);
+});
 
 watch(
 	() => props.modelValue,
 	(value) => {
-		syncingFromProp.value = true
-		localColumns.value = cloneColumns(value || [])
-		validateWidths(localColumns.value)
+		syncingFromProp.value = true;
+		localColumns.value = cloneColumns(value || []);
+		validateWidths(localColumns.value);
 		nextTick(() => {
-			syncingFromProp.value = false
-		})
+			syncingFromProp.value = false;
+		});
 	},
 	{ deep: true }
-)
+);
 
 watch(
 	localColumns,
 	(cols) => {
-		if (syncingFromProp.value) return
-		validateWidths(cols)
+		if (syncingFromProp.value) return;
+		validateWidths(cols);
 
 		// Clear any existing debounce timer
 		if (validationDebounceTimer) {
-			clearTimeout(validationDebounceTimer)
+			clearTimeout(validationDebounceTimer);
 		}
 
 		// Check if any column has invalid width
-		const invalidCols = cols.filter((col: any) => col.invalid_width)
+		const invalidCols = cols.filter((col: any) => col.invalid_width);
 		if (invalidCols.length > 0) {
 			// Debounce: only show alert after user stops typing for 800ms
 			validationDebounceTimer = setTimeout(() => {
-				const invalidValues = invalidCols.map((col) => col.width || "(empty)").join(", ")
-				validationMessage.value = `Invalid column width values: ${invalidValues}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc.`
+				const invalidValues = invalidCols.map((col) => col.width || "(empty)").join(", ");
+				validationMessage.value = `Invalid column width values: ${invalidValues}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc.`;
 
 				if (typeof frappe !== "undefined") {
 					frappe.show_alert({
 						message: validationMessage.value,
 						indicator: "orange",
-					})
+					});
 				}
-			}, 200)
+			}, 200);
 
 			// Do NOT emit update to prevent compilation
-			return
+			return;
 		}
 
 		// Clear validation message if all are valid
-		validationMessage.value = ""
-		emit("update:modelValue", cols)
+		validationMessage.value = "";
+		emit("update:modelValue", cols);
 	},
 	{ deep: true }
-)
+);
 
 const availableColumns = computed(() => {
-	const existing = new Set(localColumns.value.map((c) => c.fieldname))
+	const existing = new Set(localColumns.value.map((c) => c.fieldname));
 	const base: { label: string; fieldname: string; fieldtype: string }[] = [
 		{ label: "Sr No.", fieldname: "idx", fieldtype: "Data" },
-	]
+	];
 
 	if (!childMeta.value?.fields) {
-		return base
+		return base;
 	}
 
 	const metaFields = childMeta.value.fields
@@ -204,25 +214,26 @@ const availableColumns = computed(() => {
 				f.label &&
 				f.fieldtype &&
 				!["Section Break", "Column Break"].includes(f.fieldtype) &&
-				(!frappe?.model?.no_value_type || !frappe.model.no_value_type.includes(f.fieldtype))
+				(!frappe?.model?.no_value_type ||
+					!frappe.model.no_value_type.includes(f.fieldtype))
 		)
 		.map((f: any) => ({
 			label: f.label,
 			fieldname: f.fieldname,
 			fieldtype: f.fieldtype,
-		}))
+		}));
 
-	return [...base, ...metaFields].filter((f) => !existing.has(f.fieldname))
-})
+	return [...base, ...metaFields].filter((f) => !existing.has(f.fieldname));
+});
 
 function removeColumn(column: TableColumn) {
-	localColumns.value = localColumns.value.filter((col) => col !== column)
+	localColumns.value = localColumns.value.filter((col) => col !== column);
 }
 
 function addColumn() {
-	if (!pendingFieldname.value) return
-	const option = availableColumns.value.find((opt) => opt.fieldname === pendingFieldname.value)
-	if (!option) return
+	if (!pendingFieldname.value) return;
+	const option = availableColumns.value.find((opt) => opt.fieldname === pendingFieldname.value);
+	if (!option) return;
 
 	const newCol: TableColumn = {
 		fieldname: option.fieldname,
@@ -230,27 +241,27 @@ function addColumn() {
 		fieldtype: option.fieldtype || "Data",
 		width: "auto",
 		align: getDefaultAlignment(option.fieldtype),
-	}
-	localColumns.value = [...localColumns.value, newCol]
-	pendingFieldname.value = ""
+	};
+	localColumns.value = [...localColumns.value, newCol];
+	pendingFieldname.value = "";
 }
 
 function cycleColumnAlignment(column: TableColumn) {
-	const current = column.align || "left"
-	const alignments: Array<"left" | "center" | "right"> = ["left", "center", "right"]
-	const currentIndex = alignments.indexOf(current)
-	const nextIndex = (currentIndex + 1) % alignments.length
-	column.align = alignments[nextIndex]
+	const current = column.align || "left";
+	const alignments: Array<"left" | "center" | "right"> = ["left", "center", "right"];
+	const currentIndex = alignments.indexOf(current);
+	const nextIndex = (currentIndex + 1) % alignments.length;
+	column.align = alignments[nextIndex];
 }
 
 function getAlignIcon(align?: "left" | "center" | "right"): string {
 	switch (align) {
 		case "center":
-			return "≡"
+			return "≡";
 		case "right":
-			return "⇥"
+			return "⇥";
 		default:
-			return "⇤"
+			return "⇤";
 	}
 }
 
@@ -258,34 +269,34 @@ function validateWidths(cols: TableColumn[]) {
 	// Validate Typst width values
 	for (const col of cols) {
 		if (!col.width || typeof col.width !== "string") {
-			col.width = "auto"
+			col.width = "auto";
 		}
 		// Basic validation: should be like "1fr", "auto", "100pt", etc.
-		const valid = /^(\d+\.?\d*)(fr|pt|em|%|cm|mm|in)?$|^auto$/i.test(col.width.trim())
-		;(col as any).invalid_width = !valid
+		const valid = /^(\d+\.?\d*)(fr|pt|em|%|cm|mm|in)?$|^auto$/i.test(col.width.trim());
+		(col as any).invalid_width = !valid;
 	}
 }
 
 function loadChildMeta() {
-	if (!props.doctype || typeof frappe === "undefined") return
+	if (!props.doctype || typeof frappe === "undefined") return;
 	if (typeof frappe.model?.with_doctype === "function") {
 		frappe.model.with_doctype(props.doctype, () => {
-			childMeta.value = frappe.get_meta(props.doctype)
-		})
+			childMeta.value = frappe.get_meta(props.doctype);
+		});
 	} else {
-		childMeta.value = frappe.get_meta(props.doctype)
+		childMeta.value = frappe.get_meta(props.doctype);
 	}
 }
 
 onMounted(() => {
-	loadChildMeta()
-	validateWidths(localColumns.value)
-})
+	loadChildMeta();
+	validateWidths(localColumns.value);
+});
 
 watch(
 	() => props.doctype,
 	() => loadChildMeta()
-)
+);
 </script>
 
 <style scoped>

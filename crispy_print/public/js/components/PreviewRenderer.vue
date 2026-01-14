@@ -12,7 +12,9 @@
 			<div v-if="errorPanel" class="preview-error">
 				<div class="preview-error__header">
 					<span class="preview-error__title">Typst Error</span>
-					<button class="preview-error__copy" type="button" @click="copyError">Copy</button>
+					<button class="preview-error__copy" type="button" @click="copyError">
+						Copy
+					</button>
 				</div>
 				<pre class="preview-error__body">{{ errorPanel }}</pre>
 			</div>
@@ -21,35 +23,35 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue"
-import { setupWorker } from "../typst/setupWorker"
-import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events"
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { setupWorker } from "../typst/setupWorker";
+import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
 
 interface Props {
-	formatName: string | null
-	layout: any
-	docHeader: string
-	docFooter: string
-	typstPreamble: string
-	typstCode?: string
-	rawTypst?: boolean
-	qrEnabled: boolean
-	pageSettings: any
-	letterhead: any
-	docType: string | null
-	docName?: string | null
-	changeKey?: number
-	watchDataChanges?: boolean
+	formatName: string | null;
+	layout: any;
+	docHeader: string;
+	docFooter: string;
+	typstPreamble: string;
+	typstCode?: string;
+	rawTypst?: boolean;
+	qrEnabled: boolean;
+	pageSettings: any;
+	letterhead: any;
+	docType: string | null;
+	docName?: string | null;
+	changeKey?: number;
+	watchDataChanges?: boolean;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const previewPaneEl = ref<HTMLElement | null>(null)
-const errorPanel = ref<string | null>(null)
-let teardown: (() => void) | null = null
+const previewPaneEl = ref<HTMLElement | null>(null);
+const errorPanel = ref<string | null>(null);
+let teardown: (() => void) | null = null;
 
 function createAdapter() {
-	const enableDataWatch = props.watchDataChanges !== false
+	const enableDataWatch = props.watchDataChanges !== false;
 	return {
 		getLayout: () => props.layout,
 		getDocHeader: () => props.docHeader,
@@ -70,11 +72,11 @@ function createAdapter() {
 							() => props.changeKey,
 							(_newVal, oldVal) => {
 								if (oldVal !== undefined) {
-									callback()
+									callback();
 								}
 							}
-						)
-						return () => stop()
+						);
+						return () => stop();
 					}
 
 					// Fallback for callers that don't provide changeKey.
@@ -91,8 +93,8 @@ function createAdapter() {
 						],
 						() => callback(),
 						{ deep: true }
-					)
-					return () => stop()
+					);
+					return () => stop();
 			  }
 			: undefined,
 		hookDoctypeChanges: (callback: (doctype: string | null | undefined) => void) => {
@@ -100,55 +102,55 @@ function createAdapter() {
 				() => props.docType,
 				(next) => callback(next),
 				{ immediate: true }
-			)
-			return () => stop()
+			);
+			return () => stop();
 		},
-	}
+	};
 }
 
 watch(
 	() => [props.formatName, previewPaneEl.value] as const,
 	([formatName, element]) => {
-		if (!formatName || !element) return
+		if (!formatName || !element) return;
 
-		teardown?.()
-		teardown = setupWorker(formatName, element, createAdapter())
+		teardown?.();
+		teardown = setupWorker(formatName, element, createAdapter());
 	},
 	{ immediate: true }
-)
+);
 
 function onPreviewStatus(event: Event) {
-	const detail = (event as CustomEvent<CrispyPreviewStatusDetail>).detail
-	if (!detail) return
+	const detail = (event as CustomEvent<CrispyPreviewStatusDetail>).detail;
+	if (!detail) return;
 	if (detail.status === "error") {
-		errorPanel.value = detail.message || "Typst compilation failed."
+		errorPanel.value = detail.message || "Typst compilation failed.";
 	} else if (detail.status === "ready" || detail.status === "compiling") {
-		errorPanel.value = null
+		errorPanel.value = null;
 	}
 }
 
 function copyError() {
-	if (!errorPanel.value) return
+	if (!errorPanel.value) return;
 	if (navigator?.clipboard?.writeText) {
-		navigator.clipboard.writeText(errorPanel.value)
-		return
+		navigator.clipboard.writeText(errorPanel.value);
+		return;
 	}
-	const textarea = document.createElement("textarea")
-	textarea.value = errorPanel.value
-	document.body.appendChild(textarea)
-	textarea.select()
-	document.execCommand("copy")
-	document.body.removeChild(textarea)
+	const textarea = document.createElement("textarea");
+	textarea.value = errorPanel.value;
+	document.body.appendChild(textarea);
+	textarea.select();
+	document.execCommand("copy");
+	document.body.removeChild(textarea);
 }
 
 onMounted(() => {
-	window.addEventListener(CrispyPreviewEvents.Status, onPreviewStatus)
-})
+	window.addEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
+});
 
 onBeforeUnmount(() => {
-	if (teardown) teardown()
-	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus)
-})
+	if (teardown) teardown();
+	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
+});
 </script>
 
 <style scoped>
