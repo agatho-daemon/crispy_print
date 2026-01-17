@@ -6,7 +6,10 @@ import type { CrispyLayout } from "../utils/layout"
 
 export interface CrispyFormatDoc {
 	name: string
-	doc_type: string
+	doc_type?: string
+	crispy_format_type?: string
+	report?: string
+	contract?: string
 	is_default?: number
 	doc_header?: string
 	doc_footer?: string

@@ -1,6 +1,12 @@
 <template>
 	<div id="crispy-print-root" class="crispy-layout">
-		<FieldsPane class="pane pane--fields" :fields="store.fields" :loading="store.loading" />
+		<FieldsPane
+			class="pane pane--fields"
+			:fields="store.fields"
+			:report-columns="store.reportColumns"
+			:is-report-mode="store.isReportMode"
+			:loading="store.loading"
+		/>
 		<LayoutPane v-if="!store.rawTypst.value" class="pane pane--layout" />
 		<TypstCodePane v-else class="pane pane--layout" />
 		<PreviewPane class="pane pane--preview" />

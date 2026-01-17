@@ -2,7 +2,9 @@
 	<div class="fields-pane">
 		<div class="fields-pane__header">
 			<div class="fields-pane__header-row">
-				<h3 class="fields-pane__title">Fields</h3>
+				<h3 class="fields-pane__title">
+					{{ isReportMode ? "Report Columns" : "Fields" }}
+				</h3>
 				<div class="fields-pane__spacer"></div>
 				<div>
 					<button
@@ -16,7 +18,11 @@
 					</button>
 					<div id="fields-help" popover class="fields-pane__help-popover">
 						<ul class="fields-pane__help-list">
-							<li>Use the search box to quickly find specific fields.</li>
+							<li v-if="isReportMode">
+								Drag report columns to the layout builder to include them in your
+								print format.
+							</li>
+							<li v-else>Use the search box to quickly find specific fields.</li>
 							<li>Hover over a field to see its fieldname and type.</li>
 						</ul>
 					</div>
@@ -28,21 +34,27 @@
 				<input
 					v-model="searchQuery"
 					type="text"
-					:placeholder="`Search ${filteredFields.length} fields...`"
+					:placeholder="`Search ${filteredFields.length} ${
+						isReportMode ? 'columns' : 'fields'
+					}...`"
 					class="search-input"
 				/>
 			</div>
 			<div v-if="loading" class="loading-indicator">
-				<span class="loading-text">Loading fields...</span>
+				<span class="loading-text"
+					>Loading {{ isReportMode ? "columns" : "fields" }}...</span
+				>
 			</div>
 		</div>
 
 		<div class="fields-list">
 			<div v-if="filteredFields.length === 0" class="empty-state">
 				<p v-if="searchQuery" class="empty-message">
-					No fields match "{{ searchQuery }}!"
+					No {{ isReportMode ? "columns" : "fields" }} match "{{ searchQuery }}!"
 				</p>
-				<p v-else class="empty-message">No fields available yet!</p>
+				<p v-else class="empty-message">
+					No {{ isReportMode ? "columns" : "fields" }} available yet!
+				</p>
 			</div>
 
 			<div
@@ -56,6 +68,9 @@
 				<div class="field-label">
 					{{ field.label }}
 				</div>
+				<div v-if="isReportMode && field.fieldtype" class="field-type-badge">
+					{{ field.fieldtype }}
+				</div>
 			</div>
 		</div>
 	</div>
@@ -67,15 +82,31 @@ import type { DocField } from "../utils/layout";
 
 interface Props {
 	fields: MaybeRef<DocField[]>;
+	reportColumns?: MaybeRef<any[]>;
+	isReportMode?: MaybeRef<boolean>;
 	loading?: MaybeRef<boolean>;
 }
 
-const props = withDefaults(defineProps<Props>(), { loading: false });
+const props = withDefaults(defineProps<Props>(), {
+	loading: false,
+	isReportMode: false,
+	reportColumns: () => [],
+});
+
 const searchQuery = ref("");
 const loading = computed(() => unref(props.loading));
+const isReportMode = computed(() => unref(props.isReportMode));
+
+// Combine fields and report columns based on mode
+const allFields = computed(() => {
+	if (isReportMode.value) {
+		return unref(props.reportColumns) || [];
+	}
+	return unref(props.fields);
+});
 
 const filteredFields = computed(() => {
-	const all = unref(props.fields);
+	const all = allFields.value;
 	if (!searchQuery.value) return all;
 
 	const query = searchQuery.value.toLowerCase();
@@ -221,6 +252,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	width: 100%;
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 	gap: 8px;
 	padding: 8px 12px;
 	border: 1px dashed #e2e8f0;
@@ -243,5 +275,17 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	flex: 1;
+}
+
+.field-type-badge {
+	font-size: 11px;
+	color: #6366f1;
+	background: #eef2ff;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-weight: 500;
+	white-space: nowrap;
+	flex-shrink: 0;
 }
 </style>

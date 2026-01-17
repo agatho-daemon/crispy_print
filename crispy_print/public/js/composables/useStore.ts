@@ -13,7 +13,11 @@ let storeInstance: ReturnType<typeof buildStore> | null = null
 
 interface CrispyFormat {
 	name: string
-	doc_type: string
+	doc_type?: string
+	// TODO: invistigate teh possibility of having a dynamic crispy_format_type for future.
+	crispy_format_type?: string
+	report?: string
+	contract?: string
 	is_default?: number
 	doc_header?: string
 	doc_footer?: string
@@ -29,9 +33,12 @@ interface CrispyFormat {
 function buildStore() {
 	// State
 	const crispyFormat = ref<CrispyFormat | null>(null)
+	const builderContext = ref<Record<string, any>>({})
 	const layout = ref<CrispyLayout | null>(null)
 	const meta = ref<any>(null)
 	const fields = ref<DocField[]>([])
+	const reportColumns = ref<any[]>([])
+	const reportFilters = ref<Record<string, any>>({})
 	const letterhead = ref<any>(null)
 	const dirty = ref(false)
 	const loading = ref(false)
@@ -46,6 +53,8 @@ function buildStore() {
 	// Computed
 	const formatName = computed(() => crispyFormat.value?.name || null)
 	const docType = computed(() => crispyFormat.value?.doc_type || null)
+	const formatType = computed(() => crispyFormat.value?.crispy_format_type || "DocType")
+	const isReportMode = computed(() => formatType.value === "Report")
 	const docHeader = computed(() => crispyFormat.value?.doc_header || "")
 	const docFooter = computed(() => crispyFormat.value?.doc_footer || "")
 	const qrEnabled = computed(() => Boolean(crispyFormat.value?.qrcode))
@@ -67,6 +76,13 @@ function buildStore() {
 			crispyFormat.value = doc
 			rawTypst.value = Boolean(doc.raw_typst)
 			typstCode.value = doc.typst_code || ""
+			const formatType = doc.crispy_format_type || builderContext.value?.crispy_format_type || "DocType"
+
+			// Handle Report mode
+			if (formatType === "Report" && doc.report) {
+				await loadReportColumns(doc.report, builderContext.value?.report_filters || {})
+				console.log("[Store] Report columns loaded:", reportColumns.value)
+			}
 
 			// Load DocType metadata
 			if (doc.doc_type) {
@@ -246,6 +262,77 @@ function buildStore() {
 		letterhead.value = await resolveLetterheadDoc(letterheadName)
 	}
 
+	/**
+	 * Set builder context from route options
+	 */
+	function setBuilderContext(context: Record<string, any> = {}) {
+		builderContext.value = context
+		console.log("[Store] Builder context set:", context)
+	}
+
+	/**
+	 * Load report columns for Report mode
+	 */
+	async function loadReportColumns(reportName: string, filters: Record<string, any> = {}) {
+		if (!reportName) {
+			reportColumns.value = []
+			return
+		}
+
+		try {
+			console.log("[Store] Loading report columns for:", reportName)
+
+			// Use frappe.call to fetch report columns
+			const response = await frappe.call({
+				method: "frappe.desk.query_report.run",
+				args: {
+					report_name: reportName,
+					filters: filters,
+					are_default_filters: 1,
+					ignore_prepared_report: 1,
+				},
+			})
+
+			const columns = response?.message?.columns || []
+			console.log("[Store] Raw columns from API:", columns)
+
+			// Normalize columns to match DocField structure
+			reportColumns.value = columns.map((col: any) => {
+				if (typeof col === "string") {
+					// Parse string format: "Label:Type:Width"
+					const parts = col.split(":")
+					const label = parts[0] || ""
+					const fieldtype = parts[1] || "Data"
+					const fieldname = (typeof frappe !== "undefined" && typeof frappe.scrub === "function")
+						? frappe.scrub(label)
+						: label.toLowerCase().replace(/\s+/g, "_")
+
+					return {
+						label,
+						fieldname,
+						fieldtype,
+					}
+				}
+
+				// Object format
+				return {
+					label: col.label || col.fieldname || "",
+					fieldname: col.fieldname || (typeof frappe !== "undefined" && typeof frappe.scrub === "function"
+						? frappe.scrub(col.label)
+						: col.label?.toLowerCase().replace(/\s+/g, "_")) || "",
+					fieldtype: col.fieldtype || "Data",
+					width: col.width,
+					options: col.options,
+				}
+			})
+
+			console.log("[Store] Normalized report columns:", reportColumns.value)
+		} catch (error) {
+			console.error("[Store] Failed to load report columns:", error)
+			reportColumns.value = []
+		}
+	}
+
 	// Watch for letterhead changes in pageSettings
 	watch(
 		() => pageSettings.value.letterhead,
@@ -261,9 +348,12 @@ function buildStore() {
 	const store = {
 		// State
 		crispyFormat,
+		builderContext,
 		layout,
 		meta,
 		fields,
+		reportColumns,
+		reportFilters,
 		letterhead,
 		pageSettings,
 		dirty,
@@ -274,6 +364,8 @@ function buildStore() {
 		// Computed
 		formatName,
 		docType,
+		formatType,
+		isReportMode,
 		docHeader,
 		docFooter,
 		qrEnabled,
@@ -288,6 +380,8 @@ function buildStore() {
 		markDirty,
 		resetLayout,
 		getDefaultLayout,
+		setBuilderContext,
+		loadReportColumns,
 	}
 	return store
 }
