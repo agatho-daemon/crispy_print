@@ -39,8 +39,92 @@
 			</div>
 			<div class="settings-pane__body">
 				<div class="settings-pane__form">
-					<!-- Print Format -->
-					<div class="settings-pane__field">
+					<div v-if="isReportMode" class="settings-pane__field">
+						<label class="settings-pane__label">Report Format</label>
+						<select
+							v-model="selectedReportFormat"
+							class="settings-pane__select"
+							@change="onReportFormatChange"
+						>
+							<option v-if="reportLoading" disabled>Loading formats...</option>
+							<option
+								v-for="fmt in reportFormats"
+								:key="fmt.value"
+								:value="fmt.value"
+							>
+								{{ fmt.label }}
+							</option>
+						</select>
+					</div>
+
+					<div
+						v-if="isReportMode"
+						class="settings-pane__field settings-pane__field--inline"
+					>
+						<label class="settings-pane__label">Include Filters</label>
+						<input
+							v-model="reportIncludeFilters"
+							type="checkbox"
+							class="settings-pane__checkbox"
+						/>
+					</div>
+
+					<div v-if="isReportMode" class="settings-pane__section-card">
+						<button
+							type="button"
+							class="settings-pane__section-header"
+							@click="isReportColumnsExpanded = !isReportColumnsExpanded"
+						>
+							<span>Columns</span>
+							<svg
+								:class="[
+									'settings-pane__chevron',
+									{
+										'settings-pane__chevron--expanded':
+											isReportColumnsExpanded,
+									},
+								]"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
+						<div v-if="isReportColumnsExpanded" class="settings-pane__section-content">
+							<p v-if="reportColumnsState.length === 0" class="settings-pane__hint">
+								No report columns available.
+							</p>
+							<div v-else class="report-columns">
+								<div
+									v-for="col in reportColumnsState"
+									:key="col.fieldname"
+									class="report-columns__row"
+								>
+									<input
+										v-model="reportColumnSelections[col.fieldname].selected"
+										type="checkbox"
+										class="report-columns__checkbox"
+									/>
+									<span class="report-columns__label">{{ col.label }}</span>
+									<input
+										v-model.lazy="reportColumnSelections[col.fieldname].width"
+										type="text"
+										class="report-columns__width"
+										placeholder="auto"
+										:disabled="!reportColumnSelections[col.fieldname].selected"
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Print Format (doctype source) -->
+					<div v-if="!isReportMode" class="settings-pane__field">
 						<label class="settings-pane__label">Print Format</label>
 						<select
 							v-model="selectedFormat"
@@ -90,6 +174,7 @@
 								<select
 									v-model="pageSettings.language"
 									class="settings-pane__select"
+									disabled
 								>
 									<option value="en">English</option>
 									<option value="ar">Arabic</option>
@@ -97,6 +182,9 @@
 									<option value="de">German</option>
 									<option value="es">Spanish</option>
 								</select>
+								<p class="settings-pane__hint">
+									Default language. More languages coming soon.
+								</p>
 							</div>
 
 							<div class="settings-pane__field">
@@ -161,7 +249,7 @@
 								>
 									Selected company has no logo set.
 								</p>
-								<div class="settings-pane__grid">
+								<div class="settings-pane__grid settings-pane__grid--tight">
 									<div class="settings-pane__field">
 										<label class="settings-pane__sublabel">Size (mm)</label>
 										<input
@@ -170,6 +258,8 @@
 											class="settings-pane__input"
 										/>
 									</div>
+								</div>
+								<div class="settings-pane__grid settings-pane__grid--two">
 									<div class="settings-pane__field">
 										<label class="settings-pane__sublabel">dx (mm)</label>
 										<input
@@ -189,7 +279,10 @@
 								</div>
 							</div>
 
-							<div class="settings-pane__field settings-pane__field--inline">
+							<div
+								v-if="!isReportMode"
+								class="settings-pane__field settings-pane__field--inline"
+							>
 								<label class="settings-pane__label">Remove QRCode</label>
 								<input
 									v-model="removeQr"
@@ -272,7 +365,7 @@
 
 		<!-- Right Pane: Preview -->
 		<PreviewRenderer
-			:format-name="selectedFormat"
+			:format-name="isReportMode ? null : selectedFormat"
 			:layout="layout"
 			:doc-header="docHeader"
 			:doc-footer="docFooter"
@@ -302,11 +395,21 @@ import { defaultPageSettings, ensureLogoSettings, type PageSettings } from "../u
 import PreviewRenderer from "../components/PreviewRenderer.vue";
 import { pickFormatName } from "../utils/formatSelection";
 import { useBrandingData } from "../composables/useBrandingData";
+import {
+	buildReportFormatOptions,
+	normalizeReportColumns,
+	type ReportColumn,
+	type ReportFormatOption,
+} from "./reportPrintSettings";
 
 interface Props {
 	doctype?: string;
 	docname?: string;
 	format?: string;
+	source?: string;
+	report?: string;
+	reportFilters?: Record<string, any>;
+	reportColumns?: any[];
 }
 
 const props = defineProps<Props>();
@@ -323,6 +426,21 @@ const {
 	fetchCompanies,
 } = useBrandingData();
 const selectedFormat = ref<string>("");
+const isReportMode = computed(() => props.source === "report");
+const reportName = computed(() => props.report || "");
+const reportFormats = ref<ReportFormatOption[]>([]);
+const reportLoading = ref(false);
+const selectedReportFormat = ref<string>("");
+const reportIncludeFilters = ref(false);
+const reportColumnsState = ref<ReportColumn[]>([]);
+const reportColumnSelections = ref<Record<string, { selected: boolean; width: string }>>({});
+const reportFilters = ref<Record<string, any>>(props.reportFilters || {});
+const isReportColumnsExpanded = ref(true);
+const reportPreviewLoading = ref(false);
+const reportPreviewPending = ref(false);
+const reportBrandingInitialized = ref(false);
+const reportOrientationInitialized = ref(false);
+const reportMarginsInitialized = ref(false);
 
 // Settings state (single in-memory copy; PP does not persist)
 const pageSettings = ref<PageSettings>({ ...defaultPageSettings });
@@ -362,6 +480,183 @@ const brandingMode = computed<string>({
 	},
 });
 
+function seedReportColumnSelections(columns: ReportColumn[]) {
+	const next: Record<string, { selected: boolean; width: string }> = {};
+	columns.forEach((col) => {
+		const existing = reportColumnSelections.value[col.fieldname];
+		next[col.fieldname] = existing || { selected: true, width: "auto" };
+	});
+	reportColumnSelections.value = next;
+}
+
+const reportColumnConfig = computed(() =>
+	Object.entries(reportColumnSelections.value)
+		.filter(([, value]) => value.selected)
+		.map(([fieldname, value]) => ({
+			fieldname,
+			width: value.width || "auto",
+		}))
+);
+
+async function initializeReportSettings() {
+	if (!reportName.value) {
+		return;
+	}
+
+	try {
+		reportLoading.value = true;
+		const response = await frappe.call({
+			method: "crispy_print.api.get_available_formats",
+			args: { report: reportName.value },
+		});
+		const { options, defaultValue } = buildReportFormatOptions(response?.message);
+		reportFormats.value = options;
+
+		if (defaultValue) {
+			selectedReportFormat.value = defaultValue;
+			await loadFormatSettings(defaultValue);
+		}
+
+		if (!reportBrandingInitialized.value) {
+			pageSettings.value.brandingMode = "none";
+			reportBrandingInitialized.value = true;
+		}
+
+		if (!reportOrientationInitialized.value) {
+			pageSettings.value.orientation = "landscape";
+			reportOrientationInitialized.value = true;
+		}
+
+		if (!reportMarginsInitialized.value) {
+			pageSettings.value.margins = { top: 20, bottom: 10, left: 7, right: 7 };
+			reportMarginsInitialized.value = true;
+		}
+
+		if (reportColumnsState.value.length === 0) {
+			await fetchReportColumns();
+		}
+
+		await fetchLetterheads();
+		await fetchCompanies();
+	} catch (error) {
+		console.error("[CrispyPP] Failed to load report formats:", error);
+		frappe.show_alert({
+			message: __("Failed to load report formats."),
+			indicator: "red",
+		});
+	} finally {
+		reportLoading.value = false;
+	}
+}
+
+async function onReportFormatChange() {
+	if (!selectedReportFormat.value) return;
+	await loadFormatSettings(selectedReportFormat.value);
+	await compileReportPreview();
+}
+
+async function fetchReportColumns() {
+	if (!reportName.value) return;
+
+	try {
+		const response = await frappe.call({
+			method: "frappe.desk.query_report.run",
+			args: {
+				report_name: reportName.value,
+				filters: reportFilters.value || {},
+				ignore_prepared_report: 1,
+			},
+		});
+
+		const columns = response?.message?.columns || [];
+		const normalized = normalizeReportColumns(columns);
+		reportColumnsState.value = normalized;
+		seedReportColumnSelections(normalized);
+	} catch (error) {
+		console.error("[CrispyPP] Failed to load report columns:", error);
+	}
+}
+
+async function compileReportPreview() {
+	if (!isReportMode.value) return;
+	if (!reportName.value || !selectedReportFormat.value) return;
+	if (reportPreviewLoading.value) {
+		reportPreviewPending.value = true;
+		return;
+	}
+
+	try {
+		reportPreviewLoading.value = true;
+		const letterheadImage = letterheadDoc.value?.image || null;
+		const logoImage = logoSettings.value.image || null;
+		console.log(
+			"[CrispyPP] Report preview compile requested with letterhead:",
+			letterheadDoc.value
+		);
+		console.log(
+			"[CrispyPP] Report preview compile requested with letterhead image:",
+			letterheadImage
+		);
+		console.log(
+			"[CrispyPP] Report preview compile requested with page settings:",
+			pageSettingsComputed.value
+		);
+		const sourceResponse = await frappe.call({
+			method: "crispy_print.api.get_report_typst_source",
+			args: {
+				report: reportName.value,
+				format_name: selectedReportFormat.value,
+				filters: reportFilters.value || {},
+				column_config: reportColumnConfig.value,
+				include_filters: reportIncludeFilters.value ? 1 : 0,
+				orientation: pageSettings.value.orientation,
+				page_settings: pageSettingsComputed.value,
+				letterhead_image: letterheadImage,
+				limit: 50,
+			},
+		});
+
+		const typstSource = sourceResponse?.message;
+		if (!typstSource) {
+			throw new Error("No Typst source returned");
+		}
+
+		const compileResponse = await frappe.call({
+			method: "crispy_print.api.compile_typst",
+			args: {
+				typst_source: typstSource,
+				output_format: "svg",
+				letterhead_image: letterheadImage,
+				logo_image: logoImage,
+			},
+		});
+
+		const result = compileResponse?.message;
+		if (result?.success) {
+			window.dispatchEvent(
+				new CustomEvent("crispy-report-preview", {
+					detail: {
+						svg_pages: result.svg_pages,
+						page_count: result.page_count,
+					},
+				})
+			);
+		}
+	} catch (error) {
+		console.error("[CrispyPP] Report preview failed:", error);
+		frappe.show_alert({
+			message: __("Report preview failed."),
+			indicator: "red",
+		});
+	} finally {
+		reportPreviewLoading.value = false;
+		if (reportPreviewPending.value) {
+			reportPreviewPending.value = false;
+			compileReportPreview();
+		}
+	}
+}
+
 // Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
 watch(
 	() => [
@@ -385,6 +680,10 @@ watch(
 // Initialize: Load available formats and letterheads
 async function initializeData() {
 	if (!props.doctype) {
+		if (props.source === "report") {
+			loading.value = false;
+			return;
+		}
 		console.warn("[CrispyPP] No doctype specified");
 		loading.value = false;
 		return;
@@ -488,6 +787,15 @@ const getPageSettings = () => ({
 
 const pageSettingsComputed = computed(() => getPageSettings());
 
+const getReportSettings = () => ({
+	report: reportName.value,
+	format: selectedReportFormat.value,
+	orientation: pageSettings.value.orientation,
+	includeFilters: reportIncludeFilters.value ? 1 : 0,
+	columnConfig: reportColumnConfig.value,
+	filters: reportFilters.value,
+});
+
 function triggerRefresh() {
 	// Manual refresh (refetch + recompile) for crispy-print page.
 	window.dispatchEvent(new CustomEvent("crispy-preview:refresh"));
@@ -504,14 +812,79 @@ const getLetterhead = () => {
 watch(
 	() => pageSettings.value.letterhead,
 	async (newLetterhead) => {
+		console.log("[CrispyPP] Letterhead selection changed:", newLetterhead);
 		letterheadDoc.value = await resolveLetterheadDoc(newLetterhead);
+		console.log("[CrispyPP] Letterhead doc resolved:", letterheadDoc.value);
 	}
+);
+
+watch(
+	() => letterheadDoc.value,
+	() => {
+		console.log("[CrispyPP] Letterhead doc updated, recompiling preview.");
+		if (isReportMode.value) {
+			compileReportPreview();
+		}
+	}
+);
+
+watch(
+	() => props.reportColumns,
+	(next) => {
+		const normalized = normalizeReportColumns(next || []);
+		reportColumnsState.value = normalized;
+		seedReportColumnSelections(normalized);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.reportFilters,
+	(next) => {
+		reportFilters.value = next || {};
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => [
+		selectedReportFormat.value,
+		reportColumnConfig.value,
+		reportFilters.value,
+		reportIncludeFilters.value,
+	],
+	() => {
+		compileReportPreview();
+	},
+	{ deep: true }
+);
+
+watch(
+	() => pageSettings.value,
+	() => {
+		if (isReportMode.value) {
+			compileReportPreview();
+		}
+	},
+	{ deep: true }
 );
 
 watch(
 	() => logoSettings.value.company,
 	(newCompany) => {
+		console.log("[CrispyPP] Logo company changed:", newCompany);
 		logoSettings.value.image = resolveCompanyLogo(newCompany);
+		console.log("[CrispyPP] Logo image resolved:", logoSettings.value.image);
+	}
+);
+
+watch(
+	() => logoSettings.value.image,
+	() => {
+		console.log("[CrispyPP] Logo image updated, recompiling preview.");
+		if (isReportMode.value) {
+			compileReportPreview();
+		}
 	}
 );
 
@@ -530,6 +903,8 @@ onMounted(async () => {
 		}
 	}
 	await initializeData();
+	await initializeReportSettings();
+	await compileReportPreview();
 });
 
 watch(isOverridesExpanded, (next) => {
@@ -559,6 +934,7 @@ function lastTypstReady() {
 // Expose methods for parent access
 defineExpose({
 	getPageSettings,
+	getReportSettings,
 	getLayout,
 	getLetterhead,
 	loadFormatSettings,
@@ -605,6 +981,48 @@ defineExpose({
 	font-size: 14px;
 	font-weight: 600;
 	color: #1f2937;
+}
+
+.settings-pane__grid--tight {
+	grid-template-columns: 1fr;
+}
+
+.settings-pane__grid--two {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-columns {
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	padding: 8px;
+	max-height: 280px;
+	overflow: auto;
+}
+
+.report-columns__row {
+	display: grid;
+	grid-template-columns: 18px 1fr 80px;
+	gap: 8px;
+	align-items: center;
+	padding: 4px 0;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.report-columns__row:last-child {
+	border-bottom: none;
+}
+
+.report-columns__label {
+	font-size: 12px;
+	color: #111827;
+}
+
+.report-columns__width {
+	width: 80px;
+	padding: 4px 6px;
+	font-size: 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
 }
 
 .settings-pane__spacer {

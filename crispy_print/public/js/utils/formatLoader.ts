@@ -21,7 +21,10 @@ export interface FormatInfo {
 
 export interface FormatData {
 	name: string
-	doc_type: string
+	doc_type?: string
+	crispy_format_type?: string
+	report?: string
+	contract?: string
 	layout_json?: string
 	page_settings?: string
 	doc_header?: string
