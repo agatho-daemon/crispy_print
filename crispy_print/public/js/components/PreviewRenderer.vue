@@ -129,6 +129,39 @@ function onPreviewStatus(event: Event) {
 	}
 }
 
+/**
+ * Handle report preview custom event with SVG data
+ */
+function onReportPreview(event: Event) {
+	const detail = (event as CustomEvent).detail;
+	if (!detail || !detail.svg_pages) return;
+
+	console.log("[PreviewRenderer] Received report preview:", detail);
+
+	// Clear error panel
+	errorPanel.value = null;
+
+	// Get container
+	const container = document.getElementById("typst-svg-container");
+	if (!container) return;
+
+	// Clear existing content
+	container.innerHTML = "";
+	container.classList.add("has-pages");
+
+	// Render SVG pages
+	const svgPages = detail.svg_pages as string[];
+	svgPages.forEach((svgContent: string, index: number) => {
+		const pageDiv = document.createElement("div");
+		pageDiv.className = "typst-page";
+		pageDiv.setAttribute("data-page-number", String(index + 1));
+		pageDiv.innerHTML = svgContent;
+		container.appendChild(pageDiv);
+	});
+
+	console.log(`[PreviewRenderer] Rendered ${svgPages.length} page(s)`);
+}
+
 function copyError() {
 	if (!errorPanel.value) return;
 	if (navigator?.clipboard?.writeText) {
@@ -145,11 +178,13 @@ function copyError() {
 
 onMounted(() => {
 	window.addEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
+	window.addEventListener("crispy-report-preview", onReportPreview);
 });
 
 onBeforeUnmount(() => {
 	if (teardown) teardown();
 	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
+	window.removeEventListener("crispy-report-preview", onReportPreview);
 });
 </script>
 

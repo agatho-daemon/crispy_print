@@ -7,6 +7,12 @@ from frappe.query_builder import DocType
 
 
 class CrispyFormat(Document):
+	def autoname(self):
+		"""Auto-generate name for generic templates"""
+		if self.crispy_format_type == "Report" and self.is_generic and self.generic_report_type:
+			# Format: "Generic Report - Grid", "Generic Report - Tree", etc.
+			self.name = f"Generic Report - {self.generic_report_type}"
+
 	def before_insert(self):
 		"""Clear is_default when duplicating a format"""
 		# When duplicating via Frappe's "Duplicate" feature, is_default shouldn't carry over
@@ -14,8 +20,105 @@ class CrispyFormat(Document):
 		if self.is_default:
 			self.is_default = 0
 
+		# Set default template for new Report formats
+		if self.crispy_format_type == "Report" and self.is_generic and not self.typst_code:
+			self._set_default_report_template()
+
+	def _set_default_report_template(self):
+		"""Load default Typst template for Report mode"""
+		from pathlib import Path
+
+		app_path = frappe.get_app_path("crispy_print")
+		template_path = Path(app_path).parent / "REPORT_TEMPLATE_DEFAULT.typ"
+
+		if template_path.exists():
+			self.typst_code = template_path.read_text(encoding="utf-8")
+		else:
+			# Fallback inline template
+			self.typst_code = """// Generic Report Template
+// Available data: #data.title, #data.columns, #data.rows, #data.filters
+
+#set page(
+  paper: "a4",
+  margin: (x: 1.5cm, y: 2cm),
+  flipped: data.page_settings.orientation == "landscape",
+  header: header_block,
+  footer: footer_block,
+)
+
+#align(center)[
+  #text(size: 16pt, weight: "bold")[#data.title]
+  #v(0.3em)
+  #text(size: 9pt, fill: rgb("#666"))[#data.subtitle]
+]
+
+#v(1em)
+
+// Table
+#table(
+  columns: data.columns.map(col => {
+    if col.width == "auto" { auto } else { eval(col.width) }
+  }),
+  stroke: 0.5pt,
+  inset: 8pt,
+  align: (x, y) => if y == 0 { center } else if data.columns.at(x).is_numeric { right } else { left },
+
+  // Header
+  ..data.columns.map(col => text(weight: "bold")[#col.label]),
+
+  // Rows
+  ..data.rows.map(row => row.cells.map(cell => cell.value)).flatten()
+)
+"""
+
 	def validate(self):
-		"""Clear other defaults when this format is set as default"""
+		"""Validate field combinations and auto-enable raw_typst for generic templates"""
+		# Validate Report mode fields
+		if self.crispy_format_type == "Report":
+			if self.is_generic:
+				# Generic templates must have generic_report_type
+				if not self.generic_report_type:
+					frappe.throw("Generic Report Type is required for generic templates")
+
+				# Generic templates must not have a specific report
+				if self.report:
+					frappe.throw("Generic templates cannot be linked to a specific report")
+
+				# Auto-enable raw_typst for generic templates
+				if not self.raw_typst:
+					self.raw_typst = 1
+			else:
+				# Custom report formats must have a report
+				if not self.report:
+					frappe.throw("Report is required for custom report formats")
+
+				# Custom formats must not have generic_report_type
+				if self.generic_report_type:
+					frappe.throw("Custom report formats cannot have a Generic Report Type")
+
+		# Validate DocType mode
+		elif self.crispy_format_type == "DocType":
+			if not self.doc_type:
+				frappe.throw("DocType is required")
+
+			# DocType formats should not have report fields
+			if self.report or self.generic_report_type or self.is_generic:
+				self.report = None
+				self.generic_report_type = None
+				self.is_generic = 0
+
+		# Validate Contract mode
+		elif self.crispy_format_type == "Contract":
+			if not self.contract:
+				frappe.throw("Contract is required")
+
+			# Contract formats should not have report fields
+			if self.report or self.generic_report_type or self.is_generic:
+				self.report = None
+				self.generic_report_type = None
+				self.is_generic = 0
+
+		# Clear other defaults when this format is set as default
 		if self.is_default:
 			old_default = self.get_current_default()
 			self.clear_other_defaults()

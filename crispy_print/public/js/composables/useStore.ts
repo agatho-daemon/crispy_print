@@ -19,6 +19,8 @@ interface CrispyFormat {
 	report?: string
 	contract?: string
 	is_default?: number
+	is_generic?: number
+	generic_report_type?: string
 	doc_header?: string
 	doc_footer?: string
 	qrcode?: number
@@ -39,6 +41,7 @@ function buildStore() {
 	const fields = ref<DocField[]>([])
 	const reportColumns = ref<any[]>([])
 	const reportFilters = ref<Record<string, any>>({})
+	const sampleReports = ref<any[]>([]) // Available reports for generic template preview
 	const letterhead = ref<any>(null)
 	const dirty = ref(false)
 	const loading = ref(false)
@@ -74,14 +77,31 @@ function buildStore() {
 			// Fetch the Crispy Format document
 			const doc = await getCrispyFormat(formatName)
 			crispyFormat.value = doc
-			rawTypst.value = Boolean(doc.raw_typst)
+
+			// Fetch builder mode from backend
+			const modeResponse = await frappe.call({
+				method: "crispy_print.api.get_builder_mode",
+				args: { format_name: formatName },
+			})
+
+			const builderMode = modeResponse?.message || {}
+
+			// Set raw typst mode based on backend response
+			rawTypst.value = builderMode.mode === "code" || Boolean(doc.raw_typst)
 			typstCode.value = doc.typst_code || ""
+
 			const formatType = doc.crispy_format_type || builderContext.value?.crispy_format_type || "DocType"
 
 			// Handle Report mode
 			if (formatType === "Report" && doc.report) {
 				await loadReportColumns(doc.report, builderContext.value?.report_filters || {})
 				console.log("[Store] Report columns loaded:", reportColumns.value)
+			}
+
+			// Load sample reports for generic Report templates
+			if (formatType === "Report" && doc.is_generic && rawTypst.value) {
+				await loadSampleReports()
+				console.log("[Store] Sample reports loaded:", sampleReports.value)
 			}
 
 			// Load DocType metadata
@@ -333,6 +353,74 @@ function buildStore() {
 		}
 	}
 
+	/**
+	 * Load sample reports for generic template preview
+	 */
+	async function loadSampleReports() {
+		try {
+			console.log("[Store] Loading sample reports...")
+
+			// Get generic report type from format (e.g., "Grid" or "Tree")
+			const genericReportType = crispyFormat.value?.generic_report_type || null
+
+			const response = await frappe.call({
+				method: "crispy_print.api.get_reports_without_custom_html",
+				args: {
+					generic_report_type: genericReportType,
+				},
+			})
+
+			sampleReports.value = response?.message || []
+			console.log("[Store] Sample reports loaded:", sampleReports.value)
+		} catch (error) {
+			console.error("[Store] Failed to load sample reports:", error)
+			sampleReports.value = []
+		}
+	}
+
+	/**
+	 * Build and compile report preview (reuses existing compile_typst)
+	 */
+	async function compileReportPreview(reportName: string, columnConfig: any[] = []) {
+		try {
+			console.log("[Store] Building report source:", reportName)
+
+			// Step 1: Get Typst source
+			const sourceResponse = await frappe.call({
+				method: "crispy_print.api.get_report_typst_source",
+				args: {
+					report: reportName,
+					format_name: formatName.value,
+					filters: reportFilters.value || {},
+					column_config: columnConfig,
+					limit: 50,
+				},
+			})
+
+			const typstSource = sourceResponse?.message
+			if (!typstSource) {
+				throw new Error("No Typst source returned")
+			}
+
+			console.log("[Store] Compiling to SVG...")
+
+			// Step 2: Compile using existing endpoint (same as DocType mode)
+			const compileResponse = await frappe.call({
+				method: "crispy_print.api.compile_typst",
+				args: {
+					typst_source: typstSource,
+					output_format: "svg",
+				},
+			})
+
+			console.log("[Store] Compilation result:", compileResponse?.message)
+			return compileResponse?.message || null
+		} catch (error) {
+			console.error("[Store] Failed to compile report preview:", error)
+			throw error
+		}
+	}
+
 	// Watch for letterhead changes in pageSettings
 	watch(
 		() => pageSettings.value.letterhead,
@@ -354,6 +442,7 @@ function buildStore() {
 		fields,
 		reportColumns,
 		reportFilters,
+		sampleReports,
 		letterhead,
 		pageSettings,
 		dirty,
@@ -382,6 +471,8 @@ function buildStore() {
 		getDefaultLayout,
 		setBuilderContext,
 		loadReportColumns,
+		loadSampleReports,
+		compileReportPreview,
 	}
 	return store
 }

@@ -94,7 +94,7 @@ function load_crispy_format_builder(wrapper) {
 				.get(0);
 
 			let edit_properties_btn = page
-				.add_button(__("Edit Crispy Properties"), () => {
+				.add_button(__("Edit Properties"), () => {
 					frappe.set_route("Form", "Crispy Format", format_name);
 				})
 				.get(0);

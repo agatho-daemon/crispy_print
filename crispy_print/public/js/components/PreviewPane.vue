@@ -48,7 +48,27 @@
 
 			<div class="preview-pane__controls">
 				<div class="preview-pane__controls-row">
-					<div class="preview-search">
+					<!-- Sample Report Selector (for generic Report formats) -->
+					<div v-if="isGenericReport" class="preview-search">
+						<div class="preview-search__input-wrap">
+							<select
+								id="sample-report-select"
+								class="preview-search__input"
+								:disabled="store.sampleReports.value.length === 0"
+								@change="handleReportSelection"
+							>
+								<option value="">Sample Report...</option>
+								<option
+									v-for="report in store.sampleReports.value"
+									:key="report.name"
+									:value="report.name"
+								>
+									{{ report.name }}
+								</option>
+							</select>
+						</div>
+					</div>
+					<div v-else class="preview-search">
 						<div class="preview-search__input-wrap">
 							<div class="awesomplete">
 								<input
@@ -93,10 +113,63 @@
 <script setup lang="ts">
 import PreviewRenderer from "./PreviewRenderer.vue";
 import { useStore } from "../composables/useStore";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const store = useStore();
 const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value);
+const selectedReport = ref<string>("");
+
+// Check if this is a generic Report format
+const isGenericReport = computed(() => {
+	const format = store.crispyFormat.value;
+	return (
+		format?.crispy_format_type === "Report" && format?.is_generic === 1 && store.rawTypst.value
+	);
+});
+
+/**
+ * Handle report selection and trigger preview compilation
+ */
+async function handleReportSelection(event: Event) {
+	const target = event.target as HTMLSelectElement;
+	const reportName = target.value;
+
+	if (!reportName) {
+		selectedReport.value = "";
+		return;
+	}
+
+	selectedReport.value = reportName;
+	console.log("[PreviewPane] Selected report:", reportName);
+
+	try {
+		// Show compiling status
+		const statusEl = document.getElementById("typst-status");
+		if (statusEl) statusEl.textContent = "Compiling...";
+
+		// Trigger preview compilation via store
+		const result = await store.compileReportPreview(reportName, []);
+
+		// Dispatch custom event with SVG data for PreviewRenderer
+		if (result && result.success) {
+			window.dispatchEvent(
+				new CustomEvent("crispy-report-preview", {
+					detail: {
+						svg_pages: result.svg_pages,
+						page_count: result.page_count,
+					},
+				})
+			);
+
+			if (statusEl) statusEl.textContent = `${result.page_count} page(s)`;
+		}
+	} catch (error) {
+		console.error("[PreviewPane] Preview compilation failed:", error);
+		const statusEl = document.getElementById("typst-status");
+		if (statusEl) statusEl.textContent = "Error";
+		frappe.show_alert({ message: "Preview compilation failed", indicator: "red" });
+	}
+}
 </script>
 
 <style scoped>

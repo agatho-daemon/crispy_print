@@ -11,6 +11,8 @@ export interface CrispyFormatDoc {
 	report?: string
 	contract?: string
 	is_default?: number
+	is_generic?: number
+	generic_report_type?: string
 	doc_header?: string
 	doc_footer?: string
 	qrcode?: number
