@@ -187,6 +187,34 @@
 								</p>
 							</div>
 
+							<div v-if="isReportMode" class="settings-pane__field">
+								<label class="settings-pane__label">Font</label>
+								<select v-model="reportFontFamily" class="settings-pane__select">
+									<option v-if="loadingFonts" disabled>Loading fonts...</option>
+									<option
+										v-for="font in availableFonts"
+										:key="font"
+										:value="font"
+									>
+										{{ font }}
+									</option>
+								</select>
+							</div>
+
+							<div v-if="isReportMode" class="settings-pane__field">
+								<label class="settings-pane__label">Font Size (pt)</label>
+								<input
+									v-model.number="reportFontSizePt"
+									type="number"
+									min="1"
+									step="0.5"
+									class="settings-pane__input"
+								/>
+								<p class="settings-pane__hint">
+									Applied via #set text(...) before the template.
+								</p>
+							</div>
+
 							<div class="settings-pane__field">
 								<label class="settings-pane__label">Branding</label>
 								<select v-model="brandingMode" class="settings-pane__select">
@@ -369,7 +397,7 @@
 			:layout="layout"
 			:doc-header="docHeader"
 			:doc-footer="docFooter"
-			:typst-preamble="typstPreamble"
+			:typst-preamble="typstPreambleEffective"
 			:typst-code="typstCode"
 			:raw-typst="rawTypst"
 			:qr-enabled="qrEnabledEffective"
@@ -391,10 +419,16 @@ import {
 	resolveLetterheadDoc,
 	type FormatInfo,
 } from "../utils/formatLoader";
-import { defaultPageSettings, ensureLogoSettings, type PageSettings } from "../utils/pageSettings";
+import {
+	defaultPageSettings,
+	defaultTypography,
+	ensureLogoSettings,
+	type PageSettings,
+} from "../utils/pageSettings";
 import PreviewRenderer from "../components/PreviewRenderer.vue";
 import { pickFormatName } from "../utils/formatSelection";
 import { useBrandingData } from "../composables/useBrandingData";
+import { getTypstLocalFonts } from "../api/crispy";
 import {
 	buildReportFormatOptions,
 	normalizeReportColumns,
@@ -410,6 +444,7 @@ interface Props {
 	report?: string;
 	reportFilters?: Record<string, any>;
 	reportColumns?: any[];
+	reportChartSvg?: string;
 }
 
 const props = defineProps<Props>();
@@ -435,12 +470,19 @@ const reportIncludeFilters = ref(false);
 const reportColumnsState = ref<ReportColumn[]>([]);
 const reportColumnSelections = ref<Record<string, { selected: boolean; width: string }>>({});
 const reportFilters = ref<Record<string, any>>(props.reportFilters || {});
+const reportChartSvg = ref<string>(props.reportChartSvg || "");
 const isReportColumnsExpanded = ref(true);
 const reportPreviewLoading = ref(false);
 const reportPreviewPending = ref(false);
 const reportBrandingInitialized = ref(false);
 const reportOrientationInitialized = ref(false);
 const reportMarginsInitialized = ref(false);
+const lastReportTypstSource = ref<string | null>(null);
+const lastReportChartSvg = ref<string>("");
+const availableFonts = ref<string[]>([]);
+const loadingFonts = ref(false);
+const reportFontFamily = ref("Inter 18pt");
+const reportFontSizePt = ref(10);
 
 // Settings state (single in-memory copy; PP does not persist)
 const pageSettings = ref<PageSettings>({ ...defaultPageSettings });
@@ -478,6 +520,61 @@ const brandingMode = computed<string>({
 	set: (value) => {
 		pageSettings.value.brandingMode = value as "letterhead" | "logo" | "none";
 	},
+});
+
+function parseSize(input: string | null | undefined): {
+	value: number;
+	unit: string;
+	decimals: number;
+} {
+	const raw = String(input || "").trim();
+	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i);
+	if (!match) return { value: 0, unit: "pt", decimals: 0 };
+	const value = Number(match[1]);
+	const unit = (match[2] || "pt").toLowerCase();
+	const decimals = (match[1].split(".")[1] || "").length;
+	return { value: Number.isFinite(value) ? value : 0, unit, decimals };
+}
+
+function formatPt(value: number): string {
+	const safe = Math.max(1, value);
+	const num = safe.toFixed(2).replace(/\.?0+$/, "");
+	return `${num}pt`;
+}
+
+function escapeTypstString(value: string): string {
+	return String(value || "").replace(/"/g, '\\"');
+}
+
+async function fetchFonts() {
+	if (typeof frappe === "undefined") {
+		availableFonts.value = ["Arial", "Helvetica", "Times New Roman", "Courier"];
+		return;
+	}
+
+	loadingFonts.value = true;
+	try {
+		availableFonts.value = await getTypstLocalFonts();
+	} catch (error) {
+		console.error("[CrispyPP] Failed to fetch fonts:", error);
+		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"];
+	} finally {
+		loadingFonts.value = false;
+	}
+}
+
+const reportFontPreamble = computed(() => {
+	if (!reportFontFamily.value) return "";
+	const font = escapeTypstString(reportFontFamily.value);
+	return `#set text(font: "${font}", size: ${formatPt(reportFontSizePt.value)})`;
+});
+
+const typstPreambleEffective = computed(() => {
+	if (!isReportMode.value) return typstPreamble.value;
+	const prefix = reportFontPreamble.value;
+	if (!prefix) return typstPreamble.value;
+	const base = typstPreamble.value || "";
+	return base ? `${prefix}\n${base}` : prefix;
 });
 
 function seedReportColumnSelections(columns: ReportColumn[]) {
@@ -549,6 +646,35 @@ async function initializeReportSettings() {
 	}
 }
 
+function hydrateReportStateFromStorage() {
+	if (!reportName.value || typeof window === "undefined") return;
+	const key = `crispy-print:report:${reportName.value}`;
+	const hasFilters = Object.keys(reportFilters.value || {}).length > 0;
+	const hasColumns = Array.isArray(props.reportColumns) && props.reportColumns.length > 0;
+	const hasChart = Boolean(reportChartSvg.value);
+	if (hasFilters && hasColumns && hasChart) return;
+
+	try {
+		const raw = window.sessionStorage.getItem(key);
+		if (!raw) return;
+		const parsed = JSON.parse(raw);
+		if (parsed?.report && parsed.report !== reportName.value) return;
+		if (!hasFilters && parsed?.filters) {
+			reportFilters.value = parsed.filters;
+		}
+		if (!hasColumns && Array.isArray(parsed?.columns)) {
+			const normalized = normalizeReportColumns(parsed.columns || []);
+			reportColumnsState.value = normalized;
+			seedReportColumnSelections(normalized);
+		}
+		if (!hasChart && typeof parsed?.chartSvg === "string") {
+			reportChartSvg.value = parsed.chartSvg;
+		}
+	} catch (error) {
+		console.warn("[CrispyPP] Failed to restore report state:", error);
+	}
+}
+
 async function onReportFormatChange() {
 	if (!selectedReportFormat.value) return;
 	await loadFormatSettings(selectedReportFormat.value);
@@ -611,6 +737,8 @@ async function compileReportPreview() {
 				include_filters: reportIncludeFilters.value ? 1 : 0,
 				orientation: pageSettings.value.orientation,
 				page_settings: pageSettingsComputed.value,
+				chart_svg: reportChartSvg.value || null,
+				typst_preamble_override: reportFontPreamble.value,
 				letterhead_image: letterheadImage,
 				limit: 50,
 			},
@@ -620,6 +748,8 @@ async function compileReportPreview() {
 		if (!typstSource) {
 			throw new Error("No Typst source returned");
 		}
+		lastReportTypstSource.value = typstSource;
+		lastReportChartSvg.value = reportChartSvg.value || "";
 
 		const compileResponse = await frappe.call({
 			method: "crispy_print.api.compile_typst",
@@ -628,6 +758,7 @@ async function compileReportPreview() {
 				output_format: "svg",
 				letterhead_image: letterheadImage,
 				logo_image: logoImage,
+				chart_svg: reportChartSvg.value || null,
 			},
 		});
 
@@ -670,6 +801,8 @@ watch(
 		rawTypst.value,
 		qrEnabled.value,
 		removeQr.value,
+		reportFontFamily.value,
+		reportFontSizePt.value,
 	],
 	() => {
 		changeKey.value++;
@@ -869,6 +1002,12 @@ watch(
 	{ deep: true }
 );
 
+watch([reportFontFamily, reportFontSizePt], () => {
+	if (isReportMode.value) {
+		compileReportPreview();
+	}
+});
+
 watch(
 	() => logoSettings.value.company,
 	(newCompany) => {
@@ -902,6 +1041,13 @@ onMounted(async () => {
 			isOverridesExpanded.value = stored === "true";
 		}
 	}
+	hydrateReportStateFromStorage();
+	await fetchFonts();
+	reportFontSizePt.value =
+		parseSize(defaultTypography.fieldValue.fontSize).value || reportFontSizePt.value;
+	if (availableFonts.value.length && !availableFonts.value.includes(reportFontFamily.value)) {
+		reportFontFamily.value = availableFonts.value[0];
+	}
 	await initializeData();
 	await initializeReportSettings();
 	await compileReportPreview();
@@ -914,15 +1060,96 @@ watch(isOverridesExpanded, (next) => {
 
 // Generate and open PDF in new tab
 async function generatePDF() {
+	console.log("[CrispyPP] View PDF clicked.");
+	if (isReportMode.value) {
+		await generateReportPdf("view");
+		return;
+	}
 	window.dispatchEvent(
 		new CustomEvent("crispy-preview:request-pdf", { detail: { action: "view" } })
 	);
 }
 
 async function downloadPDF() {
+	console.log("[CrispyPP] Download PDF clicked.");
+	if (isReportMode.value) {
+		await generateReportPdf("download");
+		return;
+	}
 	window.dispatchEvent(
 		new CustomEvent("crispy-preview:request-pdf", { detail: { action: "download" } })
 	);
+}
+
+async function generateReportPdf(action: "view" | "download") {
+	if (!lastReportTypstSource.value) {
+		frappe.show_alert({
+			message: __("Report preview not ready yet."),
+			indicator: "orange",
+		});
+		return;
+	}
+
+	try {
+		const letterheadImage = letterheadDoc.value?.image || null;
+		const logoImage = logoSettings.value.image || null;
+		const compileResponse = await frappe.call({
+			method: "crispy_print.api.compile_typst",
+			args: {
+				typst_source: lastReportTypstSource.value,
+				output_format: "pdf",
+				letterhead_image: letterheadImage,
+				logo_image: logoImage,
+				chart_svg: lastReportChartSvg.value || null,
+			},
+		});
+
+		const result = compileResponse?.message;
+		if (!result?.pdf_url && !result?.pdf_data) {
+			throw new Error("No PDF data returned");
+		}
+
+		let pdfUrl = result.pdf_url as string | undefined;
+		if (!pdfUrl && result.pdf_data) {
+			const binary = atob(result.pdf_data);
+			const bytes = new Uint8Array(binary.length);
+			for (let i = 0; i < binary.length; i++) {
+				bytes[i] = binary.charCodeAt(i);
+			}
+			const blob = new Blob([bytes], { type: "application/pdf" });
+			pdfUrl = URL.createObjectURL(blob);
+			setTimeout(() => URL.revokeObjectURL(pdfUrl as string), 1000);
+		}
+
+		if (!pdfUrl) {
+			throw new Error("Failed to build PDF URL");
+		}
+
+		if (action === "download") {
+			const link = document.createElement("a");
+			link.href = pdfUrl;
+			link.download = `${reportName.value || "report"}.pdf`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			frappe.show_alert({
+				message: __("PDF download started."),
+				indicator: "green",
+			});
+		} else {
+			window.open(pdfUrl, "_blank");
+			frappe.show_alert({
+				message: __("PDF opened in a new tab."),
+				indicator: "green",
+			});
+		}
+	} catch (error) {
+		console.error("[CrispyPP] Report PDF generation failed:", error);
+		frappe.show_alert({
+			message: __("Report PDF generation failed."),
+			indicator: "red",
+		});
+	}
 }
 
 // Simple readiness check: we consider Typst ready if a prior compile set code in worker

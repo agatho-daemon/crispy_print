@@ -21,6 +21,7 @@ frappe.pages["crispy-print"].on_page_show = function () {
 			source: "report",
 			filters: routeOptions.filters || {},
 			columns: routeOptions.columns || [],
+			chartSvg: routeOptions.chartSvg || "",
 		});
 		frappe.route_options = null;
 		return;
@@ -80,6 +81,7 @@ frappe.ui.CrispyPrintView = class {
 			source: context.source || "report",
 			filters: context.filters || {},
 			columns: context.columns || [],
+			chartSvg: context.chartSvg || "",
 		};
 
 		const title = context.report ? `${context.report} Report Preview` : "Report Preview";
@@ -93,6 +95,7 @@ frappe.ui.CrispyPrintView = class {
 				report: context.report || null,
 				reportFilters: context.filters || {},
 				reportColumns: context.columns || [],
+				reportChartSvg: context.chartSvg || "",
 			});
 		}
 	}
