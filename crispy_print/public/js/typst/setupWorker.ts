@@ -311,9 +311,16 @@ export function setupWorker(
 	// PDF generation request (used by crispy-print toolbar and any other UI)
 	const handlePdfRequest = (event: any) => {
 		const action = (event?.detail?.action || "view") as "view" | "download"
+		console.log("[Typst Preview] PDF request received:", {
+			action,
+			hasPdf: Boolean(currentPdfBlob),
+			hasTypst: Boolean(lastTypstCode),
+			docNameForQr,
+		})
 
 		if (currentPdfBlob) {
 			if (action === "download") {
+				console.log("[Typst Preview] Using cached PDF for download")
 				triggerPdfDownload()
 				return
 			}
@@ -325,6 +332,7 @@ export function setupWorker(
 		}
 
 		if (!lastTypstCode) {
+			console.warn("[Typst Preview] No Typst code available for PDF request")
 			frappe?.show_alert({ message: __("Typst code not ready yet"), indicator: "orange" })
 			return
 		}
@@ -343,8 +351,14 @@ export function setupWorker(
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
 		const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
+		console.log("[Typst Preview] PDF request context:", {
+			requestId: pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID,
+			pageSettings,
+			brandingImage,
+		})
 
 		const requestId = pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
+		console.log("[Typst Preview] Posting PDF compile to worker:", { requestId })
 		worker.postMessage({
 			typstSrc: lastTypstCode,
 			csrfToken: frappe?.csrf_token,
@@ -1006,6 +1020,14 @@ export function setupWorker(
 		}
 
 		if (type === "compile" || !type) {
+			if (requestId === VIEW_PDF_REQUEST_ID || requestId === DOWNLOAD_REQUEST_ID) {
+				console.log("[Typst Preview] PDF compile response:", {
+					ok,
+					requestId,
+					format,
+					bytes: Array.isArray(pdfBytes) ? pdfBytes.length : 0,
+				})
+			}
 			if (!ok) {
 				console.error("[Typst Preview] Compilation failed:", error)
 				const formattedError = parseTypstError(error)

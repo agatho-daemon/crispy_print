@@ -183,12 +183,60 @@ def _write_qr_svg(qr_data, qr_filename, temp_dir):
 		return None
 
 
+def _write_chart_svg(chart_svg: str, temp_dir: str, filename: str = "report_chart.svg"):
+	"""Write report chart SVG to temp directory for Typst image() usage."""
+	if not chart_svg:
+		return
+	# Extract the first <svg>...</svg> block to avoid HTML wrappers.
+	import re
+	from xml.etree import ElementTree as ET
+
+	match = re.search(r"<svg\\b[^>]*>.*?</svg>", chart_svg, re.DOTALL | re.IGNORECASE)
+	svg = (match.group(0) if match else chart_svg).strip()
+
+	# Ensure SVG has the XML namespace (Typst requires a proper root node).
+	if "<svg" in svg and "xmlns=" not in svg:
+		svg = re.sub(
+			r"<svg\\b",
+			'<svg xmlns="http://www.w3.org/2000/svg"',
+			svg,
+			count=1,
+			flags=re.IGNORECASE,
+		)
+
+	# Add xlink namespace if needed
+	if "xlink:" in svg and "xmlns:xlink=" not in svg:
+		svg = re.sub(
+			r"<svg\\b",
+			'<svg xmlns:xlink="http://www.w3.org/1999/xlink"',
+			svg,
+			count=1,
+			flags=re.IGNORECASE,
+		)
+
+	# Escape stray & that can break XML parsing.
+	svg = re.sub(r"&(?!(?:[a-zA-Z]+|#\\d+|#x[0-9a-fA-F]+);)", "&amp;", svg)
+
+	# Validate XML; if invalid, fall back to minimal SVG to avoid Typst error.
+	fallback = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'
+	try:
+		ET.fromstring(svg)
+	except Exception as e:
+		frappe.log_error(f"Invalid chart SVG, using fallback: {e}", "Chart SVG Error")
+		svg = fallback
+
+	dest_path = Path(temp_dir) / Path(filename).name
+	dest_path.write_text(svg, encoding="utf-8")
+	return filename
+
+
 @frappe.whitelist()
 def compile_typst(
 	typst_source,
 	output_format="svg",
 	letterhead_image=None,
 	logo_image=None,
+	chart_svg=None,
 	qr_data=None,
 	qr_filename=None,
 ):
@@ -231,6 +279,8 @@ def compile_typst(
 				_copy_letterhead_to_temp(letterhead_image, temp_dir)
 			if logo_image:
 				_copy_logo_to_temp(logo_image, temp_dir)
+			if chart_svg:
+				_write_chart_svg(chart_svg, temp_dir)
 			if qr_data and qr_filename:
 				_write_qr_svg(qr_data, qr_filename, temp_dir)
 
@@ -690,6 +740,8 @@ def get_report_typst_source(
 	include_filters: int = 0,
 	orientation: str | None = None,
 	page_settings: dict | str | None = None,
+	chart_svg: str | None = None,
+	typst_preamble_override: str | None = None,
 	letterhead_image: str | None = None,
 	limit: int = 50,
 ) -> str:
@@ -777,7 +829,39 @@ def get_report_typst_source(
 	else:
 		typst_data["page_settings"] = {"orientation": orientation_value}
 
+	# Attach chart placeholder for Typst if SVG is provided
+	if isinstance(chart_svg, str) and chart_svg.strip():
+		typst_data["chart_svg"] = "report_chart.svg"
+		chart_block = (
+			"\n// Report chart\n"
+			'#if "chart_svg" in data and data.chart_svg != "" [\n'
+			"  #block(\n"
+			'    stroke: (paint: rgb("#E5E7EB"), thickness: 0.5pt),\n'
+			"    inset: (x: 8pt, y: 8pt),\n"
+			"    radius: 2pt,\n"
+			"  )[\n"
+			"    #image(data.chart_svg, width: 100%)\n"
+			"  ]\n"
+			"  #v(1em)\n"
+			"]\n"
+		)
+		code = format_doc.typst_code or ""
+		inserted = False
+		for marker in ("// TABLE SETUP", "#table("):
+			pos = code.find(marker)
+			if pos != -1:
+				format_doc.typst_code = code[:pos] + chart_block + code[pos:]
+				inserted = True
+				break
+		if not inserted:
+			format_doc.typst_code = code + chart_block
+
 	# Build Typst document using unified compilation
+	preamble_override = (
+		typst_preamble_override.strip()
+		if isinstance(typst_preamble_override, str) and typst_preamble_override.strip()
+		else None
+	)
 	letterhead_filename = Path(letterhead_image).name if letterhead_image else None
 	page_settings_block = _build_report_page_settings_block(
 		page_settings_dict,
@@ -789,6 +873,7 @@ def get_report_typst_source(
 		data_dict=typst_data,
 		variable_name="data",  # Reports use #data.* namespace
 		page_settings_block=page_settings_block,
+		preamble_override=preamble_override,
 	)
 
 	return typst_source
@@ -1007,21 +1092,28 @@ def _prepare_typst_report_data(
 	return result
 
 
-def _prepare_row_data(row: dict, columns: list, index: int) -> dict:
+def _prepare_row_data(row, columns: list, index: int) -> dict:
 	"""Format a single row for Typst"""
 	from frappe.utils import cint
 
 	cells = []
+	is_mapping = isinstance(row, dict)
+	row_ctx = row if is_mapping else {}
 
-	for col in columns:
+	for col_idx, col in enumerate(columns):
 		fieldname = col.get("fieldname") or col.get("id", "")
-		value = row.get(fieldname)
+		if is_mapping:
+			value = row.get(fieldname)
+		elif isinstance(row, list | tuple):
+			value = row[col_idx] if col_idx < len(row) else None
+		else:
+			value = None
 
 		# Handle total row special case
-		if row.get("is_total_row") and col.get("_index") == 0:
+		if is_mapping and row.get("is_total_row") and col.get("_index") == 0:
 			formatted_value = _("Total")
 		else:
-			formatted_value = _format_cell_value(value, col, row)
+			formatted_value = _format_cell_value(value, col, row_ctx)
 
 		cells.append(
 			{
@@ -1033,9 +1125,9 @@ def _prepare_row_data(row: dict, columns: list, index: int) -> dict:
 
 	return {
 		"index": index + 1,
-		"indent": cint(row.get("indent", 0)),
-		"is_bold": row.get("bold") == 1,
-		"is_total_row": row.get("is_total_row", False),
+		"indent": cint(row.get("indent", 0)) if is_mapping else 0,
+		"is_bold": row.get("bold") == 1 if is_mapping else False,
+		"is_total_row": row.get("is_total_row", False) if is_mapping else False,
 		"cells": cells,
 	}
 
@@ -1103,6 +1195,7 @@ def _build_typst_document(
 	header_block: str | None = None,
 	footer_block: str | None = None,
 	page_settings_block: str | None = None,
+	preamble_override: str | None = None,
 ) -> str:
 	"""
 	Build complete Typst document by injecting data into template.
@@ -1126,6 +1219,8 @@ def _build_typst_document(
 	sections = []
 
 	# 1. Preamble (set rules, imports, helper functions)
+	if preamble_override:
+		sections.append(f"// Preamble override\n{preamble_override}")
 	if format_doc.typst_preamble:
 		sections.append(f"// Preamble\n{format_doc.typst_preamble}")
 
@@ -1286,7 +1381,8 @@ def _build_report_page_settings_block(
 	"""Build a #set page() block for report previews using page settings."""
 	page_settings = page_settings or {}
 	page_size = str(page_settings.get("pageSize") or "A4").lower()
-	orientation = str(page_settings.get("orientation") or "portrait").lower()
+	# Reports default to landscape unless explicitly overridden
+	orientation = str(page_settings.get("orientation") or "landscape").lower()
 	margins = page_settings.get("margins") or {}
 	margin_top = margins.get("top", 25)
 	margin_bottom = margins.get("bottom", 20)

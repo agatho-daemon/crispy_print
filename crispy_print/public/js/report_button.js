@@ -3,57 +3,183 @@
 
 frappe.provide("crispy_print");
 
-// Hook into query report after it's loaded
-$(document).on("frappe.query_report.after_refresh", function () {
-	crispy_print.add_print_button();
-});
+(() => {
+	// Avoid double-binding if assets are loaded twice in dev.
+	if (window.__crispy_qr_patched__) return;
+	window.__crispy_qr_patched__ = true;
 
-// Also try to add on route change
-frappe.router.on("change", () => {
-	if (frappe.get_route()[0] === "query-report") {
-		setTimeout(() => {
-			crispy_print.add_print_button();
-		}, 1000);
-	}
-});
+	const BTN_MARK = "data-crispy-print-btn";
+	const SVG_NS = "http://www.w3.org/2000/svg";
+	const XLINK_NS = "http://www.w3.org/1999/xlink";
 
-crispy_print.add_print_button = function () {
-	// Check if query report exists
-	if (!frappe.query_report || !frappe.query_report.report_name) {
-		return;
+	function replaceRef(value, fromId, toId) {
+		if (!value || typeof value !== "string") return value;
+		return value
+			.replaceAll(`url(#${fromId})`, `url(#${toId})`)
+			.replaceAll(`#${fromId}`, `#${toId}`);
 	}
 
-	// Check if already added
-	if (frappe.query_report.page.btn_typst_print) {
-		const btn = frappe.query_report.page.btn_typst_print;
-		const btnEl = btn && btn.length ? btn[0] : null;
-		if (btnEl && document.contains(btnEl)) {
+	function normalizeSvgIds(svg) {
+		const seen = new Map();
+		const all = svg.querySelectorAll("[id]");
+
+		all.forEach((el) => {
+			const id = el.getAttribute("id");
+			if (!id) return;
+
+			if (!seen.has(id)) {
+				seen.set(id, 1);
+				return;
+			}
+
+			const next = seen.get(id) + 1;
+			seen.set(id, next);
+			const newId = `${id}__dup${next}`;
+			el.setAttribute("id", newId);
+
+			svg.querySelectorAll("*").forEach((node) => {
+				Array.from(node.attributes || []).forEach((attr) => {
+					const updated = replaceRef(attr.value, id, newId);
+					if (updated !== attr.value) {
+						node.setAttribute(attr.name, updated);
+					}
+				});
+			});
+		});
+	}
+
+	function serializeChartSvg(svgEl) {
+		if (!svgEl) return "";
+		const svg = svgEl.cloneNode(true);
+		if (!svg.getAttribute("xmlns")) {
+			svg.setAttribute("xmlns", SVG_NS);
+		}
+		if (!svg.getAttribute("xmlns:xlink")) {
+			svg.setAttribute("xmlns:xlink", XLINK_NS);
+		}
+		const gridLines = svg.querySelectorAll(".line-horizontal, .line-vertical");
+		gridLines.forEach((line) => {
+			line.setAttribute("stroke", "#D1D5DB");
+			line.setAttribute("stroke-width", "0.75");
+			line.setAttribute("shape-rendering", "crispEdges");
+		});
+		normalizeSvgIds(svg);
+		return new XMLSerializer().serializeToString(svg);
+	}
+
+	crispy_print.add_print_button = function (report) {
+		const qr = report || frappe.query_report;
+
+		// Must exist and have a page to attach the button to
+		if (!qr || !qr.report_name || !qr.page || typeof qr.page.add_inner_button !== "function") {
 			return;
 		}
-		frappe.query_report.page.btn_typst_print = null;
-	}
 
-	// Add button to page menu
-	const btn_label = `<img src="/assets/crispy_print/icons/typst.svg"
-        	style="width:45px;height:45px;margin-top:2px;"
-            alt="Crispy Print"
-            title="Open Crispy Print Preview"/>`;
-	frappe.query_report.page.btn_typst_print = frappe.query_report.page.add_inner_button(
-		btn_label,
-		() => {
-			const filters = frappe.query_report.get_filter_values
-				? frappe.query_report.get_filter_values()
-				: {};
-			const columns = frappe.query_report.columns || [];
+		// Already added and still in DOM
+		if (qr.page.btn_typst_print) {
+			const btn = qr.page.btn_typst_print;
+			const btnEl = btn && btn.length ? btn[0] : null;
+			if (btnEl && document.contains(btnEl)) return;
+			qr.page.btn_typst_print = null;
+		}
+
+		// Prevent duplicates even if page.btn_typst_print is lost
+		if (qr.page && qr.page.inner_toolbar) {
+			const existing = qr.page.inner_toolbar[0]?.querySelector?.(`button[${BTN_MARK}="1"]`);
+			if (existing) return;
+		}
+
+		const btn_label = `<img src="/assets/crispy_print/icons/typst.svg"
+			style="width:45px;height:45px;margin-top:2px;"
+			alt="Crispy Print"
+			title="Open Crispy Print Preview"/>`;
+
+		qr.page.btn_typst_print = qr.page.add_inner_button(btn_label, () => {
+			const filters = qr.get_filter_values ? qr.get_filter_values() : {};
+			const columns = qr.columns || [];
+			const chartSvgEl =
+				document.querySelector(".chart-container svg") ||
+				document.querySelector(".report-chart svg") ||
+				document.querySelector("#chart svg");
+			const chartSvg = serializeChartSvg(chartSvgEl);
+			const safeFilters = JSON.parse(JSON.stringify(filters || {}));
+			const safeColumns = JSON.parse(JSON.stringify(columns || []));
+			const state = {
+				report: qr.report_name,
+				filters: safeFilters,
+				columns: safeColumns,
+				chartSvg,
+			};
+			try {
+				if (typeof window !== "undefined") {
+					window.sessionStorage.setItem(
+						`crispy-print:report:${qr.report_name}`,
+						JSON.stringify(state)
+					);
+				}
+			} catch (error) {
+				console.warn("[Crispy Print] Failed to persist report state:", error);
+			}
 			frappe.route_options = {
 				source: "report",
-				filters,
-				columns,
+				filters: safeFilters,
+				columns: safeColumns,
+				chartSvg,
 			};
-			frappe.set_route("crispy-print", "report", frappe.query_report.report_name);
+			frappe.set_route("crispy-print", "report", qr.report_name);
+		});
+
+		const btnEl = qr.page.btn_typst_print && qr.page.btn_typst_print[0];
+		if (btnEl) {
+			btnEl.setAttribute(BTN_MARK, "1");
 		}
-	);
-};
+	};
+
+	function inQueryReportRoute() {
+		const route = typeof frappe.get_route === "function" ? frappe.get_route() : null;
+		return Array.isArray(route) && route[0] === "query-report";
+	}
+
+	function tryAddButton() {
+		if (!inQueryReportRoute()) return;
+		const qr = frappe.query_report;
+		if (!qr || !qr.report_name) return;
+		crispy_print.add_print_button(qr);
+	}
+
+	function tryAddButtonForReport(report) {
+		if (!report || !report.report_name) return;
+		crispy_print.add_print_button(report);
+	}
+
+	// Try on initial route load
+	setTimeout(tryAddButton, 300);
+
+	// Re-try when navigation happens
+	$(document).on("page-change", tryAddButton);
+	if (frappe.router && typeof frappe.router.on === "function") {
+		frappe.router.on("change", tryAddButton);
+	}
+
+	// Monkey-patch refresh to re-attach button after report renders
+	const QueryReport = frappe.views && frappe.views.QueryReport;
+	const proto = QueryReport && QueryReport.prototype;
+	if (proto && !proto.__crispy_refresh_patched__) {
+		const originalRefresh = proto.refresh;
+		proto.refresh = function (...args) {
+			const result = originalRefresh.apply(this, args);
+			Promise.resolve(result)
+				.then(() => {
+					tryAddButtonForReport(this);
+				})
+				.catch(() => {
+					// no-op: keep original behavior
+				});
+			return result;
+		};
+		proto.__crispy_refresh_patched__ = true;
+	}
+})();
 
 // Format selector dialog
 crispy_print.show_format_selector = function (report_name, report_instance) {
