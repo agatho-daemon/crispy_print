@@ -1160,7 +1160,8 @@ defineExpose({
 /* Settings Pane */
 .settings-pane {
 	background: white;
-	border-right: 1px solid #e5e7eb;
+	border-right: none;
+	padding-right: 12px;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
