@@ -2,48 +2,41 @@
 	<div class="crispy-preview-layout">
 		<!-- Left Pane: Settings -->
 		<div class="settings-pane">
-			<div class="settings-pane__header">
-				<div class="settings-pane__header-row">
-					<h3 class="settings-pane__title">Print Settings</h3>
-					<div class="settings-pane__spacer"></div>
+			<div class="section-head settings-pane__header">
+				<h4 class="pull-left">Print Settings</h4>
+				<div class="pull-right settings-pane__header-actions">
 					<button
 						type="button"
-						class="settings-pane__reset-btn"
+						class="btn btn-default btn-xs"
 						@click="resetFormat"
 						title="Reset to saved format"
 					>
 						Reset
 					</button>
-					<div>
-						<button
-							type="button"
-							class="settings-pane__help-btn"
-							popovertarget="preview-settings-help"
-							popovertargetaction="toggle"
-							title="Toggle help"
-						>
-							?
-						</button>
-						<div
-							id="preview-settings-help"
-							popover
-							class="settings-pane__help-popover"
-						>
-							<ul class="settings-pane__help-list">
-								<li>Configure page settings and document options.</li>
-								<li>Changes apply immediately to the preview.</li>
-							</ul>
-						</div>
+					<button
+						type="button"
+						class="btn btn-default btn-xs"
+						popovertarget="preview-settings-help"
+						popovertargetaction="toggle"
+						title="Toggle help"
+					>
+						?
+					</button>
+					<div id="preview-settings-help" popover class="settings-pane__help-popover">
+						<ul class="settings-pane__help-list">
+							<li>Configure page settings and document options.</li>
+							<li>Changes apply immediately to the preview.</li>
+						</ul>
 					</div>
 				</div>
 			</div>
 			<div class="settings-pane__body">
-				<div class="settings-pane__form">
-					<div v-if="isReportMode" class="settings-pane__field">
-						<label class="settings-pane__label">Report Format</label>
+				<div class="form-layout">
+					<div v-if="isReportMode" class="form-group">
+						<label class="control-label">Report Format</label>
 						<select
 							v-model="selectedReportFormat"
-							class="settings-pane__select"
+							class="form-control"
 							@change="onReportFormatChange"
 						>
 							<option v-if="reportLoading" disabled>Loading formats...</option>
@@ -57,22 +50,17 @@
 						</select>
 					</div>
 
-					<div
-						v-if="isReportMode"
-						class="settings-pane__field settings-pane__field--inline"
-					>
-						<label class="settings-pane__label">Include Filters</label>
-						<input
-							v-model="reportIncludeFilters"
-							type="checkbox"
-							class="settings-pane__checkbox"
-						/>
+					<div v-if="isReportMode" class="checkbox">
+						<label>
+							<input v-model="reportIncludeFilters" type="checkbox" />
+							Include Filters
+						</label>
 					</div>
 
-					<div v-if="isReportMode" class="settings-pane__section-card">
+					<div v-if="isReportMode" class="form-section">
 						<button
 							type="button"
-							class="settings-pane__section-header"
+							class="section-head"
 							@click="isReportColumnsExpanded = !isReportColumnsExpanded"
 						>
 							<span>Columns</span>
@@ -95,8 +83,11 @@
 								/>
 							</svg>
 						</button>
-						<div v-if="isReportColumnsExpanded" class="settings-pane__section-content">
-							<p v-if="reportColumnsState.length === 0" class="settings-pane__hint">
+						<div v-if="isReportColumnsExpanded" class="section-body">
+							<p
+								v-if="reportColumnsState.length === 0"
+								class="help-block text-muted small"
+							>
 								No report columns available.
 							</p>
 							<div v-else class="report-columns">
@@ -108,13 +99,13 @@
 									<input
 										v-model="reportColumnSelections[col.fieldname].selected"
 										type="checkbox"
-										class="report-columns__checkbox"
+										class="input-sm"
 									/>
 									<span class="report-columns__label">{{ col.label }}</span>
 									<input
 										v-model.lazy="reportColumnSelections[col.fieldname].width"
 										type="text"
-										class="report-columns__width"
+										class="form-control input-sm report-columns__width"
 										placeholder="auto"
 										:disabled="!reportColumnSelections[col.fieldname].selected"
 									/>
@@ -124,11 +115,11 @@
 					</div>
 
 					<!-- Print Format (doctype source) -->
-					<div v-if="!isReportMode" class="settings-pane__field">
-						<label class="settings-pane__label">Print Format</label>
+					<div v-if="!isReportMode" class="form-group">
+						<label class="control-label">Print Format</label>
 						<select
 							v-model="selectedFormat"
-							class="settings-pane__select"
+							class="form-control"
 							@change="onFormatChange"
 						>
 							<option
@@ -141,10 +132,10 @@
 						</select>
 					</div>
 
-					<div class="settings-pane__section-card">
+					<div class="form-section">
 						<button
 							type="button"
-							class="settings-pane__section-header"
+							class="section-head"
 							@click="isOverridesExpanded = !isOverridesExpanded"
 						>
 							<span>Preview Overrides</span>
@@ -164,16 +155,16 @@
 								/>
 							</svg>
 						</button>
-						<div v-if="isOverridesExpanded" class="settings-pane__section-content">
-							<p class="settings-pane__hint">
+						<div v-if="isOverridesExpanded" class="section-body">
+							<p class="help-block text-muted small">
 								Preview-only changes. The saved format is unchanged.
 							</p>
 
-							<div class="settings-pane__field">
-								<label class="settings-pane__label">Language</label>
+							<div class="form-group">
+								<label class="control-label">Language</label>
 								<select
 									v-model="pageSettings.language"
-									class="settings-pane__select"
+									class="form-control"
 									disabled
 								>
 									<option value="en">English</option>
@@ -182,14 +173,14 @@
 									<option value="de">German</option>
 									<option value="es">Spanish</option>
 								</select>
-								<p class="settings-pane__hint">
+								<p class="help-block text-muted small">
 									Default language. More languages coming soon.
 								</p>
 							</div>
 
-							<div v-if="isReportMode" class="settings-pane__field">
-								<label class="settings-pane__label">Font</label>
-								<select v-model="reportFontFamily" class="settings-pane__select">
+							<div v-if="isReportMode" class="form-group">
+								<label class="control-label">Font</label>
+								<select v-model="reportFontFamily" class="form-control">
 									<option v-if="loadingFonts" disabled>Loading fonts...</option>
 									<option
 										v-for="font in availableFonts"
@@ -201,35 +192,32 @@
 								</select>
 							</div>
 
-							<div v-if="isReportMode" class="settings-pane__field">
-								<label class="settings-pane__label">Font Size (pt)</label>
+							<div v-if="isReportMode" class="form-group">
+								<label class="control-label">Font Size (pt)</label>
 								<input
 									v-model.number="reportFontSizePt"
 									type="number"
 									min="1"
 									step="0.5"
-									class="settings-pane__input"
+									class="form-control"
 								/>
-								<p class="settings-pane__hint">
+								<p class="help-block text-muted small">
 									Applied via #set text(...) before the template.
 								</p>
 							</div>
 
-							<div class="settings-pane__field">
-								<label class="settings-pane__label">Branding</label>
-								<select v-model="brandingMode" class="settings-pane__select">
+							<div class="form-group">
+								<label class="control-label">Branding</label>
+								<select v-model="brandingMode" class="form-control">
 									<option value="none">None</option>
 									<option value="letterhead">Letterhead</option>
 									<option value="logo">Logo</option>
 								</select>
 							</div>
 
-							<div v-if="brandingMode === 'letterhead'" class="settings-pane__field">
-								<label class="settings-pane__label">Letter Head</label>
-								<select
-									v-model="pageSettings.letterhead"
-									class="settings-pane__select"
-								>
+							<div v-if="brandingMode === 'letterhead'" class="form-group">
+								<label class="control-label">Letter Head</label>
+								<select v-model="pageSettings.letterhead" class="form-control">
 									<option value="">None</option>
 									<option v-if="loadingLetterheads" disabled>
 										Loading letterheads...
@@ -245,15 +233,12 @@
 							</div>
 
 							<div v-if="brandingMode === 'logo'">
-								<p class="settings-pane__hint">
+								<p class="help-block text-muted small">
 									Logo is anchored to top-left using #place().
 								</p>
-								<div class="settings-pane__field">
-									<label class="settings-pane__label">Company</label>
-									<select
-										v-model="logoSettings.company"
-										class="settings-pane__select"
-									>
+								<div class="form-group">
+									<label class="control-label">Company</label>
+									<select v-model="logoSettings.company" class="form-control">
 										<option value="">Select company</option>
 										<option v-if="loadingCompanies" disabled>
 											Loading companies...
@@ -273,58 +258,56 @@
 								</div>
 								<p
 									v-if="logoSettings.company && !logoSettings.image"
-									class="settings-pane__hint"
+									class="help-block text-muted small"
 								>
 									Selected company has no logo set.
 								</p>
-								<div class="settings-pane__grid settings-pane__grid--tight">
-									<div class="settings-pane__field">
-										<label class="settings-pane__sublabel">Size (mm)</label>
+								<div class="row">
+									<div class="col-xs-12 form-group">
+										<label class="control-label text-muted small"
+											>Size (mm)</label
+										>
 										<input
 											v-model.number="logoSettings.size"
 											type="number"
-											class="settings-pane__input"
+											class="form-control input-sm"
 										/>
 									</div>
 								</div>
-								<div class="settings-pane__grid settings-pane__grid--two">
-									<div class="settings-pane__field">
-										<label class="settings-pane__sublabel">dx (mm)</label>
+								<div class="row">
+									<div class="col-xs-6 form-group">
+										<label class="control-label text-muted small"
+											>dx (mm)</label
+										>
 										<input
 											v-model.number="logoSettings.dx"
 											type="number"
-											class="settings-pane__input"
+											class="form-control input-sm"
 										/>
 									</div>
-									<div class="settings-pane__field">
-										<label class="settings-pane__sublabel">dy (mm)</label>
+									<div class="col-xs-6 form-group">
+										<label class="control-label text-muted small"
+											>dy (mm)</label
+										>
 										<input
 											v-model.number="logoSettings.dy"
 											type="number"
-											class="settings-pane__input"
+											class="form-control input-sm"
 										/>
 									</div>
 								</div>
 							</div>
 
-							<div
-								v-if="!isReportMode"
-								class="settings-pane__field settings-pane__field--inline"
-							>
-								<label class="settings-pane__label">Remove QRCode</label>
-								<input
-									v-model="removeQr"
-									type="checkbox"
-									class="settings-pane__checkbox"
-								/>
+							<div v-if="!isReportMode" class="checkbox">
+								<label>
+									<input v-model="removeQr" type="checkbox" />
+									Remove QRCode
+								</label>
 							</div>
 
-							<div class="settings-pane__field">
-								<label class="settings-pane__label">Page Size</label>
-								<select
-									v-model="pageSettings.pageSize"
-									class="settings-pane__select"
-								>
+							<div class="form-group">
+								<label class="control-label">Page Size</label>
+								<select v-model="pageSettings.pageSize" class="form-control">
 									<option value="A3">A3 (297 × 420 mm)</option>
 									<option value="A4">A4 (210 × 297 mm)</option>
 									<option value="A5">A5 (148 × 210 mm)</option>
@@ -333,54 +316,51 @@
 								</select>
 							</div>
 
-							<div class="settings-pane__field">
-								<label class="settings-pane__label">Orientation</label>
-								<select
-									v-model="pageSettings.orientation"
-									class="settings-pane__select"
-								>
+							<div class="form-group">
+								<label class="control-label">Orientation</label>
+								<select v-model="pageSettings.orientation" class="form-control">
 									<option value="portrait">Portrait</option>
 									<option value="landscape">Landscape</option>
 								</select>
 							</div>
 
-							<div class="settings-pane__field">
-								<label class="settings-pane__label">Margins (mm)</label>
-								<div class="settings-pane__margins">
-									<div class="settings-pane__margin-input">
-										<span class="settings-pane__margin-prefix">T</span>
+							<div class="form-group">
+								<label class="control-label">Margins (mm)</label>
+								<div class="row">
+									<div class="col-xs-6 form-group">
+										<span class="text-muted small">T</span>
 										<input
 											v-model.number="pageSettings.margins.top"
 											type="number"
 											placeholder="Top"
-											class="settings-pane__input"
+											class="form-control input-sm"
 										/>
 									</div>
-									<div class="settings-pane__margin-input">
-										<span class="settings-pane__margin-prefix">B</span>
+									<div class="col-xs-6 form-group">
+										<span class="text-muted small">B</span>
 										<input
 											v-model.number="pageSettings.margins.bottom"
 											type="number"
 											placeholder="Bottom"
-											class="settings-pane__input"
+											class="form-control input-sm"
 										/>
 									</div>
-									<div class="settings-pane__margin-input">
-										<span class="settings-pane__margin-prefix">L</span>
+									<div class="col-xs-6 form-group">
+										<span class="text-muted small">L</span>
 										<input
 											v-model.number="pageSettings.margins.left"
 											type="number"
 											placeholder="Left"
-											class="settings-pane__input"
+											class="form-control input-sm"
 										/>
 									</div>
-									<div class="settings-pane__margin-input">
-										<span class="settings-pane__margin-prefix">R</span>
+									<div class="col-xs-6 form-group">
+										<span class="text-muted small">R</span>
 										<input
 											v-model.number="pageSettings.margins.right"
 											type="number"
 											placeholder="Right"
-											class="settings-pane__input"
+											class="form-control input-sm"
 										/>
 									</div>
 								</div>
@@ -1192,27 +1172,6 @@ defineExpose({
 	flex-shrink: 0;
 }
 
-.settings-pane__header-row {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.settings-pane__title {
-	margin: 0;
-	font-size: 14px;
-	font-weight: 600;
-	color: #1f2937;
-}
-
-.settings-pane__grid--tight {
-	grid-template-columns: 1fr;
-}
-
-.settings-pane__grid--two {
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .report-columns {
 	border: 1px solid #e5e7eb;
 	border-radius: 6px;
@@ -1247,44 +1206,10 @@ defineExpose({
 	border-radius: 4px;
 }
 
-.settings-pane__spacer {
-	flex: 1;
-}
-
-.settings-pane__help-btn {
-	background: transparent;
-	border: 1px solid #d1d5db;
-	border-radius: 4px;
-	width: 24px;
-	height: 24px;
+.settings-pane__header-actions {
 	display: flex;
+	gap: 6px;
 	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	font-size: 12px;
-	color: #6b7280;
-	transition: all 0.2s;
-}
-
-.settings-pane__help-btn:hover {
-	background: #f3f4f6;
-	color: #1f2937;
-}
-
-.settings-pane__reset-btn {
-	background: #f3f4f6;
-	border: 1px solid #d1d5db;
-	border-radius: 4px;
-	padding: 4px 8px;
-	margin-right: 8px;
-	cursor: pointer;
-	font-size: 12px;
-	color: #1f2937;
-	transition: all 0.2s;
-}
-
-.settings-pane__reset-btn:hover {
-	background: #e5e7eb;
 }
 
 .settings-pane__help-popover {
@@ -1310,93 +1235,25 @@ defineExpose({
 	padding: 16px;
 }
 
-.settings-pane__form {
+.settings-pane .section-head {
 	display: flex;
-	flex-direction: column;
-	gap: 16px;
-}
-
-.settings-pane__field {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
-
-.settings-pane__field--inline {
-	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
-}
-
-.settings-pane__label {
-	font-size: 13px;
-	font-weight: 500;
-	color: #374151;
-}
-
-.settings-pane__input,
-.settings-pane__select {
 	width: 100%;
-	padding: 6px 10px;
-	border: 1px solid #d1d5db;
-	border-radius: 4px;
-	font-size: 13px;
-	color: #1f2937;
-	background: white;
-	transition: border-color 0.2s;
-}
-
-.settings-pane__input:focus,
-.settings-pane__select:focus {
-	outline: none;
-	border-color: #3b82f6;
-}
-
-.settings-pane__checkbox {
-	width: 16px;
-	height: 16px;
-	accent-color: #2563eb;
-}
-
-.settings-pane__hint {
-	margin: 0;
-	font-size: 12px;
-	color: #64748b;
-}
-
-.settings-pane__input--readonly {
-	background: #f9fafb;
-	color: #6b7280;
-	cursor: not-allowed;
-}
-
-.settings-pane__select {
 	cursor: pointer;
-}
-
-.settings-pane__section-card {
-	background: #f8fafc;
-	border: 1px solid #e2e8f0;
-	border-radius: 8px;
-	overflow: hidden;
-}
-
-.settings-pane__section-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	width: 100%;
-	margin: 0;
-	padding: 10px 12px;
-	font-size: 13px;
-	font-weight: 700;
-	color: #1e293b;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
 	background: transparent;
-	border: none;
-	cursor: pointer;
+	border: 0;
+	padding: 8px 0;
+	text-align: left;
+}
+
+.settings-pane .section-body {
+	padding: 8px 0 12px;
+}
+
+.settings-pane .form-group {
+	float: none;
+	width: 100%;
 }
 
 .settings-pane__chevron {
@@ -1407,52 +1264,6 @@ defineExpose({
 
 .settings-pane__chevron--expanded {
 	transform: rotate(-180deg);
-}
-
-.settings-pane__section-content {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 12px 12px 14px;
-	background: #f8fafc;
-	border-top: 1px solid #e2e8f0;
-}
-
-.settings-pane__grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 8px;
-}
-
-.settings-pane__sublabel {
-	font-size: 11px;
-	font-weight: 500;
-	color: #64748b;
-	margin-bottom: 0px;
-}
-
-.settings-pane__margins {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 8px;
-}
-
-.settings-pane__margin-input {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-}
-
-.settings-pane__margin-prefix {
-	font-size: 11px;
-	font-weight: 600;
-	color: #6b7280;
-	width: 16px;
-	text-align: center;
-}
-
-.settings-pane__margin-input .settings-pane__input {
-	flex: 1;
 }
 
 /* Preview Pane */
