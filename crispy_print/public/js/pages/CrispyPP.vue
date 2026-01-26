@@ -429,6 +429,7 @@ import PreviewRenderer from "../components/PreviewRenderer.vue";
 import { pickFormatName } from "../utils/formatSelection";
 import { useBrandingData } from "../composables/useBrandingData";
 import { getTypstLocalFonts } from "../api/crispy";
+import { loadReportState, normalizeReportChartSvg } from "../utils/reportState";
 import {
 	buildReportFormatOptions,
 	normalizeReportColumns,
@@ -648,30 +649,23 @@ async function initializeReportSettings() {
 
 function hydrateReportStateFromStorage() {
 	if (!reportName.value || typeof window === "undefined") return;
-	const key = `crispy-print:report:${reportName.value}`;
 	const hasFilters = Object.keys(reportFilters.value || {}).length > 0;
 	const hasColumns = Array.isArray(props.reportColumns) && props.reportColumns.length > 0;
 	const hasChart = Boolean(reportChartSvg.value);
 	if (hasFilters && hasColumns && hasChart) return;
 
-	try {
-		const raw = window.sessionStorage.getItem(key);
-		if (!raw) return;
-		const parsed = JSON.parse(raw);
-		if (parsed?.report && parsed.report !== reportName.value) return;
-		if (!hasFilters && parsed?.filters) {
-			reportFilters.value = parsed.filters;
-		}
-		if (!hasColumns && Array.isArray(parsed?.columns)) {
-			const normalized = normalizeReportColumns(parsed.columns || []);
-			reportColumnsState.value = normalized;
-			seedReportColumnSelections(normalized);
-		}
-		if (!hasChart && typeof parsed?.chartSvg === "string") {
-			reportChartSvg.value = parsed.chartSvg;
-		}
-	} catch (error) {
-		console.warn("[CrispyPP] Failed to restore report state:", error);
+	const parsed = loadReportState(reportName.value);
+	if (!parsed) return;
+	if (!hasFilters && parsed.filters) {
+		reportFilters.value = parsed.filters;
+	}
+	if (!hasColumns && Array.isArray(parsed.columns)) {
+		const normalized = normalizeReportColumns(parsed.columns || []);
+		reportColumnsState.value = normalized;
+		seedReportColumnSelections(normalized);
+	}
+	if (!hasChart && typeof parsed.chartSvg === "string") {
+		reportChartSvg.value = parsed.chartSvg;
 	}
 }
 
@@ -713,6 +707,7 @@ async function compileReportPreview() {
 
 	try {
 		reportPreviewLoading.value = true;
+		const chartSvgPayload = normalizeReportChartSvg(reportChartSvg.value || "");
 		const letterheadImage = letterheadDoc.value?.image || null;
 		const logoImage = logoSettings.value.image || null;
 		console.log(
@@ -737,7 +732,7 @@ async function compileReportPreview() {
 				include_filters: reportIncludeFilters.value ? 1 : 0,
 				orientation: pageSettings.value.orientation,
 				page_settings: pageSettingsComputed.value,
-				chart_svg: reportChartSvg.value || null,
+				chart_svg: chartSvgPayload || null,
 				typst_preamble_override: reportFontPreamble.value,
 				letterhead_image: letterheadImage,
 				limit: 50,
@@ -749,7 +744,7 @@ async function compileReportPreview() {
 			throw new Error("No Typst source returned");
 		}
 		lastReportTypstSource.value = typstSource;
-		lastReportChartSvg.value = reportChartSvg.value || "";
+		lastReportChartSvg.value = chartSvgPayload || "";
 
 		const compileResponse = await frappe.call({
 			method: "crispy_print.api.compile_typst",
@@ -758,7 +753,7 @@ async function compileReportPreview() {
 				output_format: "svg",
 				letterhead_image: letterheadImage,
 				logo_image: logoImage,
-				chart_svg: reportChartSvg.value || null,
+				chart_svg: chartSvgPayload || null,
 			},
 		});
 

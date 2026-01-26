@@ -9,63 +9,6 @@ frappe.provide("crispy_print");
 	window.__crispy_qr_patched__ = true;
 
 	const BTN_MARK = "data-crispy-print-btn";
-	const SVG_NS = "http://www.w3.org/2000/svg";
-	const XLINK_NS = "http://www.w3.org/1999/xlink";
-
-	function replaceRef(value, fromId, toId) {
-		if (!value || typeof value !== "string") return value;
-		return value
-			.replaceAll(`url(#${fromId})`, `url(#${toId})`)
-			.replaceAll(`#${fromId}`, `#${toId}`);
-	}
-
-	function normalizeSvgIds(svg) {
-		const seen = new Map();
-		const all = svg.querySelectorAll("[id]");
-
-		all.forEach((el) => {
-			const id = el.getAttribute("id");
-			if (!id) return;
-
-			if (!seen.has(id)) {
-				seen.set(id, 1);
-				return;
-			}
-
-			const next = seen.get(id) + 1;
-			seen.set(id, next);
-			const newId = `${id}__dup${next}`;
-			el.setAttribute("id", newId);
-
-			svg.querySelectorAll("*").forEach((node) => {
-				Array.from(node.attributes || []).forEach((attr) => {
-					const updated = replaceRef(attr.value, id, newId);
-					if (updated !== attr.value) {
-						node.setAttribute(attr.name, updated);
-					}
-				});
-			});
-		});
-	}
-
-	function serializeChartSvg(svgEl) {
-		if (!svgEl) return "";
-		const svg = svgEl.cloneNode(true);
-		if (!svg.getAttribute("xmlns")) {
-			svg.setAttribute("xmlns", SVG_NS);
-		}
-		if (!svg.getAttribute("xmlns:xlink")) {
-			svg.setAttribute("xmlns:xlink", XLINK_NS);
-		}
-		const gridLines = svg.querySelectorAll(".line-horizontal, .line-vertical");
-		gridLines.forEach((line) => {
-			line.setAttribute("stroke", "#D1D5DB");
-			line.setAttribute("stroke-width", "0.75");
-			line.setAttribute("shape-rendering", "crispEdges");
-		});
-		normalizeSvgIds(svg);
-		return new XMLSerializer().serializeToString(svg);
-	}
 
 	crispy_print.add_print_button = function (report) {
 		const qr = report || frappe.query_report;
@@ -101,7 +44,7 @@ frappe.provide("crispy_print");
 				document.querySelector(".chart-container svg") ||
 				document.querySelector(".report-chart svg") ||
 				document.querySelector("#chart svg");
-			const chartSvg = serializeChartSvg(chartSvgEl);
+			const chartSvg = chartSvgEl ? chartSvgEl.outerHTML : "";
 			const safeFilters = JSON.parse(JSON.stringify(filters || {}));
 			const safeColumns = JSON.parse(JSON.stringify(columns || []));
 			const state = {
