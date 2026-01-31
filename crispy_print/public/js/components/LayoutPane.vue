@@ -422,7 +422,7 @@ import { getTableColumns } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
 
 type Section = LayoutSection & {
-	id?: number;
+	id?: string | number;
 	page_break?: boolean;
 	field_orientation?: "left-right" | "top-down";
 };
