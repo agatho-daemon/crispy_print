@@ -1118,6 +1118,7 @@ function onEditDivider(field: Field) {
 /* LayoutPane.vue */
 .layout-pane {
 	position: relative;
+	border: 1px solid #e2e8f0;
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
@@ -1279,6 +1280,10 @@ function onEditDivider(field: Field) {
 	white-space: nowrap;
 }
 
+.section-card__menu-item:hover {
+	background: var(--control-bg, #f8f9fa);
+}
+
 .section-card__menu-item:disabled {
 	cursor: not-allowed;
 }
@@ -1428,6 +1433,10 @@ function onEditDivider(field: Field) {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.field-card__menu-item:hover {
+	background: var(--control-bg, #f8f9fa);
 }
 
 .field-card__menu-divider {

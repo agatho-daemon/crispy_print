@@ -51,7 +51,7 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	display: grid;
 	grid-template-columns: 280px minmax(0, 1fr) minmax(0, 1fr) 280px;
 	gap: 16px;
-	background: #f8fafc;
+	background: #fff;
 	padding: 16px;
 	align-items: stretch;
 	min-height: 0;
