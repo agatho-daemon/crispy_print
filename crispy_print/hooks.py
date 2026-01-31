@@ -17,3 +17,5 @@ app_include_js = [
 	"/assets/crispy_print/js/crispy_print_button.js",
 	"/assets/crispy_print/js/report_button.js",
 ]
+
+fixtures = [{"dt": "Crispy Format"}]

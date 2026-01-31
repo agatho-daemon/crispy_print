@@ -3,6 +3,7 @@ import {
 	defaultPageSettings,
 	ensureLogoSettings,
 	ensureQrSettings,
+	ensureTableSettings,
 	ensureTypography,
 	mergePageSettings,
 } from "../../utils/pageSettings"
@@ -35,15 +36,28 @@ describe("pageSettings helpers", () => {
 		expect(typography.sectionLabel).toBeDefined()
 	})
 
+	it("ensures table settings defaults", () => {
+		const settings: any = { pageSize: "A4", orientation: "portrait", margins: {} }
+		const table = ensureTableSettings(settings)
+		expect(table.inset.top).toBeDefined()
+		expect(table.stroke.width).toBeDefined()
+		expect(table.header.backgroundColor).toBeDefined()
+		expect(table.stripe.enabled).toBeDefined()
+		expect(table.typography.header).toBeDefined()
+		expect(table.typography.body).toBeDefined()
+	})
+
 	it("merges overrides with defaults", () => {
 		const merged = mergePageSettings(defaultPageSettings, {
 			margins: { top: 10 },
 			qr: { size: 20 },
 			logo: { company: "Acme" },
+			table: { stroke: { width: 1 } },
 		})
 		expect(merged.margins.top).toBe(10)
 		expect(merged.margins.left).toBe(defaultPageSettings.margins.left)
 		expect(merged.qr?.size).toBe(20)
 		expect(merged.logo?.company).toBe("Acme")
+		expect(merged.table?.stroke.width).toBe(1)
 	})
 })

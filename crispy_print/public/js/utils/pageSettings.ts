@@ -14,6 +14,11 @@ export interface TypographySettings {
 	sectionLabel: TypographyStyle
 }
 
+export interface TableTypographySettings {
+	header: TypographyStyle
+	body: TypographyStyle
+}
+
 export interface QrSettings {
 	dx: number
 	dy: number
@@ -27,6 +32,27 @@ export interface LogoSettings {
 	size: number
 	dx: number
 	dy: number
+}
+
+export interface TableSettings {
+	inset: {
+		top: number
+		right: number
+		bottom: number
+		left: number
+	}
+	stroke: {
+		width: number
+		color: string
+	}
+	header: {
+		backgroundColor: string
+	}
+	stripe: {
+		enabled: boolean
+		color: string
+	}
+	typography: TableTypographySettings
 }
 
 export const defaultTypography: TypographySettings = {
@@ -53,6 +79,31 @@ export const defaultTypography: TypographySettings = {
 	},
 }
 
+export const defaultTableTypography: TableTypographySettings = {
+	header: {
+		fontFamily: "Inter 18pt",
+		fontSize: "9pt",
+		fontStyle: "normal",
+		fontWeight: "semibold",
+		color: "#0f172a",
+	},
+	body: {
+		fontFamily: "Inter 18pt",
+		fontSize: "9pt",
+		fontStyle: "normal",
+		fontWeight: "regular",
+		color: "#0f172a",
+	},
+}
+
+export const defaultTableSettings: TableSettings = {
+	inset: { top: 2, right: 2, bottom: 2, left: 2 },
+	stroke: { width: 0.5, color: "#e2e8f0" },
+	header: { backgroundColor: "#f1f5f9" },
+	stripe: { enabled: false, color: "#f8fafc" },
+	typography: defaultTableTypography,
+}
+
 export interface PageSettings {
 	pageSize: string
 	orientation: string
@@ -69,6 +120,7 @@ export interface PageSettings {
 	language: string
 
 	typography?: TypographySettings
+	table?: TableSettings
 	qr?: QrSettings
 }
 
@@ -80,6 +132,7 @@ export const defaultPageSettings: PageSettings = {
 	brandingMode: "letterhead",
 	logo: { company: "", image: "", size: 25, dx: 0, dy: 0 },
 	typography: undefined,
+	table: undefined,
 	language: "en",
 	qr: { dx: 0, dy: 0, size: 15, fields: [] },
 }
@@ -89,6 +142,40 @@ export function ensureTypography(pageSettings: PageSettings): TypographySettings
 		pageSettings.typography = JSON.parse(JSON.stringify(defaultTypography))
 	}
 	return pageSettings.typography
+}
+
+export function ensureTableSettings(pageSettings: PageSettings): TableSettings {
+	if (!pageSettings.table) {
+		pageSettings.table = JSON.parse(JSON.stringify(defaultTableSettings))
+		return pageSettings.table
+	}
+	pageSettings.table.inset = {
+		...defaultTableSettings.inset,
+		...(pageSettings.table.inset || {}),
+	}
+	pageSettings.table.stroke = {
+		...defaultTableSettings.stroke,
+		...(pageSettings.table.stroke || {}),
+	}
+	pageSettings.table.header = {
+		...defaultTableSettings.header,
+		...(pageSettings.table.header || {}),
+	}
+	pageSettings.table.stripe = {
+		...defaultTableSettings.stripe,
+		...(pageSettings.table.stripe || {}),
+	}
+	pageSettings.table.typography = {
+		header: {
+			...defaultTableTypography.header,
+			...(pageSettings.table.typography?.header || {}),
+		},
+		body: {
+			...defaultTableTypography.body,
+			...(pageSettings.table.typography?.body || {}),
+		},
+	}
+	return pageSettings.table
 }
 
 export function ensureQrSettings(pageSettings: PageSettings): QrSettings {
@@ -129,6 +216,36 @@ export function mergePageSettings(
 		...safeOverrides,
 		margins: { ...base.margins, ...(safeOverrides.margins || {}) },
 		typography: safeOverrides.typography ?? base.typography,
+		table: {
+			...(base.table || defaultTableSettings),
+			...((safeOverrides as PageSettings).table || {}),
+			inset: {
+				...(base.table?.inset || defaultTableSettings.inset),
+				...((safeOverrides as PageSettings).table?.inset || {}),
+			},
+			stroke: {
+				...(base.table?.stroke || defaultTableSettings.stroke),
+				...((safeOverrides as PageSettings).table?.stroke || {}),
+			},
+			header: {
+				...(base.table?.header || defaultTableSettings.header),
+				...((safeOverrides as PageSettings).table?.header || {}),
+			},
+			stripe: {
+				...(base.table?.stripe || defaultTableSettings.stripe),
+				...((safeOverrides as PageSettings).table?.stripe || {}),
+			},
+			typography: {
+				header: {
+					...(base.table?.typography?.header || defaultTableTypography.header),
+					...((safeOverrides as PageSettings).table?.typography?.header || {}),
+				},
+				body: {
+					...(base.table?.typography?.body || defaultTableTypography.body),
+					...((safeOverrides as PageSettings).table?.typography?.body || {}),
+				},
+			},
+		},
 		qr: {
 			...(base.qr || { dx: 0, dy: 0, size: 15, fields: [] }),
 			...((safeOverrides as PageSettings).qr || {}),

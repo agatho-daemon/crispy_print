@@ -1,13 +1,13 @@
 <template>
 	<div class="settings-pane">
-		<div class="settings-pane__header">
-			<div class="settings-pane__header-row">
-				<h3 class="settings-pane__title">Typst Settings</h3>
+		<div class="section-head settings-pane__header">
+			<div class="section-head-content settings-pane__header-row">
+				<h3 class="section-title settings-pane__title">Typst Settings</h3>
 				<div class="settings-pane__spacer"></div>
 				<div>
 					<button
 						type="button"
-						class="settings-pane__help-btn"
+						class="btn btn-default btn-xs settings-pane__help-btn"
 						popovertarget="settings-help"
 						popovertargetaction="toggle"
 						title="Toggle help"
@@ -24,10 +24,11 @@
 		</div>
 		<div class="settings-pane__body">
 			<div class="settings-pane__form">
-				<div class="settings-pane__section-card">
+				<div class="settings-pane__section-card card">
 					<button
 						type="button"
-						class="settings-pane__section-header"
+						class="btn btn-link card-header settings-pane__section-header"
+						:class="{ 'is-expanded': isPageSettingsExpanded }"
 						@click="isPageSettingsExpanded = !isPageSettingsExpanded"
 					>
 						<span>Page Settings</span>
@@ -48,10 +49,13 @@
 						</svg>
 					</button>
 
-					<div v-if="isPageSettingsExpanded" class="settings-pane__section-content">
+					<div
+						v-if="isPageSettingsExpanded"
+						class="settings-pane__section-content card-body"
+					>
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">Size</label>
-							<select v-model="pageSettings.pageSize" class="settings-pane__select">
+							<select v-model="pageSettings.pageSize" class="form-control">
 								<option value="A3">A3 (297 × 420 mm)</option>
 								<option value="A4">A4 (210 × 297 mm)</option>
 								<option value="A5">A5 (148 × 210 mm)</option>
@@ -64,10 +68,7 @@
 
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">Orientation</label>
-							<select
-								v-model="pageSettings.orientation"
-								class="settings-pane__select"
-							>
+							<select v-model="pageSettings.orientation" class="form-control">
 								<option value="portrait">Portrait</option>
 								<option value="landscape">Landscape</option>
 							</select>
@@ -82,7 +83,7 @@
 										v-model.number="pageSettings.margins.top"
 										type="number"
 										placeholder="Top"
-										class="settings-pane__input"
+										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
@@ -91,7 +92,7 @@
 										v-model.number="pageSettings.margins.bottom"
 										type="number"
 										placeholder="Bottom"
-										class="settings-pane__input"
+										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
@@ -100,7 +101,7 @@
 										v-model.number="pageSettings.margins.left"
 										type="number"
 										placeholder="Left"
-										class="settings-pane__input"
+										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
@@ -109,17 +110,18 @@
 										v-model.number="pageSettings.margins.right"
 										type="number"
 										placeholder="Right"
-										class="settings-pane__input"
+										class="form-control settings-pane__input"
 									/>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-				<div class="settings-pane__section-card">
+				<div class="settings-pane__section-card card">
 					<button
 						type="button"
-						class="settings-pane__section-header"
+						class="btn btn-link card-header settings-pane__section-header"
+						:class="{ 'is-expanded': isTypographyExpanded }"
 						@click="isTypographyExpanded = !isTypographyExpanded"
 					>
 						<span>Typography</span>
@@ -140,7 +142,10 @@
 						</svg>
 					</button>
 
-					<div v-if="isTypographyExpanded" class="settings-pane__section-content">
+					<div
+						v-if="isTypographyExpanded"
+						class="settings-pane__section-content card-body"
+					>
 						<!-- Section Labels -->
 						<div class="settings-pane__subsection">
 							<label class="settings-pane__label">Section Labels</label>
@@ -149,7 +154,7 @@
 									<label class="settings-pane__sublabel">Family</label>
 									<select
 										v-model="typography.sectionLabel.fontFamily"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option
 											v-for="font in availableFonts"
@@ -167,14 +172,14 @@
 										type="number"
 										min="1"
 										step="1"
-										class="settings-pane__input"
+										class="form-control"
 									/>
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Style</label>
 									<select
 										v-model="typography.sectionLabel.fontStyle"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
@@ -185,7 +190,7 @@
 									<label class="settings-pane__sublabel">Weight</label>
 									<select
 										v-model="typography.sectionLabel.fontWeight"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
@@ -212,7 +217,7 @@
 									<label class="settings-pane__sublabel">Family</label>
 									<select
 										v-model="typography.fieldLabel.fontFamily"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option
 											v-for="font in availableFonts"
@@ -230,14 +235,14 @@
 										type="number"
 										min="1"
 										step="1"
-										class="settings-pane__input"
+										class="form-control"
 									/>
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Style</label>
 									<select
 										v-model="typography.fieldLabel.fontStyle"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
@@ -248,7 +253,7 @@
 									<label class="settings-pane__sublabel">Weight</label>
 									<select
 										v-model="typography.fieldLabel.fontWeight"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
@@ -275,7 +280,7 @@
 									<label class="settings-pane__sublabel">Family</label>
 									<select
 										v-model="typography.fieldValue.fontFamily"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option
 											v-for="font in availableFonts"
@@ -293,14 +298,14 @@
 										type="number"
 										min="1"
 										step="1"
-										class="settings-pane__input"
+										class="form-control"
 									/>
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">Style</label>
 									<select
 										v-model="typography.fieldValue.fontStyle"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option value="normal">Normal</option>
 										<option value="italic">Italic</option>
@@ -311,7 +316,7 @@
 									<label class="settings-pane__sublabel">Weight</label>
 									<select
 										v-model="typography.fieldValue.fontWeight"
-										class="settings-pane__select"
+										class="form-control"
 									>
 										<option value="thin">Thin</option>
 										<option value="extralight">Extralight</option>
@@ -332,11 +337,258 @@
 						</div>
 					</div>
 				</div>
-
-				<div class="settings-pane__section-card">
+				<div class="settings-pane__section-card card">
 					<button
 						type="button"
-						class="settings-pane__section-header"
+						class="btn btn-link card-header settings-pane__section-header"
+						:class="{ 'is-expanded': isTableExpanded }"
+						@click="isTableExpanded = !isTableExpanded"
+					>
+						<span>Table Settings</span>
+						<svg
+							:class="[
+								'settings-pane__chevron',
+								{ 'settings-pane__chevron--expanded': isTableExpanded },
+							]"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+
+					<div v-if="isTableExpanded" class="settings-pane__section-content card-body">
+						<div class="settings-pane__subsection">
+							<label class="settings-pane__label">Spacing (pt)</label>
+							<div class="settings-pane__margins">
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">top</span>
+									<input
+										v-model.number="tableSettings.inset.top"
+										type="number"
+										placeholder="Top"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">bottom</span>
+									<input
+										v-model.number="tableSettings.inset.bottom"
+										type="number"
+										placeholder="Bottom"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">left</span>
+									<input
+										v-model.number="tableSettings.inset.left"
+										type="number"
+										placeholder="Left"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">right</span>
+									<input
+										v-model.number="tableSettings.inset.right"
+										type="number"
+										placeholder="Right"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div class="settings-pane__subsection">
+							<label class="settings-pane__label">Borders</label>
+							<div class="settings-pane__grid">
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Stroke (pt)</label>
+									<input
+										v-model.number="tableSettings.stroke.width"
+										type="number"
+										min="0"
+										step="0.1"
+										class="form-control"
+									/>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Color</label>
+									<ColorInput v-model="tableSettings.stroke.color" />
+								</div>
+							</div>
+						</div>
+
+						<div class="settings-pane__subsection">
+							<label class="settings-pane__label">Colors</label>
+							<div class="settings-pane__grid settings-pane__grid--colors">
+								<div class="settings-pane__field settings-pane__field--span">
+									<label class="settings-pane__sublabel"
+										>Header Background</label
+									>
+									<ColorInput v-model="tableSettings.header.backgroundColor" />
+								</div>
+							</div>
+							<div class="settings-pane__grid settings-pane__grid--stripe">
+								<div class="settings-pane__field settings-pane__field--toggle">
+									<label class="settings-pane__sublabel">Striping</label>
+									<div class="settings-pane__checkbox-wrap">
+										<input
+											v-model="tableSettings.stripe.enabled"
+											type="checkbox"
+											class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										/>
+									</div>
+								</div>
+								<div class="settings-pane__field settings-pane__field--color">
+									<label class="settings-pane__sublabel">Stripe Color</label>
+									<ColorInput
+										v-model="tableSettings.stripe.color"
+										:disabled="!tableSettings.stripe.enabled"
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div class="settings-pane__subsection">
+							<label class="settings-pane__label">Header Typography</label>
+							<div class="settings-pane__grid">
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Header Family</label>
+									<select
+										v-model="tableSettings.typography.header.fontFamily"
+										class="form-control"
+									>
+										<option
+											v-for="font in availableFonts"
+											:key="font"
+											:value="font"
+										>
+											{{ font }}
+										</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Header Size (pt)</label>
+									<input
+										v-model.number="tableHeaderFontSizePt"
+										type="number"
+										min="1"
+										step="1"
+										class="form-control"
+									/>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Header Style</label>
+									<select
+										v-model="tableSettings.typography.header.fontStyle"
+										class="form-control"
+									>
+										<option value="normal">Normal</option>
+										<option value="italic">Italic</option>
+										<option value="oblique">Oblique</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Header Weight</label>
+									<select
+										v-model="tableSettings.typography.header.fontWeight"
+										class="form-control"
+									>
+										<option value="thin">Thin</option>
+										<option value="extralight">Extralight</option>
+										<option value="light">Light</option>
+										<option value="regular">Regular</option>
+										<option value="medium">Medium</option>
+										<option value="semibold">Semibold</option>
+										<option value="bold">Bold</option>
+										<option value="extrabold">Extrabold</option>
+										<option value="black">Black</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Header Color</label>
+									<ColorInput v-model="tableSettings.typography.header.color" />
+								</div>
+							</div>
+						</div>
+
+						<div class="settings-pane__subsection">
+							<label class="settings-pane__label">Body Typography</label>
+							<div class="settings-pane__grid">
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Body Family</label>
+									<select
+										v-model="tableSettings.typography.body.fontFamily"
+										class="form-control"
+									>
+										<option
+											v-for="font in availableFonts"
+											:key="font"
+											:value="font"
+										>
+											{{ font }}
+										</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Body Size (pt)</label>
+									<input
+										v-model.number="tableBodyFontSizePt"
+										type="number"
+										min="1"
+										step="1"
+										class="form-control"
+									/>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Body Style</label>
+									<select
+										v-model="tableSettings.typography.body.fontStyle"
+										class="form-control"
+									>
+										<option value="normal">Normal</option>
+										<option value="italic">Italic</option>
+										<option value="oblique">Oblique</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Body Weight</label>
+									<select
+										v-model="tableSettings.typography.body.fontWeight"
+										class="form-control"
+									>
+										<option value="thin">Thin</option>
+										<option value="extralight">Extralight</option>
+										<option value="light">Light</option>
+										<option value="regular">Regular</option>
+										<option value="medium">Medium</option>
+										<option value="semibold">Semibold</option>
+										<option value="bold">Bold</option>
+										<option value="extrabold">Extrabold</option>
+										<option value="black">Black</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">Body Color</label>
+									<ColorInput v-model="tableSettings.typography.body.color" />
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="settings-pane__section-card card">
+					<button
+						type="button"
+						class="btn btn-link card-header settings-pane__section-header"
+						:class="{ 'is-expanded': isBrandingExpanded }"
 						@click="isBrandingExpanded = !isBrandingExpanded"
 					>
 						<span>Letterhead / Logo</span>
@@ -357,10 +609,13 @@
 						</svg>
 					</button>
 
-					<div v-if="isBrandingExpanded" class="settings-pane__section-content">
+					<div
+						v-if="isBrandingExpanded"
+						class="settings-pane__section-content card-body"
+					>
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">Type</label>
-							<select v-model="brandingMode" class="settings-pane__select">
+							<select v-model="brandingMode" class="form-control">
 								<option value="none">None</option>
 								<option value="letterhead">Letterhead</option>
 								<option value="logo">Logo</option>
@@ -369,10 +624,7 @@
 
 						<div v-if="brandingMode === 'letterhead'" class="settings-pane__field">
 							<label class="settings-pane__label">Letterhead</label>
-							<select
-								v-model="pageSettings.letterhead"
-								class="settings-pane__select"
-							>
+							<select v-model="pageSettings.letterhead" class="form-control">
 								<option value="">None</option>
 								<option v-if="loadingLetterheads" disabled>
 									Loading letterheads...
@@ -393,10 +645,7 @@
 							</p>
 							<div class="settings-pane__field">
 								<label class="settings-pane__label">Company</label>
-								<select
-									v-model="logoSettings.company"
-									class="settings-pane__select"
-								>
+								<select v-model="logoSettings.company" class="form-control">
 									<option value="">Select company</option>
 									<option v-if="loadingCompanies" disabled>
 										Loading companies...
@@ -426,7 +675,7 @@
 									<input
 										v-model.number="logoSettings.size"
 										type="number"
-										class="settings-pane__input"
+										class="form-control"
 									/>
 								</div>
 								<div class="settings-pane__field">
@@ -434,7 +683,7 @@
 									<input
 										v-model.number="logoSettings.dx"
 										type="number"
-										class="settings-pane__input"
+										class="form-control"
 									/>
 								</div>
 								<div class="settings-pane__field">
@@ -442,7 +691,7 @@
 									<input
 										v-model.number="logoSettings.dy"
 										type="number"
-										class="settings-pane__input"
+										class="form-control"
 									/>
 								</div>
 							</div>
@@ -455,15 +704,16 @@
 					<input
 						v-model="store.removeQr.value"
 						type="checkbox"
-						class="settings-pane__checkbox"
+						class="form-check-input settings-pane__checkbox"
 					/>
 				</div>
 
 				<div v-if="!store.removeQr.value" class="settings-pane__section">
-					<div class="settings-pane__section-card">
+					<div class="settings-pane__section-card card">
 						<button
 							type="button"
-							class="settings-pane__section-header"
+							class="btn btn-link card-header settings-pane__section-header"
+							:class="{ 'is-expanded': isQrExpanded }"
 							@click="isQrExpanded = !isQrExpanded"
 						>
 							<span>QR-Code</span>
@@ -478,7 +728,7 @@
 								<path d="M6 8l4 4 4-4" />
 							</svg>
 						</button>
-						<div v-if="isQrExpanded" class="settings-pane__section-content">
+						<div v-if="isQrExpanded" class="settings-pane__section-content card-body">
 							<p class="settings-pane__hint">
 								QR Code is anchored to bottom-left using #place().
 							</p>
@@ -487,7 +737,7 @@
 								<input
 									v-model.number="qrSettings.size"
 									type="number"
-									class="settings-pane__input"
+									class="form-control"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -495,7 +745,7 @@
 								<input
 									v-model.number="qrSettings.dx"
 									type="number"
-									class="settings-pane__input"
+									class="form-control"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -503,7 +753,7 @@
 								<input
 									v-model.number="qrSettings.dy"
 									type="number"
-									class="settings-pane__input"
+									class="form-control"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -511,7 +761,7 @@
 								<div class="settings-pane__qr-row">
 									<button
 										type="button"
-										class="settings-pane__qr-btn"
+										class="btn btn-default btn-xs settings-pane__qr-btn"
 										@click="showQrDialog = true"
 									>
 										Select fields
@@ -540,8 +790,10 @@ import { ref, watch, onMounted, computed } from "vue";
 import {
 	ensureLogoSettings,
 	ensureQrSettings,
+	ensureTableSettings,
 	ensureTypography,
 	type PageSettings,
+	type TableSettings,
 	type TypographySettings,
 } from "../utils/pageSettings";
 import ColorInput from "./ColorInput.vue";
@@ -570,6 +822,7 @@ const {
 } = useBrandingData();
 const isPageSettingsExpanded = ref(false);
 const isTypographyExpanded = ref(false);
+const isTableExpanded = ref(false);
 const isBrandingExpanded = ref(false);
 const isQrExpanded = ref(false);
 const store = useStore();
@@ -579,6 +832,8 @@ const showQrDialog = ref(false);
 const typography = computed<TypographySettings>(() => {
 	return ensureTypography(props.pageSettings);
 });
+
+const tableSettings = ref<TableSettings>(ensureTableSettings(props.pageSettings));
 
 const logoSettings = computed(() => ensureLogoSettings(props.pageSettings));
 
@@ -678,11 +933,33 @@ const fieldValueFontSizePt = computed<number>({
 	},
 });
 
+const tableHeaderFontSizePt = computed<number>({
+	get: () => Math.max(1, parseSize(tableSettings.value.typography.header.fontSize).value || 0),
+	set: (value) => {
+		tableSettings.value.typography.header.fontSize = formatPt(value);
+	},
+});
+
+const tableBodyFontSizePt = computed<number>({
+	get: () => Math.max(1, parseSize(tableSettings.value.typography.body.fontSize).value || 0),
+	set: (value) => {
+		tableSettings.value.typography.body.fontSize = formatPt(value);
+	},
+});
+
 onMounted(() => {
 	fetchFonts();
 	fetchLetterheads();
 	fetchCompanies();
 });
+
+watch(
+	() => props.pageSettings,
+	(nextSettings) => {
+		tableSettings.value = ensureTableSettings(nextSettings);
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.pageSettings,
@@ -711,16 +988,21 @@ watch(availableCompanies, () => {
 <style scoped>
 /* SettingsPane.vue */
 .settings-pane {
-	background: #fff;
-	border: 1px solid #e2e8f0;
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+	background: #fff;
 }
 
 .settings-pane__header {
-	border-bottom: 1px solid #e2e8f0;
-	padding: 12px;
+	margin: 12px 16px 0;
+	padding: 0;
+	border: none;
+	box-shadow: none;
+}
+
+.settings-pane__header :deep(.section-head-content) {
+	padding: 0 0 8px;
 }
 
 .settings-pane__header-row {
@@ -731,9 +1013,6 @@ watch(availableCompanies, () => {
 
 .settings-pane__title {
 	margin: 0;
-	font-size: 14px;
-	font-weight: 600;
-	color: #1e293b;
 }
 
 .settings-pane__spacer {
@@ -747,30 +1026,21 @@ watch(availableCompanies, () => {
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
-	color: #4f46e5;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.settings-pane__header-row {
+	align-items: center;
 }
 
 .settings-pane__help-btn:hover {
-	background: #eef2ff;
-	border-color: #c7d2fe;
 }
 
 .settings-pane__help-popover {
 	margin-top: 8px;
 	border-radius: 12px;
-	border: 1px solid #e0e7ff;
-	background: #fff;
 	padding: 12px;
 	font-size: 12px;
 	line-height: 1.6;
-	color: #334155;
-	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .settings-pane__help-list {
@@ -806,42 +1076,24 @@ watch(availableCompanies, () => {
 	gap: 12px;
 }
 
+.settings-pane__field--span {
+	grid-column: 1 / -1;
+}
+
 .settings-pane__label {
 	font-size: 13px;
 	font-weight: 600;
-	color: #334155;
-}
-
-.settings-pane__select,
-.settings-pane__input {
-	width: 100%;
-	padding: 8px 12px;
-	font-size: 14px;
-	color: #0f172a;
-	border: 1px solid #e2e8f0;
-	border-radius: 3px;
-	background: #fff;
-	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-	box-sizing: border-box;
-}
-
-.settings-pane__select:focus,
-.settings-pane__input:focus {
-	border-color: #a5b4fc;
-	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .settings-pane__checkbox {
 	width: 16px;
 	height: 16px;
-	accent-color: #4f46e5;
+	margin: 0;
 }
 
 .settings-pane__hint {
 	margin: 0;
 	font-size: 12px;
-	color: #64748b;
 }
 
 .settings-pane__qr-row {
@@ -853,21 +1105,12 @@ watch(availableCompanies, () => {
 .settings-pane__qr-btn {
 	padding: 6px 10px;
 	border-radius: 8px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
 	font-size: 12px;
 	cursor: pointer;
-	color: #1e293b;
-}
-
-.settings-pane__qr-btn:hover {
-	border-color: #cbd5f5;
-	background: #eef2ff;
 }
 
 .settings-pane__qr-summary {
 	font-size: 12px;
-	color: #475569;
 }
 
 .settings-pane__margins {
@@ -887,11 +1130,14 @@ watch(availableCompanies, () => {
 	transform: translateY(-50%);
 	font-size: 10px;
 	font-weight: 600;
-	color: #94a3b8;
 	pointer-events: none;
 }
 
 .settings-pane__margin-input .settings-pane__input {
+	padding-left: 50px;
+}
+
+.settings-pane__margin-input .form-control {
 	padding-left: 50px;
 }
 
@@ -902,10 +1148,7 @@ watch(availableCompanies, () => {
 }
 
 .settings-pane__section-card {
-	background: #f8fafc;
-	border: 1px solid #e2e8f0;
-	border-radius: 8px;
-	overflow: hidden;
+	overflow: visible;
 }
 
 .settings-pane__section-header {
@@ -914,15 +1157,15 @@ watch(availableCompanies, () => {
 	justify-content: space-between;
 	width: 100%;
 	margin: 0;
-	padding: 10px 12px;
+	padding: 0;
 	font-size: 13px;
-	font-weight: 700;
-	color: #1e293b;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	background: transparent;
-	border: none;
 	cursor: pointer;
+	text-align: left;
+}
+
+.settings-pane__section-header.is-expanded {
+	border-left: 0;
+	padding-left: 12px;
 }
 
 .settings-pane__chevron {
@@ -941,8 +1184,6 @@ watch(availableCompanies, () => {
 	flex-direction: column;
 	gap: 12px;
 	padding: 12px 12px 14px;
-	background: #f8fafc;
-	border-top: 1px solid #e2e8f0;
 }
 
 .settings-pane__subsection {
@@ -957,10 +1198,39 @@ watch(availableCompanies, () => {
 	gap: 8px;
 }
 
+.settings-pane__grid--colors {
+	gap: 10px;
+}
+
+.settings-pane__grid--stripe {
+	align-items: center;
+}
+
 .settings-pane__sublabel {
 	font-size: 11px;
 	font-weight: 500;
-	color: #64748b;
 	margin-bottom: 0px;
+}
+
+.settings-pane__field--toggle {
+	gap: 6px;
+	align-items: center;
+	align-items: flex-start;
+}
+
+.settings-pane__checkbox-wrap {
+	display: flex;
+	align-items: flex-start;
+	min-height: 36px;
+}
+
+.settings-pane__checkbox--inline {
+	align-self: flex-start;
+}
+
+.settings-pane__field--color :deep(.pickr .pcr-button) {
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
 }
 </style>

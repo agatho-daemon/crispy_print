@@ -1,5 +1,5 @@
 <template>
-	<div class="color-input">
+	<div class="color-input" :class="{ 'color-input--disabled': props.disabled }">
 		<div ref="pickrContainer"></div>
 	</div>
 </template>
@@ -11,6 +11,7 @@ import "@simonwep/pickr/dist/themes/nano.min.css"; // Or classic.min.css, monoli
 
 interface Props {
 	modelValue: string;
+	disabled?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -112,5 +113,10 @@ onUnmounted(() => {
 <style scoped>
 .color-input {
 	display: inline-block;
+}
+
+.color-input--disabled {
+	opacity: 0.5;
+	pointer-events: none;
 }
 </style>
