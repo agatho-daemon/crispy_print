@@ -1,17 +1,17 @@
 <template>
 	<div class="layout-pane">
-		<div class="layout-pane__header">
-			<div class="layout-pane__header-row">
-				<h3 class="layout-pane__title">Layout Builder</h3>
+		<div class="section-head layout-pane__header">
+			<div class="section-head-content layout-pane__header-row">
+				<h3 class="section-title layout-pane__title">Layout Builder</h3>
 				<div class="layout-pane__controls">
-					<button class="lp-btn lp-btn--secondary" @click="resetLayout">
+					<button class="btn btn-default btn-sm" @click="resetLayout">
 						Reset to Default
 					</button>
 					<div class="layout-pane__spacer"></div>
-					<div>
+					<div class="layout-pane__help">
 						<button
 							type="button"
-							class="layout-pane__help-btn"
+							class="btn btn-default btn-xs layout-pane__help-btn"
 							popovertarget="layout-help"
 							popovertargetaction="toggle"
 							title="Toggle help"
@@ -36,7 +36,7 @@
 		</div>
 		<div v-if="!layout" class="layout-pane__empty">
 			No layout loaded.
-			<button class="lp-link" @click="ensureLayout">Load default</button>
+			<button class="btn btn-link btn-sm" @click="ensureLayout">Load default</button>
 		</div>
 
 		<div v-else class="layout-pane__body">
@@ -55,7 +55,7 @@
 								<input
 									v-model="section.label"
 									type="text"
-									class="section-title-input"
+									class="form-control section-title-input"
 									placeholder="Section title"
 								/>
 							</div>
@@ -166,7 +166,7 @@
 													<input
 														v-model="field.label"
 														type="text"
-														class="field-card__label field-card__label-input"
+														class="form-control field-card__label field-card__label-input"
 														:placeholder="field.fieldname"
 														@blur="markDirty()"
 														@keydown.enter.prevent="onLabelEnter"
@@ -443,10 +443,28 @@ const sectionMenuStyle = ref<Record<string, string>>({});
 const openFieldMenuId = ref<string | null>(null);
 const fieldMenuStyle = ref<Record<string, string>>({});
 const openFieldSubmenu = ref<"align" | null>(null);
+let sectionIdSeed = 0;
 
 const sectionKey = (section: Section, index: number) => {
 	return (section as any).id || index;
 };
+
+function nextSectionId() {
+	sectionIdSeed += 1;
+	return `section_${Date.now()}_${sectionIdSeed}`;
+}
+
+function ensureSectionIds() {
+	if (!layout.value?.sections?.length) return;
+	const seen = new Set<string | number>();
+	layout.value.sections.forEach((section) => {
+		const currentId = (section as any).id;
+		if (!currentId || seen.has(currentId)) {
+			(section as any).id = nextSectionId();
+		}
+		seen.add((section as any).id);
+	});
+}
 
 function getSectionMenuId(section: Section, index: number) {
 	return String(section.id || index);
@@ -541,6 +559,7 @@ function ensureLayout() {
 			store.markDirty();
 		}
 	}
+	ensureSectionIds();
 }
 
 function ensureAtLeastOneSection() {
@@ -550,6 +569,7 @@ function ensureAtLeastOneSection() {
 	if (!layout.value.sections?.length) {
 		layout.value.sections = [createEmptySection()];
 	}
+	ensureSectionIds();
 }
 
 onMounted(() => {
@@ -625,7 +645,7 @@ function createEmptySection(): Section {
 	return {
 		label: "",
 		columns: [{ label: "", fields: [] }],
-		id: Date.now() + Math.random(),
+		id: nextSectionId(),
 		field_orientation: "left-right",
 	};
 }
@@ -1101,13 +1121,12 @@ function onEditDivider(field: Field) {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
-	border: 1px solid #e2e8f0;
-	background: rgba(255, 255, 255, 0.9);
+	background: #fff;
 }
 
 .layout-pane__header {
-	border-bottom: 1px solid #e2e8f0;
-	padding: 12px;
+	margin: 12px 16px 0;
+	padding: 0;
 }
 
 .layout-pane__header-row {
@@ -1119,9 +1138,6 @@ function onEditDivider(field: Field) {
 
 .layout-pane__title {
 	margin: 0;
-	font-size: 14px;
-	font-weight: 600;
-	color: #1e293b;
 }
 
 .layout-pane__controls {
@@ -1142,30 +1158,19 @@ function onEditDivider(field: Field) {
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
-	color: #4f46e5;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.layout-pane__help-btn:hover {
-	background: #eef2ff;
-	border-color: #c7d2fe;
+.layout-pane__help {
+	display: flex;
+	align-items: center;
 }
 
 .layout-pane__help-popover {
 	margin-top: 8px;
 	border-radius: 12px;
-	border: 1px solid #e0e7ff;
-	background: #fff;
 	padding: 12px;
 	font-size: 12px;
 	line-height: 1.6;
-	color: #334155;
-	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .layout-pane__help-list {
@@ -1183,7 +1188,6 @@ function onEditDivider(field: Field) {
 	justify-content: center;
 	gap: 8px;
 	font-size: 14px;
-	color: #64748b;
 	padding: 12px;
 }
 
@@ -1203,11 +1207,10 @@ function onEditDivider(field: Field) {
 }
 
 .section-card {
-	border: 1px solid #e2e8f0;
-	background: #fff;
+	border: 1px solid var(--border-color, #e2e8f0);
+	background: var(--card-bg, #fff);
 	padding: 16px;
 	border-radius: 12px;
-	box-shadow: 0 8px 20px rgba(226, 232, 240, 0.55), 0 2px 6px rgba(148, 163, 184, 0.25);
 }
 
 .section-card__header {
@@ -1226,26 +1229,12 @@ function onEditDivider(field: Field) {
 
 .section-grip {
 	cursor: grab;
-	color: #94a3b8;
 	font-size: 24px;
 }
 
 .section-title-input {
 	width: 190px;
-	padding: 8px 12px;
-	font-size: 14px;
-	font-weight: 600;
-	color: #0f172a;
-	border: 1px solid #e2e8f0;
 	border-radius: 8px;
-	outline: none;
-	background: #fff;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.section-title-input:focus {
-	border-color: #a5b4fc;
-	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .section-card__actions {
@@ -1264,25 +1253,18 @@ function onEditDivider(field: Field) {
 	border-radius: 8px;
 	border: none;
 	background: transparent;
-	color: #475569;
 	cursor: pointer;
 	font-size: 18px;
 	line-height: 1;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.section-card__menu-btn:hover {
-	background: #f8fafc;
 }
 
 .section-card__menu {
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
+	border: 1px solid var(--border-color, #e2e8f0);
+	background: var(--card-bg, #fff);
 	padding: 6px;
 	width: 260px;
 	max-width: calc(100vw - 32px);
-	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .section-card__menu-item {
@@ -1293,32 +1275,20 @@ function onEditDivider(field: Field) {
 	padding: 8px 10px;
 	border-radius: 8px;
 	font-size: 13px;
-	color: #0f172a;
 	cursor: pointer;
 	white-space: nowrap;
 }
 
-.section-card__menu-item:hover {
-	background: #f1f5f9;
-}
-
 .section-card__menu-item:disabled {
-	color: #94a3b8;
 	cursor: not-allowed;
 }
 
 .section-card__menu-divider {
 	height: 1px;
 	margin: 6px 6px;
-	background: #e2e8f0;
 }
 
 .section-card__menu-item--danger {
-	color: #b91c1c;
-}
-
-.section-card__menu-item--danger:hover {
-	background: #fee2e2;
 }
 
 .section-grid {
@@ -1336,17 +1306,10 @@ function onEditDivider(field: Field) {
 
 .section-column--empty {
 	min-height: 56px;
-	border: 1px dashed #e2e8f0;
+	border: 1px dashed var(--border-color, #e2e8f0);
 	border-radius: 12px;
-	background: #fafafa;
+	background: var(--control-bg, #f8f9fa);
 	padding: 10px;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.section-column--empty:hover,
-.section-column--empty:focus-within {
-	border-color: #c7d2fe;
-	background: rgba(238, 242, 255, 0.25);
 }
 
 .section-column__fields {
@@ -1362,22 +1325,14 @@ function onEditDivider(field: Field) {
 	justify-content: center;
 	text-align: center;
 	font-size: 12px;
-	color: #94a3b8;
 	padding: 12px;
 }
 
 .field-card {
-	border: 1px dashed #cbd5e1;
-	background: rgba(255, 255, 255, 0.9);
+	border: 1px solid var(--border-color, #e2e8f0);
+	background: var(--card-bg, #fff);
 	padding: 12px;
 	border-radius: 8px;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.field-card:hover,
-.field-card:focus-within {
-	border-color: #c7d2fe;
-	background: #fff;
 }
 
 .field-card__row {
@@ -1398,15 +1353,12 @@ function onEditDivider(field: Field) {
 
 .field-grip {
 	cursor: grab;
-	color: #94a3b8;
 	font-size: 12px;
 	line-height: 1;
 }
 
 .field-card__label {
 	font-size: 14px;
-	font-weight: 600;
-	color: #0f172a;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1419,13 +1371,6 @@ function onEditDivider(field: Field) {
 	background: transparent;
 	padding: 0;
 	min-width: 0;
-}
-
-.field-card__label-input:focus {
-	background: #fff;
-	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18);
-	border-radius: 6px;
-	padding: 4px 6px;
 }
 
 .field-card__actions {
@@ -1456,25 +1401,18 @@ function onEditDivider(field: Field) {
 	border-radius: 8px;
 	border: none;
 	background: transparent;
-	color: #475569;
 	cursor: pointer;
 	font-size: 18px;
 	line-height: 1;
-	transition: background-color 0.15s ease;
-}
-
-.field-card__menu-btn:hover {
-	background: rgba(241, 245, 249, 0.9);
 }
 
 .field-card__menu {
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
+	border: 1px solid var(--border-color, #e2e8f0);
+	background: var(--card-bg, #fff);
 	padding: 6px;
 	width: 220px;
 	max-width: calc(100vw - 32px);
-	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .field-card__menu-item {
@@ -1485,7 +1423,6 @@ function onEditDivider(field: Field) {
 	padding: 8px 10px;
 	border-radius: 8px;
 	font-size: 13px;
-	color: #0f172a;
 	cursor: pointer;
 	white-space: nowrap;
 	display: flex;
@@ -1493,22 +1430,12 @@ function onEditDivider(field: Field) {
 	gap: 8px;
 }
 
-.field-card__menu-item:hover {
-	background: #f1f5f9;
-}
-
 .field-card__menu-divider {
 	height: 1px;
 	margin: 6px 6px;
-	background: #e2e8f0;
 }
 
 .field-card__menu-item--danger {
-	color: #b91c1c;
-}
-
-.field-card__menu-item--danger:hover {
-	background: #fee2e2;
 }
 
 .field-card__submenu {
@@ -1516,23 +1443,20 @@ function onEditDivider(field: Field) {
 	top: 6px;
 	left: calc(100% + 6px);
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
+	border: 1px solid var(--border-color, #e2e8f0);
+	background: var(--card-bg, #fff);
 	padding: 6px;
 	width: 180px;
-	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .field-card__menu-check {
 	width: 14px;
 	display: inline-flex;
 	justify-content: center;
-	color: #0f172a;
 }
 
 .field-card__menu-arrow {
 	margin-left: auto;
-	color: #94a3b8;
 }
 
 .field-card__columns {
@@ -1541,89 +1465,24 @@ function onEditDivider(field: Field) {
 	flex-wrap: wrap;
 	gap: 6px;
 	font-size: 11px;
-	color: #64748b;
 }
 
 .field-card__column-pill {
-	border: 1px solid #e2e8f0;
-	background: #f8fafc;
+	border: 1px solid var(--border-color, #e2e8f0);
+	background: var(--control-bg, #f8f9fa);
 	border-radius: 6px;
 	padding: 4px 8px;
 }
 
 .section-page-break {
 	margin-top: 8px;
-	border-top: 1px dashed #cbd5e1;
+	border-top: 1px dashed var(--border-color, #e2e8f0);
 	padding-top: 8px;
 	text-align: center;
 	font-size: 12px;
-	color: #64748b;
 }
 
-.lp-btn {
-	border: 1px solid #e2e8f0;
-	background: #fff;
-	color: #334155;
-	font-size: 12px;
-	font-weight: 600;
-	border-radius: 8px;
-	padding: 6px 12px;
-	cursor: pointer;
-	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-}
-
-.lp-btn:hover {
-	border-color: #c7d2fe;
-	background: #eef2ff;
-}
-
-.lp-btn:disabled {
-	cursor: not-allowed;
-	border-color: #e2e8f0;
-	background: #f8fafc;
-	color: #cbd5e1;
-}
-
-.lp-btn--secondary {
-	border-color: #fecdd3;
-	color: #be123c;
-}
-
-.lp-btn--icon {
-	padding: 8px 12px;
-	min-width: 40px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 18px;
-	font-family: monospace;
-	font-weight: bold;
-}
-
-.lp-btn--label-toggle {
-	font-size: 14px;
-	font-family: inherit;
-	letter-spacing: -0.02em;
-}
-
-.lp-btn--secondary:hover {
-	background: #ffe4e6;
-	border-color: #fecdd3;
-}
-
-.lp-btn--small {
-	padding: 4px 8px;
-	font-size: 11px;
-}
-
-.lp-link {
-	margin-left: 8px;
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: #4f46e5;
-	text-decoration: underline;
-	font-size: 14px;
-	cursor: pointer;
+.layout-pane__header :deep(.section-head-content) {
+	padding: 0 0 8px;
 }
 </style>

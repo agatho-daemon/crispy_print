@@ -60,6 +60,7 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 
 .pane {
 	min-height: 0;
+	background: #fff;
 }
 
 .pane--fields {

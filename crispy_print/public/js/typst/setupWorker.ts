@@ -5,6 +5,7 @@ import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import { extractUsedFieldsFromTypstSource } from "../utils/typstFieldExtractor"
 import { serializeLayout, type CrispyLayout } from "../utils/layout"
+import { ensureTableSettings, ensureTypography } from "../utils/pageSettings"
 import {
 	buildForegroundPlacements,
 	getLetterheadFilename,
@@ -68,6 +69,7 @@ export function setupWorker(
 	let qrFilename = ""
 	let skipNextInput = false
 	let autocompleteInitialized = false
+	let stylesNoticeShown = false
 
 	// Cleanup function exported for external use (e.g., component unmount)
 	function cleanupAutocomplete() {
@@ -193,6 +195,132 @@ export function setupWorker(
 			// Fallback: return original error as string
 			return String(error?.message || error || "Compilation failed")
 		}
+	}
+
+	function fontWeightToNumber(weight: string) {
+		const normalized = String(weight || "").toLowerCase()
+		if (normalized === "bold") return 700
+		if (normalized === "semibold" || normalized === "semi-bold") return 600
+		if (normalized === "medium") return 500
+		if (normalized === "light") return 300
+		return 400
+	}
+
+	function buildDefaultStyleDefs(pageSettings: any) {
+		const typography = ensureTypography(pageSettings || {})
+		const fieldLabel = typography.fieldLabel
+		const fieldValue = typography.fieldValue
+		const sectionLabel = typography.sectionLabel
+		const tableSettings = ensureTableSettings(pageSettings || {})
+		const tableHeader = tableSettings.typography.header
+		const tableBody = tableSettings.typography.body
+		const tableInset = tableSettings.inset
+		const tableStrokeWidth = Number.isFinite(tableSettings.stroke.width)
+			? tableSettings.stroke.width
+			: 0
+		const formatColor = (color: string, fallback = "none") => {
+			const raw = String(color || "").trim()
+			if (!raw) return fallback
+			if (raw.startsWith("#")) {
+				return `rgb("${raw.substring(1)}")`
+			}
+			return raw
+		}
+		const tableStrokeColor = formatColor(tableSettings.stroke.color, "black")
+		const tableHeaderFill = formatColor(tableSettings.header.backgroundColor, "none")
+		const tableStripeFill = formatColor(tableSettings.stripe.color, "none")
+		const tableStripeEnabled = Boolean(tableSettings.stripe.enabled)
+
+		const lines: string[] = []
+		lines.push("// Typography styles (auto-injected for raw Typst)")
+		lines.push("#let fieldLabelStyle = (")
+		lines.push(`  font: "${fieldLabel.fontFamily}",`)
+		lines.push(`  size: ${fieldLabel.fontSize},`)
+		lines.push(`  style: "${fieldLabel.fontStyle}",`)
+		lines.push(`  weight: ${fontWeightToNumber(fieldLabel.fontWeight)},`)
+		lines.push(`  fill: rgb("${fieldLabel.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push("#let fieldValueStyle = (")
+		lines.push(`  font: "${fieldValue.fontFamily}",`)
+		lines.push(`  size: ${fieldValue.fontSize},`)
+		lines.push(`  style: "${fieldValue.fontStyle}",`)
+		lines.push(`  weight: ${fontWeightToNumber(fieldValue.fontWeight)},`)
+		lines.push(`  fill: rgb("${fieldValue.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push("#let sectionLabelStyle = (")
+		lines.push(`  font: "${sectionLabel.fontFamily}",`)
+		lines.push(`  size: ${sectionLabel.fontSize},`)
+		lines.push(`  style: "${sectionLabel.fontStyle}",`)
+		lines.push(`  weight: ${fontWeightToNumber(sectionLabel.fontWeight)},`)
+		lines.push(`  fill: rgb("${sectionLabel.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push("// Table styles (auto-injected for raw Typst)")
+		lines.push("#let tableHeaderStyle = (")
+		lines.push(`  font: "${tableHeader.fontFamily}",`)
+		lines.push(`  size: ${tableHeader.fontSize},`)
+		lines.push(`  style: "${tableHeader.fontStyle}",`)
+		lines.push(`  weight: ${fontWeightToNumber(tableHeader.fontWeight)},`)
+		lines.push(`  fill: rgb("${tableHeader.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push("#let tableBodyStyle = (")
+		lines.push(`  font: "${tableBody.fontFamily}",`)
+		lines.push(`  size: ${tableBody.fontSize},`)
+		lines.push(`  style: "${tableBody.fontStyle}",`)
+		lines.push(`  weight: ${fontWeightToNumber(tableBody.fontWeight)},`)
+		lines.push(`  fill: rgb("${tableBody.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push(
+			`#let tableCellInset = (top: ${tableInset.top}pt, right: ${tableInset.right}pt, bottom: ${tableInset.bottom}pt, left: ${tableInset.left}pt)`
+		)
+		lines.push(
+			`#let tableStroke = ${
+				tableStrokeWidth > 0
+					? `${tableStrokeWidth}pt + ${tableStrokeColor}`
+					: "none"
+			}`
+		)
+		lines.push(`#let tableHeaderFill = ${tableHeaderFill}`)
+		lines.push(`#let tableStripeFill = ${tableStripeFill}`)
+		lines.push(`#let tableStripeEnabled = ${tableStripeEnabled ? "true" : "false"}`)
+		lines.push("")
+		return lines.join("\n")
+	}
+
+	function typstReferencesDefaultStyles(source: string) {
+		if (!source) return false
+		return (
+			source.includes("fieldLabelStyle") ||
+			source.includes("fieldValueStyle") ||
+			source.includes("sectionLabelStyle") ||
+			source.includes("tableHeaderStyle") ||
+			source.includes("tableBodyStyle") ||
+			source.includes("tableCellInset") ||
+			source.includes("tableStroke") ||
+			source.includes("tableHeaderFill") ||
+			source.includes("tableStripeFill") ||
+			source.includes("tableStripeEnabled")
+		)
+	}
+
+	function typstDefinesDefaultStyles(source: string) {
+		if (!source) return false
+		return (
+			/#let\s+fieldLabelStyle\b/.test(source) ||
+			/#let\s+fieldValueStyle\b/.test(source) ||
+			/#let\s+sectionLabelStyle\b/.test(source) ||
+			/#let\s+tableHeaderStyle\b/.test(source) ||
+			/#let\s+tableBodyStyle\b/.test(source) ||
+			/#let\s+tableCellInset\b/.test(source) ||
+			/#let\s+tableStroke\b/.test(source) ||
+			/#let\s+tableHeaderFill\b/.test(source) ||
+			/#let\s+tableStripeFill\b/.test(source) ||
+			/#let\s+tableStripeEnabled\b/.test(source)
+		)
 	}
 
 	function setCurrentDoc(doctype: string, docname: string, opts: { force?: boolean } = {}) {
@@ -441,11 +569,16 @@ export function setupWorker(
 						page_length: 20,
 					},
 					callback: (r: any) => {
+						if (!awesomplete || !workingInput?.isConnected) {
+							return
+						}
 						if (r.message && r.message.length) {
 							awesomplete.list = r.message.map((d: any) => ({
 								label: d.value + (d.description ? " - " + __(d.description) : ""),
 								value: d.value,
 							}))
+						} else {
+							awesomplete.list = []
 						}
 					},
 				})
@@ -491,6 +624,11 @@ export function setupWorker(
 			autocompleteInitialized = true
 			skipNextInput = false
 
+			if (!sampleDocInput) {
+				console.warn("[Typst Preview] Sample doc input not found")
+				return
+			}
+
 			sampleDocInput.placeholder = `Search ${doctype}...`
 			sampleDocInput.setAttribute("data-doctype", doctype)
 			sampleDocInput.value = ""
@@ -503,6 +641,7 @@ export function setupWorker(
 				autoFirst: true,
 				filter: () => true,
 			})
+			const awesompleteInstance = awesomplete
 
 			function searchDocs(txt: string) {
 				frappe.call({
@@ -513,11 +652,20 @@ export function setupWorker(
 						page_length: 20,
 					},
 					callback: (r: any) => {
+						if (
+							!awesomplete ||
+							awesomplete !== awesompleteInstance ||
+							!sampleDocInput?.isConnected
+						) {
+							return
+						}
 						if (r.message && r.message.length) {
-							awesomplete.list = r.message.map((d: any) => ({
+							awesomplete.list = r.message.slice(0, 20).map((d: any) => ({
 								label: d.value + (d.description ? " - " + __(d.description) : ""),
 								value: d.value,
 							}))
+						} else {
+							awesomplete.list = []
 						}
 					},
 				})
@@ -937,6 +1085,22 @@ export function setupWorker(
 				if (pageSettingsBlock) {
 					parts.push(pageSettingsBlock)
 				}
+				const preambleDefinesDefaults = typstDefinesDefaultStyles(typstPreamble)
+				const codeReferencesDefaults = typstReferencesDefaultStyles(typstCode)
+				if (!preambleDefinesDefaults) {
+					parts.push(buildDefaultStyleDefs(pageSettings))
+					if (codeReferencesDefaults && !stylesNoticeShown && typeof frappe !== "undefined") {
+						stylesNoticeShown = true
+						frappe.show_alert(
+							{
+								message:
+									"Default typography styles injected for raw Typst. Add definitions in Typst Preamble to override.",
+								indicator: "blue",
+							},
+							6
+						)
+					}
+				}
 				if (typstPreamble && typstPreamble.trim()) {
 					parts.push(typstPreamble.trim())
 				}
@@ -968,10 +1132,10 @@ export function setupWorker(
 		}
 
 		if (typst === lastTypstCode && !qrPayloadChanged) {
-			if (statusEl) {
-				statusEl.textContent = "code unchanged"
-				statusEl.style.color = "#95a5a6"
-			}
+				if (statusEl) {
+					statusEl.textContent = "up to date"
+					statusEl.style.color = "#95a5a6"
+				}
 			return
 		}
 		lastTypstCode = typst

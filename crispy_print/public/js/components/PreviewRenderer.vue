@@ -202,6 +202,7 @@ onBeforeUnmount(() => {
 	overflow-y: auto;
 	padding: 16px;
 	background: #f8fafc;
+	margin-top: 8px;
 }
 
 .preview-placeholder {

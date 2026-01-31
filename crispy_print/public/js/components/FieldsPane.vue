@@ -1,15 +1,15 @@
 <template>
 	<div class="fields-pane">
-		<div class="fields-pane__header">
-			<div class="fields-pane__header-row">
-				<h3 class="fields-pane__title">
+		<div class="section-head fields-pane__header">
+			<div class="section-head-content fields-pane__header-row">
+				<h3 class="section-title fields-pane__title">
 					{{ isReportMode ? "Report Columns" : "Fields" }}
 				</h3>
 				<div class="fields-pane__spacer"></div>
-				<div>
+				<div class="fields-pane__help">
 					<button
 						type="button"
-						class="fields-pane__help-btn"
+						class="btn btn-default btn-xs fields-pane__help-btn"
 						popovertarget="fields-help"
 						popovertargetaction="toggle"
 						title="Toggle help"
@@ -37,7 +37,7 @@
 					:placeholder="`Search ${filteredFields.length} ${
 						isReportMode ? 'columns' : 'fields'
 					}...`"
-					class="search-input"
+					class="form-control search-input"
 				/>
 			</div>
 			<div v-if="loading" class="loading-indicator">
@@ -131,13 +131,12 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 .fields-pane {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid #e2e8f0;
-	background: rgba(255, 255, 255, 0.9);
+	background: #fff;
 }
 
 .fields-pane__header {
-	border-bottom: 1px solid #e2e8f0;
-	padding: 12px 16px;
+	margin: 12px 16px 0;
+	padding: 0;
 }
 
 .fields-pane__header-row {
@@ -151,9 +150,6 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 }
 
 .fields-pane__title {
-	font-size: 14px;
-	font-weight: 600;
-	color: #1e293b;
 	margin: 0;
 }
 
@@ -164,30 +160,19 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
-	color: #4f46e5;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.fields-pane__help-btn:hover {
-	background: #eef2ff;
-	border-color: #c7d2fe;
+.fields-pane__help {
+	display: flex;
+	align-items: center;
 }
 
 .fields-pane__help-popover {
 	margin-top: 8px;
 	border-radius: 12px;
-	border: 1px solid #e0e7ff;
-	background: #fff;
 	padding: 12px;
 	font-size: 12px;
 	line-height: 1.6;
-	color: #334155;
-	box-shadow: 0 10px 25px rgba(148, 163, 184, 0.25), 0 8px 10px rgba(148, 163, 184, 0.15);
 }
 
 .fields-pane__help-list {
@@ -208,30 +193,14 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 
 .search-input {
 	width: 100%;
-	padding: 8px 12px;
-	font-size: 14px;
-	border: 1px solid #e2e8f0;
-	border-radius: 6px;
-	background: #fff;
-	color: #0f172a;
-	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
-	outline: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.search-input:focus {
-	border-color: #a5b4fc;
-	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .loading-indicator {
 	margin-top: 8px;
 	font-size: 13px;
-	color: #475569;
 }
 
 .fields-list {
-	border: 1px solid #e2e8f0;
 	overflow-y: auto;
 	padding: 12px 16px 16px;
 	display: flex;
@@ -241,7 +210,6 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 
 .empty-state {
 	font-size: 14px;
-	color: #475569;
 }
 
 .empty-message {
@@ -255,23 +223,19 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	justify-content: space-between;
 	gap: 8px;
 	padding: 8px 12px;
-	border: 1px dashed #e2e8f0;
 	border-radius: 6px;
-	background: #fff;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
+	border: 1px solid var(--border-color, #e2e8f0);
+	background: var(--card-bg, #fff);
 	cursor: grab;
 }
 
 .field-item:hover {
-	border-color: #cbd5e1;
-	background: #f8fafc;
+	background: var(--control-bg, #f8f9fa);
 }
 
 .field-label {
 	display: block;
 	font-size: 14px;
-	font-weight: 600;
-	color: #0f172a;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -280,12 +244,13 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 
 .field-type-badge {
 	font-size: 11px;
-	color: #6366f1;
-	background: #eef2ff;
 	padding: 2px 8px;
 	border-radius: 3px;
-	font-weight: 500;
 	white-space: nowrap;
 	flex-shrink: 0;
+}
+
+.fields-pane__header :deep(.section-head-content) {
+	padding: 0 0 8px;
 }
 </style>

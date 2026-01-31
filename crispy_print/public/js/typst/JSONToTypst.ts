@@ -3,6 +3,7 @@
 
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
 import { buildForegroundPlacements, getLetterheadFilename, resolveBrandingMode } from "./branding"
+import { ensureTableSettings } from "../utils/pageSettings"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
 	sections?: LayoutSection[]
@@ -144,6 +145,23 @@ class JSONTypstTranslator {
 		return weightMap[normalized] || 400
 	}
 
+	formatColor(color: string, fallback = "none") {
+		const raw = String(color || "").trim()
+		if (!raw) return fallback
+		if (raw.startsWith("#")) {
+			return `rgb("${raw.substring(1)}")`
+		}
+		return raw
+	}
+
+	formatPtValue(value: any, fallback: number) {
+		const num = Number(value)
+		if (Number.isFinite(num)) {
+			return `${num}pt`
+		}
+		return `${fallback}pt`
+	}
+
 	generateUserSection() {
 		const lines = [
 			"// ========================================",
@@ -202,6 +220,57 @@ class JSONTypstTranslator {
 		lines.push(`  fill: rgb("${sectionLabel.color}")`)
 		lines.push(")")
 		lines.push("")
+
+		const tableSettings = ensureTableSettings(this.options as any)
+		const tableHeader = tableSettings.typography.header
+		const tableBody = tableSettings.typography.body
+		const tableInset = tableSettings.inset
+		const tableStrokeWidth = Number.isFinite(tableSettings.stroke.width)
+			? tableSettings.stroke.width
+			: 0
+		const tableStrokeColor = this.formatColor(tableSettings.stroke.color, "black")
+		const tableHeaderFill = this.formatColor(tableSettings.header.backgroundColor, "none")
+		const tableStripeFill = this.formatColor(tableSettings.stripe.color, "none")
+		const tableStripeEnabled = Boolean(tableSettings.stripe.enabled)
+
+		lines.push("// Table styles")
+		lines.push("#let tableHeaderStyle = (")
+		lines.push(`  font: "${tableHeader.fontFamily}",`)
+		lines.push(`  size: ${tableHeader.fontSize},`)
+		lines.push(`  style: "${tableHeader.fontStyle}",`)
+		lines.push(`  weight: ${this.fontWeightToNumber(tableHeader.fontWeight)},`)
+		lines.push(`  fill: rgb("${tableHeader.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push("#let tableBodyStyle = (")
+		lines.push(`  font: "${tableBody.fontFamily}",`)
+		lines.push(`  size: ${tableBody.fontSize},`)
+		lines.push(`  style: "${tableBody.fontStyle}",`)
+		lines.push(`  weight: ${this.fontWeightToNumber(tableBody.fontWeight)},`)
+		lines.push(`  fill: rgb("${tableBody.color}")`)
+		lines.push(")")
+		lines.push("")
+		lines.push(
+			`#let tableCellInset = (top: ${this.formatPtValue(
+				tableInset.top,
+				2
+			)}, right: ${this.formatPtValue(tableInset.right, 2)}, bottom: ${this.formatPtValue(
+				tableInset.bottom,
+				2
+			)}, left: ${this.formatPtValue(tableInset.left, 2)})`
+		)
+		lines.push(
+			`#let tableStroke = ${
+				tableStrokeWidth > 0
+					? `${this.formatPtValue(tableStrokeWidth, 0)} + ${tableStrokeColor}`
+					: "none"
+			}`
+		)
+		lines.push(`#let tableHeaderFill = ${tableHeaderFill}`)
+		lines.push(`#let tableStripeFill = ${tableStripeFill}`)
+		lines.push(`#let tableStripeEnabled = ${tableStripeEnabled ? "true" : "false"}`)
+		lines.push("")
+
 		lines.push("#let header_block = []")
 		lines.push("#let footer_block = []")
 		lines.push("")
@@ -448,6 +517,10 @@ class JSONTypstTranslator {
 			return lines.join("\n")
 		}
 
+		const isRawTypstSection = section.columns.every((col) =>
+			(col.fields || []).every((field) => field.fieldtype === "Typst")
+		)
+
 		if (section.label) {
 			lines.push(`#block(spacing: 0.6em)[#text(..sectionLabelStyle)[${safeLabel}]]`)
 			lines.push("")
@@ -455,6 +528,25 @@ class JSONTypstTranslator {
 
 		// lines.push(`#v(8pt) // Spacing after section`)
 		lines.push("")
+
+		if (isRawTypstSection) {
+			const maxRows = Math.max(...section.columns.map((col) => col.fields?.length || 0))
+			const numCols = section.columns.length
+
+			for (let rowIdx = 0; rowIdx < maxRows; rowIdx++) {
+				for (let colIdx = 0; colIdx < numCols; colIdx++) {
+					const column = section.columns[colIdx]
+					const field = column.fields?.[rowIdx]
+					if (!field) continue
+					const code = String(field.raw_typst_field || "").trim()
+					if (code) {
+						lines.push(code)
+					}
+				}
+			}
+			appendPageBreak()
+			return lines.join("\n")
+		}
 
 		// All sections use grid (unified approach for consistent spacing)
 		const maxRows = Math.max(...section.columns.map((col) => col.fields?.length || 0))
@@ -647,6 +739,7 @@ class JSONTypstTranslator {
 		const fieldname = field.fieldname || "items"
 		const label = field.label || "Table"
 		const includeComment = options.includeComment !== false
+		ensureTableSettings(this.options as any)
 
 		if (includeComment) {
 			lines.push(`// Table: ${label}`)
@@ -672,14 +765,21 @@ class JSONTypstTranslator {
 				return align
 			})
 			lines.push(`    align: (${alignments.join(", ")}),`)
+			lines.push(`    inset: tableCellInset,`)
+			lines.push(`    stroke: tableStroke,`)
+			lines.push(
+				`    fill: (x, y) => if y == 0 { tableHeaderFill } else { if tableStripeEnabled and calc.even(y) { tableStripeFill } else { none } },`
+			)
 
 			const headerCells = columns
-				.map((col) => `[*${this.escapeTypstText(col.label || "")}*]`)
+				.map((col) => `[#text(..tableHeaderStyle)[${this.escapeTypstText(col.label || "")}]]`)
 				.join(", ")
-			lines.push(`    ${headerCells},`)
+			lines.push(`    table.header(${headerCells}),`)
 
 			// Row data - map each row to all its column values and flatten
-			const rowCells = columns.map((col) => `[#row.${col.fieldname}]`).join(", ")
+			const rowCells = columns
+				.map((col) => `[#text(..tableBodyStyle)[#row.${col.fieldname}]]`)
+				.join(", ")
 			lines.push(`    ..doc.${fieldname}.map(row => (${rowCells})).flatten(),`)
 
 			lines.push(`  )`)

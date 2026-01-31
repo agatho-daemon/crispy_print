@@ -157,7 +157,7 @@
    "fieldname": "typst_help",
    "fieldtype": "HTML",
    "label": "Typst Help",
-   "options": "<div>\n  <h4 style=\"margin:0 0 8px;\">Typst Help</h4>\n  <div style=\"margin-bottom:10px;\">\n    <strong>Notes</strong>\n    <ol style=\"margin:6px 0 0 18px;\">\n      <li><code>typst_preamble</code> runs before any document content.</li>\n      <li><code>doc_header</code> defines <code>header_block</code> used in <code>#set page(header: header_block)</code>.</li>\n      <li><code>doc_footer</code> defines <code>footer_block</code> used in <code>#set page(footer: footer_block)</code>.</li>\n    </ol>\n  </div>\n  <div style=\"margin-bottom:10px;\">\n    <strong>Examples</strong>\n    <ol style=\"margin:6px 0 0 18px;\">\n      <li>Preamble: <code>#set text(font: \"Inter 18pt\", size: 11pt)</code></li>\n      <li>Header: <code>#let header_block = [#text(weight: 700)[#doc.doctype]]</code></li>\n      <li>Footer: <code>#let footer_block = [#text(size: 8pt)[#doc.name]]</code></li>\n    </ol>\n  </div>\n  <div>\n    <strong>Branding</strong>\n    <div style=\"margin-top:4px;\">Letterhead is rendered in <code>background</code>. Logo and QR are rendered in <code>foreground</code>.</div>\n  </div>\n</div>"
+   "options": "<div style=\"line-height:1.5;\">\n  <h4 style=\"margin:0 0 10px;\">Typst Help</h4>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>How Styling Works</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>\n        <code>fieldLabelStyle</code>, <code>fieldValueStyle</code>, and <code>sectionLabelStyle</code>  \n        are configured in the Builder and automatically inserted <strong>before</strong> the <code>typst_preamble</code>.\n      </li>\n      <li>\n        <code>typst_preamble</code> runs before any document content and can override all global styles <strong>including above fields</strong>.\n      </li>\n      <li>\n        <code>doc_header</code> defines <code>header_block</code>, which is used in  \n        <code>#set page(header: header_block)</code>.\n      </li>\n      <li>\n        <code>doc_footer</code> defines <code>footer_block</code>, which is used in  \n        <code>#set page(footer: footer_block)</code>.\n      </li>\n      <li>\n        All style and layout logic should be placed in the preamble or header/footer blocks,  \n        while the body focuses only on document data rendering.\n      </li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Quick Examples</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Preamble: <code>#set text(font: \"Inter 18pt\", size: 11pt)</code></li>\n      <li>Header: <code>#let header_block = [#text(weight: 700)[#doc.doctype]]</code></li>\n      <li>Footer: <code>#let footer_block = [#text(size: 8pt)[#doc.name]]</code></li>\n    </ol>\n  </div>\n\n  <div>\n    <strong>Branding Layers</strong>\n    <div style=\"margin-top:4px;\">\n      The letterhead is rendered in the page <code>background</code>, while the logo and QR code are rendered in the <code>foreground</code> layer.\n    </div>\n  </div>\n</div>"
   },
   {
    "default": "0",
@@ -184,7 +184,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-18 09:24:56.039243",
+ "modified": "2026-01-28 08:24:44.427802",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",
