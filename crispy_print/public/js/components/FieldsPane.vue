@@ -130,6 +130,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 <style scoped>
 .fields-pane {
 	display: flex;
+	border: 1px solid #e2e8f0;
 	flex-direction: column;
 	background: #fff;
 }

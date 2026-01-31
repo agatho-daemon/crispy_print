@@ -989,6 +989,7 @@ watch(availableCompanies, () => {
 /* SettingsPane.vue */
 .settings-pane {
 	display: flex;
+	border: 1px solid #e2e8f0;
 	flex-direction: column;
 	overflow-y: auto;
 	background: #fff;
