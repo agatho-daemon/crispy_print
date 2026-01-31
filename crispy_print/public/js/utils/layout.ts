@@ -42,7 +42,7 @@ export interface LayoutColumn {
 export interface LayoutSection {
 	label: string
 	columns: LayoutColumn[]
-	id?: number
+	id?: string | number
 	page_break?: boolean
 }
 
