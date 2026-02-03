@@ -116,7 +116,7 @@ import { useStore } from "../composables/useStore";
 import { computed, ref } from "vue";
 
 const store = useStore();
-const qrEnabled = computed(() => store.qrEnabled.value && !store.removeQr.value);
+const qrEnabled = computed(() => store.qrEnabled.value);
 const selectedReport = ref<string>("");
 
 // Check if this is a generic Report format

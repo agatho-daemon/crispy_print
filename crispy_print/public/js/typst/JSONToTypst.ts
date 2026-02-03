@@ -172,7 +172,7 @@ class JSONTypstTranslator {
 		]
 
 		// Typography styles for labels and values
-		const typography = this.options.typography || {}
+		const typography = (this.options?.typography || {}) as any
 		const fieldLabel = typography.fieldLabel || {
 			fontFamily: "Inter 18pt",
 			fontSize: "8pt",
@@ -221,7 +221,9 @@ class JSONTypstTranslator {
 		lines.push(")")
 		lines.push("")
 
-		const tableSettings = ensureTableSettings(this.options as any)
+		const tableSettings = ensureTableSettings(
+			this.options ? JSON.parse(JSON.stringify(this.options)) : {}
+		)
 		const tableHeader = tableSettings.typography.header
 		const tableBody = tableSettings.typography.body
 		const tableInset = tableSettings.inset
@@ -555,7 +557,8 @@ class JSONTypstTranslator {
 		// Only create grid if there are rows
 		if (maxRows > 0) {
 			lines.push(`#grid(`)
-			lines.push(`  columns: (${section.columns.map(() => "1fr").join(", ")}),`)
+			const columnWidths = section.columns.map((col) => col.width || "1fr")
+			lines.push(`  columns: (${columnWidths.join(", ")}),`)
 
 			// Iterate row by row (row-major order)
 			for (let rowIdx = 0; rowIdx < maxRows; rowIdx++) {
@@ -739,7 +742,7 @@ class JSONTypstTranslator {
 		const fieldname = field.fieldname || "items"
 		const label = field.label || "Table"
 		const includeComment = options.includeComment !== false
-		ensureTableSettings(this.options as any)
+		ensureTableSettings(this.options ? JSON.parse(JSON.stringify(this.options)) : {})
 
 		if (includeComment) {
 			lines.push(`// Table: ${label}`)

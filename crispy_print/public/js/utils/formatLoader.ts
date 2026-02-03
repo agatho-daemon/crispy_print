@@ -29,7 +29,6 @@ export interface FormatData {
 	page_settings?: string
 	doc_header?: string
 	doc_footer?: string
-	qrcode?: number
 	typst_preamble?: string
 	typst_code?: string
 	raw_typst?: number

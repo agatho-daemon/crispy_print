@@ -4,7 +4,7 @@ import { buildDocDictionary, translateJSONToTypst } from "./JSONToTypst"
 import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import { extractUsedFieldsFromTypstSource } from "../utils/typstFieldExtractor"
-import { serializeLayout, type CrispyLayout } from "../utils/layout"
+import { type CrispyLayout } from "../utils/layout"
 import { ensureTableSettings, ensureTypography } from "../utils/pageSettings"
 import {
 	buildForegroundPlacements,
@@ -207,11 +207,12 @@ export function setupWorker(
 	}
 
 	function buildDefaultStyleDefs(pageSettings: any) {
-		const typography = ensureTypography(pageSettings || {})
+		const safePageSettings = pageSettings ? JSON.parse(JSON.stringify(pageSettings)) : {}
+		const typography = ensureTypography(safePageSettings)
 		const fieldLabel = typography.fieldLabel
 		const fieldValue = typography.fieldValue
 		const sectionLabel = typography.sectionLabel
-		const tableSettings = ensureTableSettings(pageSettings || {})
+		const tableSettings = ensureTableSettings(safePageSettings)
 		const tableHeader = tableSettings.typography.header
 		const tableBody = tableSettings.typography.body
 		const tableInset = tableSettings.inset
@@ -330,7 +331,6 @@ export function setupWorker(
 		sampleDocData = null
 
 		clearPreview()
-		lastLayoutSerialized = ""
 		lastTypstCode = ""
 
 		if (statusEl) {
@@ -714,10 +714,7 @@ export function setupWorker(
 	svgContainer?.classList.remove("preview-hidden")
 
 	let compilationTimeout: number | undefined
-	let debounceTimer: number | undefined = undefined
 	let lastTypstCode = ""
-	let lastLayoutSerialized = ""
-	let lastPageSettingsSerialized = ""
 	let lastQrPayload = ""
 	let currentPdfBlob: Blob | null = null
 	let pendingPdfDownload = false
@@ -735,7 +732,7 @@ export function setupWorker(
 		return seq
 	}
 
-	function scheduleCompile(reason = "hook", delay = 200) {
+	function scheduleCompile(delay = 200) {
 		if (compilationDisabled) {
 			return
 		}
@@ -796,7 +793,7 @@ export function setupWorker(
 
 		if (adapter.hookDataChanges) {
 			unsubscribeAdapter = adapter.hookDataChanges(() => {
-				scheduleCompile("adapter-change", 200)
+				scheduleCompile(200)
 			})
 		}
 
@@ -815,16 +812,6 @@ export function setupWorker(
 		}
 
 		return adapter.getLayout()
-	}
-
-	function serializeLayoutSafe(layout: CrispyLayout | null | undefined) {
-		if (!layout) return ""
-		try {
-			return serializeLayout(layout)
-		} catch (e) {
-			console.error("[Typst Preview] Failed to serialize layout:", e)
-			return ""
-		}
 	}
 
 	function compile() {
@@ -994,7 +981,7 @@ export function setupWorker(
 				console.warn(
 					`[Typst Preview] Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`
 				)
-				scheduleCompile("retry-missing-layout", 500 * missingLayoutRetries)
+				scheduleCompile(500 * missingLayoutRetries)
 			} else {
 				console.error("[Typst Preview] Max retries (5) reached. Disabling compilation.")
 				compilationDisabled = true
@@ -1007,22 +994,7 @@ export function setupWorker(
 		}
 		missingLayoutRetries = 0
 
-		const layoutSerialized = rawTypst ? "" : serializeLayoutSafe(layout)
-
-		// Also check page settings for changes
-		let pageSettingsSerialized = ""
-		if (adapter && adapter.getPageSettings) {
-			try {
-				const pageSettings = adapter.getPageSettings()
-				pageSettingsSerialized = pageSettings ? JSON.stringify(pageSettings) : ""
-			} catch (e) {
-				console.warn("[Typst Preview] Failed to serialize page settings:", e)
-			}
-		}
-
-		// Always compile on trigger; skip unchanged guard to honor debounced triggers
-		lastLayoutSerialized = layoutSerialized
-		lastPageSettingsSerialized = pageSettingsSerialized
+		// Intentionally skip serialized layout diffing; always compile on trigger.
 
 		let typst: string
 		let qrPayloadChanged = false
@@ -1169,7 +1141,7 @@ export function setupWorker(
 	}
 
 	worker.addEventListener("message", (e) => {
-		const { type, ok, format, svgPages, pdfBytes, error, requestId, pageCount, seq } = e.data || {}
+		const { type, ok, format, svgPages, pdfBytes, error, requestId, seq } = e.data || {}
 		if (requestId && typeof seq === "number") {
 			const expected = latestSeqByRequest[requestId]
 			if (typeof expected === "number" && seq !== expected) {
@@ -1389,11 +1361,10 @@ export function setupWorker(
 				statusEl.textContent = "refreshing..."
 				statusEl.style.color = "#3498db"
 			}
-			lastLayoutSerialized = ""
 			lastTypstCode = "" // Force recompilation by clearing cached code
 			missingLayoutRetries = 0
 			compilationDisabled = false
-			scheduleCompile("manual-refresh", 0)
+			scheduleCompile(0)
 		})
 
 	viewCodeBtn &&

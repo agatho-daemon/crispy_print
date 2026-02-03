@@ -49,10 +49,10 @@ describe("pageSettings helpers", () => {
 
 	it("merges overrides with defaults", () => {
 		const merged = mergePageSettings(defaultPageSettings, {
-			margins: { top: 10 },
-			qr: { size: 20 },
-			logo: { company: "Acme" },
-			table: { stroke: { width: 1 } },
+			margins: { top: 10, bottom: 20, left: 30, right: 40 },
+			qr: { size: 20, dx: 0, dy: 0, fields: [], enabled: true },
+			logo: { company: "Acme", image: "", size: 25, dx: 0, dy: 0 },
+			table: { stroke: { width: 1, color: "#000000" } } as any,
 		})
 		expect(merged.margins.top).toBe(10)
 		expect(merged.margins.left).toBe(defaultPageSettings.margins.left)

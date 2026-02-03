@@ -699,16 +699,25 @@
 					</div>
 				</div>
 
-				<div class="settings-pane__field settings-pane__field--inline">
-					<label class="settings-pane__label">Remove QRCode</label>
-					<input
-						v-model="store.removeQr.value"
-						type="checkbox"
-						class="form-check-input settings-pane__checkbox"
-					/>
-				</div>
+				<label class="settings-pane__checkbox-row">
+					<span class="input-area">
+						<input
+							v-model="qrSettings.enabled"
+							type="checkbox"
+							autocomplete="off"
+							class="input-with-feedback"
+							data-fieldtype="Check"
+							data-fieldname="qr_enabled"
+						/>
+					</span>
+					<span class="disp-area" style="display: none">
+						<input type="checkbox" disabled class="disabled-deselected" />
+					</span>
+					<span class="label-area settings-pane__label">Enable QR Code</span>
+					<span class="ml-1 help"></span>
+				</label>
 
-				<div v-if="!store.removeQr.value" class="settings-pane__section">
+				<div v-if="qrSettings.enabled" class="settings-pane__section">
 					<div class="settings-pane__section-card card">
 						<button
 							type="button"
@@ -834,6 +843,7 @@ const typography = computed<TypographySettings>(() => {
 });
 
 const tableSettings = ref<TableSettings>(ensureTableSettings(props.pageSettings));
+const syncedTableRef = ref(false);
 
 const logoSettings = computed(() => ensureLogoSettings(props.pageSettings));
 
@@ -956,7 +966,11 @@ onMounted(() => {
 watch(
 	() => props.pageSettings,
 	(nextSettings) => {
+		if (syncedTableRef.value && nextSettings.table === tableSettings.value) {
+			return;
+		}
 		tableSettings.value = ensureTableSettings(nextSettings);
+		syncedTableRef.value = true;
 	},
 	{ immediate: true }
 );
@@ -1073,8 +1087,26 @@ watch(availableCompanies, () => {
 .settings-pane__field--inline {
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: flex-start;
 	gap: 12px;
+}
+
+.settings-pane__checkbox-row {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+}
+
+.settings-pane__checkbox-row .input-area {
+	display: inline-flex;
+	align-items: center;
+}
+
+.settings-pane__checkbox-row .label-area {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1.2;
 }
 
 .settings-pane__field--span {
@@ -1216,17 +1248,6 @@ watch(availableCompanies, () => {
 .settings-pane__field--toggle {
 	gap: 6px;
 	align-items: center;
-	align-items: flex-start;
-}
-
-.settings-pane__checkbox-wrap {
-	display: flex;
-	align-items: flex-start;
-	min-height: 36px;
-}
-
-.settings-pane__checkbox--inline {
-	align-self: flex-start;
 }
 
 .settings-pane__field--color :deep(.pickr .pcr-button) {

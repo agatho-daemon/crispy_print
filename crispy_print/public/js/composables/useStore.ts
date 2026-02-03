@@ -4,7 +4,7 @@
 import { ref, computed, watch, nextTick } from "vue"
 import { createDefaultLayout, serializeLayout } from "../utils/layout"
 import type { CrispyLayout, DocField } from "../utils/layout"
-import { defaultPageSettings, type PageSettings } from "../utils/pageSettings"
+import { defaultPageSettings, ensureQrSettings, type PageSettings } from "../utils/pageSettings"
 import { parseCrispyFormatDoc, resolveLetterheadDoc } from "../utils/formatLoader"
 import { getCrispyFormat, saveCrispyFormat } from "../api/crispy"
 import { withDoctype } from "../api/frappe"
@@ -23,7 +23,6 @@ interface CrispyFormat {
 	generic_report_type?: string
 	doc_header?: string
 	doc_footer?: string
-	qrcode?: number
 	raw_typst?: number
 	typst_preamble?: string
 	typst_code?: string
@@ -47,7 +46,6 @@ function buildStore() {
 	const loading = ref(false)
 	const initializing = ref(false) // Prevents dirty marking during init
 	const changeKey = ref(0)
-	const removeQr = ref(false)
 	const rawTypst = ref(false)
 	const typstCode = ref("")
 
@@ -60,7 +58,13 @@ function buildStore() {
 	const isReportMode = computed(() => formatType.value === "Report")
 	const docHeader = computed(() => crispyFormat.value?.doc_header || "")
 	const docFooter = computed(() => crispyFormat.value?.doc_footer || "")
-	const qrEnabled = computed(() => Boolean(crispyFormat.value?.qrcode))
+	const qrEnabled = computed(() => {
+		const qr = pageSettings.value?.qr
+		if (qr && typeof qr.enabled === "boolean") {
+			return qr.enabled
+		}
+		return false
+	})
 	const typstPreamble = computed(() => crispyFormat.value?.typst_preamble || "")
 
 	/**
@@ -70,7 +74,6 @@ function buildStore() {
 		loading.value = true
 		initializing.value = true
 		changeKey.value = 0
-		removeQr.value = false
 		dirty.value = false // Set clean state BEFORE triggering any reactive updates
 
 		try {
@@ -171,6 +174,11 @@ function buildStore() {
 
 			// Load page settings (already merged with defaults by parser)
 			pageSettings.value = parsed.pageSettings || { ...defaultPageSettings }
+			const qrSettings = ensureQrSettings(pageSettings.value)
+			const parsedQrEnabled = (parsed.pageSettings as PageSettings | undefined)?.qr?.enabled
+			if (typeof parsedQrEnabled !== "boolean") {
+				qrSettings.enabled = false
+			}
 
 			// Load letterhead if specified
 			if (pageSettings.value.letterhead) {
@@ -429,9 +437,6 @@ function buildStore() {
 		}
 	)
 
-	watch(removeQr, () => {
-		changeKey.value++
-	})
 
 	const store = {
 		// State
@@ -461,7 +466,6 @@ function buildStore() {
 		typstPreamble,
 		rawTypst,
 		typstCode,
-		removeQr,
 
 		// Methods
 		fetch,

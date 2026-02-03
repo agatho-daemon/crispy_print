@@ -7,7 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "crispy_format_type",
-  "qrcode",
   "raw_typst",
   "is_generic",
   "is_default",
@@ -142,12 +141,6 @@
   },
   {
    "default": "0",
-   "fieldname": "qrcode",
-   "fieldtype": "Check",
-   "label": "QR Code"
-  },
-  {
-   "default": "0",
    "description": "Write Typst code directly (automatically enabled for generic templates)",
    "fieldname": "raw_typst",
    "fieldtype": "Check",
@@ -184,7 +177,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-28 08:24:44.427802",
+ "modified": "2026-02-03 07:46:16.719683",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",
