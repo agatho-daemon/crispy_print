@@ -1,7 +1,7 @@
 // utils/layoutFieldExtractor.ts
 // Extract and filter fields actually used in a layout
 
-import type { CrispyLayout, LayoutSection, LayoutColumn, LayoutField } from "./layout"
+import type { CrispyLayout, LayoutSection, LayoutColumn } from "./layout"
 import { extractUsedFieldsFromTypstSource } from "./typstFieldExtractor"
 
 /**

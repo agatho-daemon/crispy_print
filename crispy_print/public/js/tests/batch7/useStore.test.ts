@@ -7,7 +7,6 @@ vi.mock("../../api/crispy", () => ({
 		layout_json: JSON.stringify({ sections: [] }),
 		page_settings: JSON.stringify({ pageSize: "A4" }),
 		raw_typst: 0,
-		qrcode: 0,
 	}),
 	saveCrispyFormat: async () => {},
 }))
@@ -17,7 +16,7 @@ vi.mock("../../api/frappe", () => ({
 }))
 
 vi.mock("../../utils/formatLoader", async (orig) => {
-	const actual = await orig()
+	const actual = (await orig()) as Record<string, any>
 	return {
 		...actual,
 		parseCrispyFormatDoc: () => ({
@@ -26,6 +25,7 @@ vi.mock("../../utils/formatLoader", async (orig) => {
 				pageSize: "A4",
 				orientation: "portrait",
 				margins: { top: 1, bottom: 1, left: 1, right: 1 },
+				language: "en",
 			},
 			docHeader: "",
 			formatDoc: {},

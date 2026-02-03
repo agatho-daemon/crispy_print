@@ -17,7 +17,7 @@ describe("layout serialization", () => {
 	})
 
 	it("drops has_fields from sections", () => {
-		const layout: CrispyLayout = {
+		const layout = {
 			sections: [
 				{
 					label: "Section 1",
@@ -25,7 +25,7 @@ describe("layout serialization", () => {
 					has_fields: true as any,
 				},
 			],
-		}
+		} as unknown as CrispyLayout
 		const json = serializeLayout(layout)
 		expect(json).not.toContain("has_fields")
 	})

@@ -15,7 +15,10 @@ describe("Typst edge cases", () => {
 									{
 										fieldname: "items",
 										fieldtype: "Table",
-										table_columns: [{ fieldname: "item_code", label: "Item Code" }],
+										label: "Items",
+										table_columns: [
+											{ fieldname: "item_code", label: "Item Code", fieldtype: "Data" },
+										],
 									},
 								],
 							},
@@ -39,18 +42,18 @@ describe("Typst edge cases", () => {
 						label: "Intro",
 						columns: [
 							{
-								label: "",
-								fields: [{ fieldname: "intro", fieldtype: "Data" }],
-							},
-						],
-						page_break: true,
+									label: "",
+									fields: [{ fieldname: "intro", fieldtype: "Data", label: "Intro" }],
+								},
+							],
+							page_break: true,
 					},
 					{
 						label: "One",
 						columns: [
 							{
 								label: "",
-								fields: [{ fieldname: "title", fieldtype: "Data" }],
+								fields: [{ fieldname: "title", fieldtype: "Data", label: "Title" }],
 							},
 						],
 					},

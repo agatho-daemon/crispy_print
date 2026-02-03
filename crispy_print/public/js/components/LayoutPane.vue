@@ -91,6 +91,7 @@
 									>
 										Add section below
 									</button>
+									<div class="section-card__menu-divider"></div>
 									<button
 										type="button"
 										class="section-card__menu-item"
@@ -106,6 +107,14 @@
 										@click="onRemoveLastColumn(section)"
 									>
 										Remove column
+									</button>
+									<div class="section-card__menu-divider"></div>
+									<button
+										type="button"
+										class="section-card__menu-item"
+										@click="onOpenSectionSettings(section)"
+									>
+										Section settings
 									</button>
 									<button
 										type="button"
@@ -168,7 +177,7 @@
 														type="text"
 														class="form-control field-card__label field-card__label-input"
 														:placeholder="field.fieldname"
-														@blur="markDirty()"
+														@change="markDirty()"
 														@keydown.enter.prevent="onLabelEnter"
 													/>
 												</div>
@@ -689,6 +698,52 @@ function removeLastColumn(section: Section) {
 
 function onRemoveLastColumn(section: Section) {
 	removeLastColumn(section);
+	closeSectionMenu();
+}
+
+function openSectionSettings(section: Section) {
+	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
+		const widths = section.columns.map((col, idx) => {
+			const label = `Column ${idx + 1} width (default 1fr)`;
+			const current = col.width || "1fr";
+			const next = window.prompt(label, current);
+			return typeof next === "string" ? next.trim() : "";
+		});
+		widths.forEach((value, idx) => {
+			section.columns[idx].width = value || "";
+		});
+		store.markDirty();
+		return;
+	}
+
+	const fields = section.columns.map((col, idx) => ({
+		fieldtype: "Data",
+		fieldname: `col_${idx}_width`,
+		label: `Column ${idx + 1} width`,
+		description: "Typst units: 1fr, 2fr, auto, 100pt, 50%, 2cm, etc.",
+		default: col.width || "1fr",
+	}));
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Section Settings"),
+		fields,
+		primary_action_label: __("Apply"),
+		primary_action: (values: Record<string, any>) => {
+			section.columns.forEach((col, idx) => {
+				const key = `col_${idx}_width`;
+				const value = String(values[key] ?? "").trim();
+				col.width = value || "";
+			});
+			store.markDirty();
+			dialog.hide();
+		},
+	});
+
+	dialog.show();
+}
+
+function onOpenSectionSettings(section: Section) {
+	openSectionSettings(section);
 	closeSectionMenu();
 }
 
@@ -1291,6 +1346,7 @@ function onEditDivider(field: Field) {
 .section-card__menu-divider {
 	height: 1px;
 	margin: 6px 6px;
+	background: var(--border-color, #e2e8f0);
 }
 
 .section-card__menu-item--danger {

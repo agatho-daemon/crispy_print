@@ -475,13 +475,18 @@ const docFooter = ref("");
 const typstPreamble = ref("");
 const typstCode = ref("");
 const rawTypst = ref(false);
-const qrEnabled = ref(false);
 const removeQr = ref(false);
 const letterheadDoc = ref<any | null>(null);
 const changeKey = ref(0);
 const OVERRIDES_STORAGE_KEY = "crispy-print:pp:preview-overrides-expanded";
 const isOverridesExpanded = ref(false);
-const qrEnabledEffective = computed(() => qrEnabled.value && !removeQr.value);
+const qrEnabledEffective = computed(() => {
+	const pageQrEnabled = pageSettings.value.qr?.enabled;
+	if (typeof pageQrEnabled === "boolean") {
+		return pageQrEnabled && !removeQr.value;
+	}
+	return false;
+});
 const logoSettings = computed(() => ensureLogoSettings(pageSettings.value));
 
 const brandingMode = computed<string>({
@@ -774,7 +779,6 @@ watch(
 		typstPreamble.value,
 		typstCode.value,
 		rawTypst.value,
-		qrEnabled.value,
 		removeQr.value,
 		reportFontFamily.value,
 		reportFontSizePt.value,
@@ -853,6 +857,9 @@ async function loadFormatSettings(formatName: string) {
 
 		// Overwrite in-memory page settings (ephemeral)
 		pageSettings.value = data.pageSettings || { ...defaultPageSettings };
+		if (data.pageSettings?.qr?.enabled === undefined && pageSettings.value.qr) {
+			delete (pageSettings.value.qr as any).enabled;
+		}
 
 		// Preload letterhead data if the format has one set
 		letterheadDoc.value = await resolveLetterheadDoc(pageSettings.value.letterhead);
@@ -864,7 +871,6 @@ async function loadFormatSettings(formatName: string) {
 		typstPreamble.value = data.formatDoc.typst_preamble || "";
 		typstCode.value = data.formatDoc.typst_code || "";
 		rawTypst.value = Boolean(data.formatDoc.raw_typst);
-		qrEnabled.value = Boolean(data.formatDoc.qrcode);
 
 		loading.value = false;
 	} catch (error) {

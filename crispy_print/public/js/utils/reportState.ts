@@ -9,7 +9,8 @@ export type ReportState = {
 };
 
 function replaceRef(value: string, fromId: string, toId: string): string {
-	return value.replaceAll(`url(#${fromId})`, `url(#${toId})`).replaceAll(`#${fromId}`, `#${toId}`);
+	const next = value.split(`url(#${fromId})`).join(`url(#${toId})`);
+	return next.split(`#${fromId}`).join(`#${toId}`);
 }
 
 function normalizeSvgIds(svg: SVGSVGElement) {

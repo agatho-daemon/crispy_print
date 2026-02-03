@@ -24,7 +24,6 @@ vi.mock("../../composables/useStore", () => ({
 		fields: ref([]),
 		loading: ref(false),
 		initializing: ref(false),
-		removeQr: ref(false),
 	}),
 }))
 

@@ -24,6 +24,7 @@ export interface QrSettings {
 	dy: number
 	size: number
 	fields: string[]
+	enabled?: boolean
 }
 
 export interface LogoSettings {
@@ -134,7 +135,7 @@ export const defaultPageSettings: PageSettings = {
 	typography: undefined,
 	table: undefined,
 	language: "en",
-	qr: { dx: 0, dy: 0, size: 15, fields: [] },
+	qr: { dx: 0, dy: 0, size: 15, fields: [], enabled: false },
 }
 
 export function ensureTypography(pageSettings: PageSettings): TypographySettings {
@@ -180,10 +181,13 @@ export function ensureTableSettings(pageSettings: PageSettings): TableSettings {
 
 export function ensureQrSettings(pageSettings: PageSettings): QrSettings {
 	if (!pageSettings.qr) {
-		pageSettings.qr = { dx: 0, dy: 0, size: 15, fields: [] }
+		pageSettings.qr = { dx: 0, dy: 0, size: 15, fields: [], enabled: false }
 	}
 	if (!Array.isArray(pageSettings.qr.fields)) {
 		pageSettings.qr.fields = []
+	}
+	if (typeof pageSettings.qr.enabled !== "boolean") {
+		pageSettings.qr.enabled = false
 	}
 	return pageSettings.qr
 }

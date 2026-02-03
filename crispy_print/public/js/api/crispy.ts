@@ -15,7 +15,6 @@ export interface CrispyFormatDoc {
 	generic_report_type?: string
 	doc_header?: string
 	doc_footer?: string
-	qrcode?: number
 	raw_typst?: number
 	layout_json?: string
 	page_settings?: string

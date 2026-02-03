@@ -37,6 +37,7 @@ export interface LayoutField {
 export interface LayoutColumn {
 	label: string
 	fields: LayoutField[]
+	width?: string
 }
 
 export interface LayoutSection {
@@ -75,6 +76,7 @@ export function normalizeLayout(layout: CrispyLayout | null | undefined): Crispy
 		const normalizedColumns: LayoutColumn[] = columns.map((rawColumn: any) => {
 			const column: LayoutColumn = {
 				label: typeof rawColumn?.label === "string" ? rawColumn.label : "",
+				width: typeof rawColumn?.width === "string" ? rawColumn.width : undefined,
 				fields: Array.isArray(rawColumn?.fields) ? rawColumn.fields : [],
 			}
 
@@ -118,7 +120,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 	}
 
 	const layout: CrispyLayout & { sections: LayoutSection[] } = {
-		header: getDefaultHeader(meta),
+		header: getDefaultHeader(),
 		sections: [],
 	}
 
@@ -172,7 +174,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 					align: getDefaultFieldAlignment(fieldtype),
 				}
 
-				const fieldTemplate = getFieldTemplate(crispyFormat, df.fieldname, df)
+				const fieldTemplate = getFieldTemplate(crispyFormat, df.fieldname)
 				if (fieldTemplate) {
 					field.label = `${__(df.label, null, (df as any).parent)} (${__("Field Template")})`
 					field.fieldtype = "Field Template"
@@ -244,7 +246,7 @@ export function getTableColumns(dfOrDoctype: DocField | string): TableColumn[] {
 	return tableColumns
 }
 
-function getFieldTemplate(crispyFormat: any, fieldname: string, df: DocField) {
+function getFieldTemplate(crispyFormat: any, fieldname: string) {
 	const templates = crispyFormat?.__onload?.print_templates || []
 	for (const template of templates) {
 		if (template.field === fieldname) {
@@ -254,7 +256,7 @@ function getFieldTemplate(crispyFormat: any, fieldname: string, df: DocField) {
 	return null
 }
 
-function getDefaultHeader(meta: any) {
+function getDefaultHeader() {
 	// Header rendering is handled via Typst `doc_header` on the Crispy Format doctype.
 	// Keep layout.header empty for legacy compatibility.
 	return ""
