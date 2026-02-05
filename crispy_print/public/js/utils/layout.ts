@@ -1,6 +1,10 @@
 // utils/layout.ts
 // Utility functions for creating and manipulating Typst print layouts
 
+import { getLogger } from "../logger"
+
+const logger = getLogger({ module: "Layout" })
+
 export interface DocField {
 	fieldname: string
 	label: string
@@ -307,7 +311,7 @@ export function deserializeLayout(json: string): CrispyLayout | null {
 		const parsed = JSON.parse(json) as CrispyLayout
 		return normalizeLayout(parsed)
 	} catch (e) {
-		console.error("[Layout] Failed to parse layout JSON:", e)
+		logger.error("Failed to parse layout JSON", e)
 		return null
 	}
 }

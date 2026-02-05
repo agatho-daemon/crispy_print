@@ -26,6 +26,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { setupWorker } from "../typst/setupWorker";
 import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
+import { getLogger } from "../logger";
 
 interface Props {
 	formatName: string | null;
@@ -45,6 +46,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const logger = getLogger({ component: "PreviewRenderer" });
 
 const previewPaneEl = ref<HTMLElement | null>(null);
 const errorPanel = ref<string | null>(null);
@@ -136,7 +138,7 @@ function onReportPreview(event: Event) {
 	const detail = (event as CustomEvent).detail;
 	if (!detail || !detail.svg_pages) return;
 
-	console.log("[PreviewRenderer] Received report preview:", detail);
+	logger.info("Received report preview", detail);
 
 	// Clear error panel
 	errorPanel.value = null;
@@ -159,7 +161,7 @@ function onReportPreview(event: Event) {
 		container.appendChild(pageDiv);
 	});
 
-	console.log(`[PreviewRenderer] Rendered ${svgPages.length} page(s)`);
+	logger.info(`Rendered ${svgPages.length} page(s)`);
 }
 
 function copyError() {

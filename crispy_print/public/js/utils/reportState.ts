@@ -1,5 +1,8 @@
+import { getLogger } from "../logger";
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XLINK_NS = "http://www.w3.org/1999/xlink";
+const logger = getLogger({ module: "ReportState" });
 
 export type ReportState = {
 	report: string;
@@ -77,7 +80,7 @@ export function loadReportState(reportName: string): ReportState | null {
 		if (parsed?.report && parsed.report !== reportName) return null;
 		return parsed as ReportState;
 	} catch (error) {
-		console.warn("[CrispyPP] Failed to read report state:", error);
+		logger.warn("Failed to read report state", error);
 		return null;
 	}
 }

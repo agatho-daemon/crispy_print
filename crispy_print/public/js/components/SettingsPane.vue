@@ -810,6 +810,7 @@ import { getTypstLocalFonts } from "../api/crispy";
 import { useBrandingData } from "../composables/useBrandingData";
 import { useStore } from "../composables/useStore";
 import QrFieldsDialog from "./QrFieldsDialog.vue";
+import { getLogger } from "../logger";
 
 interface Props {
 	pageSettings: PageSettings;
@@ -817,6 +818,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const logger = getLogger({ component: "SettingsPane" });
 
 const availableFonts = ref<string[]>([]);
 const loadingFonts = ref(false);
@@ -894,7 +896,7 @@ async function fetchFonts() {
 	try {
 		availableFonts.value = await getTypstLocalFonts();
 	} catch (error) {
-		console.error("[SettingsPane] Failed to fetch fonts:", error);
+		logger.error("Failed to fetch fonts", error);
 		// Fallback fonts
 		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"];
 	} finally {

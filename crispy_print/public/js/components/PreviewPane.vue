@@ -114,8 +114,10 @@
 import PreviewRenderer from "./PreviewRenderer.vue";
 import { useStore } from "../composables/useStore";
 import { computed, ref } from "vue";
+import { getLogger } from "../logger";
 
 const store = useStore();
+const logger = getLogger({ component: "PreviewPane" });
 const qrEnabled = computed(() => store.qrEnabled.value);
 const selectedReport = ref<string>("");
 
@@ -140,7 +142,7 @@ async function handleReportSelection(event: Event) {
 	}
 
 	selectedReport.value = reportName;
-	console.log("[PreviewPane] Selected report:", reportName);
+	logger.info("Selected report", reportName);
 
 	try {
 		// Show compiling status
@@ -164,7 +166,7 @@ async function handleReportSelection(event: Event) {
 			if (statusEl) statusEl.textContent = `${result.page_count} page(s)`;
 		}
 	} catch (error) {
-		console.error("[PreviewPane] Preview compilation failed:", error);
+		logger.error("Preview compilation failed", error);
 		const statusEl = document.getElementById("typst-status");
 		if (statusEl) statusEl.textContent = "Error";
 		frappe.show_alert({ message: "Preview compilation failed", indicator: "red" });

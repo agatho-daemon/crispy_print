@@ -10,8 +10,10 @@ import {
 	getLetterheadDoc,
 	getLetterheads as apiGetLetterheads,
 } from "../api/crispy"
+import { getLogger } from "../logger"
 
 let letterheadCache: Map<string, any> | null = null
+const logger = getLogger({ module: "FormatLoader" })
 
 export interface FormatInfo {
 	name: string
@@ -55,7 +57,7 @@ export function parseCrispyFormatDoc(doc: FormatData): {
 			const settings = JSON.parse(doc.page_settings)
 			pageSettings = mergePageSettings(defaultPageSettings, settings)
 		} catch (e) {
-			console.error("[FormatLoader] Failed to parse page_settings:", e)
+			logger.error("Failed to parse page_settings", e)
 			pageSettings = { ...defaultPageSettings }
 		}
 	}
@@ -72,7 +74,7 @@ export async function getFormatsForDoctype(doctype: string): Promise<FormatInfo[
 	try {
 		return await getCrispyFormatsForDoctype(doctype)
 	} catch (error) {
-		console.error("[FormatLoader] Error fetching formats:", error)
+		logger.error("Error fetching formats", error)
 		return []
 	}
 }
@@ -84,7 +86,7 @@ export async function getDefaultFormat(doctype: string): Promise<string | null> 
 	try {
 		return await getDefaultCrispyFormatForDoctype(doctype)
 	} catch (error) {
-		console.error("[FormatLoader] Error fetching default format:", error)
+		logger.error("Error fetching default format", error)
 		return null
 	}
 }
@@ -102,7 +104,7 @@ export async function loadFormatData(formatName: string): Promise<{
 		const parsed = parseCrispyFormatDoc(doc)
 		return { layout: parsed.layout, pageSettings: parsed.pageSettings, formatDoc: parsed.formatDoc }
 	} catch (error) {
-		console.error("[FormatLoader] Error loading format data:", error)
+		logger.error("Error loading format data", error)
 		return null
 	}
 }
@@ -114,7 +116,7 @@ export async function getLetterheads(): Promise<string[]> {
 	try {
 		return await apiGetLetterheads()
 	} catch (error) {
-		console.error("[FormatLoader] Error fetching letterheads:", error)
+		logger.error("Error fetching letterheads", error)
 		return []
 	}
 }
@@ -135,7 +137,7 @@ export async function loadLetterheadDoc(letterheadName: string): Promise<any | n
 		letterheadCache.set(letterheadName, doc)
 		return doc
 	} catch (error) {
-		console.error("[FormatLoader] Error fetching letterhead data:", error)
+		logger.error("Error fetching letterhead data", error)
 		return null
 	}
 }

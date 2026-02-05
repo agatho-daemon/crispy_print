@@ -420,6 +420,7 @@ import draggable from "vuedraggable";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useStore } from "../composables/useStore";
 import TableColumnsDialog from "../components/TableColumnsDialog.vue";
+import { getLogger } from "../logger";
 import type {
 	LayoutSection,
 	LayoutColumn,
@@ -445,6 +446,7 @@ const store = useStore();
 const layout = store.layout;
 const columnEditor = ref<TableEditorContext | null>(null);
 const editingColumns = ref<TableColumn[]>([]);
+const logger = getLogger({ component: "LayoutPane" });
 
 const openSectionMenuId = ref<string | null>(null);
 const sectionMenuStyle = ref<Record<string, string>>({});
@@ -810,7 +812,7 @@ async function ensureTableColumns(field: Field) {
 		field.table_columns = getTableColumns(field.options);
 	} catch (e) {
 		field.table_columns = [];
-		console.warn("Failed to load table columns", e);
+		logger.warn("Failed to load table columns", e);
 	}
 }
 
@@ -838,7 +840,7 @@ async function onDropField(event: DragEvent, column: Column) {
 		column.fields.push(field);
 		store.markDirty();
 	} catch (e) {
-		console.warn("Failed to drop field", e);
+		logger.warn("Failed to drop field", e);
 	}
 }
 
@@ -1086,7 +1088,7 @@ function editDivider(field: Field) {
 	setTimeout(() => {
 		const container = document.getElementById("divider-color-picker");
 		if (!container) {
-			console.error("Pickr container not found");
+			logger.error("Pickr container not found");
 			return;
 		}
 
@@ -1158,7 +1160,7 @@ function editDivider(field: Field) {
 				});
 			})
 			.catch((error) => {
-				console.error("Failed to load Pickr:", error);
+				logger.error("Failed to load Pickr", error);
 			});
 	}, 300);
 }

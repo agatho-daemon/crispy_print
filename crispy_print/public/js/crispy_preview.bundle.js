@@ -15,10 +15,27 @@ if (typeof __VUE_PROD_HYDRATION_MISMATCH_DETAILS__ === "undefined") {
 // Expose setupWorker globally for crispy_print.js
 window.setupWorker = setupWorker;
 
+const getLogger = (scope = {}) => {
+	const base = window?.CrispyPrintLogger;
+	if (base && typeof base.child === "function") {
+		return base.child(scope);
+	}
+	const noop = {
+		debug: () => {},
+		info: () => {},
+		warn: () => {},
+		error: () => {},
+		child: () => noop,
+		setLevel: () => {},
+	};
+	return noop;
+};
+const logger = getLogger({ module: "CrispyPreviewMount" });
+
 window.mountCrispyPreview = (selector = "#crispy-preview-root", props = {}) => {
 	const mountPoint = document.querySelector(selector);
 	if (!mountPoint) {
-		console.warn("[CrispyPreview] Mount point not found:", selector);
+		logger.warn("Mount point not found", { selector });
 		return null;
 	}
 

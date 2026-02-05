@@ -1,5 +1,9 @@
 // Factory for Typst inline worker used across Crispy pages
 
+import { getLogger } from "../logger"
+
+const logger = getLogger({ module: "TypstWorker" })
+
 export interface TypstWorkerHandle {
 	worker: Worker
 	cleanup: () => void
@@ -7,10 +11,21 @@ export interface TypstWorkerHandle {
 
 export function createTypstWorker(): TypstWorkerHandle {
 	const baseUrl = window.location?.origin || ""
+	const enableWorkerLogs = Boolean(
+		(window as any).CRISPY_DEBUG ||
+			((window as any).frappe?.boot && (window as any).frappe.boot.developer_mode)
+	)
 	const workerCode = `
-const ENABLE_WORKER_LOGS = false;
-const log = (...args) => { if (ENABLE_WORKER_LOGS) console.log('[Typst Worker]', ...args) };
-const warn = (...args) => console.warn('[Typst Worker]', ...args);
+const ENABLE_WORKER_LOGS = ${JSON.stringify(enableWorkerLogs)};
+const emit = (level, ...args) => {
+  if (!ENABLE_WORKER_LOGS) return;
+  const c = self && self["console"];
+  if (c && typeof c[level] === "function") {
+    c[level]("[Typst Worker]", ...args);
+  }
+};
+const log = (...args) => emit("log", ...args);
+const warn = (...args) => emit("warn", ...args);
 const BASE_URL = ${JSON.stringify(baseUrl)};
 
 async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterheadImage = null, qrData = null, qrFilename = null) {
@@ -146,7 +161,7 @@ log('Typst worker loaded (server-side CLI bridge)');
 			try {
 				worker.terminate()
 			} catch (err) {
-				console.warn("[Typst Worker] Failed to terminate worker", err)
+				logger.warn("Failed to terminate worker", err)
 			}
 			URL.revokeObjectURL(workerUrl)
 		},
