@@ -1043,6 +1043,7 @@ export function setupWorker(
 			if (rawTypst) {
 				const parts: string[] = []
 				parts.push(buildDocDictionary(filteredDoc, printFormatName))
+				parts.push(buildDefaultStyleDefs(pageSettings))
 				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
 				if (headerFooterBlock) {
 					parts.push(headerFooterBlock)
@@ -1056,22 +1057,6 @@ export function setupWorker(
 				})
 				if (pageSettingsBlock) {
 					parts.push(pageSettingsBlock)
-				}
-				const preambleDefinesDefaults = typstDefinesDefaultStyles(typstPreamble)
-				const codeReferencesDefaults = typstReferencesDefaultStyles(typstCode)
-				if (!preambleDefinesDefaults) {
-					parts.push(buildDefaultStyleDefs(pageSettings))
-					if (codeReferencesDefaults && !stylesNoticeShown && typeof frappe !== "undefined") {
-						stylesNoticeShown = true
-						frappe.show_alert(
-							{
-								message:
-									"Default typography styles injected for raw Typst. Add definitions in Typst Preamble to override.",
-								indicator: "blue",
-							},
-							6
-						)
-					}
 				}
 				if (typstPreamble && typstPreamble.trim()) {
 					parts.push(typstPreamble.trim())
