@@ -1,4 +1,20 @@
 (() => {
+	const getLogger = (scope = {}) => {
+		const base = window?.CrispyPrintLogger;
+		if (base && typeof base.child === "function") {
+			return base.child(scope);
+		}
+		const noop = {
+			debug: () => {},
+			info: () => {},
+			warn: () => {},
+			error: () => {},
+			child: () => noop,
+			setLevel: () => {},
+		};
+		return noop;
+	};
+	const logger = getLogger({ module: "CrispyPrintButton" });
 	const ns = (window.typstPrint = window.typstPrint || {});
 
 	// Load doctypes with default Crispy Formats
@@ -12,7 +28,7 @@
 			}
 		},
 		error: () => {
-			console.error("[CrispyPrint] Failed to load default doctypes");
+			logger.error("Failed to load default doctypes");
 		},
 	});
 

@@ -1,5 +1,8 @@
 import { ref } from "vue"
 import { getCompanies, getLetterheads, type CompanyOption } from "../api/crispy"
+import { getLogger } from "../logger"
+
+const logger = getLogger({ module: "BrandingData" })
 
 export function useBrandingData() {
 	const availableLetterheads = ref<string[]>([])
@@ -18,7 +21,7 @@ export function useBrandingData() {
 		try {
 			availableLetterheads.value = await getLetterheads()
 		} catch (error) {
-			console.error("[BrandingData] Failed to fetch letterheads:", error)
+			logger.error("Failed to fetch letterheads", error)
 			availableLetterheads.value = []
 		} finally {
 			loadingLetterheads.value = false
@@ -35,7 +38,7 @@ export function useBrandingData() {
 		try {
 			availableCompanies.value = await getCompanies()
 		} catch (error) {
-			console.error("[BrandingData] Failed to fetch companies:", error)
+			logger.error("Failed to fetch companies", error)
 			availableCompanies.value = []
 		} finally {
 			loadingCompanies.value = false

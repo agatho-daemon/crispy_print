@@ -8,8 +8,11 @@ import { defaultPageSettings, ensureQrSettings, type PageSettings } from "../uti
 import { parseCrispyFormatDoc, resolveLetterheadDoc } from "../utils/formatLoader"
 import { getCrispyFormat, saveCrispyFormat } from "../api/crispy"
 import { withDoctype } from "../api/frappe"
+import { getLogger } from "../logger"
 
 let storeInstance: ReturnType<typeof buildStore> | null = null
+
+const logger = getLogger({ module: "Store" })
 
 interface CrispyFormat {
 	name: string
@@ -98,13 +101,13 @@ function buildStore() {
 			// Handle Report mode
 			if (formatType === "Report" && doc.report) {
 				await loadReportColumns(doc.report, builderContext.value?.report_filters || {})
-				console.log("[Store] Report columns loaded:", reportColumns.value)
+				logger.info("Report columns loaded", reportColumns.value)
 			}
 
 			// Load sample reports for generic Report templates
 			if (formatType === "Report" && doc.is_generic && rawTypst.value) {
 				await loadSampleReports()
-				console.log("[Store] Sample reports loaded:", sampleReports.value)
+				logger.info("Sample reports loaded", sampleReports.value)
 			}
 
 			// Load DocType metadata
@@ -190,7 +193,7 @@ function buildStore() {
 				await saveChanges()
 			}
 		} catch (error) {
-			console.error("[Store] Failed to fetch Crispy Format:", error)
+			logger.error("Failed to fetch Crispy Format", error)
 			frappe.throw(__("Failed to load Crispy Format"))
 		} finally {
 			loading.value = false
@@ -215,7 +218,7 @@ function buildStore() {
 	 */
 	async function saveChanges() {
 		if (!crispyFormat.value || (!layout.value && !rawTypst.value)) {
-			console.warn("[Store] Nothing to save")
+			logger.warn("Nothing to save")
 			return
 		}
 
@@ -242,7 +245,7 @@ function buildStore() {
 
 			dirty.value = false
 		} catch (error) {
-			console.error("[Store] Failed to save changes:", error)
+			logger.error("Failed to save changes", error)
 			frappe.show_alert({
 				message: __("Failed to save changes"),
 				indicator: "red",
@@ -278,7 +281,7 @@ function buildStore() {
 	 */
 	async function fetchLetterhead(letterheadName: string) {
 		if (typeof frappe === "undefined") {
-			console.warn("[Store] Cannot fetch letterhead - Frappe not available")
+			logger.warn("Cannot fetch letterhead - Frappe not available")
 			return
 		}
 
@@ -295,7 +298,7 @@ function buildStore() {
 	 */
 	function setBuilderContext(context: Record<string, any> = {}) {
 		builderContext.value = context
-		console.log("[Store] Builder context set:", context)
+		logger.info("Builder context set", context)
 	}
 
 	/**
@@ -308,7 +311,7 @@ function buildStore() {
 		}
 
 		try {
-			console.log("[Store] Loading report columns for:", reportName)
+			logger.info("Loading report columns for", reportName)
 
 			// Use frappe.call to fetch report columns
 			const response = await frappe.call({
@@ -322,7 +325,7 @@ function buildStore() {
 			})
 
 			const columns = response?.message?.columns || []
-			console.log("[Store] Raw columns from API:", columns)
+			logger.debug("Raw columns from API", columns)
 
 			// Normalize columns to match DocField structure
 			reportColumns.value = columns.map((col: any) => {
@@ -354,9 +357,9 @@ function buildStore() {
 				}
 			})
 
-			console.log("[Store] Normalized report columns:", reportColumns.value)
+			logger.info("Normalized report columns", reportColumns.value)
 		} catch (error) {
-			console.error("[Store] Failed to load report columns:", error)
+			logger.error("Failed to load report columns", error)
 			reportColumns.value = []
 		}
 	}
@@ -366,7 +369,7 @@ function buildStore() {
 	 */
 	async function loadSampleReports() {
 		try {
-			console.log("[Store] Loading sample reports...")
+			logger.info("Loading sample reports")
 
 			// Get generic report type from format (e.g., "Grid" or "Tree")
 			const genericReportType = crispyFormat.value?.generic_report_type || null
@@ -379,9 +382,9 @@ function buildStore() {
 			})
 
 			sampleReports.value = response?.message || []
-			console.log("[Store] Sample reports loaded:", sampleReports.value)
+			logger.info("Sample reports loaded", sampleReports.value)
 		} catch (error) {
-			console.error("[Store] Failed to load sample reports:", error)
+			logger.error("Failed to load sample reports", error)
 			sampleReports.value = []
 		}
 	}
@@ -391,7 +394,7 @@ function buildStore() {
 	 */
 	async function compileReportPreview(reportName: string, columnConfig: any[] = []) {
 		try {
-			console.log("[Store] Building report source:", reportName)
+			logger.info("Building report source", reportName)
 
 			// Step 1: Get Typst source
 			const sourceResponse = await frappe.call({
@@ -410,7 +413,7 @@ function buildStore() {
 				throw new Error("No Typst source returned")
 			}
 
-			console.log("[Store] Compiling to SVG...")
+			logger.info("Compiling to SVG")
 
 			// Step 2: Compile using existing endpoint (same as DocType mode)
 			const compileResponse = await frappe.call({
@@ -421,10 +424,10 @@ function buildStore() {
 				},
 			})
 
-			console.log("[Store] Compilation result:", compileResponse?.message)
+			logger.info("Compilation result", compileResponse?.message)
 			return compileResponse?.message || null
 		} catch (error) {
-			console.error("[Store] Failed to compile report preview:", error)
+			logger.error("Failed to compile report preview", error)
 			throw error
 		}
 	}

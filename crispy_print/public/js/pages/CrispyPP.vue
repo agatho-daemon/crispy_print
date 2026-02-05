@@ -416,6 +416,7 @@ import {
 	type ReportColumn,
 	type ReportFormatOption,
 } from "./reportPrintSettings";
+import { getLogger } from "../logger";
 
 interface Props {
 	doctype?: string;
@@ -429,6 +430,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const logger = getLogger({ component: "CrispyPP" });
 
 // Format selection
 const availableFormats = ref<FormatInfo[]>([]);
@@ -542,7 +544,7 @@ async function fetchFonts() {
 	try {
 		availableFonts.value = await getTypstLocalFonts();
 	} catch (error) {
-		console.error("[CrispyPP] Failed to fetch fonts:", error);
+		logger.error("Failed to fetch fonts", error);
 		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"];
 	} finally {
 		loadingFonts.value = false;
@@ -622,7 +624,7 @@ async function initializeReportSettings() {
 		await fetchLetterheads();
 		await fetchCompanies();
 	} catch (error) {
-		console.error("[CrispyPP] Failed to load report formats:", error);
+		logger.error("Failed to load report formats", error);
 		frappe.show_alert({
 			message: __("Failed to load report formats."),
 			indicator: "red",
@@ -678,7 +680,7 @@ async function fetchReportColumns() {
 		reportColumnsState.value = normalized;
 		seedReportColumnSelections(normalized);
 	} catch (error) {
-		console.error("[CrispyPP] Failed to load report columns:", error);
+		logger.error("Failed to load report columns", error);
 	}
 }
 
@@ -695,16 +697,10 @@ async function compileReportPreview() {
 		const chartSvgPayload = normalizeReportChartSvg(reportChartSvg.value || "");
 		const letterheadImage = letterheadDoc.value?.image || null;
 		const logoImage = logoSettings.value.image || null;
-		console.log(
-			"[CrispyPP] Report preview compile requested with letterhead:",
-			letterheadDoc.value
-		);
-		console.log(
-			"[CrispyPP] Report preview compile requested with letterhead image:",
-			letterheadImage
-		);
-		console.log(
-			"[CrispyPP] Report preview compile requested with page settings:",
+		logger.info("Report preview compile requested with letterhead", letterheadDoc.value);
+		logger.info("Report preview compile requested with letterhead image", letterheadImage);
+		logger.info(
+			"Report preview compile requested with page settings",
 			pageSettingsComputed.value
 		);
 		const sourceResponse = await frappe.call({
@@ -754,7 +750,7 @@ async function compileReportPreview() {
 			);
 		}
 	} catch (error) {
-		console.error("[CrispyPP] Report preview failed:", error);
+		logger.error("Report preview failed", error);
 		frappe.show_alert({
 			message: __("Report preview failed."),
 			indicator: "red",
@@ -796,7 +792,7 @@ async function initializeData() {
 			loading.value = false;
 			return;
 		}
-		console.warn("[CrispyPP] No doctype specified");
+		logger.warn("No doctype specified");
 		loading.value = false;
 		return;
 	}
@@ -831,11 +827,11 @@ async function initializeData() {
 			selectedFormat.value = formatToLoad;
 			await loadFormatSettings(formatToLoad);
 		} else {
-			console.warn("[CrispyPP] No formats available for doctype:", props.doctype);
+			logger.warn("No formats available for doctype", props.doctype);
 			loading.value = false;
 		}
 	} catch (error) {
-		console.error("[CrispyPP] Error initializing:", error);
+		logger.error("Error initializing", error);
 		frappe.show_alert({
 			message: __("Failed to initialize preview: {0}", [error.message]),
 			indicator: "red",
@@ -874,7 +870,7 @@ async function loadFormatSettings(formatName: string) {
 
 		loading.value = false;
 	} catch (error) {
-		console.error("[CrispyPP] Error loading format settings:", error);
+		logger.error("Error loading format settings", error);
 		frappe.show_alert({
 			message: __("Failed to load format: {0}", [error.message]),
 			indicator: "red",
@@ -926,16 +922,16 @@ const getLetterhead = () => {
 watch(
 	() => pageSettings.value.letterhead,
 	async (newLetterhead) => {
-		console.log("[CrispyPP] Letterhead selection changed:", newLetterhead);
+		logger.info("Letterhead selection changed", newLetterhead);
 		letterheadDoc.value = await resolveLetterheadDoc(newLetterhead);
-		console.log("[CrispyPP] Letterhead doc resolved:", letterheadDoc.value);
+		logger.info("Letterhead doc resolved", letterheadDoc.value);
 	}
 );
 
 watch(
 	() => letterheadDoc.value,
 	() => {
-		console.log("[CrispyPP] Letterhead doc updated, recompiling preview.");
+		logger.info("Letterhead doc updated, recompiling preview");
 		if (isReportMode.value) {
 			compileReportPreview();
 		}
@@ -992,16 +988,16 @@ watch([reportFontFamily, reportFontSizePt], () => {
 watch(
 	() => logoSettings.value.company,
 	(newCompany) => {
-		console.log("[CrispyPP] Logo company changed:", newCompany);
+		logger.info("Logo company changed", newCompany);
 		logoSettings.value.image = resolveCompanyLogo(newCompany);
-		console.log("[CrispyPP] Logo image resolved:", logoSettings.value.image);
+		logger.info("Logo image resolved", logoSettings.value.image);
 	}
 );
 
 watch(
 	() => logoSettings.value.image,
 	() => {
-		console.log("[CrispyPP] Logo image updated, recompiling preview.");
+		logger.info("Logo image updated, recompiling preview");
 		if (isReportMode.value) {
 			compileReportPreview();
 		}
@@ -1041,7 +1037,7 @@ watch(isOverridesExpanded, (next) => {
 
 // Generate and open PDF in new tab
 async function generatePDF() {
-	console.log("[CrispyPP] View PDF clicked.");
+	logger.info("View PDF clicked");
 	if (isReportMode.value) {
 		await generateReportPdf("view");
 		return;
@@ -1052,7 +1048,7 @@ async function generatePDF() {
 }
 
 async function downloadPDF() {
-	console.log("[CrispyPP] Download PDF clicked.");
+	logger.info("Download PDF clicked");
 	if (isReportMode.value) {
 		await generateReportPdf("download");
 		return;
@@ -1125,7 +1121,7 @@ async function generateReportPdf(action: "view" | "download") {
 			});
 		}
 	} catch (error) {
-		console.error("[CrispyPP] Report PDF generation failed:", error);
+		logger.error("Report PDF generation failed", error);
 		frappe.show_alert({
 			message: __("Report PDF generation failed."),
 			indicator: "red",

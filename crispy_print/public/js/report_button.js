@@ -4,6 +4,22 @@
 frappe.provide("crispy_print");
 
 (() => {
+	const getLogger = (scope = {}) => {
+		const base = window?.CrispyPrintLogger;
+		if (base && typeof base.child === "function") {
+			return base.child(scope);
+		}
+		const noop = {
+			debug: () => {},
+			info: () => {},
+			warn: () => {},
+			error: () => {},
+			child: () => noop,
+			setLevel: () => {},
+		};
+		return noop;
+	};
+	const logger = getLogger({ module: "ReportButton" });
 	// Avoid double-binding if assets are loaded twice in dev.
 	if (window.__crispy_qr_patched__) return;
 	window.__crispy_qr_patched__ = true;
@@ -61,7 +77,7 @@ frappe.provide("crispy_print");
 					);
 				}
 			} catch (error) {
-				console.warn("[Crispy Print] Failed to persist report state:", error);
+				logger.warn("Failed to persist report state", error);
 			}
 			frappe.route_options = {
 				source: "report",
@@ -301,7 +317,7 @@ crispy_print.show_format_dialog = function (report_name, formats, report_instanc
 								error_msg = msg.message || error_msg;
 							}
 						} catch (e) {
-							console.error("Error parsing server messages:", e);
+							logger.error("Error parsing server messages", e);
 						}
 					} else if (r && r.message) {
 						error_msg = r.message;
@@ -310,14 +326,12 @@ crispy_print.show_format_dialog = function (report_name, formats, report_instanc
 						error_msg = r.exc;
 					}
 
-					// Log full error details to console
-					console.group("❌ Typst PDF Generation Failed");
-					console.error("Error message:", error_msg);
-					console.error("Full response:", r);
-					if (r && r.exc) {
-						console.error("Exception traceback:", r.exc);
-					}
-					console.groupEnd();
+					// Log full error details
+					logger.error("Typst PDF Generation Failed", {
+						errorMessage: error_msg,
+						response: r,
+						traceback: r && r.exc ? r.exc : null,
+					});
 
 					// Show simple error dialog
 					frappe.msgprint({

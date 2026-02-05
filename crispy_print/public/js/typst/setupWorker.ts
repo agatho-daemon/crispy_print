@@ -17,6 +17,9 @@ import {
 	dispatchCrispyPreviewSource,
 	dispatchCrispyPreviewStatus,
 } from "../utils/events"
+import { getLogger } from "../logger"
+
+const logger = getLogger({ module: "TypstPreview" })
 
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
@@ -44,10 +47,10 @@ export function setupWorker(
 	const { worker, cleanup } = createWorker()
 
 	worker.addEventListener("error", (err) => {
-		console.error("[Typst Preview] Worker error", err)
+		logger.error("Worker error", err)
 	})
 	worker.addEventListener("messageerror", (err) => {
-		console.error("[Typst Preview] Worker messageerror", err)
+		logger.error("Worker messageerror", err)
 	})
 
 	const statusEl = previewPane.querySelector<HTMLElement>("#typst-status")
@@ -341,7 +344,7 @@ export function setupWorker(
 
 		fetchDoc(doctype, docname, { force: Boolean(opts.force) }).then((doc) => {
 			if (!doc) {
-				console.warn("[Typst Preview] Failed to fetch document", doctype, docname)
+				logger.warn("Failed to fetch document", { doctype, docname })
 				if (statusEl) {
 					statusEl.textContent = "document not found"
 					statusEl.style.color = "#e74c3c"
@@ -407,7 +410,7 @@ export function setupWorker(
 	const handleSetDoc = (event: any) => {
 		const { doctype, docname } = event?.detail || {}
 		if (!doctype || !docname) {
-			console.warn("[Typst Preview] Invalid set-doc event", event?.detail)
+			logger.warn("Invalid set-doc event", event?.detail)
 			return
 		}
 		setCurrentDoc(doctype, docname, { force: true })
@@ -439,7 +442,7 @@ export function setupWorker(
 	// PDF generation request (used by crispy-print toolbar and any other UI)
 	const handlePdfRequest = (event: any) => {
 		const action = (event?.detail?.action || "view") as "view" | "download"
-		console.log("[Typst Preview] PDF request received:", {
+		logger.info("PDF request received", {
 			action,
 			hasPdf: Boolean(currentPdfBlob),
 			hasTypst: Boolean(lastTypstCode),
@@ -448,7 +451,7 @@ export function setupWorker(
 
 		if (currentPdfBlob) {
 			if (action === "download") {
-				console.log("[Typst Preview] Using cached PDF for download")
+				logger.info("Using cached PDF for download")
 				triggerPdfDownload()
 				return
 			}
@@ -460,7 +463,7 @@ export function setupWorker(
 		}
 
 		if (!lastTypstCode) {
-			console.warn("[Typst Preview] No Typst code available for PDF request")
+			logger.warn("No Typst code available for PDF request")
 			frappe?.show_alert({ message: __("Typst code not ready yet"), indicator: "orange" })
 			return
 		}
@@ -479,14 +482,14 @@ export function setupWorker(
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
 		const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
-		console.log("[Typst Preview] PDF request context:", {
+		logger.info("PDF request context", {
 			requestId: pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID,
 			pageSettings,
 			brandingImage,
 		})
 
 		const requestId = pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
-		console.log("[Typst Preview] Posting PDF compile to worker:", { requestId })
+		logger.info("Posting PDF compile to worker", { requestId })
 		worker.postMessage({
 			typstSrc: lastTypstCode,
 			csrfToken: frappe?.csrf_token,
@@ -502,7 +505,7 @@ export function setupWorker(
 
 	function setupSampleDocAutocomplete(doctype: string) {
 		if (!doctype) {
-			console.warn("[Typst Preview] Cannot setup autocomplete - missing doctype")
+			logger.warn("Cannot setup autocomplete - missing doctype")
 			return
 		}
 
@@ -534,7 +537,7 @@ export function setupWorker(
 			// Update reference to the new input
 			const refreshedInput = previewPane.querySelector<HTMLInputElement>("#typst-sample-doc-input")
 			if (!refreshedInput) {
-				console.error("[Autocomplete] Failed to get refreshed input element")
+				logger.error("Autocomplete failed to get refreshed input element")
 				return
 			}
 			// Update the closure reference (this is a bit tricky, but we're in the same scope)
@@ -608,7 +611,7 @@ export function setupWorker(
 				currentDocname = selectedDoc
 
 				if (!selectedDoc || !currentDoctype) {
-					console.warn("[Typst Preview] No document or doctype selected")
+					logger.warn("No document or doctype selected")
 					return
 				}
 
@@ -625,7 +628,7 @@ export function setupWorker(
 			skipNextInput = false
 
 			if (!sampleDocInput) {
-				console.warn("[Typst Preview] Sample doc input not found")
+				logger.warn("Sample doc input not found")
 				return
 			}
 
@@ -695,7 +698,7 @@ export function setupWorker(
 				currentDocname = selectedDoc
 
 				if (!selectedDoc || !currentDoctype) {
-					console.warn("[Typst Preview] No document or doctype selected")
+					logger.warn("No document or doctype selected")
 					return
 				}
 
@@ -764,7 +767,7 @@ export function setupWorker(
 
 	function initializeAdapter() {
 		if (!adapter) {
-			console.warn("[Typst Preview] No adapter provided")
+			logger.warn("No adapter provided")
 			return
 		}
 
@@ -802,12 +805,12 @@ export function setupWorker(
 
 	function getLayout() {
 		if (!adapter) {
-			console.warn("[Typst Preview] Adapter not available")
+			logger.warn("Adapter not available")
 			return null
 		}
 
 		if (!adapter.getLayout) {
-			console.error("[Typst Preview] Adapter does not have getLayout function")
+			logger.error("Adapter does not have getLayout function")
 			return null
 		}
 
@@ -957,7 +960,7 @@ export function setupWorker(
 
 		// Allow compile if we already have document data, even if sampleDocSelected wasn't toggled
 		if (!sampleDocData) {
-			console.warn("[Typst Preview] No document data; skipping compile")
+			logger.warn("No document data; skipping compile")
 			if (statusEl) {
 				statusEl.textContent = "select a document"
 				statusEl.style.color = "#e67e22"
@@ -971,19 +974,19 @@ export function setupWorker(
 		const layout = getLayout()
 
 		if (!layout && !rawTypst) {
-			console.error("[Typst Preview] No layout found from adapter")
+			logger.error("No layout found from adapter")
 			if (statusEl) {
 				statusEl.textContent = "waiting for layout..."
 				statusEl.style.color = "#e67e22"
 			}
 			if (missingLayoutRetries < 5) {
 				missingLayoutRetries += 1
-				console.warn(
-					`[Typst Preview] Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`
+				logger.warn(
+					`Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`
 				)
 				scheduleCompile(500 * missingLayoutRetries)
 			} else {
-				console.error("[Typst Preview] Max retries (5) reached. Disabling compilation.")
+				logger.error("Max retries (5) reached. Disabling compilation.")
 				compilationDisabled = true
 				if (statusEl) {
 					statusEl.textContent = "no layout data"
@@ -1077,7 +1080,7 @@ export function setupWorker(
 				})
 			}
 		} catch (e: any) {
-			console.error("[Typst Preview] Translation error:", e)
+			logger.error("Translation error", e)
 			const formattedError = parseTypstError(e)
 			if (statusEl) {
 				statusEl.textContent = "translation error"
@@ -1142,7 +1145,7 @@ export function setupWorker(
 
 		if (type === "compile" || !type) {
 			if (requestId === VIEW_PDF_REQUEST_ID || requestId === DOWNLOAD_REQUEST_ID) {
-				console.log("[Typst Preview] PDF compile response:", {
+				logger.info("PDF compile response", {
 					ok,
 					requestId,
 					format,
@@ -1150,7 +1153,7 @@ export function setupWorker(
 				})
 			}
 			if (!ok) {
-				console.error("[Typst Preview] Compilation failed:", error)
+				logger.error("Compilation failed", error)
 				const formattedError = parseTypstError(error)
 				if (statusEl) {
 					statusEl.textContent = isDownload || isViewPdf ? "pdf error" : "error"
@@ -1195,7 +1198,7 @@ export function setupWorker(
 					}
 					dispatchStatus("ready")
 				} else {
-					console.warn("[Typst Preview] SVG response received for download request")
+					logger.warn("SVG response received for download request")
 					pendingPdfDownload = false
 				}
 
@@ -1249,7 +1252,7 @@ export function setupWorker(
 				}
 				return
 			} else {
-				console.warn("[Typst Preview] PDF response received for preview request")
+				logger.warn("PDF response received for preview request")
 				if (statusEl) {
 					statusEl.textContent = "unexpected pdf"
 					statusEl.style.color = "#e67e22"
