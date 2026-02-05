@@ -27,6 +27,41 @@ function hasProdOverride(): boolean {
 	return override === true || override === "true" || override === 1;
 }
 
+const notifiedMessages = new Set<string>();
+
+function shouldNotify(level: LogLevel): boolean {
+	return level === "warn" || level === "error";
+}
+
+function notifyUser(level: LogLevel, msg: string, ctx?: unknown): void {
+	if (typeof window === "undefined") return;
+
+	const key = `${level}:${msg}`;
+	if (notifiedMessages.has(key)) return;
+	notifiedMessages.add(key);
+
+	const frappe = (window as any).frappe;
+	if (!frappe || typeof frappe.msgprint !== "function") return;
+
+	let detail = "";
+	if (ctx instanceof Error) {
+		detail = ctx.message || "";
+	} else if (typeof ctx === "string") {
+		detail = ctx;
+	} else if (ctx && typeof ctx === "object" && "message" in (ctx as any)) {
+		detail = String((ctx as any).message || "");
+	}
+
+	const message = detail ? `${msg}\n${detail}` : msg;
+	const indicator = level === "error" ? "red" : "orange";
+
+	frappe.msgprint({
+		title: "Crispy Print",
+		message,
+		indicator,
+	});
+}
+
 function levelRank(level: LogLevel): number {
 	switch (level) {
 		case "debug":
@@ -54,6 +89,9 @@ export function createLogger(opts: LoggerOptions): Logger {
 	};
 
 	const emit = (lvl: LogLevel, msg: string, ctx?: unknown): void => {
+		if (shouldNotify(lvl)) {
+			notifyUser(lvl, msg, ctx);
+		}
 		if (!shouldLog(lvl)) return;
 
 		const payload = ctx === undefined ? [] : [ctx];
