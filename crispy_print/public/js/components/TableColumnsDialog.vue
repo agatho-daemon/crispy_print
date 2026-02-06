@@ -122,6 +122,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import type { TableColumn } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
+import { deepClone } from "../utils/json";
 
 interface Props {
 	modelValue: TableColumn[];
@@ -134,7 +135,7 @@ const emit = defineEmits<{
 	(e: "close"): void;
 }>();
 
-const cloneColumns = (cols?: TableColumn[] | null) => JSON.parse(JSON.stringify(cols || []));
+const cloneColumns = (cols?: TableColumn[] | null) => deepClone(cols || []);
 const localColumns = ref<TableColumn[]>(cloneColumns(props.modelValue || []));
 const childMeta = ref<any>(null);
 const pendingFieldname = ref<string>("");

@@ -1,0 +1,45 @@
+import { getTypstLocalFonts } from "../api/crispy";
+
+export type SizeParseResult = {
+	value: number;
+	unit: string;
+	decimals: number;
+};
+
+export type FontFetchOptions = {
+	devFallback?: string[];
+	errorFallback?: string[];
+	logger?: { error?: (message: string, error?: unknown) => void };
+};
+
+export function parseSize(input: string | null | undefined): SizeParseResult {
+	const raw = String(input || "").trim();
+	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i);
+	if (!match) return { value: 0, unit: "pt", decimals: 0 };
+	const value = Number(match[1]);
+	const unit = (match[2] || "pt").toLowerCase();
+	const decimals = (match[1].split(".")[1] || "").length;
+	return { value: Number.isFinite(value) ? value : 0, unit, decimals };
+}
+
+export function formatPt(value: number): string {
+	const safe = Math.max(1, value);
+	const num = safe.toFixed(2).replace(/\.?0+$/, "");
+	return `${num}pt`;
+}
+
+export async function fetchTypstFonts(options: FontFetchOptions = {}): Promise<string[]> {
+	const devFallback = options.devFallback || ["Arial", "Helvetica", "Times New Roman", "Courier"];
+	const errorFallback = options.errorFallback || ["Arial", "Helvetica", "Times New Roman"];
+
+	if (typeof frappe === "undefined") {
+		return devFallback;
+	}
+
+	try {
+		return await getTypstLocalFonts();
+	} catch (error) {
+		options.logger?.error?.("Failed to fetch fonts", error);
+		return errorFallback;
+	}
+}

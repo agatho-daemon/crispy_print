@@ -410,7 +410,6 @@ import {
 import PreviewRenderer from "../components/PreviewRenderer.vue";
 import { pickFormatName } from "../utils/formatSelection";
 import { useBrandingData } from "../composables/useBrandingData";
-import { getTypstLocalFonts } from "../api/crispy";
 import { loadReportState, normalizeReportChartSvg } from "../utils/reportState";
 import {
 	buildReportFormatOptions,
@@ -419,6 +418,7 @@ import {
 	type ReportFormatOption,
 } from "./reportPrintSettings";
 import { getLogger } from "../logger";
+import { fetchTypstFonts, formatPt, parseSize } from "../utils/typstTypography";
 
 interface Props {
 	doctype?: string;
@@ -512,42 +512,14 @@ const brandingMode = computed<string>({
 	},
 });
 
-function parseSize(input: string | null | undefined): {
-	value: number;
-	unit: string;
-	decimals: number;
-} {
-	const raw = String(input || "").trim();
-	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i);
-	if (!match) return { value: 0, unit: "pt", decimals: 0 };
-	const value = Number(match[1]);
-	const unit = (match[2] || "pt").toLowerCase();
-	const decimals = (match[1].split(".")[1] || "").length;
-	return { value: Number.isFinite(value) ? value : 0, unit, decimals };
-}
-
-function formatPt(value: number): string {
-	const safe = Math.max(1, value);
-	const num = safe.toFixed(2).replace(/\.?0+$/, "");
-	return `${num}pt`;
-}
-
 function escapeTypstString(value: string): string {
 	return String(value || "").replace(/"/g, '\\"');
 }
 
 async function fetchFonts() {
-	if (typeof frappe === "undefined") {
-		availableFonts.value = ["Arial", "Helvetica", "Times New Roman", "Courier"];
-		return;
-	}
-
 	loadingFonts.value = true;
 	try {
-		availableFonts.value = await getTypstLocalFonts();
-	} catch (error) {
-		logger.error("Failed to fetch fonts", error);
-		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"];
+		availableFonts.value = await fetchTypstFonts({ logger });
 	} finally {
 		loadingFonts.value = false;
 	}
@@ -593,7 +565,7 @@ async function initializeReportSettings() {
 	try {
 		reportLoading.value = true;
 		const response = await frappe.call({
-			method: "crispy_print.api.get_available_formats",
+			method: "crispy_print.api.v1.get_available_formats",
 			args: { report: reportName.value },
 		});
 		const { options, defaultValue } = buildReportFormatOptions(response?.message);
@@ -706,7 +678,7 @@ async function compileReportPreview() {
 			pageSettingsComputed.value
 		);
 		const sourceResponse = await frappe.call({
-			method: "crispy_print.api.get_report_typst_source",
+			method: "crispy_print.api.v1.get_report_typst_source",
 			args: {
 				report: reportName.value,
 				format_name: selectedReportFormat.value,
@@ -730,7 +702,7 @@ async function compileReportPreview() {
 		lastReportChartSvg.value = chartSvgPayload || "";
 
 		const compileResponse = await frappe.call({
-			method: "crispy_print.api.compile_typst",
+			method: "crispy_print.api.v1.compile_typst",
 			args: {
 				typst_source: typstSource,
 				output_format: "svg",
@@ -1073,7 +1045,7 @@ async function generateReportPdf(action: "view" | "download") {
 		const letterheadImage = letterheadDoc.value?.image || null;
 		const logoImage = logoSettings.value.image || null;
 		const compileResponse = await frappe.call({
-			method: "crispy_print.api.compile_typst",
+			method: "crispy_print.api.v1.compile_typst",
 			args: {
 				typst_source: lastReportTypstSource.value,
 				output_format: "pdf",

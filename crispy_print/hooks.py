@@ -14,8 +14,8 @@ app_license = "mit"
 app_include_js = [
 	"crispy_print.bundle.js",
 	"crispy_preview.bundle.js",
+	"report_button.bundle.js",
 	"/assets/crispy_print/js/crispy_print_button.js",
-	"/assets/crispy_print/js/report_button.js",
 ]
 
 fixtures = [{"dt": "Crispy Format"}]
