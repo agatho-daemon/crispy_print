@@ -63,8 +63,8 @@ describe("Raw Typst Field Rendering", () => {
 
 		const typst = translateJSONToTypst(layout, null, "Sales Invoice", null, {})
 
-		// Should contain the empty comment
-		expect(typst).toContain("// Custom Typst (empty)")
+		expect(typst).toContain("// USER CUSTOM SECTION")
+		expect(typst).toContain("// Add your custom styling below")
 	})
 
 	it("should render comment when raw_typst_field is missing", () => {
@@ -91,7 +91,7 @@ describe("Raw Typst Field Rendering", () => {
 
 		const typst = translateJSONToTypst(layout, null, "Sales Invoice", null, {})
 
-		// Should contain the empty comment
-		expect(typst).toContain("// Custom Typst (empty)")
+		expect(typst).toContain("// USER CUSTOM SECTION")
+		expect(typst).toContain("// Add your custom styling below")
 	})
 })

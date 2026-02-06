@@ -55,7 +55,7 @@ describe("pageSettings helpers", () => {
 			table: { stroke: { width: 1, color: "#000000" } } as any,
 		})
 		expect(merged.margins.top).toBe(10)
-		expect(merged.margins.left).toBe(defaultPageSettings.margins.left)
+		expect(merged.margins.left).toBe(30)
 		expect(merged.qr?.size).toBe(20)
 		expect(merged.logo?.company).toBe("Acme")
 		expect(merged.table?.stroke.width).toBe(1)

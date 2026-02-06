@@ -22,6 +22,7 @@ export interface TableColumn {
 }
 
 export interface LayoutField {
+	id?: string | number
 	fieldname: string
 	label: string
 	fieldtype: string
@@ -39,6 +40,7 @@ export interface LayoutField {
 }
 
 export interface LayoutColumn {
+	id?: string | number
 	label: string
 	fields: LayoutField[]
 	width?: string
@@ -56,14 +58,17 @@ export interface CrispyLayout {
 	sections: LayoutSection[]
 }
 
-function generateLayoutId(): number {
-	return Date.now() + Math.random()
+export function createLayoutId(): string {
+	if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+		return crypto.randomUUID()
+	}
+	return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
 
 /**
  * Normalize layout structure for consistent UI + serialization.
  * - Ensures arrays exist (`sections`, `columns`, `fields`)
- * - Ensures every section has a stable `id`
+ * - Ensures every section/column/field has a stable `id`
  * - Strips legacy/derived keys (e.g. `has_fields`)
  * - Leaves layout empty if it's empty (no auto-seeding)
  */
@@ -79,6 +84,10 @@ export function normalizeLayout(layout: CrispyLayout | null | undefined): Crispy
 		const columns = Array.isArray(section.columns) ? section.columns : []
 		const normalizedColumns: LayoutColumn[] = columns.map((rawColumn: any) => {
 			const column: LayoutColumn = {
+				id:
+					typeof rawColumn?.id === "string" || typeof rawColumn?.id === "number"
+						? rawColumn.id
+						: createLayoutId(),
 				label: typeof rawColumn?.label === "string" ? rawColumn.label : "",
 				width: typeof rawColumn?.width === "string" ? rawColumn.width : undefined,
 				fields: Array.isArray(rawColumn?.fields) ? rawColumn.fields : [],
@@ -90,6 +99,10 @@ export function normalizeLayout(layout: CrispyLayout | null | undefined): Crispy
 					const fieldtype = rawField?.fieldtype || "Data"
 					return {
 						...rawField,
+						id:
+							typeof rawField?.id === "string" || typeof rawField?.id === "number"
+								? rawField.id
+								: createLayoutId(),
 						fieldtype,
 						label: typeof rawField?.label === "string" ? rawField.label : "",
 						fieldname: typeof rawField?.fieldname === "string" ? rawField.fieldname : "",
@@ -104,7 +117,10 @@ export function normalizeLayout(layout: CrispyLayout | null | undefined): Crispy
 		return {
 			label: typeof section.label === "string" ? section.label : "",
 			columns: normalizedColumns,
-			id: typeof section.id === "number" ? section.id : generateLayoutId(),
+			id:
+				typeof section.id === "string" || typeof section.id === "number"
+					? section.id
+					: createLayoutId(),
 		}
 	})
 
@@ -138,7 +154,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 		currentSection = {
 			label: source.label || "",
 			columns: [],
-			id: generateLayoutId(),
+			id: createLayoutId(),
 		}
 		currentColumn = null
 		sections.push(currentSection)
@@ -150,6 +166,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 		}
 		const source = df || { label: "" }
 		currentColumn = {
+			id: createLayoutId(),
 			label: source.label || "",
 			fields: [],
 		}
@@ -171,6 +188,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 				const fieldtype = df.fieldtype || "Data"
 
 				const field: LayoutField = {
+					id: createLayoutId(),
 					label: df.label,
 					fieldname: df.fieldname,
 					fieldtype: fieldtype,

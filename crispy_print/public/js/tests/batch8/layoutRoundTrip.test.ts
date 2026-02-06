@@ -28,7 +28,8 @@ describe("layout round trip", () => {
 
 		expect(serialized).not.toContain("has_fields")
 		expect(parsed?.sections?.length).toBe(1)
-		expect(parsed?.sections?.[0]?.id).toBeTypeOf("number")
+	const sectionId = parsed?.sections?.[0]?.id
+	expect(typeof sectionId === "string" || typeof sectionId === "number").toBe(true)
 		expect(parsed?.sections?.[0]?.columns?.[0]?.fields?.length).toBe(1)
 		expect(normalized.sections[0].columns[0].fields[0].align).toBe("right")
 	})

@@ -11,6 +11,8 @@
 						popovertarget="typst-code-help"
 						popovertargetaction="toggle"
 						title="Toggle help"
+						aria-haspopup="dialog"
+						aria-controls="typst-code-help"
 					>
 						?
 					</button>

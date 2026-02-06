@@ -27,6 +27,8 @@
 							popovertarget="preview-help"
 							popovertargetaction="toggle"
 							title="Toggle help"
+							aria-haspopup="dialog"
+							aria-controls="preview-help"
 						>
 							?
 						</button>
