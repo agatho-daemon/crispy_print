@@ -3,7 +3,12 @@
 
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
 import { buildForegroundPlacements, getLetterheadFilename, resolveBrandingMode } from "./branding"
-import { ensureTableSettings } from "../utils/pageSettings"
+import {
+	defaultPageSettings,
+	ensureTableSettings,
+	mergePageSettings,
+	type PageSettings,
+} from "../utils/pageSettings"
 import { deepClone } from "../utils/json"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
@@ -94,6 +99,7 @@ class JSONTypstTranslator {
 	realDocData: RealDocData
 	sections: LayoutWithOptionalSections["sections"]
 	options: Record<string, any>
+	private _pageSettings: PageSettings | null = null
 
 	constructor(
 		layoutData: LayoutWithOptionalSections,
@@ -117,6 +123,14 @@ class JSONTypstTranslator {
 		parts.push(this.generateAutoSection())
 
 		return parts.join("\n\n")
+	}
+
+	private getPageSettings(): PageSettings {
+		if (!this._pageSettings) {
+			const overrides = (this.options ? deepClone(this.options) : {}) as Partial<PageSettings>
+			this._pageSettings = mergePageSettings(defaultPageSettings, overrides)
+		}
+		return this._pageSettings
 	}
 
 	escapeTypstText(value: string) {
@@ -222,7 +236,7 @@ class JSONTypstTranslator {
 		lines.push(")")
 		lines.push("")
 
-		const tableSettings = ensureTableSettings(this.options ? deepClone(this.options) : {})
+		const tableSettings = ensureTableSettings(this.getPageSettings())
 		const tableHeader = tableSettings.typography.header
 		const tableBody = tableSettings.typography.body
 		const tableInset = tableSettings.inset
@@ -741,7 +755,7 @@ class JSONTypstTranslator {
 		const fieldname = field.fieldname || "items"
 		const label = field.label || "Table"
 		const includeComment = options.includeComment !== false
-		ensureTableSettings(this.options ? deepClone(this.options) : {})
+		ensureTableSettings(this.getPageSettings())
 
 		if (includeComment) {
 			lines.push(`// Table: ${label}`)
