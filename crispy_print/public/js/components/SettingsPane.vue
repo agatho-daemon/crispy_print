@@ -11,6 +11,8 @@
 						popovertarget="settings-help"
 						popovertargetaction="toggle"
 						title="Toggle help"
+						aria-haspopup="dialog"
+						aria-controls="settings-help"
 					>
 						?
 					</button>

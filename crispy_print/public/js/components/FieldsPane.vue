@@ -13,6 +13,8 @@
 						popovertarget="fields-help"
 						popovertargetaction="toggle"
 						title="Toggle help"
+						aria-haspopup="dialog"
+						aria-controls="fields-help"
 					>
 						?
 					</button>

@@ -1,5 +1,5 @@
 <template>
-	<div class="layout-pane">
+	<div ref="layoutPaneRef" class="layout-pane">
 		<div class="section-head layout-pane__header">
 			<div class="section-head-content layout-pane__header-row">
 				<h3 class="section-title layout-pane__title">Layout Builder</h3>
@@ -15,6 +15,8 @@
 							popovertarget="layout-help"
 							popovertargetaction="toggle"
 							title="Toggle help"
+							aria-haspopup="dialog"
+							aria-controls="layout-help"
 						>
 							?
 						</button>
@@ -65,91 +67,129 @@
 									class="section-card__menu-btn"
 									title="Section menu"
 									@click.stop="toggleSectionMenu(section, sectionIndex, $event)"
-								>
-									&#8943;
-								</button>
-								<div
-									v-if="
+									aria-haspopup="menu"
+									:aria-expanded="
 										openSectionMenuId ===
 										getSectionMenuId(section, sectionIndex)
 									"
-									class="section-card__menu"
-									:style="sectionMenuStyle"
-									@click.stop
+									:aria-controls="`section-menu-${getSectionMenuId(
+										section,
+										sectionIndex
+									)}`"
 								>
-									<button
-										type="button"
-										class="section-card__menu-item"
-										@click="onAddSectionAbove(sectionIndex)"
+									&#8943;
+								</button>
+								<teleport :to="menuPortalTarget">
+									<div
+										v-if="
+											openSectionMenuId ===
+											getSectionMenuId(section, sectionIndex)
+										"
+										:id="`section-menu-${getSectionMenuId(
+											section,
+											sectionIndex
+										)}`"
+										:ref="setSectionMenuRef"
+										class="section-card__menu"
+										:style="sectionMenuStyle"
+										@click.stop
+										role="menu"
+										tabindex="-1"
+										@keydown="onSectionMenuKeydown"
 									>
-										Add section above
-									</button>
-									<button
-										type="button"
-										class="section-card__menu-item"
-										@click="onAddSectionBelow(sectionIndex)"
-									>
-										Add section below
-									</button>
-									<div class="section-card__menu-divider"></div>
-									<button
-										type="button"
-										class="section-card__menu-item"
-										:disabled="section.columns.length >= 4"
-										@click="onAddColumn(section)"
-									>
-										Add column
-									</button>
-									<button
-										type="button"
-										class="section-card__menu-item"
-										:disabled="section.columns.length <= 1"
-										@click="onRemoveLastColumn(section)"
-									>
-										Remove column
-									</button>
-									<div class="section-card__menu-divider"></div>
-									<button
-										type="button"
-										class="section-card__menu-item"
-										@click="onOpenSectionSettings(section)"
-									>
-										Section settings
-									</button>
-									<button
-										type="button"
-										class="section-card__menu-item"
-										@click="onTogglePageBreak(section)"
-									>
-										{{
-											section.page_break
-												? "Remove page break"
-												: "Add page break"
-										}}
-									</button>
-									<button
-										type="button"
-										class="section-card__menu-item"
-										@click="onToggleFieldOrientation(section)"
-									>
-										Field orientation ({{ getFieldOrientationLabel(section) }})
-									</button>
-									<div class="section-card__menu-divider"></div>
-									<button
-										type="button"
-										class="section-card__menu-item section-card__menu-item--danger"
-										@click="onRemoveSection(sectionIndex)"
-									>
-										Remove section
-									</button>
-								</div>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											@click="onAddSectionAbove(sectionIndex)"
+											role="menuitem"
+										>
+											Add section above
+										</button>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											@click="onAddSectionBelow(sectionIndex)"
+											role="menuitem"
+										>
+											Add section below
+										</button>
+										<div
+											class="section-card__menu-divider"
+											role="separator"
+										></div>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											:disabled="section.columns.length >= 4"
+											@click="onAddColumn(section)"
+											role="menuitem"
+										>
+											Add column
+										</button>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											:disabled="section.columns.length <= 1"
+											@click="onRemoveLastColumn(section)"
+											role="menuitem"
+										>
+											Remove column
+										</button>
+										<div
+											class="section-card__menu-divider"
+											role="separator"
+										></div>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											@click="onOpenSectionSettings(section)"
+											role="menuitem"
+										>
+											Section settings
+										</button>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											@click="onTogglePageBreak(section)"
+											role="menuitem"
+										>
+											{{
+												section.page_break
+													? "Remove page break"
+													: "Add page break"
+											}}
+										</button>
+										<button
+											type="button"
+											class="section-card__menu-item"
+											@click="onToggleFieldOrientation(section)"
+											role="menuitem"
+										>
+											Field orientation ({{
+												getFieldOrientationLabel(section)
+											}})
+										</button>
+										<div
+											class="section-card__menu-divider"
+											role="separator"
+										></div>
+										<button
+											type="button"
+											class="section-card__menu-item section-card__menu-item--danger"
+											@click="onRemoveSection(sectionIndex)"
+											role="menuitem"
+										>
+											Remove section
+										</button>
+									</div>
+								</teleport>
 							</div>
 						</div>
 
 						<div class="section-grid" :style="gridStyle(section)">
 							<div
 								v-for="(column, colIndex) in section.columns"
-								:key="colIndex"
+								:key="column.id || colIndex"
 								:class="[
 									'section-column',
 									{ 'section-column--empty': !column.fields.length },
@@ -160,7 +200,7 @@
 								<draggable
 									v-model="column.fields"
 									group="layout-fields"
-									item-key="fieldname"
+									item-key="id"
 									handle=".field-grip"
 									:animation="150"
 									class="section-column__fields"
@@ -190,33 +230,67 @@
 															toggleFieldMenu(
 																getFieldMenuId(
 																	section,
-																	colIndex,
-																	field
+																	column,
+																	field,
+																	colIndex
 																),
 																$event
 															)
 														"
+														aria-haspopup="menu"
+														:aria-expanded="
+															openFieldMenuId ===
+															getFieldMenuId(
+																section,
+																column,
+																field,
+																colIndex
+															)
+														"
+														:aria-controls="`field-menu-${getFieldMenuId(
+															section,
+															column,
+															field,
+															colIndex
+														)}`"
 													>
 														&#8943;
 													</button>
-													<teleport to="body">
+													<teleport :to="menuPortalTarget">
 														<div
 															v-if="
 																openFieldMenuId ===
 																getFieldMenuId(
 																	section,
-																	colIndex,
-																	field
+																	column,
+																	field,
+																	colIndex
 																)
 															"
+															:id="`field-menu-${getFieldMenuId(
+																section,
+																column,
+																field,
+																colIndex
+															)}`"
+															:ref="setFieldMenuRef"
 															class="field-card__menu"
 															:style="fieldMenuStyle"
 															@click.stop
+															role="menu"
+															tabindex="-1"
+															@keydown="onFieldMenuKeydown"
 														>
 															<button
 																type="button"
 																class="field-card__menu-item"
 																@click="toggleAlignSubmenu"
+																:ref="setAlignMenuItemRef"
+																role="menuitem"
+																aria-haspopup="menu"
+																:aria-expanded="
+																	openFieldSubmenu === 'align'
+																"
 															>
 																Align
 																<span
@@ -228,12 +302,22 @@
 																v-if="openFieldSubmenu === 'align'"
 																class="field-card__submenu"
 																@click.stop
+																:ref="setAlignSubmenuRef"
+																role="menu"
+																aria-label="Alignment options"
+																tabindex="-1"
+																@keydown="onAlignSubmenuKeydown"
 															>
 																<button
 																	type="button"
 																	class="field-card__menu-item"
 																	@click="
 																		setAlignment(field, 'left')
+																	"
+																	role="menuitemradio"
+																	:aria-checked="
+																		getFieldAlign(field) ===
+																		'left'
 																	"
 																>
 																	<span
@@ -257,6 +341,11 @@
 																			'center'
 																		)
 																	"
+																	role="menuitemradio"
+																	:aria-checked="
+																		getFieldAlign(field) ===
+																		'center'
+																	"
 																>
 																	<span
 																		class="field-card__menu-check"
@@ -279,6 +368,11 @@
 																			'right'
 																		)
 																	"
+																	role="menuitemradio"
+																	:aria-checked="
+																		getFieldAlign(field) ===
+																		'right'
+																	"
 																>
 																	<span
 																		class="field-card__menu-check"
@@ -298,6 +392,7 @@
 																type="button"
 																class="field-card__menu-item"
 																@click="onToggleFieldLabel(field)"
+																role="menuitem"
 															>
 																{{
 																	(field.label ?? "").trim()
@@ -311,6 +406,7 @@
 																type="button"
 																class="field-card__menu-item"
 																@click="onConfigureColumns(field)"
+																role="menuitem"
 															>
 																Configure columns
 															</button>
@@ -324,6 +420,7 @@
 																type="button"
 																class="field-card__menu-item"
 																@click="onEditTypstCode(field)"
+																role="menuitem"
 															>
 																Edit code
 															</button>
@@ -337,6 +434,7 @@
 																type="button"
 																class="field-card__menu-item"
 																@click="onEditSpacer(field)"
+																role="menuitem"
 															>
 																Configure spacer
 															</button>
@@ -350,12 +448,14 @@
 																type="button"
 																class="field-card__menu-item"
 																@click="onEditDivider(field)"
+																role="menuitem"
 															>
 																Configure divider
 															</button>
 
 															<div
 																class="field-card__menu-divider"
+																role="separator"
 															></div>
 
 															<button
@@ -367,6 +467,7 @@
 																		fieldIndex
 																	)
 																"
+																role="menuitem"
 															>
 																Remove
 															</button>
@@ -405,6 +506,7 @@
 				</template>
 			</draggable>
 		</div>
+		<div ref="menuPortalRef" class="layout-pane__menu-portal"></div>
 		<TableColumnsDialog
 			v-if="columnEditor"
 			:model-value="editingColumns"
@@ -417,7 +519,7 @@
 
 <script setup lang="ts">
 import draggable from "vuedraggable";
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useStore } from "../composables/useStore";
 import TableColumnsDialog from "../components/TableColumnsDialog.vue";
 import { getLogger } from "../logger";
@@ -428,7 +530,7 @@ import type {
 	DocField,
 	TableColumn,
 } from "../utils/layout";
-import { getTableColumns } from "../utils/layout";
+import { createLayoutId, getTableColumns } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
 
 type Section = LayoutSection & {
@@ -447,6 +549,32 @@ const layout = store.layout;
 const columnEditor = ref<TableEditorContext | null>(null);
 const editingColumns = ref<TableColumn[]>([]);
 const logger = getLogger({ component: "LayoutPane" });
+const layoutPaneRef = ref<HTMLElement | null>(null);
+const menuPortalRef = ref<HTMLElement | null>(null);
+const sectionMenuEl = ref<HTMLElement | null>(null);
+const fieldMenuEl = ref<HTMLElement | null>(null);
+const alignMenuItemEl = ref<HTMLElement | null>(null);
+const alignSubmenuEl = ref<HTMLElement | null>(null);
+
+const setSectionMenuRef = (el: HTMLElement | null) => {
+	if (el) sectionMenuEl.value = el;
+};
+
+const setFieldMenuRef = (el: HTMLElement | null) => {
+	if (el) fieldMenuEl.value = el;
+};
+
+const menuPortalTarget = computed(() => {
+	return menuPortalRef.value || layoutPaneRef.value || "body";
+});
+
+const setAlignMenuItemRef = (el: HTMLElement | null) => {
+	if (el) alignMenuItemEl.value = el;
+};
+
+const setAlignSubmenuRef = (el: HTMLElement | null) => {
+	if (el) alignSubmenuEl.value = el;
+};
 
 const openSectionMenuId = ref<string | null>(null);
 const sectionMenuStyle = ref<Record<string, string>>({});
@@ -454,16 +582,116 @@ const sectionMenuStyle = ref<Record<string, string>>({});
 const openFieldMenuId = ref<string | null>(null);
 const fieldMenuStyle = ref<Record<string, string>>({});
 const openFieldSubmenu = ref<"align" | null>(null);
-let sectionIdSeed = 0;
+
+function clamp(value: number, min: number, max: number) {
+	return Math.min(Math.max(value, min), max);
+}
+
+function getMenuPosition(anchor: HTMLElement, menu: HTMLElement) {
+	const container = layoutPaneRef.value;
+	if (!container) {
+		return {
+			position: "absolute",
+			top: "0px",
+			left: "0px",
+			zIndex: "1000",
+		};
+	}
+
+	const containerRect = container.getBoundingClientRect();
+	const anchorRect = anchor.getBoundingClientRect();
+	const menuRect = menu.getBoundingClientRect();
+	const padding = 8;
+	const gap = 6;
+	const scrollTop = container.scrollTop;
+	const scrollLeft = container.scrollLeft;
+
+	let left = anchorRect.right - containerRect.left + scrollLeft - menuRect.width;
+	let top = anchorRect.bottom - containerRect.top + scrollTop + gap;
+
+	const maxLeft = scrollLeft + container.clientWidth - menuRect.width - padding;
+	const minLeft = scrollLeft + padding;
+	left = clamp(left, minLeft, Math.max(minLeft, maxLeft));
+
+	const maxTop = scrollTop + container.clientHeight - menuRect.height - padding;
+	const minTop = scrollTop + padding;
+	if (top > maxTop) {
+		top = anchorRect.top - containerRect.top + scrollTop - menuRect.height - gap;
+	}
+	top = clamp(top, minTop, Math.max(minTop, maxTop));
+
+	return {
+		position: "absolute",
+		top: `${top}px`,
+		left: `${left}px`,
+		zIndex: "1000",
+	};
+}
+
+function getMenuItems(menuEl: HTMLElement, includeSubmenu = true) {
+	const items = Array.from(menuEl.querySelectorAll<HTMLButtonElement>("button:not([disabled])"));
+	if (includeSubmenu) return items;
+	return items.filter((item) => !item.closest(".field-card__submenu"));
+}
+
+function focusMenuItem(menuEl: HTMLElement, index: number, includeSubmenu = true) {
+	const items = getMenuItems(menuEl, includeSubmenu);
+	if (!items.length) return;
+	const safeIndex = Math.max(0, Math.min(items.length - 1, index));
+	items[safeIndex]?.focus();
+}
+
+function focusFirstMenuItem(menuEl: HTMLElement, includeSubmenu = true) {
+	focusMenuItem(menuEl, 0, includeSubmenu);
+}
+
+function handleMenuKeydown(
+	event: KeyboardEvent,
+	menuEl: HTMLElement,
+	options?: { includeSubmenu?: boolean; onEscape?: () => void }
+) {
+	const includeSubmenu = options?.includeSubmenu ?? true;
+	const items = getMenuItems(menuEl, includeSubmenu);
+	if (!items.length) return;
+
+	const active = document.activeElement as HTMLElement | null;
+	let index = items.findIndex((item) => item === active);
+	if (index < 0) index = 0;
+
+	switch (event.key) {
+		case "ArrowDown":
+			event.preventDefault();
+			focusMenuItem(menuEl, index + 1, includeSubmenu);
+			break;
+		case "ArrowUp":
+			event.preventDefault();
+			focusMenuItem(menuEl, index - 1, includeSubmenu);
+			break;
+		case "Home":
+			event.preventDefault();
+			focusMenuItem(menuEl, 0, includeSubmenu);
+			break;
+		case "End":
+			event.preventDefault();
+			focusMenuItem(menuEl, items.length - 1, includeSubmenu);
+			break;
+		case "Enter":
+		case " ":
+			if (active && active.tagName === "BUTTON") {
+				event.preventDefault();
+				(active as HTMLButtonElement).click();
+			}
+			break;
+		case "Escape":
+			event.preventDefault();
+			options?.onEscape?.();
+			break;
+	}
+}
 
 const sectionKey = (section: Section, index: number) => {
 	return (section as any).id || index;
 };
-
-function nextSectionId() {
-	sectionIdSeed += 1;
-	return `section_${Date.now()}_${sectionIdSeed}`;
-}
 
 function ensureSectionIds() {
 	if (!layout.value?.sections?.length) return;
@@ -471,9 +699,40 @@ function ensureSectionIds() {
 	layout.value.sections.forEach((section) => {
 		const currentId = (section as any).id;
 		if (!currentId || seen.has(currentId)) {
-			(section as any).id = nextSectionId();
+			(section as any).id = createLayoutId();
 		}
 		seen.add((section as any).id);
+	});
+}
+
+function ensureColumnIds(section: Section) {
+	const seen = new Set<string | number>();
+	section.columns.forEach((column: Column) => {
+		const currentId = (column as any).id;
+		if (!currentId || seen.has(currentId)) {
+			(column as any).id = createLayoutId();
+		}
+		seen.add((column as any).id);
+	});
+}
+
+function ensureFieldIds(column: Column) {
+	const seen = new Set<string | number>();
+	column.fields.forEach((field: Field) => {
+		const currentId = (field as any).id;
+		if (!currentId || seen.has(currentId)) {
+			(field as any).id = createLayoutId();
+		}
+		seen.add((field as any).id);
+	});
+}
+
+function ensureLayoutIds() {
+	if (!layout.value?.sections?.length) return;
+	ensureSectionIds();
+	layout.value.sections.forEach((section) => {
+		ensureColumnIds(section);
+		section.columns.forEach((column) => ensureFieldIds(column));
 	});
 }
 
@@ -486,16 +745,76 @@ function closeSectionMenu() {
 	sectionMenuStyle.value = {};
 }
 
-function getFieldMenuId(section: Section, colIndex: number | string, field: Field) {
+function getFieldMenuId(
+	section: Section,
+	column: Column,
+	field: Field,
+	colIndex: number | string
+) {
 	const sid = String(section.id ?? "section");
-	const fname = String(field.fieldname ?? "field");
-	return `${sid}:${String(colIndex)}:${fname}`;
+	const cid = String((column as any).id ?? colIndex ?? "col");
+	const fid = String((field as any).id ?? field.fieldname ?? "field");
+	return `${sid}:${cid}:${fid}`;
 }
 
 function closeFieldMenu() {
 	openFieldMenuId.value = null;
 	openFieldSubmenu.value = null;
 	fieldMenuStyle.value = {};
+}
+
+function onSectionMenuKeydown(event: KeyboardEvent) {
+	const menu = sectionMenuEl.value;
+	if (!menu) return;
+	handleMenuKeydown(event, menu, { includeSubmenu: false, onEscape: closeSectionMenu });
+}
+
+function onFieldMenuKeydown(event: KeyboardEvent) {
+	const menu = fieldMenuEl.value;
+	if (!menu) return;
+
+	const active = document.activeElement as HTMLElement | null;
+	if (
+		event.key === "ArrowRight" &&
+		active &&
+		alignMenuItemEl.value &&
+		active === alignMenuItemEl.value
+	) {
+		event.preventDefault();
+		if (openFieldSubmenu.value !== "align") {
+			openFieldSubmenu.value = "align";
+			nextTick(() => {
+				const submenu = alignSubmenuEl.value;
+				if (submenu) focusFirstMenuItem(submenu, true);
+			});
+		}
+		return;
+	}
+
+	handleMenuKeydown(event, menu, {
+		includeSubmenu: false,
+		onEscape: closeFieldMenu,
+	});
+}
+
+function onAlignSubmenuKeydown(event: KeyboardEvent) {
+	const submenu = alignSubmenuEl.value;
+	if (!submenu) return;
+
+	if (event.key === "ArrowLeft") {
+		event.preventDefault();
+		openFieldSubmenu.value = null;
+		nextTick(() => alignMenuItemEl.value?.focus());
+		return;
+	}
+
+	handleMenuKeydown(event, submenu, {
+		includeSubmenu: true,
+		onEscape: () => {
+			openFieldSubmenu.value = null;
+			nextTick(() => alignMenuItemEl.value?.focus());
+		},
+	});
 }
 
 function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
@@ -510,23 +829,12 @@ function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
 	const target = event.currentTarget as HTMLElement | null;
 	if (!target) return;
 
-	const rect = target.getBoundingClientRect();
-	const menuHeight = 280; // Approximate menu height
-	const viewportHeight = window.innerHeight;
-
-	// Check if menu would overflow bottom of viewport
-	const shouldFlipUp = rect.bottom + menuHeight + 6 > viewportHeight;
-
-	const top = shouldFlipUp ? rect.top - menuHeight - 6 : rect.bottom + 6;
-	const left = rect.right;
-
-	sectionMenuStyle.value = {
-		position: "fixed",
-		top: `${top}px`,
-		left: `${left}px`,
-		transform: "translateX(-100%)",
-		zIndex: "1000",
-	};
+	nextTick(() => {
+		const menu = sectionMenuEl.value;
+		if (!menu) return;
+		sectionMenuStyle.value = getMenuPosition(target, menu);
+		focusFirstMenuItem(menu, false);
+	});
 }
 
 function toggleFieldMenu(id: string, event: MouseEvent) {
@@ -544,21 +852,14 @@ function toggleFieldMenu(id: string, event: MouseEvent) {
 		((event.target as HTMLElement | null)?.closest?.(
 			".field-card__menu-btn"
 		) as HTMLElement | null);
+	if (!target) return;
 
-	const rect = target?.getBoundingClientRect?.();
-	const estimatedMenuHeight = 280;
-	const maxTop = Math.max(12, window.innerHeight - estimatedMenuHeight);
-
-	const top = Math.min((rect?.bottom ?? event.clientY) + 6, maxTop);
-	const left = rect?.right ?? event.clientX;
-
-	fieldMenuStyle.value = {
-		position: "fixed",
-		top: `${top}px`,
-		left: `${left}px`,
-		transform: "translateX(-100%)",
-		zIndex: "1000",
-	};
+	nextTick(() => {
+		const menu = fieldMenuEl.value;
+		if (!menu) return;
+		fieldMenuStyle.value = getMenuPosition(target, menu);
+		focusFirstMenuItem(menu, false);
+	});
 }
 
 function ensureLayout() {
@@ -570,7 +871,7 @@ function ensureLayout() {
 			store.markDirty();
 		}
 	}
-	ensureSectionIds();
+	ensureLayoutIds();
 }
 
 function ensureAtLeastOneSection() {
@@ -580,7 +881,7 @@ function ensureAtLeastOneSection() {
 	if (!layout.value.sections?.length) {
 		layout.value.sections = [createEmptySection()];
 	}
-	ensureSectionIds();
+	ensureLayoutIds();
 }
 
 onMounted(() => {
@@ -588,11 +889,11 @@ onMounted(() => {
 	ensureAtLeastOneSection();
 });
 
-const onDocClick = () => {
+const onPaneClick = () => {
 	closeSectionMenu();
 	closeFieldMenu();
 };
-const onKeyDown = (e: KeyboardEvent) => {
+const onPaneKeyDown = (e: KeyboardEvent) => {
 	if (e.key === "Escape") {
 		closeSectionMenu();
 		closeFieldMenu();
@@ -600,13 +901,17 @@ const onKeyDown = (e: KeyboardEvent) => {
 };
 
 onMounted(() => {
-	document.addEventListener("click", onDocClick);
-	document.addEventListener("keydown", onKeyDown);
+	const pane = layoutPaneRef.value;
+	if (!pane) return;
+	pane.addEventListener("click", onPaneClick);
+	pane.addEventListener("keydown", onPaneKeyDown);
 });
 
 onBeforeUnmount(() => {
-	document.removeEventListener("click", onDocClick);
-	document.removeEventListener("keydown", onKeyDown);
+	const pane = layoutPaneRef.value;
+	if (!pane) return;
+	pane.removeEventListener("click", onPaneClick);
+	pane.removeEventListener("keydown", onPaneKeyDown);
 });
 
 watch(
@@ -655,8 +960,8 @@ function onAddSectionBelow(index: number) {
 function createEmptySection(): Section {
 	return {
 		label: "",
-		columns: [{ label: "", fields: [] }],
-		id: nextSectionId(),
+		columns: [{ id: createLayoutId(), label: "", fields: [] }],
+		id: createLayoutId(),
 		field_orientation: "left-right",
 	};
 }
@@ -676,7 +981,7 @@ function addColumn(section: Section) {
 	if (section.columns.length >= 4) {
 		return;
 	}
-	section.columns.push({ label: "", fields: [] });
+	section.columns.push({ id: createLayoutId(), label: "", fields: [] });
 	store.markDirty();
 }
 
@@ -760,6 +1065,14 @@ function getFieldAlign(field: Field): "left" | "center" | "right" {
 
 function toggleAlignSubmenu() {
 	openFieldSubmenu.value = openFieldSubmenu.value === "align" ? null : "align";
+	if (openFieldSubmenu.value === "align") {
+		nextTick(() => {
+			const submenu = alignSubmenuEl.value;
+			if (submenu) focusFirstMenuItem(submenu, true);
+		});
+	} else {
+		alignMenuItemEl.value?.focus();
+	}
 }
 
 function setAlignment(field: Field, align: "left" | "center" | "right") {
@@ -825,6 +1138,7 @@ async function onDropField(event: DragEvent, column: Column) {
 		if (!parsed.fieldname) return;
 
 		const field: LayoutField = {
+			id: createLayoutId(),
 			fieldname: parsed.fieldname,
 			label: parsed.label || parsed.fieldname,
 			fieldtype: parsed.fieldtype || "Data",
@@ -1180,6 +1494,19 @@ function onEditDivider(field: Field) {
 	flex-direction: column;
 	overflow-y: auto;
 	background: #fff;
+}
+
+.layout-pane__menu-portal {
+	position: absolute;
+	inset: 0;
+	z-index: 999;
+	pointer-events: none;
+}
+
+.layout-pane__menu-portal .section-card__menu,
+.layout-pane__menu-portal .field-card__menu,
+.layout-pane__menu-portal .field-card__submenu {
+	pointer-events: auto;
 }
 
 .layout-pane__header {
