@@ -4,6 +4,7 @@
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
 import { buildForegroundPlacements, getLetterheadFilename, resolveBrandingMode } from "./branding"
 import { ensureTableSettings } from "../utils/pageSettings"
+import { deepClone } from "../utils/json"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
 	sections?: LayoutSection[]
@@ -221,9 +222,7 @@ class JSONTypstTranslator {
 		lines.push(")")
 		lines.push("")
 
-		const tableSettings = ensureTableSettings(
-			this.options ? JSON.parse(JSON.stringify(this.options)) : {}
-		)
+		const tableSettings = ensureTableSettings(this.options ? deepClone(this.options) : {})
 		const tableHeader = tableSettings.typography.header
 		const tableBody = tableSettings.typography.body
 		const tableInset = tableSettings.inset
@@ -742,7 +741,7 @@ class JSONTypstTranslator {
 		const fieldname = field.fieldname || "items"
 		const label = field.label || "Table"
 		const includeComment = options.includeComment !== false
-		ensureTableSettings(this.options ? JSON.parse(JSON.stringify(this.options)) : {})
+		ensureTableSettings(this.options ? deepClone(this.options) : {})
 
 		if (includeComment) {
 			lines.push(`// Table: ${label}`)

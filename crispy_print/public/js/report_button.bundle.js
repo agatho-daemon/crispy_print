@@ -144,7 +144,7 @@ frappe.provide("crispy_print");
 crispy_print.show_format_selector = function (report_name, report_instance) {
 	// Check for available formats
 	frappe.call({
-		method: "crispy_print.api.get_available_formats",
+		method: "crispy_print.api.v1.get_available_formats",
 		args: { report: report_name },
 		callback: (r) => {
 			const formats = r.message;
@@ -279,7 +279,7 @@ crispy_print.show_format_dialog = function (report_name, formats, report_instanc
 
 			// Call API
 			frappe.call({
-				method: "crispy_print.api.generate_report_pdf",
+				method: "crispy_print.api.v1.generate_report_pdf",
 				args: {
 					report: report_name,
 					filters: JSON.stringify(filters),

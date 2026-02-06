@@ -10,14 +10,48 @@ from frappe.tests.utils import FrappeTestCase
 class TestCrispyFormat(FrappeTestCase):
 	def setUp(self):
 		"""Set up test data before each test"""
+		frappe.set_user("Administrator")
 		# Clean up any existing test formats
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test Format%"]})
+		self._default_doctypes = [
+			"Sales Invoice",
+			"Sales Order",
+			"Purchase Invoice",
+			"Purchase Order",
+		]
+		self._saved_defaults = self._capture_defaults(self._default_doctypes)
+		self._clear_defaults(self._default_doctypes)
 		frappe.db.commit()
 
 	def tearDown(self):
 		"""Clean up after each test"""
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test Format%"]})
+		self._restore_defaults(self._saved_defaults)
 		frappe.db.commit()
+
+	def _capture_defaults(self, doctypes: list[str]) -> dict[str, list[str]]:
+		saved = {}
+		for dt in doctypes:
+			names = frappe.get_all(
+				"Crispy Format",
+				filters={"doc_type": dt, "is_default": 1},
+				pluck="name",
+			)
+			saved[dt] = names or []
+		return saved
+
+	def _clear_defaults(self, doctypes: list[str]):
+		if not doctypes:
+			return
+		frappe.db.sql(
+			"update `tabCrispy Format` set is_default = 0 where doc_type in %s",
+			(tuple(doctypes),),
+		)
+
+	def _restore_defaults(self, saved: dict[str, list[str]]):
+		for names in (saved or {}).values():
+			for name in names:
+				frappe.db.set_value("Crispy Format", name, "is_default", 1)
 
 	def test_create_crispy_format(self):
 		"""Test creating a new Crispy Format document"""
@@ -42,6 +76,8 @@ class TestCrispyFormat(FrappeTestCase):
 
 	def test_set_default_format(self):
 		"""Test setting a format as default clears other defaults"""
+		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
+
 		# Create first format
 		format1 = frappe.get_doc(
 			{
@@ -50,11 +86,12 @@ class TestCrispyFormat(FrappeTestCase):
 				"crispy_format_type": "DocType",
 				"doc_type": "Sales Invoice",
 				"module": "Crispy Print",
-				"is_default": 1,
 				"layout_json": json.dumps({"sections": []}),
 			}
 		)
 		format1.insert()
+		make_default(format1.name)
+		format1.reload()
 		self.assertTrue(format1.is_default)
 
 		# Create second format and set as default
@@ -65,14 +102,15 @@ class TestCrispyFormat(FrappeTestCase):
 				"crispy_format_type": "DocType",
 				"doc_type": "Sales Invoice",
 				"module": "Crispy Print",
-				"is_default": 1,
 				"layout_json": json.dumps({"sections": []}),
 			}
 		)
 		format2.insert()
+		make_default(format2.name)
 
 		# Reload first format and verify it's no longer default
 		format1.reload()
+		format2.reload()
 		self.assertFalse(format1.is_default)
 		self.assertTrue(format2.is_default)
 
@@ -82,6 +120,8 @@ class TestCrispyFormat(FrappeTestCase):
 
 	def test_get_current_default(self):
 		"""Test getting the current default format for a DocType"""
+		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
+
 		# Create default format
 		format1 = frappe.get_doc(
 			{
@@ -90,11 +130,11 @@ class TestCrispyFormat(FrappeTestCase):
 				"crispy_format_type": "DocType",
 				"doc_type": "Sales Order",
 				"module": "Crispy Print",
-				"is_default": 1,
 				"layout_json": json.dumps({"sections": []}),
 			}
 		)
 		format1.insert()
+		make_default(format1.name)
 
 		# Create another format for same DocType
 		format2 = frappe.get_doc(
@@ -181,6 +221,8 @@ class TestCrispyFormat(FrappeTestCase):
 
 	def test_multiple_doctypes_defaults(self):
 		"""Test that different DocTypes can each have their own default"""
+		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
+
 		# Create default for Sales Invoice
 		format_si = frappe.get_doc(
 			{
@@ -189,11 +231,11 @@ class TestCrispyFormat(FrappeTestCase):
 				"crispy_format_type": "DocType",
 				"doc_type": "Sales Invoice",
 				"module": "Crispy Print",
-				"is_default": 1,
 				"layout_json": json.dumps({"sections": []}),
 			}
 		)
 		format_si.insert()
+		make_default(format_si.name)
 
 		# Create default for Purchase Invoice
 		format_pi = frappe.get_doc(
@@ -203,11 +245,11 @@ class TestCrispyFormat(FrappeTestCase):
 				"crispy_format_type": "DocType",
 				"doc_type": "Purchase Invoice",
 				"module": "Crispy Print",
-				"is_default": 1,
 				"layout_json": json.dumps({"sections": []}),
 			}
 		)
 		format_pi.insert()
+		make_default(format_pi.name)
 
 		# Both should remain as defaults for their respective DocTypes
 		format_si.reload()

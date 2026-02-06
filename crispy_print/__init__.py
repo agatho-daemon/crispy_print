@@ -3,7 +3,7 @@
 __version__ = "0.0.1-alpha.1"
 
 # API methods for bench console convenience
-from crispy_print.api import (
+from crispy_print.api.v1 import (
 	compile_typst,
 	get_crispy_formats_for_doctype,
 	get_default_doctypes,

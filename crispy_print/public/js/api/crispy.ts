@@ -52,7 +52,7 @@ export async function getCrispyFormatsForDoctype(
 	doctype: string
 ): Promise<Array<{ name: string; doc_type: string; is_default?: number }>> {
 	const res = await call<Array<{ name: string; doc_type: string; is_default?: number }>>({
-		method: "crispy_print.api.get_crispy_formats_for_doctype",
+		method: "crispy_print.api.v1.get_crispy_formats_for_doctype",
 		args: { doctype },
 	})
 	return res.message || []
@@ -88,7 +88,7 @@ export async function getCompanies(): Promise<CompanyOption[]> {
 
 export async function getTypstLocalFonts(): Promise<string[]> {
 	const res = await call<string[]>({
-		method: "crispy_print.api.get_typst_local_fonts",
+		method: "crispy_print.api.v1.get_typst_local_fonts",
 	})
 	return res.message || []
 }

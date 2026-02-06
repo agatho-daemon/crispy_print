@@ -19,7 +19,7 @@
 
 	// Load doctypes with default Crispy Formats
 	frappe.call({
-		method: "crispy_print.api.get_default_doctypes",
+		method: "crispy_print.api.v1.get_default_doctypes",
 		freeze: false,
 		callback: (r) => {
 			const doctypes = r.message || [];

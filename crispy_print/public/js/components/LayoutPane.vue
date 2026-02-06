@@ -532,6 +532,7 @@ import type {
 } from "../utils/layout";
 import { createLayoutId, getTableColumns } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
+import { deepClone } from "../utils/json";
 
 type Section = LayoutSection & {
 	id?: string | number;
@@ -1204,7 +1205,7 @@ function gridStyle(section: Section) {
 async function configureColumns(field: Field) {
 	if (field.fieldtype !== "Table") return;
 	await ensureTableColumns(field);
-	editingColumns.value = JSON.parse(JSON.stringify(field.table_columns || []));
+	editingColumns.value = deepClone(field.table_columns || []);
 	columnEditor.value = { field };
 }
 
@@ -1215,7 +1216,7 @@ async function onConfigureColumns(field: Field) {
 
 function onColumnsUpdate(columns: TableColumn[]) {
 	if (!columnEditor.value) return;
-	editingColumns.value = JSON.parse(JSON.stringify(columns || []));
+	editingColumns.value = deepClone(columns || []);
 	columnEditor.value.field.table_columns = columns;
 	store.markDirty();
 }

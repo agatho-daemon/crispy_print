@@ -3,6 +3,7 @@
 
 import { defaultPageSettings, mergePageSettings, type PageSettings } from "./pageSettings"
 import { deserializeLayout, type CrispyLayout } from "./layout"
+import { safeJsonParse } from "./json"
 import {
 	getCrispyFormat,
 	getCrispyFormatsForDoctype,
@@ -53,13 +54,12 @@ export function parseCrispyFormatDoc(doc: FormatData): {
 
 	// Parse page settings
 	if (doc.page_settings) {
-		try {
-			const settings = JSON.parse(doc.page_settings)
-			pageSettings = mergePageSettings(defaultPageSettings, settings)
-		} catch (e) {
-			logger.error("Failed to parse page_settings", e)
-			pageSettings = { ...defaultPageSettings }
-		}
+		const settings = safeJsonParse<Record<string, any>>(doc.page_settings, {
+			fallback: {},
+			logger,
+			errorMessage: "Failed to parse page_settings",
+		})
+		pageSettings = mergePageSettings(defaultPageSettings, settings)
 	}
 
 	const docHeader = doc.doc_header || ""

@@ -1,5 +1,7 @@
 // Shared page settings model and helpers
 
+import { deepClone } from "./json"
+
 export interface TypographyStyle {
 	fontFamily: string
 	fontSize: string
@@ -140,14 +142,14 @@ export const defaultPageSettings: PageSettings = {
 
 export function ensureTypography(pageSettings: PageSettings): TypographySettings {
 	if (!pageSettings.typography) {
-		pageSettings.typography = JSON.parse(JSON.stringify(defaultTypography))
+		pageSettings.typography = deepClone(defaultTypography)
 	}
 	return pageSettings.typography
 }
 
 export function ensureTableSettings(pageSettings: PageSettings): TableSettings {
 	if (!pageSettings.table) {
-		pageSettings.table = JSON.parse(JSON.stringify(defaultTableSettings))
+		pageSettings.table = deepClone(defaultTableSettings)
 		return pageSettings.table
 	}
 	pageSettings.table.inset = {

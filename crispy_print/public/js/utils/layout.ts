@@ -2,6 +2,7 @@
 // Utility functions for creating and manipulating Typst print layouts
 
 import { getLogger } from "../logger"
+import { deepClone, safeJsonParse } from "./json"
 
 const logger = getLogger({ module: "Layout" })
 
@@ -174,7 +175,7 @@ export function createDefaultLayout(meta: any, crispyFormat: any): CrispyLayout 
 	}
 
 	for (let dfRaw of meta.fields as DocField[]) {
-		let df = dfRaw.fieldname ? (JSON.parse(JSON.stringify(dfRaw)) as DocField) : null
+		let df = dfRaw.fieldname ? (deepClone(dfRaw) as DocField) : null
 		if (!df) continue
 
 		if (df.fieldtype === "Section Break") {
@@ -325,13 +326,12 @@ export function serializeLayout(layout: CrispyLayout): string {
  * Parse layout from JSON string
  */
 export function deserializeLayout(json: string): CrispyLayout | null {
-	try {
-		const parsed = JSON.parse(json) as CrispyLayout
-		return normalizeLayout(parsed)
-	} catch (e) {
-		logger.error("Failed to parse layout JSON", e)
-		return null
-	}
+	const parsed = safeJsonParse<CrispyLayout | null>(json, {
+		fallback: null,
+		logger,
+		errorMessage: "Failed to parse layout JSON",
+	})
+	return parsed ? normalizeLayout(parsed) : null
 }
 
 /**

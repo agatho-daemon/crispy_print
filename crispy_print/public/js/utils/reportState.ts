@@ -1,4 +1,5 @@
 import { getLogger } from "../logger";
+import { safeJsonParse } from "./json";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XLINK_NS = "http://www.w3.org/1999/xlink";
@@ -76,7 +77,12 @@ export function loadReportState(reportName: string): ReportState | null {
 	try {
 		const raw = window.sessionStorage.getItem(key);
 		if (!raw) return null;
-		const parsed = JSON.parse(raw);
+		const parsed = safeJsonParse<ReportState | null>(raw, {
+			fallback: null,
+			logger,
+			errorMessage: "Failed to read report state",
+		});
+		if (!parsed) return null;
 		if (parsed?.report && parsed.report !== reportName) return null;
 		return parsed as ReportState;
 	} catch (error) {

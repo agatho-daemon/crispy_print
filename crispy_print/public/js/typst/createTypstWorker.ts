@@ -29,7 +29,7 @@ const warn = (...args) => emit("warn", ...args);
 const BASE_URL = ${JSON.stringify(baseUrl)};
 
 async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterheadImage = null, qrData = null, qrFilename = null) {
-  const apiUrl = BASE_URL + '/api/method/crispy_print.api.compile_typst';
+  const apiUrl = BASE_URL + '/api/method/crispy_print.api.v1.compile_typst';
   const body = {
     typst_source: typstSrc,
     output_format: outputFormat

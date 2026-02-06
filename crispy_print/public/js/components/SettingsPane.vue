@@ -808,7 +808,7 @@ import {
 	type TypographySettings,
 } from "../utils/pageSettings";
 import ColorInput from "./ColorInput.vue";
-import { getTypstLocalFonts } from "../api/crispy";
+import { fetchTypstFonts, formatPt, parseSize } from "../utils/typstTypography";
 import { useBrandingData } from "../composables/useBrandingData";
 import { useStore } from "../composables/useStore";
 import QrFieldsDialog from "./QrFieldsDialog.vue";
@@ -888,42 +888,12 @@ const brandingMode = computed<string>({
 
 // Fetch available fonts from Typst
 async function fetchFonts() {
-	if (typeof frappe === "undefined") {
-		// Dev mode fallback
-		availableFonts.value = ["Arial", "Helvetica", "Times New Roman", "Courier"];
-		return;
-	}
-
 	loadingFonts.value = true;
 	try {
-		availableFonts.value = await getTypstLocalFonts();
-	} catch (error) {
-		logger.error("Failed to fetch fonts", error);
-		// Fallback fonts
-		availableFonts.value = ["Arial", "Helvetica", "Times New Roman"];
+		availableFonts.value = await fetchTypstFonts({ logger });
 	} finally {
 		loadingFonts.value = false;
 	}
-}
-
-function parseSize(input: string | null | undefined): {
-	value: number;
-	unit: string;
-	decimals: number;
-} {
-	const raw = String(input || "").trim();
-	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i);
-	if (!match) return { value: 0, unit: "pt", decimals: 0 };
-	const value = Number(match[1]);
-	const unit = (match[2] || "pt").toLowerCase();
-	const decimals = (match[1].split(".")[1] || "").length;
-	return { value: Number.isFinite(value) ? value : 0, unit, decimals };
-}
-
-function formatPt(value: number): string {
-	const safe = Math.max(1, value);
-	const num = safe.toFixed(2).replace(/\.?0+$/, "");
-	return `${num}pt`;
 }
 
 const sectionLabelFontSizePt = computed<number>({

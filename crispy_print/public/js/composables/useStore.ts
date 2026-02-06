@@ -86,7 +86,7 @@ function buildStore() {
 
 			// Fetch builder mode from backend
 			const modeResponse = await frappe.call({
-				method: "crispy_print.api.get_builder_mode",
+				method: "crispy_print.api.v1.get_builder_mode",
 				args: { format_name: formatName },
 			})
 
@@ -375,7 +375,7 @@ function buildStore() {
 			const genericReportType = crispyFormat.value?.generic_report_type || null
 
 			const response = await frappe.call({
-				method: "crispy_print.api.get_reports_without_custom_html",
+				method: "crispy_print.api.v1.get_reports_without_custom_html",
 				args: {
 					generic_report_type: genericReportType,
 				},
@@ -398,7 +398,7 @@ function buildStore() {
 
 			// Step 1: Get Typst source
 			const sourceResponse = await frappe.call({
-				method: "crispy_print.api.get_report_typst_source",
+				method: "crispy_print.api.v1.get_report_typst_source",
 				args: {
 					report: reportName,
 					format_name: formatName.value,
@@ -417,7 +417,7 @@ function buildStore() {
 
 			// Step 2: Compile using existing endpoint (same as DocType mode)
 			const compileResponse = await frappe.call({
-				method: "crispy_print.api.compile_typst",
+				method: "crispy_print.api.v1.compile_typst",
 				args: {
 					typst_source: typstSource,
 					output_format: "svg",
