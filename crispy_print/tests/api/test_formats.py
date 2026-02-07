@@ -145,3 +145,179 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 
 		self.assertIsInstance(formats, list)
 		self.assertEqual(len(formats), 0)
+
+
+class TestCrispyFormatImportExportAPI(FrappeTestCase):
+	"""Test import/export API for Crispy Format schema v1."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		frappe.db.delete("Crispy Format", {"name": ["like", "Test ImportExport%"]})
+		frappe.db.commit()
+
+	def tearDown(self):
+		frappe.db.delete("Crispy Format", {"name": ["like", "Test ImportExport%"]})
+		frappe.db.delete("Crispy Format", {"name": ["like", "Generic Report - Test ImportExport%"]})
+		frappe.db.commit()
+
+	def _insert_format(self, name: str, **overrides):
+		doc = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": name,
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"module": "Crispy Print",
+				"layout_json": json.dumps({"sections": []}),
+				"page_settings": json.dumps({"pageSize": "A4", "language": "en"}),
+				"doc_header": "#let header_block = []",
+				"doc_footer": "#let footer_block = []",
+				"typst_preamble": "#set text(size: 10pt)",
+				"typst_code": "#text[Hello]",
+				"raw_typst": 1,
+				**overrides,
+			}
+		)
+		doc.insert()
+		return doc
+
+	def test_export_payload_schema(self):
+		from crispy_print.api.v1 import export_crispy_format
+
+		self._insert_format("Test ImportExport Export")
+		payload = export_crispy_format("Test ImportExport Export")
+
+		self.assertEqual(payload["schema_version"], 1)
+		self.assertEqual(payload["app"], "crispy_print")
+		self.assertIn("exported_at", payload)
+		self.assertIn("format", payload)
+		self.assertEqual(payload["format"]["name"], "Test ImportExport Export")
+		self.assertNotIn("is_default", payload["format"])
+
+	def test_import_new_format_success(self):
+		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
+
+		self._insert_format("Test ImportExport Source")
+		payload = export_crispy_format("Test ImportExport Source")
+		payload["format"]["name"] = "Test ImportExport Imported"
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		imported = frappe.get_doc("Crispy Format", result["name"])
+
+		self.assertTrue(result["success"])
+		self.assertEqual(imported.name, "Test ImportExport Imported")
+		self.assertEqual(imported.typst_code, "#text[Hello]")
+		self.assertEqual(imported.is_default, 0)
+
+	def test_import_generic_report_preserves_validation(self):
+		from crispy_print.api.v1 import import_crispy_format
+
+		payload = {
+			"schema_version": 1,
+			"exported_at": "2026-02-07T00:00:00",
+			"app": "crispy_print",
+			"format": {
+				"name": "Generic Report - Test ImportExport Grid",
+				"crispy_format_type": "Report",
+				"report": None,
+				"doc_type": None,
+				"contract": None,
+				"is_generic": 1,
+				"generic_report_type": "Grid",
+				"raw_typst": 0,
+				"layout_json": json.dumps({"sections": []}),
+				"page_settings": json.dumps({"pageSize": "A4", "language": "en"}),
+				"doc_header": "",
+				"doc_footer": "",
+				"typst_preamble": "",
+				"typst_code": "#text[Generic]",
+				"default_print_language": None,
+			},
+		}
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		imported = frappe.get_doc("Crispy Format", result["name"])
+		self.assertEqual(imported.crispy_format_type, "Report")
+		self.assertEqual(imported.is_generic, 1)
+		self.assertEqual(imported.raw_typst, 1)
+
+	def test_import_conflict_copy_creates_suffix(self):
+		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
+
+		self._insert_format("Test ImportExport Conflict")
+		payload = export_crispy_format("Test ImportExport Conflict")
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		self.assertTrue(result["name"].startswith("Test ImportExport Conflict (Imported"))
+		self.assertTrue(frappe.db.exists("Crispy Format", result["name"]))
+
+	def test_import_conflict_overwrite_updates_existing(self):
+		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
+
+		self._insert_format("Test ImportExport Existing", typst_code="#text[Old]")
+		self._insert_format("Test ImportExport Source Overwrite", typst_code="#text[New]")
+		payload = export_crispy_format("Test ImportExport Source Overwrite")
+		payload["format"]["name"] = "Test ImportExport Existing"
+
+		result = import_crispy_format(payload, on_conflict="overwrite")
+		updated = frappe.get_doc("Crispy Format", "Test ImportExport Existing")
+
+		self.assertEqual(result["name"], "Test ImportExport Existing")
+		self.assertEqual(updated.typst_code, "#text[New]")
+
+	def test_check_import_conflicts(self):
+		from crispy_print.api.v1 import check_import_conflicts, export_crispy_format
+
+		self._insert_format("Test ImportExport Check")
+		payload = export_crispy_format("Test ImportExport Check")
+		result = check_import_conflicts(payload)
+
+		self.assertTrue(result["exists"])
+		self.assertEqual(result["name"], "Test ImportExport Check")
+
+	def test_invalid_schema_version_rejected(self):
+		from crispy_print.api.v1 import import_crispy_format
+
+		with self.assertRaises(frappe.ValidationError):
+			import_crispy_format({"schema_version": 999, "format": {}}, on_conflict="copy")
+
+	def test_invalid_json_payload_rejected(self):
+		from crispy_print.api.v1 import import_crispy_format
+
+		with self.assertRaises(frappe.ValidationError):
+			import_crispy_format('{"schema_version": 1, "format": ', on_conflict="copy")
+
+	def test_missing_reference_warnings_non_blocking(self):
+		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
+
+		self._insert_format("Test ImportExport Warn Source")
+		payload = export_crispy_format("Test ImportExport Warn Source")
+		payload["format"]["name"] = "Test ImportExport Warn Imported"
+		payload["format"]["default_print_language"] = "Missing-Language"
+		payload["format"]["page_settings"] = json.dumps(
+			{
+				"pageSize": "A4",
+				"language": "en",
+				"letterhead": "Missing Letterhead",
+				"logo": {"company": "Missing Co", "image": "/files/missing-logo.png"},
+			}
+		)
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		self.assertTrue(result["success"])
+		self.assertTrue(frappe.db.exists("Crispy Format", result["name"]))
+		self.assertGreaterEqual(len(result["warnings"]), 3)
+
+	def test_is_default_not_transferred_on_import(self):
+		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
+
+		source = self._insert_format("Test ImportExport Default Source", doc_type="Language")
+		frappe.db.set_value("Crispy Format", source.name, "is_default", 1, update_modified=False)
+		frappe.db.commit()
+
+		payload = export_crispy_format(source.name)
+		payload["format"]["name"] = "Test ImportExport Default Imported"
+		result = import_crispy_format(payload, on_conflict="copy")
+		imported = frappe.get_doc("Crispy Format", result["name"])
+
+		self.assertEqual(imported.is_default, 0)

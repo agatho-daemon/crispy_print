@@ -29,6 +29,27 @@ export interface CompanyOption {
 	company_logo?: string
 }
 
+export interface ExportPayload {
+	schema_version: number
+	exported_at: string
+	app: string
+	format: CrispyFormatDoc
+}
+
+export interface ConflictResult {
+	schema_version: number
+	name: string
+	exists: boolean
+	conflict: boolean
+}
+
+export interface ImportResult {
+	success: boolean
+	name: string
+	warnings: string[]
+	conflict_action: "copy" | "overwrite"
+}
+
 export async function getCrispyFormat(name: string): Promise<CrispyFormatDoc> {
 	return await getDoc<CrispyFormatDoc>("Crispy Format", name)
 }
@@ -99,4 +120,43 @@ export function encodePageSettings(settings: PageSettings): string {
 
 export function encodeLayout(layoutJson: CrispyLayout): string {
 	return JSON.stringify(layoutJson)
+}
+
+export async function exportCrispyFormat(name: string): Promise<ExportPayload> {
+	const res = await call<ExportPayload>({
+		method: "crispy_print.api.v1.export_crispy_format",
+		args: { name },
+	})
+	if (!res.message) {
+		throw new Error("Missing export payload")
+	}
+	return res.message
+}
+
+export async function checkImportConflicts(payload: unknown): Promise<ConflictResult> {
+	const res = await call<ConflictResult>({
+		method: "crispy_print.api.v1.check_import_conflicts",
+		args: { payload: typeof payload === "string" ? payload : JSON.stringify(payload) },
+	})
+	if (!res.message) {
+		throw new Error("Missing conflict response")
+	}
+	return res.message
+}
+
+export async function importCrispyFormat(
+	payload: unknown,
+	onConflict: "copy" | "overwrite"
+): Promise<ImportResult> {
+	const res = await call<ImportResult>({
+		method: "crispy_print.api.v1.import_crispy_format",
+		args: {
+			payload: typeof payload === "string" ? payload : JSON.stringify(payload),
+			on_conflict: onConflict,
+		},
+	})
+	if (!res.message) {
+		throw new Error("Missing import response")
+	}
+	return res.message
 }

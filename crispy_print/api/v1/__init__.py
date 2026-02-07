@@ -3,11 +3,14 @@ import frappe
 from .compile import compile_typst as _compile_typst
 from .compile import get_typst_local_fonts as _get_typst_local_fonts
 from .docs import get_formatted_doc as _get_formatted_doc
+from .formats import check_import_conflicts as _check_import_conflicts
+from .formats import export_crispy_format as _export_crispy_format
 from .formats import get_available_formats as _get_available_formats
 from .formats import get_builder_mode as _get_builder_mode
 from .formats import get_crispy_formats_for_doctype as _get_crispy_formats_for_doctype
 from .formats import get_default_doctypes as _get_default_doctypes
 from .formats import get_reports_without_custom_html as _get_reports_without_custom_html
+from .formats import import_crispy_format as _import_crispy_format
 from .reports import generate_report_pdf as _generate_report_pdf
 from .reports import get_report_typst_source as _get_report_typst_source
 from .reports import get_sample_report_data as _get_sample_report_data
@@ -88,6 +91,21 @@ def get_builder_mode(format_name: str) -> dict:
 
 
 @frappe.whitelist()
+def export_crispy_format(name: str) -> dict:
+	return _export_crispy_format(name)
+
+
+@frappe.whitelist()
+def check_import_conflicts(payload: dict | str) -> dict:
+	return _check_import_conflicts(payload)
+
+
+@frappe.whitelist()
+def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict:
+	return _import_crispy_format(payload, on_conflict=on_conflict)
+
+
+@frappe.whitelist()
 def get_reports_without_custom_html(generic_report_type: str | None = None) -> list[dict]:
 	return _get_reports_without_custom_html(generic_report_type)
 
@@ -127,7 +145,9 @@ def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
 
 
 __all__ = [
+	"check_import_conflicts",
 	"compile_typst",
+	"export_crispy_format",
 	"generate_report_pdf",
 	"get_available_formats",
 	"get_builder_mode",
@@ -138,4 +158,5 @@ __all__ = [
 	"get_reports_without_custom_html",
 	"get_sample_report_data",
 	"get_typst_local_fonts",
+	"import_crispy_format",
 ]

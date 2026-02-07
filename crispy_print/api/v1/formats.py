@@ -1,9 +1,31 @@
+import json
 import re
 from pathlib import Path
 
 import frappe
 from frappe import _
 from frappe.query_builder import DocType
+from frappe.utils import now_datetime
+
+EXPORT_SCHEMA_VERSION = 1
+ALLOWED_IMPORT_CONFLICT_ACTIONS = {"copy", "overwrite"}
+EXPORT_FIELDS = [
+	"name",
+	"crispy_format_type",
+	"doc_type",
+	"report",
+	"contract",
+	"is_generic",
+	"generic_report_type",
+	"raw_typst",
+	"layout_json",
+	"page_settings",
+	"doc_header",
+	"doc_footer",
+	"typst_preamble",
+	"typst_code",
+	"default_print_language",
+]
 
 
 def get_crispy_formats_for_doctype(doctype):
@@ -34,8 +56,6 @@ def get_crispy_formats_for_doctype(doctype):
 
 			# Check if layout_json is parseable
 			if layout.get("layout_json"):
-				import json
-
 				json.loads(layout["layout_json"])  # Validate JSON
 				valid_formats.append(fmt)
 		except (json.JSONDecodeError, Exception) as e:
@@ -230,3 +250,203 @@ def _get_report_is_tree(report: str) -> bool | None:
 		return bool(re.search(r"tree\\s*:\\s*true", js_content, re.IGNORECASE))
 	except Exception:
 		return None
+
+
+def export_crispy_format(name: str) -> dict:
+	"""Export a Crispy Format in portable schema v1 JSON payload."""
+	if not name:
+		frappe.throw(_("Format name is required"))
+
+	doc = frappe.get_doc("Crispy Format", name)
+	doc.check_permission("read")
+
+	format_data = {field: doc.get(field) for field in EXPORT_FIELDS}
+
+	return {
+		"schema_version": EXPORT_SCHEMA_VERSION,
+		"exported_at": now_datetime().isoformat(),
+		"app": "crispy_print",
+		"format": format_data,
+	}
+
+
+def check_import_conflicts(payload: dict | str) -> dict:
+	"""Preflight payload validation and collision check."""
+	parsed = _parse_import_payload(payload)
+	format_data = _validate_import_payload(parsed)
+	name = format_data.get("name")
+	exists = bool(name and frappe.db.exists("Crispy Format", name))
+
+	return {
+		"schema_version": EXPORT_SCHEMA_VERSION,
+		"name": name,
+		"exists": exists,
+		"conflict": exists,
+	}
+
+
+def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict:
+	"""Import a Crispy Format exported via schema v1."""
+	parsed = _parse_import_payload(payload)
+	format_data = _validate_import_payload(parsed)
+	on_conflict_value = (on_conflict or "copy").strip().lower()
+
+	if on_conflict_value not in ALLOWED_IMPORT_CONFLICT_ACTIONS:
+		frappe.throw(_("Invalid conflict action: {0}").format(on_conflict))
+
+	target_name = format_data.get("name")
+	if not target_name:
+		frappe.throw(_("Format name is required in payload"))
+
+	existing_name = frappe.db.exists("Crispy Format", target_name)
+	imported_doc = None
+
+	if existing_name:
+		if on_conflict_value == "overwrite":
+			imported_doc = _overwrite_format(target_name, format_data)
+		else:
+			imported_doc = _insert_new_format(format_data, copy_name=True)
+	else:
+		imported_doc = _insert_new_format(format_data, copy_name=False)
+
+	warnings = _collect_reference_warnings(imported_doc)
+
+	return {
+		"success": True,
+		"name": imported_doc.name,
+		"warnings": warnings,
+		"conflict_action": on_conflict_value,
+	}
+
+
+def _parse_import_payload(payload: dict | str) -> dict:
+	if isinstance(payload, str):
+		raw = payload.strip()
+		if not raw:
+			frappe.throw(_("Import payload cannot be empty"))
+		try:
+			parsed = json.loads(raw)
+		except json.JSONDecodeError:
+			frappe.throw(_("Invalid JSON payload"))
+	elif isinstance(payload, dict):
+		parsed = payload
+	else:
+		frappe.throw(_("Payload must be a JSON object or JSON string"))
+
+	if not isinstance(parsed, dict):
+		frappe.throw(_("Payload must be a JSON object"))
+
+	return parsed
+
+
+def _validate_import_payload(parsed: dict) -> dict:
+	if parsed.get("schema_version") != EXPORT_SCHEMA_VERSION:
+		frappe.throw(_("Unsupported schema_version. Expected {0}").format(EXPORT_SCHEMA_VERSION))
+
+	format_data = parsed.get("format")
+	if not isinstance(format_data, dict):
+		frappe.throw(_("Payload must include a 'format' object"))
+
+	for key in ("layout_json", "page_settings"):
+		value = format_data.get(key)
+		if value:
+			try:
+				json.loads(value)
+			except json.JSONDecodeError:
+				frappe.throw(_("{0} must contain valid JSON").format(key))
+
+	return {field: format_data.get(field) for field in EXPORT_FIELDS}
+
+
+def _insert_new_format(format_data: dict, copy_name: bool) -> "frappe.model.document.Document":
+	_ensure_create_permission()
+	doc_data = dict(format_data)
+	original_name = str(doc_data.get("name") or "").strip()
+
+	if copy_name or frappe.db.exists("Crispy Format", original_name):
+		doc_data["name"] = _get_imported_copy_name(original_name)
+	else:
+		doc_data["name"] = original_name
+
+	doc_data["doctype"] = "Crispy Format"
+	doc_data["is_default"] = 0
+	doc = frappe.get_doc(doc_data)
+	doc.insert()
+	return doc
+
+
+def _overwrite_format(target_name: str, format_data: dict) -> "frappe.model.document.Document":
+	doc = frappe.get_doc("Crispy Format", target_name)
+	doc.check_permission("write")
+
+	preserved_is_default = doc.is_default
+
+	for field in EXPORT_FIELDS:
+		if field in ("name",):
+			continue
+		doc.set(field, format_data.get(field))
+
+	doc.is_default = preserved_is_default
+	doc.save()
+	return doc
+
+
+def _get_imported_copy_name(base_name: str) -> str:
+	base = (base_name or "Imported Format").strip()
+	candidate = f"{base} (Imported)"
+	if not frappe.db.exists("Crispy Format", candidate):
+		return candidate
+
+	index = 2
+	while True:
+		next_candidate = f"{base} (Imported {index})"
+		if not frappe.db.exists("Crispy Format", next_candidate):
+			return next_candidate
+		index += 1
+
+
+def _ensure_create_permission():
+	if not frappe.has_permission("Crispy Format", "create"):
+		frappe.throw(_("You don't have permission to create Crispy Format"))
+
+
+def _collect_reference_warnings(doc) -> list[str]:
+	warnings: list[str] = []
+
+	link_checks = [
+		("doc_type", "DocType"),
+		("report", "Report"),
+		("generic_report_type", "Crispy Generic Report"),
+		("default_print_language", "Language"),
+	]
+	for fieldname, doctype in link_checks:
+		value = doc.get(fieldname)
+		if value and not frappe.db.exists(doctype, value):
+			warnings.append(_("Missing reference: {0} '{1}' (field: {2})").format(doctype, value, fieldname))
+
+	page_settings_raw = doc.get("page_settings")
+	page_settings = {}
+	if page_settings_raw:
+		try:
+			page_settings = json.loads(page_settings_raw)
+		except json.JSONDecodeError:
+			# Should already be validated, keep as safety net.
+			warnings.append(_("page_settings could not be parsed for reference checks"))
+			page_settings = {}
+
+	letterhead = page_settings.get("letterhead")
+	if letterhead and not frappe.db.exists("Letter Head", letterhead):
+		warnings.append(_("Missing reference: Letter Head '{0}'").format(letterhead))
+
+	logo = page_settings.get("logo") or {}
+	company = logo.get("company")
+	if company and not frappe.db.exists("Company", company):
+		warnings.append(_("Missing reference: Company '{0}'").format(company))
+
+	logo_image = logo.get("image")
+	if logo_image and logo_image.startswith("/"):
+		file_exists = frappe.db.exists("File", {"file_url": logo_image})
+		if not file_exists:
+			warnings.append(_("File not found for logo image path: {0}").format(logo_image))
+
+	return warnings
