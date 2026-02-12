@@ -9,6 +9,7 @@ from .formats import get_available_formats as _get_available_formats
 from .formats import get_builder_mode as _get_builder_mode
 from .formats import get_crispy_formats_for_doctype as _get_crispy_formats_for_doctype
 from .formats import get_default_doctypes as _get_default_doctypes
+from .formats import get_default_report_builder_config as _get_default_report_builder_config
 from .formats import get_reports_without_custom_html as _get_reports_without_custom_html
 from .formats import import_crispy_format as _import_crispy_format
 from .reports import generate_report_pdf as _generate_report_pdf
@@ -59,6 +60,11 @@ def get_crispy_formats_for_doctype(doctype):
 @frappe.whitelist()
 def get_default_doctypes():
 	return _get_default_doctypes()
+
+
+@frappe.whitelist()
+def get_default_report_builder_config(generic_report_type: str | None = None) -> dict:
+	return _get_default_report_builder_config(generic_report_type)
 
 
 @frappe.whitelist()
@@ -117,10 +123,14 @@ def get_report_typst_source(
 	filters: dict | str | None = None,
 	column_config: list | str | None = None,
 	include_filters: int = 0,
+	include_summary: int = 1,
+	include_total_row: int = 1,
 	orientation: str | None = None,
 	page_settings: dict | str | None = None,
 	chart_svg: str | None = None,
 	typst_preamble_override: str | None = None,
+	typst_code_override: str | None = None,
+	preview_data: dict | str | None = None,
 	letterhead_image: str | None = None,
 	limit: int = 50,
 ) -> str:
@@ -130,10 +140,14 @@ def get_report_typst_source(
 		filters=filters,
 		column_config=column_config,
 		include_filters=include_filters,
+		include_summary=include_summary,
+		include_total_row=include_total_row,
 		orientation=orientation,
 		page_settings=page_settings,
 		chart_svg=chart_svg,
 		typst_preamble_override=typst_preamble_override,
+		typst_code_override=typst_code_override,
+		preview_data=preview_data,
 		letterhead_image=letterhead_image,
 		limit=limit,
 	)
@@ -153,6 +167,7 @@ __all__ = [
 	"get_builder_mode",
 	"get_crispy_formats_for_doctype",
 	"get_default_doctypes",
+	"get_default_report_builder_config",
 	"get_formatted_doc",
 	"get_report_typst_source",
 	"get_reports_without_custom_html",

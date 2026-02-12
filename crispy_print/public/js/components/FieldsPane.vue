@@ -3,7 +3,7 @@
 		<div class="section-head fields-pane__header">
 			<div class="section-head-content fields-pane__header-row">
 				<h3 class="section-title fields-pane__title">
-					{{ isReportMode ? "Report Columns" : "Fields" }}
+					{{ isReportMode ? "Report Fields" : "Fields" }}
 				</h3>
 				<div class="fields-pane__spacer"></div>
 				<div class="fields-pane__help">
@@ -21,8 +21,8 @@
 					<div id="fields-help" popover class="fields-pane__help-popover">
 						<ul class="fields-pane__help-list">
 							<li v-if="isReportMode">
-								Drag report columns to the layout builder to include them in your
-								print format.
+								Drag report blocks into the layout builder to compose your print
+								format.
 							</li>
 							<li v-else>Use the search box to quickly find specific fields.</li>
 							<li>Hover over a field to see its fieldname and type.</li>
@@ -36,27 +36,20 @@
 				<input
 					v-model="searchQuery"
 					type="text"
-					:placeholder="`Search ${filteredFields.length} ${
-						isReportMode ? 'columns' : 'fields'
-					}...`"
+					:placeholder="`Search ${filteredFields.length} fields...`"
 					class="form-control search-input"
 				/>
 			</div>
 			<div v-if="loading" class="loading-indicator">
-				<span class="loading-text"
-					>Loading {{ isReportMode ? "columns" : "fields" }}...</span
-				>
+				<span class="loading-text">Loading fields...</span>
 			</div>
 		</div>
-
 		<div class="fields-list">
 			<div v-if="filteredFields.length === 0" class="empty-state">
 				<p v-if="searchQuery" class="empty-message">
-					No {{ isReportMode ? "columns" : "fields" }} match "{{ searchQuery }}!"
+					No fields match "{{ searchQuery }}!"
 				</p>
-				<p v-else class="empty-message">
-					No {{ isReportMode ? "columns" : "fields" }} available yet!
-				</p>
+				<p v-else class="empty-message">No fields available yet!</p>
 			</div>
 
 			<div
@@ -84,7 +77,7 @@ import type { DocField } from "../utils/layout";
 
 interface Props {
 	fields: MaybeRef<DocField[]>;
-	reportColumns?: MaybeRef<any[]>;
+	reportFields?: MaybeRef<any[]>;
 	isReportMode?: MaybeRef<boolean>;
 	loading?: MaybeRef<boolean>;
 }
@@ -92,7 +85,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
 	loading: false,
 	isReportMode: false,
-	reportColumns: () => [],
+	reportFields: () => [],
 });
 
 const searchQuery = ref("");
@@ -102,7 +95,7 @@ const isReportMode = computed(() => unref(props.isReportMode));
 // Combine fields and report columns based on mode
 const allFields = computed(() => {
 	if (isReportMode.value) {
-		return unref(props.reportColumns) || [];
+		return unref(props.reportFields) || [];
 	}
 	return unref(props.fields);
 });

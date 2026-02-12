@@ -34,35 +34,104 @@
 			</div>
 			<div class="settings-pane__body">
 				<div class="form-layout">
-					<div v-if="isReportMode" class="form-group">
-						<label class="control-label">Report Format</label>
-						<select
-							v-model="selectedReportFormat"
-							class="form-control"
-							@change="onReportFormatChange"
-						>
-							<option v-if="reportLoading" disabled>Loading formats...</option>
-							<option
-								v-for="fmt in reportFormats"
-								:key="fmt.value"
-								:value="fmt.value"
-							>
-								{{ fmt.label }}
-							</option>
-						</select>
-					</div>
-
-					<div v-if="isReportMode" class="checkbox">
-						<label>
-							<input v-model="reportIncludeFilters" type="checkbox" />
-							Include Filters
-						</label>
-					</div>
-
-					<div v-if="isReportMode" class="form-section">
+					<div v-if="isReportMode" class="settings-pane__section-card card">
 						<button
 							type="button"
-							class="section-head"
+							class="btn btn-link card-header settings-pane__section-header"
+							:class="{ 'is-expanded': isReportTemplateExpanded }"
+							@click="isReportTemplateExpanded = !isReportTemplateExpanded"
+						>
+							<span>Report Template</span>
+							<svg
+								:class="[
+									'settings-pane__chevron',
+									{
+										'settings-pane__chevron--expanded':
+											isReportTemplateExpanded,
+									},
+								]"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
+						<div
+							v-if="isReportTemplateExpanded"
+							class="settings-pane__section-content card-body"
+						>
+							<div class="form-group">
+								<label class="control-label">Report Format</label>
+								<select
+									v-model="selectedReportFormat"
+									class="form-control"
+									@change="onReportFormatChange"
+								>
+									<option v-if="reportLoading" disabled>
+										Loading formats...
+									</option>
+									<option
+										v-for="fmt in reportFormats"
+										:key="fmt.value"
+										:value="fmt.value"
+									>
+										{{ fmt.label }}
+									</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label">Font</label>
+								<select v-model="reportFontFamily" class="form-control">
+									<option v-if="loadingFonts" disabled>Loading fonts...</option>
+									<option
+										v-for="font in availableFonts"
+										:key="font"
+										:value="font"
+									>
+										{{ font }}
+									</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label class="control-label">Font Size (pt)</label>
+								<input
+									v-model.number="reportFontSizePt"
+									type="number"
+									min="1"
+									step="0.5"
+									class="form-control"
+								/>
+							</div>
+
+							<div class="settings-pane__toggles">
+								<label class="settings-pane__toggle">
+									<input v-model="reportIncludeFilters" type="checkbox" />
+									<span>Show Filters</span>
+								</label>
+								<label v-if="reportHasSummary" class="settings-pane__toggle">
+									<input v-model="reportShowSummary" type="checkbox" />
+									<span>Show Summary</span>
+								</label>
+								<label v-if="reportHasTotalRow" class="settings-pane__toggle">
+									<input v-model="reportShowTotalRow" type="checkbox" />
+									<span>Show Total Row</span>
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<div v-if="isReportMode" class="settings-pane__section-card card">
+						<button
+							type="button"
+							class="btn btn-link card-header settings-pane__section-header"
+							:class="{ 'is-expanded': isReportColumnsExpanded }"
 							@click="isReportColumnsExpanded = !isReportColumnsExpanded"
 						>
 							<span>Columns</span>
@@ -85,7 +154,10 @@
 								/>
 							</svg>
 						</button>
-						<div v-if="isReportColumnsExpanded" class="section-body">
+						<div
+							v-if="isReportColumnsExpanded"
+							class="settings-pane__section-content card-body"
+						>
 							<p
 								v-if="reportColumnsState.length === 0"
 								class="help-block text-muted small"
@@ -116,28 +188,11 @@
 						</div>
 					</div>
 
-					<!-- Print Format (doctype source) -->
-					<div v-if="!isReportMode" class="form-group">
-						<label class="control-label">Print Format</label>
-						<select
-							v-model="selectedFormat"
-							class="form-control"
-							@change="onFormatChange"
-						>
-							<option
-								v-for="fmt in availableFormats"
-								:key="fmt.name"
-								:value="fmt.name"
-							>
-								{{ fmt.name }}{{ fmt.is_default ? " (Default)" : "" }}
-							</option>
-						</select>
-					</div>
-
-					<div class="form-section">
+					<div class="settings-pane__section-card card">
 						<button
 							type="button"
-							class="section-head"
+							class="btn btn-link card-header settings-pane__section-header"
+							:class="{ 'is-expanded': isOverridesExpanded }"
 							@click="isOverridesExpanded = !isOverridesExpanded"
 						>
 							<span>Preview Overrides</span>
@@ -157,10 +212,31 @@
 								/>
 							</svg>
 						</button>
-						<div v-if="isOverridesExpanded" class="section-body">
+						<div
+							v-if="isOverridesExpanded"
+							class="settings-pane__section-content card-body"
+						>
 							<p class="help-block text-muted small">
 								Preview-only changes. The saved format is unchanged.
 							</p>
+
+							<!-- Print Format (doctype source) -->
+							<div v-if="!isReportMode" class="form-group">
+								<label class="control-label">Print Format</label>
+								<select
+									v-model="selectedFormat"
+									class="form-control"
+									@change="onFormatChange"
+								>
+									<option
+										v-for="fmt in availableFormats"
+										:key="fmt.name"
+										:value="fmt.name"
+									>
+										{{ fmt.name }}{{ fmt.is_default ? " (Default)" : "" }}
+									</option>
+								</select>
+							</div>
 
 							<div class="form-group">
 								<label class="control-label">Language</label>
@@ -179,35 +255,36 @@
 									Default language. More languages coming soon.
 								</p>
 							</div>
-
-							<div v-if="isReportMode" class="form-group">
-								<label class="control-label">Font</label>
-								<select v-model="reportFontFamily" class="form-control">
-									<option v-if="loadingFonts" disabled>Loading fonts...</option>
-									<option
-										v-for="font in availableFonts"
-										:key="font"
-										:value="font"
-									>
-										{{ font }}
-									</option>
-								</select>
-							</div>
-
-							<div v-if="isReportMode" class="form-group">
-								<label class="control-label">Font Size (pt)</label>
-								<input
-									v-model.number="reportFontSizePt"
-									type="number"
-									min="1"
-									step="0.5"
-									class="form-control"
+						</div>
+					</div>
+					<div class="settings-pane__section-card card">
+						<button
+							type="button"
+							class="btn btn-link card-header settings-pane__section-header"
+							:class="{ 'is-expanded': isBrandingExpanded }"
+							@click="isBrandingExpanded = !isBrandingExpanded"
+						>
+							<span>Branding</span>
+							<svg
+								:class="[
+									'settings-pane__chevron',
+									{ 'settings-pane__chevron--expanded': isBrandingExpanded },
+								]"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+									clip-rule="evenodd"
 								/>
-								<p class="help-block text-muted small">
-									Applied via #set text(...) before the template.
-								</p>
-							</div>
-
+							</svg>
+						</button>
+						<div
+							v-if="isBrandingExpanded"
+							class="settings-pane__section-content card-body"
+						>
 							<div class="form-group">
 								<label class="control-label">Branding</label>
 								<select v-model="brandingMode" class="form-control">
@@ -306,7 +383,36 @@
 									Remove QRCode
 								</label>
 							</div>
-
+						</div>
+					</div>
+					<div class="settings-pane__section-card card">
+						<button
+							type="button"
+							class="btn btn-link card-header settings-pane__section-header"
+							:class="{ 'is-expanded': isPageSettingsExpanded }"
+							@click="isPageSettingsExpanded = !isPageSettingsExpanded"
+						>
+							<span>Page Settings</span>
+							<svg
+								:class="[
+									'settings-pane__chevron',
+									{ 'settings-pane__chevron--expanded': isPageSettingsExpanded },
+								]"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
+						<div
+							v-if="isPageSettingsExpanded"
+							class="settings-pane__section-content card-body"
+						>
 							<div class="form-group">
 								<label class="control-label">Page Size</label>
 								<select v-model="pageSettings.pageSize" class="form-control">
@@ -452,8 +558,12 @@ const reportFormats = ref<ReportFormatOption[]>([]);
 const reportLoading = ref(false);
 const selectedReportFormat = ref<string>("");
 const reportIncludeFilters = ref(false);
+const reportShowSummary = ref(true);
+const reportShowTotalRow = ref(true);
 const reportColumnsState = ref<ReportColumn[]>([]);
 const reportColumnSelections = ref<Record<string, { selected: boolean; width: string }>>({});
+const reportHasSummary = ref(false);
+const reportHasTotalRow = ref(false);
 const reportFilters = ref<Record<string, any>>(props.reportFilters || {});
 const reportChartSvg = ref<string>(props.reportChartSvg || "");
 const isReportColumnsExpanded = ref(true);
@@ -484,6 +594,9 @@ const letterheadDoc = ref<any | null>(null);
 const changeKey = ref(0);
 const OVERRIDES_STORAGE_KEY = "crispy-print:pp:preview-overrides-expanded";
 const isOverridesExpanded = ref(false);
+const isReportTemplateExpanded = ref(true);
+const isBrandingExpanded = ref(false);
+const isPageSettingsExpanded = ref(false);
 const qrEnabledEffective = computed(() => {
 	const pageQrEnabled = pageSettings.value.qr?.enabled;
 	if (typeof pageQrEnabled === "boolean") {
@@ -538,6 +651,19 @@ const typstPreambleEffective = computed(() => {
 	const base = typstPreamble.value || "";
 	return base ? `${prefix}\n${base}` : prefix;
 });
+
+function buildReportTypstCodeOverride(): string {
+	const baseCode = String(typstCode.value || "");
+	if (!isReportMode.value || !baseCode.trim()) return baseCode;
+	const fontSetLine = reportFontPreamble.value.trim();
+	if (!fontSetLine) return baseCode;
+
+	// Keep report font controls authoritative by replacing the first template-level
+	// global text setting when present (common in generic/basic report templates).
+	const replaced = baseCode.replace(/#set\s+text\([^\n]*\)/, fontSetLine);
+	if (replaced !== baseCode) return replaced;
+	return `${fontSetLine}\n${baseCode}`;
+}
 
 function seedReportColumnSelections(columns: ReportColumn[]) {
 	const next: Record<string, { selected: boolean; width: string }> = {};
@@ -653,6 +779,12 @@ async function fetchReportColumns() {
 		const normalized = normalizeReportColumns(columns);
 		reportColumnsState.value = normalized;
 		seedReportColumnSelections(normalized);
+		const rawSummary = response?.message?.report_summary;
+		reportHasSummary.value = Array.isArray(rawSummary) && rawSummary.length > 0;
+		const rawRows = Array.isArray(response?.message?.result) ? response.message.result : [];
+		reportHasTotalRow.value = rawRows.some(
+			(row: any) => row && typeof row === "object" && Boolean(row.is_total_row)
+		);
 	} catch (error) {
 		logger.error("Failed to load report columns", error);
 	}
@@ -685,10 +817,13 @@ async function compileReportPreview() {
 				filters: reportFilters.value || {},
 				column_config: reportColumnConfig.value,
 				include_filters: reportIncludeFilters.value ? 1 : 0,
+				include_summary: reportShowSummary.value ? 1 : 0,
+				include_total_row: reportShowTotalRow.value ? 1 : 0,
 				orientation: pageSettings.value.orientation,
 				page_settings: pageSettingsComputed.value,
 				chart_svg: chartSvgPayload || null,
 				typst_preamble_override: reportFontPreamble.value,
+				typst_code_override: buildReportTypstCodeOverride(),
 				letterhead_image: letterheadImage,
 				limit: 50,
 			},
@@ -876,6 +1011,8 @@ const getReportSettings = () => ({
 	format: selectedReportFormat.value,
 	orientation: pageSettings.value.orientation,
 	includeFilters: reportIncludeFilters.value ? 1 : 0,
+	includeSummary: reportShowSummary.value ? 1 : 0,
+	includeTotalRow: reportShowTotalRow.value ? 1 : 0,
 	columnConfig: reportColumnConfig.value,
 	filters: reportFilters.value,
 });
@@ -930,12 +1067,26 @@ watch(
 	{ immediate: true }
 );
 
+watch(reportHasSummary, (hasSummary) => {
+	if (!hasSummary) {
+		reportShowSummary.value = true;
+	}
+});
+
+watch(reportHasTotalRow, (hasTotalRow) => {
+	if (!hasTotalRow) {
+		reportShowTotalRow.value = true;
+	}
+});
+
 watch(
 	() => [
 		selectedReportFormat.value,
 		reportColumnConfig.value,
 		reportFilters.value,
 		reportIncludeFilters.value,
+		reportShowSummary.value,
+		reportShowTotalRow.value,
 	],
 	() => {
 		compileReportPreview();
@@ -1212,25 +1363,41 @@ defineExpose({
 	padding: 16px;
 }
 
-.settings-pane .section-head {
+.form-layout {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.settings-pane__section-card {
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	overflow: hidden;
+	background: #fff;
+}
+
+.settings-pane__section-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
 	cursor: pointer;
-	background: transparent;
+	background: #fff;
 	border: 0;
-	padding: 8px 0;
+	padding: 10px 12px;
 	text-align: left;
+	color: #334155;
+	text-decoration: none;
 }
 
-.settings-pane .section-body {
-	padding: 8px 0 12px;
+.settings-pane__section-header:hover {
+	text-decoration: none;
+	background: #f8fafc;
 }
 
-.settings-pane .form-group {
-	float: none;
-	width: 100%;
+.settings-pane__section-content {
+	padding: 12px;
+	border-top: 1px solid #e2e8f0;
 }
 
 .settings-pane__chevron {
@@ -1241,6 +1408,20 @@ defineExpose({
 
 .settings-pane__chevron--expanded {
 	transform: rotate(-180deg);
+}
+
+.settings-pane__toggles {
+	display: grid;
+	gap: 8px;
+}
+
+.settings-pane__toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: #334155;
+	margin: 0;
 }
 
 /* Preview Pane */

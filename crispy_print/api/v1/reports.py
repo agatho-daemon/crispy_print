@@ -89,10 +89,14 @@ def get_report_typst_source(
 	filters: dict | str | None = None,
 	column_config: list | str | None = None,
 	include_filters: int = 0,
+	include_summary: int = 1,
+	include_total_row: int = 1,
 	orientation: str | None = None,
 	page_settings: dict | str | None = None,
 	chart_svg: str | None = None,
 	typst_preamble_override: str | None = None,
+	typst_code_override: str | None = None,
+	preview_data: dict | str | None = None,
 	letterhead_image: str | None = None,
 	limit: int = 50,
 ) -> str:
@@ -112,6 +116,18 @@ def get_report_typst_source(
 	Returns:
 		str: Complete Typst source code
 	"""
+	from frappe.utils import cint
+
+	# Parse preview_data if string (used by style-only builder preview mode)
+	preview_data_dict = None
+	if preview_data:
+		if isinstance(preview_data, str):
+			try:
+				preview_data_dict = json.loads(preview_data)
+			except json.JSONDecodeError:
+				preview_data_dict = None
+		elif isinstance(preview_data, dict):
+			preview_data_dict = preview_data
 
 	# Parse filters if string
 	if isinstance(filters, str):
@@ -122,8 +138,9 @@ def get_report_typst_source(
 	if not isinstance(filters, dict):
 		filters = {}
 
-	# Fill missing required filters with defaults for preview
-	filters = _fill_default_report_filters(report, filters)
+	# Fill missing required filters with defaults only for live report previews.
+	if not preview_data_dict:
+		filters = _fill_default_report_filters(report, filters)
 
 	# Parse column_config if string
 	column_filter = None
@@ -147,16 +164,33 @@ def get_report_typst_source(
 		elif isinstance(page_settings, dict):
 			page_settings_dict = page_settings
 
-	# Get report data
-	report_data = _get_report_data(report, filters or {})
-
 	# Get format document
 	format_doc = frappe.get_doc("Crispy Format", format_name)
+	if isinstance(typst_code_override, str) and typst_code_override.strip():
+		format_doc.typst_code = typst_code_override
 
 	# Prepare data for Typst
-	typst_data = _prepare_typst_report_data(
-		report, report_data, filters if include_filters else None, column_filter
-	)
+	if preview_data_dict:
+		typst_data = dict(preview_data_dict)
+		typst_data.setdefault("title", report or "Style Preview")
+		typst_data.setdefault("subtitle", "")
+		typst_data.setdefault("filters", [])
+		typst_data.setdefault("report_summary", [])
+		typst_data.setdefault("columns", [])
+		typst_data.setdefault("rows", [])
+		typst_data.setdefault("total_rows", len(typst_data.get("rows") or []))
+		typst_data.setdefault("chart", {})
+		typst_data.setdefault("skip_total_row", False)
+	else:
+		report_data = _get_report_data(report, filters or {})
+		typst_data = _prepare_typst_report_data(
+			report,
+			report_data,
+			filters if cint(include_filters) else None,
+			column_filter,
+			include_summary=bool(cint(include_summary)),
+			include_total_row=bool(cint(include_total_row)),
+		)
 
 	# Limit rows for preview
 	if limit and len(typst_data["rows"]) > limit:
@@ -182,29 +216,30 @@ def get_report_typst_source(
 	# Attach chart placeholder for Typst if SVG is provided
 	if isinstance(chart_svg, str) and chart_svg.strip():
 		typst_data["chart_svg"] = "report_chart.svg"
-		chart_block = (
-			"\n// Report chart\n"
-			'#if "chart_svg" in data and data.chart_svg != "" [\n'
-			"  #block(\n"
-			'    stroke: (paint: rgb("#E5E7EB"), thickness: 0.5pt),\n'
-			"    inset: (x: 8pt, y: 8pt),\n"
-			"    radius: 2pt,\n"
-			"  )[\n"
-			"    #image(data.chart_svg, width: 100%)\n"
-			"  ]\n"
-			"  #v(1em)\n"
-			"]\n"
-		)
 		code = format_doc.typst_code or ""
-		inserted = False
-		for marker in ("// TABLE SETUP", "#table("):
-			pos = code.find(marker)
-			if pos != -1:
-				format_doc.typst_code = code[:pos] + chart_block + code[pos:]
-				inserted = True
-				break
-		if not inserted:
-			format_doc.typst_code = code + chart_block
+		if "data.chart_svg" not in code:
+			chart_block = (
+				"\n// Report chart\n"
+				'#if "chart_svg" in data and data.chart_svg != "" [\n'
+				"  #block(\n"
+				'    stroke: (paint: rgb("#E5E7EB"), thickness: 0.5pt),\n'
+				"    inset: (x: 8pt, y: 8pt),\n"
+				"    radius: 2pt,\n"
+				"  )[\n"
+				"    #image(data.chart_svg, width: 100%)\n"
+				"  ]\n"
+				"  #v(1em)\n"
+				"]\n"
+			)
+			inserted = False
+			for marker in ("// TABLE SETUP", "#table("):
+				pos = code.find(marker)
+				if pos != -1:
+					format_doc.typst_code = code[:pos] + chart_block + code[pos:]
+					inserted = True
+					break
+			if not inserted:
+				format_doc.typst_code = code + chart_block
 
 	# Build Typst document using unified compilation
 	preamble_override = (
@@ -275,13 +310,22 @@ def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
 
 def _get_report_data(report: str, filters: dict) -> dict:
 	"""Execute report and return raw data"""
-	result = frappe.desk.query_report.run(report, filters=filters)
+	# Always run live for Crispy preview/PDF so prepared-report queue state
+	# does not return empty placeholder payloads.
+	result = frappe.desk.query_report.run(
+		report,
+		filters=filters,
+		ignore_prepared_report=True,
+		are_default_filters=False,
+	)
 
 	return {
 		"columns": result.get("columns", []),
 		"result": result.get("result", []),
 		"message": result.get("message"),
 		"chart": result.get("chart"),
+		"report_summary": result.get("report_summary"),
+		"skip_total_row": result.get("skip_total_row"),
 	}
 
 
@@ -359,6 +403,8 @@ def _prepare_typst_report_data(
 	report_data: dict,
 	filters: dict | None = None,
 	column_filter: list | None = None,
+	include_summary: bool = True,
+	include_total_row: bool = True,
 ) -> dict:
 	"""Transform report data into Typst-friendly structure
 
@@ -373,6 +419,10 @@ def _prepare_typst_report_data(
 
 	# Filter visible columns
 	visible_columns = [col for col in columns if col.get("label") and col.get("_id") != "_check"]
+	# Default width semantics are backend-owned: report metadata widths are ignored unless
+	# caller provides explicit column_config widths.
+	for col in visible_columns:
+		col["width"] = "auto"
 
 	# Build column width map from filter
 	width_map = {}
@@ -380,7 +430,7 @@ def _prepare_typst_report_data(
 		for col_config in column_filter:
 			if isinstance(col_config, dict):
 				fieldname = col_config.get("fieldname")
-				width = col_config.get("width", "auto")
+				width = _normalize_typst_column_width(col_config.get("width", "auto"))
 				if fieldname:
 					width_map[fieldname] = width
 
@@ -399,36 +449,74 @@ def _prepare_typst_report_data(
 	# Apply widths if not already applied
 	for col in visible_columns:
 		if col.get("fieldname") in width_map:
-			col["width"] = width_map[col.get("fieldname")]
+			col["width"] = _normalize_typst_column_width(width_map[col.get("fieldname")])
 
 	# Convert rows to dictionary for Typst
 	processed_rows = []
 	for index, row in enumerate(rows):
 		processed_rows.append(_prepare_row_data(row, visible_columns, index))
+	base_rows = [row for row in processed_rows if not row.get("is_total_row")]
+	final_rows = processed_rows if include_total_row else base_rows
 
 	# Generate report title
 	report_title = report_data.get("message") or report
 
 	# Get report chart if any
 	report_chart = report_data.get("chart") or {}
+	report_summary = report_data.get("report_summary") or []
+	if not include_summary:
+		report_summary = []
+	skip_total_row = bool(report_data.get("skip_total_row"))
 
 	return {
 		"columns": visible_columns,
-		"rows": processed_rows,
-		"total_rows": len(processed_rows),
-		"filters": filters or {},
+		"rows": final_rows,
+		"total_rows": len(base_rows),
+		"filters": _normalize_filters_for_typst(filters),
 		"title": report_title,
 		"subtitle": "",
 		"chart": report_chart,
+		"report_summary": report_summary,
+		"skip_total_row": skip_total_row,
 	}
+
+
+def _normalize_filters_for_typst(filters: dict | list | None) -> list[dict]:
+	"""Return report filters as Typst-friendly array of (label, value) objects."""
+	if not filters:
+		return []
+
+	if isinstance(filters, list):
+		out = []
+		for entry in filters:
+			if not isinstance(entry, dict):
+				continue
+			label = str(entry.get("label") or entry.get("fieldname") or "").strip()
+			value = entry.get("value")
+			if not label:
+				continue
+			out.append({"label": label, "value": "" if value is None else str(value)})
+		return out
+
+	if isinstance(filters, dict):
+		out = []
+		for key, value in filters.items():
+			if key in (None, ""):
+				continue
+			out.append({"label": str(key), "value": "" if value is None else str(value)})
+		return out
+
+	return []
 
 
 def _prepare_row_data(row, columns: list, index: int) -> dict:
 	"""Transform a row into a Typst row dict"""
-	out = {"_idx": index, "cells": [], "is_bold": False}
+	out = {"_idx": index, "cells": [], "is_bold": False, "is_total_row": False}
 
 	# Row can be list or dict
 	if isinstance(row, dict):
+		out["is_bold"] = bool(row.get("bold") or row.get("is_bold"))
+		out["is_total_row"] = bool(row.get("is_total_row"))
 		for col in columns:
 			fieldname = col.get("fieldname")
 			if fieldname:
@@ -488,6 +576,31 @@ def _format_cell_value(value, col: dict, row: dict) -> str:
 
 def _is_numeric_fieldtype(fieldtype: str) -> bool:
 	return fieldtype in ("Int", "Float", "Currency", "Percent")
+
+
+def _normalize_typst_column_width(width) -> str:
+	"""Normalize to Typst table width tokens (auto, fraction, relative length)."""
+	if width in (None, ""):
+		return "auto"
+
+	if isinstance(width, int | float):
+		return f"{round(float(width))}pt" if float(width) > 0 else "auto"
+
+	width_str = str(width).strip().lower()
+	if not width_str:
+		return "auto"
+	if width_str == "auto":
+		return "auto"
+
+	import re
+
+	if re.fullmatch(r"\d+(\.\d+)?(fr|pt|em|rem|%|cm|mm|in)", width_str):
+		return width_str
+
+	if re.fullmatch(r"\d+(\.\d+)?", width_str):
+		return f"{round(float(width_str))}pt"
+
+	return "auto"
 
 
 def _normalize_columns(columns: list) -> list:

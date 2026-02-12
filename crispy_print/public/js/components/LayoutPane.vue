@@ -2,7 +2,15 @@
 	<div ref="layoutPaneRef" class="layout-pane">
 		<div class="section-head layout-pane__header">
 			<div class="section-head-content layout-pane__header-row">
-				<h3 class="section-title layout-pane__title">Layout Builder</h3>
+				<div class="layout-pane__title-wrap">
+					<h3 class="section-title layout-pane__title">Layout Builder</h3>
+					<span
+						v-if="showGenericReportTypeBadge"
+						class="layout-pane__generic-type-badge"
+					>
+						Generic Type: {{ genericReportTypeLabel }}
+					</span>
+				</div>
 				<div class="layout-pane__controls">
 					<button class="btn btn-default btn-sm" @click="resetLayout">
 						Reset to Default
@@ -33,6 +41,13 @@
 							</ul>
 						</div>
 					</div>
+				</div>
+			</div>
+			<div v-if="isReportFormat" class="layout-pane__report-selector-row">
+				<div class="layout-pane__report-selector-wrap">
+					<span class="layout-pane__preview-note">
+						Style preview mode: layout uses deterministic sample data.
+					</span>
 				</div>
 			</div>
 		</div>
@@ -511,6 +526,7 @@
 			v-if="columnEditor"
 			:model-value="editingColumns"
 			:doctype="columnEditor.field.options || ''"
+			:available-columns="columnEditorAvailableColumns"
 			@update:modelValue="onColumnsUpdate"
 			@close="closeColumnEditor"
 		/>
@@ -583,6 +599,53 @@ const sectionMenuStyle = ref<Record<string, string>>({});
 const openFieldMenuId = ref<string | null>(null);
 const fieldMenuStyle = ref<Record<string, string>>({});
 const openFieldSubmenu = ref<"align" | null>(null);
+const currentFormat = computed(() => store.crispyFormat?.value || null);
+const showGenericReportTypeBadge = computed(() => {
+	const format = currentFormat.value;
+	return (
+		format?.crispy_format_type === "Report" &&
+		Number(format?.is_generic || 0) === 1 &&
+		Boolean(format?.generic_report_type)
+	);
+});
+const genericReportTypeLabel = computed(() =>
+	String(currentFormat.value?.generic_report_type || "").trim()
+);
+const isReportFormat = computed(() => currentFormat.value?.crispy_format_type === "Report");
+const columnEditorAvailableColumns = computed(() => {
+	if (!columnEditor.value) return [];
+	if (!isReportFormat.value) return [];
+	const fieldname = columnEditor.value.field.fieldname;
+	if (fieldname === "data.table") {
+		return (store.reportColumns.value || []).map((col: any) => ({
+			label: col.label || col.fieldname || "",
+			fieldname: col.fieldname || "",
+			fieldtype: col.fieldtype || "Data",
+		}));
+	}
+	if (fieldname === "data.filters") {
+		const options = (store.reportFilterFields?.value || []).map((df: any) => ({
+			label: df.label || df.fieldname || "",
+			fieldname: df.fieldname || "",
+			fieldtype: df.fieldtype || "Data",
+		}));
+		if (options.length > 0) return options;
+		return [
+			{ label: "Label", fieldname: "label", fieldtype: "Data" },
+			{ label: "Value", fieldname: "value", fieldtype: "Data" },
+		];
+	}
+	if (fieldname === "data.report_summary") {
+		return [
+			{ label: "Label", fieldname: "label", fieldtype: "Data" },
+			{ label: "Value", fieldname: "value", fieldtype: "Data" },
+			{ label: "Indicator", fieldname: "indicator", fieldtype: "Data" },
+			{ label: "Data Type", fieldname: "datatype", fieldtype: "Data" },
+			{ label: "Currency", fieldname: "currency", fieldtype: "Data" },
+		];
+	}
+	return [];
+});
 
 function clamp(value: number, min: number, max: number) {
 	return Math.min(Math.max(value, min), max);
@@ -1113,6 +1176,75 @@ async function ensureTableColumns(field: Field) {
 	if (field.fieldtype !== "Table" || (field.table_columns && field.table_columns.length)) {
 		return;
 	}
+	if (field.fieldname === "data.filters") {
+		const filterFields = (store.reportFilterFields?.value || []).map((df: any) => ({
+			fieldname: df.fieldname,
+			label: df.label || df.fieldname,
+			fieldtype: df.fieldtype || "Data",
+			width: "auto",
+			align: "left" as const,
+		}));
+		field.table_columns =
+			filterFields.length > 0
+				? filterFields
+				: [
+						{
+							fieldname: "label",
+							label: "Label",
+							fieldtype: "Data",
+							width: "auto",
+							align: "left",
+						},
+						{
+							fieldname: "value",
+							label: "Value",
+							fieldtype: "Data",
+							width: "auto",
+							align: "left",
+						},
+				  ];
+		return;
+	}
+	if (field.fieldname === "data.report_summary") {
+		field.table_columns = [
+			{
+				fieldname: "label",
+				label: "Label",
+				fieldtype: "Data",
+				width: "auto",
+				align: "left",
+			},
+			{
+				fieldname: "value",
+				label: "Value",
+				fieldtype: "Data",
+				width: "auto",
+				align: "right",
+			},
+			{
+				fieldname: "indicator",
+				label: "Indicator",
+				fieldtype: "Data",
+				width: "auto",
+				align: "left",
+			},
+			{
+				fieldname: "datatype",
+				label: "Data Type",
+				fieldtype: "Data",
+				width: "auto",
+				align: "left",
+			},
+			{
+				fieldname: "currency",
+				label: "Currency",
+				fieldtype: "Data",
+				width: "auto",
+				align: "left",
+			},
+		];
+		return;
+	}
 	if (!field.options) {
 		field.table_columns = [];
 		return;
@@ -1493,14 +1625,15 @@ function onEditDivider(field: Field) {
 	border: 1px solid #e2e8f0;
 	display: flex;
 	flex-direction: column;
-	overflow-y: auto;
+	overflow: visible;
 	background: #fff;
 }
 
 .layout-pane__menu-portal {
 	position: absolute;
 	inset: 0;
-	z-index: 999;
+	overflow: visible;
+	z-index: 1200;
 	pointer-events: none;
 }
 
@@ -1522,8 +1655,46 @@ function onEditDivider(field: Field) {
 	gap: 8px;
 }
 
+.layout-pane__report-selector-row {
+	margin-top: 10px;
+}
+
+.layout-pane__report-selector-wrap {
+	max-width: 320px;
+}
+
+.layout-pane__report-selector {
+	width: 100%;
+}
+
+.layout-pane__preview-note {
+	display: inline-flex;
+	font-size: 12px;
+	color: #475569;
+}
+
+.layout-pane__title-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
 .layout-pane__title {
 	margin: 0;
+}
+
+.layout-pane__generic-type-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	line-height: 1.4;
+	color: #1e3a8a;
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	border-radius: 9999px;
+	white-space: nowrap;
 }
 
 .layout-pane__controls {

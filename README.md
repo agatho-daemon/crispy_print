@@ -44,6 +44,8 @@ Modern print format designer for Frappe using the [Typst](https://typst.app/) ty
 - **Print Preview Page** - Dedicated preview page for testing formats with actual documents
 - **QR Code Integration** - Automatic QR code generation for documents
 - **Raw Typst Mode** - Advanced users can write Typst markup directly
+- **Dual-Mode Report Builder** - Basic visual controls for report templates with Advanced Raw Typst mode for full customization
+- **Report Mode Guardrails** - Safe Basic/Advanced switching with signature checks to prevent accidental overwrite of custom Typst
 
 ## Requirements
 
@@ -285,7 +287,7 @@ crispy_print/
 ### Key Components
 
 **Pages:**
-- **Crispy Format Builder** (`/app/crispy-format-builder`) - Visual layout editor with 4-column grid
+- **Crispy Format Builder** (`/app/crispy-format-builder`) - 4-pane builder; DocType uses visual layout, Report supports Basic + Advanced Raw Typst modes
 - **Crispy Print Preview** (`/app/crispy-print/{doctype}/{docname}/{format}`) - Document preview page
 
 **Core Files:**
@@ -405,6 +407,23 @@ The typical workflow for using Crispy Print:
 1. **Create format** → Design in builder → Save
 2. **Set as default** → To enable Typst button for DocType
 3. **Open document** → Click `typst` button → Download PDF
+
+### Report Builder Workflow (Dual Mode)
+
+For `Crispy Format Type = Report`, builder now supports two editing modes:
+
+- **Basic mode**: non-technical controls generate a managed Typst report template
+- **Advanced mode**: direct Raw Typst editing
+
+Key behavior:
+
+1. **Basic → Advanced** is always allowed.
+2. **Advanced → Basic** only unlocks full Basic editing when the template is still Basic-managed.
+3. If custom Raw Typst changes are detected, Basic opens in **read-only** with options to:
+   - stay in Advanced mode, or
+   - reset/regenerate the Basic template.
+
+This keeps report editing accessible while protecting advanced customizations.
 
 ### Advanced: Creating Formats Without Default
 
@@ -566,6 +585,44 @@ def get_default_doctypes() -> list[str]
 
 ---
 
+#### `get_default_report_builder_config()`
+
+Returns canonical backend defaults for report Basic mode controls.
+
+```python
+@frappe.whitelist()
+def get_default_report_builder_config(generic_report_type: str | None = None) -> dict
+```
+
+**Parameters:**
+- `generic_report_type` (str, optional) - e.g. `"Grid"`, `"Tree"`, `"Summary"`, `"Minimal"`
+
+**Returns:** `dict`
+```python
+{
+    "mode": "basic",
+    "preset": "grid",              # or tree/summary/minimal
+    "show_filters": True,
+    "show_footer_total": True,
+    "header_fill": "#B3D7FF",
+    "header_text_weight": "bold",
+    "font_family": "Inter 18pt",
+    "font_size_pt": 9,
+    "row_striping": False,
+    "row_stripe_fill": "#F8FBFF",
+    "column_align_strategy": "auto",
+    "table_inset_x_pt": 8,
+    "table_inset_y_pt": 6,
+    "table_stroke_top_pt": 1,
+    "table_stroke_body_pt": 0.5,
+    "raw_signature": None
+}
+```
+
+Used by the frontend as the server-side single source of truth for report builder defaults.
+
+---
+
 ### JavaScript API
 
 These functions are available globally in the builder and preview pages.
@@ -614,6 +671,7 @@ As an **alpha release**, Crispy Print has several known limitations:
 - **Limited Field Types**: Currently supports basic fields; complex custom fields may not render correctly
 - **Fixed Grid System**: 4-column layout structure cannot be customized
 - **No Conditional Visibility**: Cannot hide/show elements based on document conditions
+- **Report Basic Mode Scope**: Basic mode intentionally covers common report patterns; complex custom report logic still requires Advanced Raw Typst mode
 
 ### Typst Integration
 
@@ -657,19 +715,18 @@ As an **alpha release**, Crispy Print has several known limitations:
 
 The following features are planned but not yet available:
 
+- [ ] Support Frappe Format Field Templates in Typst output
+-  Native rendering with safe fallback for unsupported legacy templates
 - [ ] Batch printing from list view
 - [ ] Progress indicator for multi-document compilation
 - [ ] Configurable batch size limits
-- [ ] Conditional field visibility rules
-- [ ] Custom page break controls
+- [x] Custom page break controls
 - [ ] Multi-language format support
-- [ ] Format import/export
-- [ ] Real-time collaboration
-- [ ] Advanced table styling options
+- [x] Format import/export
+- [x] Advanced table styling options
 - [ ] Client-side PDF rendering
 - [ ] Format version history
-- [ ] Dynamic letterhead switching
-- [ ] Template variable/expression support
+- [ ] ~~Template variable/expression support~~
 
 ## Troubleshooting
 
@@ -863,4 +920,3 @@ Built with the assistance of various AI tools. Special thanks to:
 ---
 
 **Star this repo if you find it useful!** ⭐
-

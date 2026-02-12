@@ -1,6 +1,11 @@
 // Shared page settings model and helpers
 
 import { deepClone } from "./json"
+import {
+	getDefaultReportBuilderConfig,
+	normalizeReportBuilderConfig,
+	type ReportBuilderConfig,
+} from "./reportBuilder"
 
 export interface TypographyStyle {
 	fontFamily: string
@@ -125,6 +130,7 @@ export interface PageSettings {
 	typography?: TypographySettings
 	table?: TableSettings
 	qr?: QrSettings
+	report_builder?: ReportBuilderConfig
 }
 
 export const defaultPageSettings: PageSettings = {
@@ -138,6 +144,7 @@ export const defaultPageSettings: PageSettings = {
 	table: undefined,
 	language: "en",
 	qr: { dx: 0, dy: 0, size: 15, fields: [], enabled: false },
+	report_builder: getDefaultReportBuilderConfig(),
 }
 
 export function ensureTypography(pageSettings: PageSettings): TypographySettings {
@@ -260,5 +267,9 @@ export function mergePageSettings(
 			...(base.logo || { company: "", image: "", size: 25, dx: 0, dy: 0 }),
 			...((safeOverrides as PageSettings).logo || {}),
 		},
+		report_builder: normalizeReportBuilderConfig(
+			(safeOverrides as PageSettings).report_builder || base.report_builder || {},
+			(safeOverrides as any)?.generic_report_type || (base as any)?.generic_report_type
+		),
 	}
 }
