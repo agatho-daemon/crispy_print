@@ -3,7 +3,7 @@
 		<FieldsPane
 			class="pane pane--fields"
 			:fields="store.fields"
-			:report-columns="store.reportColumns"
+			:report-fields="store.reportBuilderFields"
 			:is-report-mode="store.isReportMode"
 			:loading="store.loading"
 		/>

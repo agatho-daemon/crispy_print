@@ -12,6 +12,7 @@ export interface CrispyFormatDoc {
 	contract?: string
 	is_default?: number
 	is_generic?: number
+	is_advanced?: number
 	generic_report_type?: string
 	doc_header?: string
 	doc_footer?: string
@@ -50,6 +51,34 @@ export interface ImportResult {
 	conflict_action: "copy" | "overwrite"
 }
 
+export interface ReportBuilderDefaults {
+	mode: "basic" | "advanced"
+	preset: "grid" | "tree" | "summary" | "minimal"
+	show_filters: boolean
+	show_summary: boolean
+	include_total_row: boolean
+	show_footer_total: boolean
+	chart_enabled: boolean
+	chart_width_percent: number
+	chart_max_height_pt: number
+	chart_card_border: boolean
+	chart_spacing_top_pt: number
+	chart_spacing_bottom_pt: number
+	header_fill: string
+	header_text_weight: string
+	font_family: string
+	font_size_pt: number
+	row_striping: boolean
+	row_stripe_fill: string
+	column_align_strategy: "auto" | "left" | "center" | "right"
+	table_inset_x_pt: number
+	table_inset_y_pt: number
+	table_stroke_top_pt: number
+	table_stroke_body_pt: number
+	raw_signature: string | null
+	report_table_sync_signature: string | null
+}
+
 export async function getCrispyFormat(name: string): Promise<CrispyFormatDoc> {
 	return await getDoc<CrispyFormatDoc>("Crispy Format", name)
 }
@@ -64,6 +93,7 @@ export async function saveCrispyFormat(
 		typst_code?: string
 		typst_preamble?: string
 		raw_typst?: number
+		is_advanced?: number
 	}
 ): Promise<void> {
 	await setValue("Crispy Format", name, values)
@@ -112,6 +142,19 @@ export async function getTypstLocalFonts(): Promise<string[]> {
 		method: "crispy_print.api.v1.get_typst_local_fonts",
 	})
 	return res.message || []
+}
+
+export async function getDefaultReportBuilderConfig(
+	genericReportType?: string | null
+): Promise<ReportBuilderDefaults> {
+	const res = await call<ReportBuilderDefaults>({
+		method: "crispy_print.api.v1.get_default_report_builder_config",
+		args: { generic_report_type: genericReportType || null },
+	})
+	if (!res.message) {
+		throw new Error("Missing report builder defaults")
+	}
+	return res.message
 }
 
 export function encodePageSettings(settings: PageSettings): string {

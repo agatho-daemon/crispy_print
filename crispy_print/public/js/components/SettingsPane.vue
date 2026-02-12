@@ -28,6 +28,224 @@
 			<div class="settings-pane__form">
 				<div class="settings-pane__section-card card">
 					<button
+						v-if="isReportMode"
+						type="button"
+						class="btn btn-link card-header settings-pane__section-header"
+						:class="{ 'is-expanded': isReportTemplateExpanded }"
+						@click="isReportTemplateExpanded = !isReportTemplateExpanded"
+					>
+						<span>Report Template</span>
+						<svg
+							:class="[
+								'settings-pane__chevron',
+								{ 'settings-pane__chevron--expanded': isReportTemplateExpanded },
+							]"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+					<div
+						v-if="isReportMode && isReportTemplateExpanded"
+						class="settings-pane__section-content card-body"
+					>
+						<div class="settings-pane__field">
+							<label class="settings-pane__label">Preset</label>
+							<select
+								v-model="reportBuilderConfig.preset"
+								class="form-control"
+								:disabled="reportBasicReadOnly"
+							>
+								<option value="grid">Grid</option>
+								<option value="tree">Tree</option>
+								<option value="summary">Summary</option>
+								<option value="minimal">Minimal</option>
+							</select>
+						</div>
+						<div class="settings-pane__grid">
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">Font Family</label>
+								<select
+									v-model="reportBuilderConfig.font_family"
+									class="form-control"
+									:disabled="reportBasicReadOnly"
+								>
+									<option
+										v-for="font in availableFonts"
+										:key="font"
+										:value="font"
+									>
+										{{ font }}
+									</option>
+								</select>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">Font Size (pt)</label>
+								<input
+									v-model.number="reportBuilderConfig.font_size_pt"
+									type="number"
+									min="1"
+									step="1"
+									class="form-control"
+									:disabled="reportBasicReadOnly"
+								/>
+							</div>
+						</div>
+						<div class="settings-pane__grid settings-pane__grid--stripe">
+							<div class="settings-pane__field settings-pane__field--toggle">
+								<label class="settings-pane__sublabel">Show Filters</label>
+								<div class="settings-pane__checkbox-wrap">
+									<input
+										v-model="reportBuilderConfig.show_filters"
+										type="checkbox"
+										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										:disabled="reportBasicReadOnly"
+									/>
+								</div>
+							</div>
+							<div class="settings-pane__field settings-pane__field--toggle">
+								<label class="settings-pane__sublabel">Show Summary</label>
+								<div class="settings-pane__checkbox-wrap">
+									<input
+										v-model="reportBuilderConfig.show_summary"
+										type="checkbox"
+										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										:disabled="reportBasicReadOnly"
+									/>
+								</div>
+							</div>
+							<div class="settings-pane__field settings-pane__field--toggle">
+								<label class="settings-pane__sublabel">Show Total Row</label>
+								<div class="settings-pane__checkbox-wrap">
+									<input
+										v-model="reportBuilderConfig.include_total_row"
+										type="checkbox"
+										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										:disabled="reportBasicReadOnly"
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div v-if="isReportMode" class="settings-pane__section-card card">
+					<button
+						type="button"
+						class="btn btn-link card-header settings-pane__section-header"
+						:class="{ 'is-expanded': isChartExpanded }"
+						@click="isChartExpanded = !isChartExpanded"
+					>
+						<span>Chart Settings</span>
+						<svg
+							:class="[
+								'settings-pane__chevron',
+								{ 'settings-pane__chevron--expanded': isChartExpanded },
+							]"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+					<div v-if="isChartExpanded" class="settings-pane__section-content card-body">
+						<div class="settings-pane__grid">
+							<div class="settings-pane__field settings-pane__field--toggle">
+								<label class="settings-pane__sublabel">Enable Chart</label>
+								<div class="settings-pane__checkbox-wrap">
+									<input
+										v-model="reportBuilderConfig.chart_enabled"
+										type="checkbox"
+										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										:disabled="reportBasicReadOnly"
+									/>
+								</div>
+							</div>
+							<div class="settings-pane__field settings-pane__field--toggle">
+								<label class="settings-pane__sublabel">Card Border</label>
+								<div class="settings-pane__checkbox-wrap">
+									<input
+										v-model="reportBuilderConfig.chart_card_border"
+										type="checkbox"
+										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										:disabled="
+											reportBasicReadOnly ||
+											!reportBuilderConfig.chart_enabled
+										"
+									/>
+								</div>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">Chart Width (%)</label>
+								<input
+									v-model.number="reportBuilderConfig.chart_width_percent"
+									type="number"
+									min="10"
+									max="100"
+									step="1"
+									class="form-control"
+									:disabled="
+										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+									"
+								/>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">Max Height (pt)</label>
+								<input
+									v-model.number="reportBuilderConfig.chart_max_height_pt"
+									type="number"
+									min="60"
+									max="600"
+									step="1"
+									class="form-control"
+									:disabled="
+										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+									"
+								/>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">Spacing Top (pt)</label>
+								<input
+									v-model.number="reportBuilderConfig.chart_spacing_top_pt"
+									type="number"
+									min="0"
+									max="120"
+									step="1"
+									class="form-control"
+									:disabled="
+										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+									"
+								/>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">Spacing Bottom (pt)</label>
+								<input
+									v-model.number="reportBuilderConfig.chart_spacing_bottom_pt"
+									type="number"
+									min="0"
+									max="120"
+									step="1"
+									class="form-control"
+									:disabled="
+										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+									"
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div v-if="!isReportMode" class="settings-pane__section-card card">
+					<button
 						type="button"
 						class="btn btn-link card-header settings-pane__section-header"
 						:class="{ 'is-expanded': isPageSettingsExpanded }"
@@ -119,7 +337,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="settings-pane__section-card card">
+				<div v-if="!isReportMode" class="settings-pane__section-card card">
 					<button
 						type="button"
 						class="btn btn-link card-header settings-pane__section-header"
@@ -593,7 +811,7 @@
 						:class="{ 'is-expanded': isBrandingExpanded }"
 						@click="isBrandingExpanded = !isBrandingExpanded"
 					>
-						<span>Letterhead / Logo</span>
+						<span>Branding</span>
 						<svg
 							:class="[
 								'settings-pane__chevron',
@@ -701,7 +919,7 @@
 					</div>
 				</div>
 
-				<label class="settings-pane__checkbox-row">
+				<label v-if="!isReportMode" class="settings-pane__checkbox-row">
 					<span class="input-area">
 						<input
 							v-model="qrSettings.enabled"
@@ -719,7 +937,7 @@
 					<span class="ml-1 help"></span>
 				</label>
 
-				<div v-if="qrSettings.enabled" class="settings-pane__section">
+				<div v-if="!isReportMode && qrSettings.enabled" class="settings-pane__section">
 					<div class="settings-pane__section-card card">
 						<button
 							type="button"
@@ -813,6 +1031,7 @@ import { useBrandingData } from "../composables/useBrandingData";
 import { useStore } from "../composables/useStore";
 import QrFieldsDialog from "./QrFieldsDialog.vue";
 import { getLogger } from "../logger";
+import { getDefaultReportBuilderConfig } from "../utils/reportBuilder";
 
 interface Props {
 	pageSettings: PageSettings;
@@ -836,10 +1055,25 @@ const {
 const isPageSettingsExpanded = ref(false);
 const isTypographyExpanded = ref(false);
 const isTableExpanded = ref(false);
+const isReportTemplateExpanded = ref(false);
+const isChartExpanded = ref(false);
 const isBrandingExpanded = ref(false);
 const isQrExpanded = ref(false);
 const store = useStore();
 const showQrDialog = ref(false);
+const fallbackReportBuilder = ref(getDefaultReportBuilderConfig());
+const isReportMode = computed(() => Boolean(store.isReportMode?.value));
+const reportBuilderConfig = computed({
+	get: () => store.reportBuilderConfig?.value || fallbackReportBuilder.value,
+	set: (nextValue) => {
+		if (store.reportBuilderConfig?.value) {
+			store.reportBuilderConfig.value = nextValue;
+		} else {
+			fallbackReportBuilder.value = nextValue;
+		}
+	},
+});
+const reportBasicReadOnly = computed(() => Boolean(store.reportBasicReadOnly?.value));
 
 // Initialize typography with defaults if not present
 const typography = computed<TypographySettings>(() => {
@@ -992,6 +1226,7 @@ watch(availableCompanies, () => {
 
 .settings-pane__header :deep(.section-head-content) {
 	padding: 0 0 8px;
+	border-bottom: none;
 }
 
 .settings-pane__header-row {
@@ -1155,7 +1390,10 @@ watch(availableCompanies, () => {
 }
 
 .settings-pane__section-card {
-	overflow: visible;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	overflow: hidden;
+	background: #fff;
 }
 
 .settings-pane__section-header {
@@ -1163,16 +1401,39 @@ watch(availableCompanies, () => {
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
-	margin: 0;
-	padding: 0;
-	font-size: 13px;
 	cursor: pointer;
+	margin: 0;
+	padding: 10px 12px;
 	text-align: left;
+	background: #fff;
+	color: #334155;
+	border: none;
+	text-decoration: none;
 }
 
 .settings-pane__section-header.is-expanded {
 	border-left: 0;
 	padding-left: 12px;
+}
+
+.settings-pane__section-header:hover {
+	background: #f8fafc;
+	color: #334155;
+	text-decoration: none;
+}
+
+.settings-pane__section-header:focus {
+	background: #fff;
+	color: #334155;
+	text-decoration: none;
+	outline: none;
+	box-shadow: none;
+}
+
+.settings-pane__section-header:focus-visible {
+	background: #f8fafc;
+	outline: 2px solid #cbd5e1;
+	outline-offset: -2px;
 }
 
 .settings-pane__chevron {
@@ -1190,7 +1451,8 @@ watch(availableCompanies, () => {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	padding: 12px 12px 14px;
+	padding: 12px;
+	border-top: 1px solid #e2e8f0;
 }
 
 .settings-pane__subsection {

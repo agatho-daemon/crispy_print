@@ -50,6 +50,14 @@ vi.mock("../../composables/useStore", () => {
 	return {
 		useStore: () => ({
 			layout,
+			crispyFormat: ref({
+				crispy_format_type: "DocType",
+				is_generic: 0,
+				generic_report_type: "",
+			}),
+			reportCandidates: ref([]),
+			selectedReportName: ref(""),
+			setSelectedReport: vi.fn(async () => {}),
 			meta: ref({}),
 			getDefaultLayout: vi.fn(),
 			markDirty: vi.fn(),

@@ -16,6 +16,7 @@ EXPORT_FIELDS = [
 	"report",
 	"contract",
 	"is_generic",
+	"is_advanced",
 	"generic_report_type",
 	"raw_typst",
 	"layout_json",
@@ -146,10 +147,11 @@ def get_builder_mode(format_name: str) -> dict:
 	# Determine builder mode
 	mode = "visual"  # Default for DocType formats
 
-	# Generic Report formats use code mode
-	if format_doc.crispy_format_type == "Report" and format_doc.is_generic:
-		mode = "code"
-	# Raw Typst mode also uses code editor
+	# Report formats now use is_advanced as mode source of truth.
+	if format_doc.crispy_format_type == "Report":
+		if getattr(format_doc, "is_advanced", 0) or format_doc.raw_typst:
+			mode = "code"
+	# Raw Typst mode also uses code editor for non-report formats.
 	elif format_doc.raw_typst:
 		mode = "code"
 
@@ -157,9 +159,46 @@ def get_builder_mode(format_name: str) -> dict:
 		"mode": mode,
 		"format_type": format_doc.crispy_format_type,
 		"is_generic": format_doc.is_generic or 0,
+		"is_advanced": getattr(format_doc, "is_advanced", 0) or 0,
 		"generic_report_type": format_doc.generic_report_type,
 		"doc_type": format_doc.doc_type,
 		"report": format_doc.report,
+	}
+
+
+def get_default_report_builder_config(generic_report_type: str | None = None) -> dict:
+	"""Return canonical server-side defaults for report builder basic mode."""
+	report_type = (generic_report_type or "").strip().lower()
+	preset = "grid"
+	if report_type in ("tree", "summary", "minimal", "grid"):
+		preset = report_type
+
+	return {
+		"mode": "basic",
+		"preset": preset,
+		"show_filters": True,
+		"show_summary": True,
+		"include_total_row": True,
+		"show_footer_total": True,
+		"chart_enabled": True,
+		"chart_width_percent": 100,
+		"chart_max_height_pt": 220,
+		"chart_card_border": True,
+		"chart_spacing_top_pt": 0,
+		"chart_spacing_bottom_pt": 12,
+		"header_fill": "#B3D7FF",
+		"header_text_weight": "bold",
+		"font_family": "Inter 18pt",
+		"font_size_pt": 9,
+		"row_striping": False,
+		"row_stripe_fill": "#F8FBFF",
+		"column_align_strategy": "auto",
+		"table_inset_x_pt": 8,
+		"table_inset_y_pt": 6,
+		"table_stroke_top_pt": 1,
+		"table_stroke_body_pt": 0.5,
+		"raw_signature": None,
+		"report_table_sync_signature": None,
 	}
 
 
@@ -182,7 +221,10 @@ def get_reports_without_custom_html(generic_report_type: str | None = None) -> l
 		order_by="name asc",
 	)
 
-	# Filter out reports with custom HTML and optionally by tree/grid type
+	normalized_report_type = (generic_report_type or "").strip().lower()
+
+	# Filter out reports with custom HTML and optionally by tree/grid type.
+	# Grid/Tree are strict; all other generic types fall back to full no-HTML list.
 	available_reports = []
 	for report in reports:
 		report_name = report["name"]
@@ -210,12 +252,10 @@ def get_reports_without_custom_html(generic_report_type: str | None = None) -> l
 				if "tree:" in js_content and "true" in js_content:
 					is_tree = True
 
-			# Filter by generic_report_type if specified
-			if generic_report_type:
-				if generic_report_type == "Tree" and not is_tree:
-					continue
-				if generic_report_type == "Grid" and is_tree:
-					continue
+			if normalized_report_type == "tree" and not is_tree:
+				continue
+			if normalized_report_type == "grid" and is_tree:
+				continue
 
 			report["is_tree"] = is_tree
 			available_reports.append(report)

@@ -80,4 +80,46 @@ describe("crispy format import/export api wrappers", () => {
 			},
 		})
 	})
+
+	it("gets report builder defaults from backend", async () => {
+		const { call } = await import("../../api/frappe")
+		;(call as any).mockResolvedValueOnce({
+			message: {
+				mode: "basic",
+				preset: "tree",
+				show_filters: true,
+				show_summary: true,
+				include_total_row: true,
+				show_footer_total: true,
+				chart_enabled: true,
+				chart_width_percent: 100,
+				chart_max_height_pt: 220,
+				chart_card_border: true,
+				chart_spacing_top_pt: 0,
+				chart_spacing_bottom_pt: 12,
+				header_fill: "#B3D7FF",
+				header_text_weight: "bold",
+				font_family: "Inter 18pt",
+				font_size_pt: 9,
+				row_striping: false,
+				row_stripe_fill: "#F8FBFF",
+				column_align_strategy: "auto",
+				table_inset_x_pt: 8,
+				table_inset_y_pt: 6,
+				table_stroke_top_pt: 1,
+				table_stroke_body_pt: 0.5,
+				raw_signature: null,
+				report_table_sync_signature: null,
+			},
+		})
+
+		const { getDefaultReportBuilderConfig } = await import("../../api/crispy")
+		const defaults = await getDefaultReportBuilderConfig("Tree")
+
+		expect(defaults.preset).toBe("tree")
+		expect((call as any).mock.calls[0][0]).toMatchObject({
+			method: "crispy_print.api.v1.get_default_report_builder_config",
+			args: { generic_report_type: "Tree" },
+		})
+	})
 })

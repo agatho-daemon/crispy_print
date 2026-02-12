@@ -83,7 +83,7 @@
 					>
 						<option value="" disabled>Select field</option>
 						<option
-							v-for="option in availableColumns"
+							v-for="option in availableColumnOptions"
 							:key="option.fieldname"
 							:value="option.fieldname"
 						>
@@ -127,6 +127,7 @@ import { deepClone } from "../utils/json";
 interface Props {
 	modelValue: TableColumn[];
 	doctype: string;
+	availableColumns?: Array<{ label: string; fieldname: string; fieldtype?: string }>;
 }
 
 const props = defineProps<Props>();
@@ -198,11 +199,22 @@ watch(
 	{ deep: true }
 );
 
-const availableColumns = computed(() => {
+const availableColumnOptions = computed(() => {
 	const existing = new Set(localColumns.value.map((c) => c.fieldname));
 	const base: { label: string; fieldname: string; fieldtype: string }[] = [
 		{ label: "Sr No.", fieldname: "idx", fieldtype: "Data" },
 	];
+
+	if (Array.isArray(props.availableColumns) && props.availableColumns.length) {
+		return [...base, ...props.availableColumns]
+			.filter((f) => f?.fieldname && f?.label)
+			.map((f) => ({
+				label: f.label,
+				fieldname: f.fieldname,
+				fieldtype: f.fieldtype || "Data",
+			}))
+			.filter((f) => !existing.has(f.fieldname));
+	}
 
 	if (!childMeta.value?.fields) {
 		return base;
@@ -233,7 +245,9 @@ function removeColumn(column: TableColumn) {
 
 function addColumn() {
 	if (!pendingFieldname.value) return;
-	const option = availableColumns.value.find((opt) => opt.fieldname === pendingFieldname.value);
+	const option = availableColumnOptions.value.find(
+		(opt) => opt.fieldname === pendingFieldname.value
+	);
 	if (!option) return;
 
 	const newCol: TableColumn = {
@@ -273,7 +287,7 @@ function validateWidths(cols: TableColumn[]) {
 			col.width = "auto";
 		}
 		// Basic validation: should be like "1fr", "auto", "100pt", etc.
-		const valid = /^(\d+\.?\d*)(fr|pt|em|%|cm|mm|in)?$|^auto$/i.test(col.width.trim());
+		const valid = /^(\d+\.?\d*)(fr|pt|em|rem|%|cm|mm|in)$|^auto$/i.test(col.width.trim());
 		(col as any).invalid_width = !valid;
 	}
 }

@@ -72,7 +72,7 @@ class CrispyFormat(Document):
 """
 
 	def validate(self):
-		"""Validate field combinations and auto-enable raw_typst for generic templates"""
+		"""Validate field combinations and keep report raw mode aligned with is_advanced."""
 		# Validate Report mode fields
 		if self.crispy_format_type == "Report":
 			if self.is_generic:
@@ -84,9 +84,6 @@ class CrispyFormat(Document):
 				if self.report:
 					frappe.throw("Generic templates cannot be linked to a specific report")
 
-				# Auto-enable raw_typst for generic templates
-				if not self.raw_typst:
-					self.raw_typst = 1
 			else:
 				# Custom report formats must have a report
 				if not self.report:
@@ -95,6 +92,9 @@ class CrispyFormat(Document):
 				# Custom formats must not have generic_report_type
 				if self.generic_report_type:
 					frappe.throw("Custom report formats cannot have a Generic Report Type")
+
+			# Report mode source of truth: is_advanced drives raw_typst.
+			self.raw_typst = 1 if self.is_advanced else 0
 
 		# Validate DocType mode
 		elif self.crispy_format_type == "DocType":
@@ -106,6 +106,7 @@ class CrispyFormat(Document):
 				self.report = None
 				self.generic_report_type = None
 				self.is_generic = 0
+			self.is_advanced = 0
 
 		# Validate Contract mode
 		elif self.crispy_format_type == "Contract":
@@ -117,6 +118,7 @@ class CrispyFormat(Document):
 				self.report = None
 				self.generic_report_type = None
 				self.is_generic = 0
+			self.is_advanced = 0
 
 		# Clear other defaults when this format is set as default
 		if self.is_default:

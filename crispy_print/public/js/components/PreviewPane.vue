@@ -13,7 +13,7 @@
 		:doc-name="null"
 		:page-settings="store.pageSettings.value"
 		:change-key="store.changeKey.value"
-		:watch-data-changes="true"
+		:watch-data-changes="!isReportMode"
 	>
 		<template #menu>
 			<div class="section-head preview-pane__header">
@@ -39,7 +39,10 @@
 							class="preview-pane__help-popover"
 						>
 							<ul class="preview-pane__help-list">
-								<li>Pick a document to preview.</li>
+								<li v-if="isReportMode">
+									Style preview uses deterministic sample data.
+								</li>
+								<li v-else>Pick a document to preview.</li>
 								<li>Refresh regenerates the preview.</li>
 								<li>View code shows the generated Typst source.</li>
 							</ul>
@@ -50,24 +53,12 @@
 
 			<div class="preview-pane__controls card">
 				<div class="preview-pane__controls-row">
-					<!-- Sample Report Selector (for generic Report formats) -->
-					<div v-if="isGenericReport" class="preview-search">
+					<!-- Sample Report Selector (shared with LayoutPane for Report formats) -->
+					<div v-if="isReportMode" class="preview-search">
 						<div class="preview-search__input-wrap">
-							<select
-								id="sample-report-select"
-								class="form-control preview-search__input"
-								:disabled="store.sampleReports.value.length === 0"
-								@change="handleReportSelection"
-							>
-								<option value="">Sample Report...</option>
-								<option
-									v-for="report in store.sampleReports.value"
-									:key="report.name"
-									:value="report.name"
-								>
-									{{ report.name }}
-								</option>
-							</select>
+							<span class="preview-search__note">
+								Style preview with placeholder data
+							</span>
 						</div>
 					</div>
 					<div v-else class="preview-search">
@@ -115,35 +106,25 @@
 <script setup lang="ts">
 import PreviewRenderer from "./PreviewRenderer.vue";
 import { useStore } from "../composables/useStore";
-import { computed, ref } from "vue";
+import { computed, watch } from "vue";
 import { getLogger } from "../logger";
 
 const store = useStore();
 const logger = getLogger({ component: "PreviewPane" });
 const qrEnabled = computed(() => store.qrEnabled.value);
-const selectedReport = ref<string>("");
+let reportCompileRequestSeq = 0;
 
-// Check if this is a generic Report format
-const isGenericReport = computed(() => {
+const isReportMode = computed(() => {
 	const format = store.crispyFormat.value;
-	return (
-		format?.crispy_format_type === "Report" && format?.is_generic === 1 && store.rawTypst.value
-	);
+	return format?.crispy_format_type === "Report";
 });
 
-/**
- * Handle report selection and trigger preview compilation
- */
-async function handleReportSelection(event: Event) {
-	const target = event.target as HTMLSelectElement;
-	const reportName = target.value;
-
-	if (!reportName) {
-		selectedReport.value = "";
+async function compileSelectedReport(reportName: string) {
+	if (!reportName || !store.formatName.value) {
 		return;
 	}
+	const requestSeq = ++reportCompileRequestSeq;
 
-	selectedReport.value = reportName;
 	logger.info("Selected report", reportName);
 
 	try {
@@ -153,6 +134,9 @@ async function handleReportSelection(event: Event) {
 
 		// Trigger preview compilation via store
 		const result = await store.compileReportPreview(reportName, []);
+		if (requestSeq !== reportCompileRequestSeq) {
+			return;
+		}
 
 		// Dispatch custom event with SVG data for PreviewRenderer
 		if (result && result.success) {
@@ -168,12 +152,31 @@ async function handleReportSelection(event: Event) {
 			if (statusEl) statusEl.textContent = `${result.page_count} page(s)`;
 		}
 	} catch (error) {
+		if (requestSeq !== reportCompileRequestSeq) {
+			return;
+		}
 		logger.error("Preview compilation failed", error);
 		const statusEl = document.getElementById("typst-status");
 		if (statusEl) statusEl.textContent = "Error";
 		frappe.show_alert({ message: "Preview compilation failed", indicator: "red" });
 	}
 }
+
+watch(
+	() =>
+		[
+			isReportMode.value,
+			store.changeKey.value,
+			store.reportBuilderConfig?.value?.show_filters,
+			store.reportBuilderConfig?.value?.show_summary,
+			store.reportBuilderConfig?.value?.include_total_row,
+		] as const,
+	([reportMode]) => {
+		if (!reportMode) return;
+		void compileSelectedReport("Style Preview");
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -274,6 +277,11 @@ async function handleReportSelection(event: Event) {
 
 .preview-search__input {
 	width: 200px;
+}
+
+.preview-search__note {
+	font-size: 12px;
+	color: #475569;
 }
 
 .preview-btn {

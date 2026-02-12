@@ -2,6 +2,7 @@
 # See license.txt
 
 import json
+from unittest import mock
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -136,6 +137,68 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertIn("Sales Order", default_doctypes)
 		self.assertIn("Purchase Order", default_doctypes)
 
+	def test_get_default_report_builder_config(self):
+		from crispy_print.api.v1 import get_default_report_builder_config
+
+		grid = get_default_report_builder_config("Grid")
+		tree = get_default_report_builder_config("Tree")
+		unknown = get_default_report_builder_config("SomethingElse")
+
+		self.assertEqual(grid["mode"], "basic")
+		self.assertEqual(grid["preset"], "grid")
+		self.assertEqual(tree["preset"], "tree")
+		self.assertEqual(unknown["preset"], "grid")
+		self.assertIn("show_filters", grid)
+		self.assertIn("chart_enabled", grid)
+		self.assertIn("font_family", grid)
+
+	def test_get_reports_without_custom_html_type_filtering(self):
+		from crispy_print.api.v1.formats import get_reports_without_custom_html
+
+		reports = [
+			{
+				"name": "Tree Report",
+				"report_type": "Script Report",
+				"ref_doctype": "Sales Invoice",
+				"module": "Accounts",
+			},
+			{
+				"name": "Grid Report",
+				"report_type": "Query Report",
+				"ref_doctype": "Sales Invoice",
+				"module": "Accounts",
+			},
+		]
+
+		def fake_exists(path_obj):
+			path = str(path_obj)
+			if path.endswith(".html"):
+				return False
+			return path.endswith(".js")
+
+		def fake_read_text(_self, encoding="utf-8"):
+			path = str(_self)
+			if "tree_report.js" in path:
+				return "frappe.query_reports['Tree Report'] = { tree: true }"
+			return "frappe.query_reports['Grid Report'] = { tree: false }"
+
+		with (
+			mock.patch("crispy_print.api.v1.formats.frappe.get_all", return_value=reports),
+			mock.patch(
+				"crispy_print.api.v1.formats.frappe.get_module_path",
+				return_value="/tmp/accounts",
+			),
+			mock.patch("pathlib.Path.exists", side_effect=fake_exists),
+			mock.patch("pathlib.Path.read_text", side_effect=fake_read_text),
+		):
+			grid_only = get_reports_without_custom_html("Grid")
+			tree_only = get_reports_without_custom_html("Tree")
+			summary_fallback = get_reports_without_custom_html("Summary")
+
+		self.assertEqual([r["name"] for r in grid_only], ["Grid Report"])
+		self.assertEqual([r["name"] for r in tree_only], ["Tree Report"])
+		self.assertCountEqual([r["name"] for r in summary_fallback], ["Tree Report", "Grid Report"])
+
 	def test_get_crispy_formats_empty_doctype(self):
 		"""Test retrieval for DocType with no formats"""
 		from crispy_print.api.v1 import get_crispy_formats_for_doctype
@@ -223,6 +286,7 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 				"doc_type": None,
 				"contract": None,
 				"is_generic": 1,
+				"is_advanced": 1,
 				"generic_report_type": "Grid",
 				"raw_typst": 0,
 				"layout_json": json.dumps({"sections": []}),
@@ -239,6 +303,7 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		imported = frappe.get_doc("Crispy Format", result["name"])
 		self.assertEqual(imported.crispy_format_type, "Report")
 		self.assertEqual(imported.is_generic, 1)
+		self.assertEqual(imported.is_advanced, 1)
 		self.assertEqual(imported.raw_typst, 1)
 
 	def test_import_conflict_copy_creates_suffix(self):

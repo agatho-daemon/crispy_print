@@ -106,56 +106,42 @@ frappe.ui.form.on("Crispy Format", {
 				"blue"
 			);
 		}
+
+		syncReportRawTypstFromAdvanced(frm);
 	},
 
 	is_generic(frm) {
 		if (frm.doc.crispy_format_type !== "Report") return;
 
 		if (frm.doc.is_generic) {
-			// Auto-enable raw_typst for generic templates
-			frm.set_value("raw_typst", 1);
-
 			// Clear report field (generic templates don't have specific reports)
 			if (frm.doc.report) {
 				frm.set_value("report", null);
 			}
-
-			frappe.show_alert(
-				{
-					message: __(
-						"Raw Typst enabled. You can manually edit Typst code for this template."
-					),
-					indicator: "blue",
-				},
-				5
-			);
 		} else {
 			// Clear generic_report_type when switching to custom report
 			if (frm.doc.generic_report_type) {
 				frm.set_value("generic_report_type", null);
 			}
-
-			// Clear raw_typst (it was auto-enabled for generic templates)
-			if (frm.doc.raw_typst) {
-				frm.set_value("raw_typst", 0);
-			}
 		}
 	},
 
-	raw_typst(frm) {
-		// Prevent unchecking raw_typst for generic templates
-		if (frm.doc.crispy_format_type === "Report" && frm.doc.is_generic && !frm.doc.raw_typst) {
-			frappe.show_alert(
-				{
-					message: __("Generic templates must use Raw Typst mode"),
-					indicator: "orange",
-				},
-				3
-			);
-			frm.set_value("raw_typst", 1);
-		}
+	crispy_format_type(frm) {
+		syncReportRawTypstFromAdvanced(frm);
+	},
+
+	is_advanced(frm) {
+		syncReportRawTypstFromAdvanced(frm);
 	},
 });
+
+function syncReportRawTypstFromAdvanced(frm) {
+	if (frm.doc.crispy_format_type !== "Report") return;
+	const nextRawTypst = frm.doc.is_advanced ? 1 : 0;
+	if (frm.doc.raw_typst !== nextRawTypst) {
+		frm.set_value("raw_typst", nextRawTypst);
+	}
+}
 
 async function exportFormat(name) {
 	if (!name) {
