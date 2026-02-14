@@ -85,6 +85,7 @@
 							class="btn btn-default btn-sm preview-btn"
 							type="button"
 							title="Refresh preview"
+							@click="onRefreshClick"
 						>
 							Refresh
 						</button>
@@ -162,11 +163,17 @@ async function compileSelectedReport(reportName: string) {
 	}
 }
 
+function onRefreshClick() {
+	if (!isReportMode.value) return;
+	void compileSelectedReport("Style Preview");
+}
+
 watch(
 	() =>
 		[
 			isReportMode.value,
 			store.changeKey.value,
+			store.rawTypst.value,
 			store.reportBuilderConfig?.value?.show_filters,
 			store.reportBuilderConfig?.value?.show_summary,
 			store.reportBuilderConfig?.value?.include_total_row,

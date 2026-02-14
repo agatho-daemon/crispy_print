@@ -40,13 +40,8 @@ function load_crispy_format_builder(wrapper) {
 		page.clear_icons();
 		page.clear_custom_actions();
 
-		// Set page title
-		const routeOptions = frappe.route_options || {};
-		if (routeOptions.crispy_format_type === "Report" && routeOptions.report) {
-			page.set_title(__("Editing {0} Report", [routeOptions.report]));
-		} else {
-			page.set_title(__("Editing {0}", [format_name]));
-		}
+		// Set page title (source of truth: format document name)
+		page.set_title(__("Editing {0}", [format_name]));
 
 		// Mount Vue app
 		parent.innerHTML =
@@ -69,13 +64,13 @@ function load_crispy_format_builder(wrapper) {
 			}
 			frappe.route_options = null;
 
-			// Keep title in sync after async fetch (route_options not present on reload)
+			// Keep title in sync after async fetch (e.g. if format is renamed)
 			if (window.Vue && window.Vue.watch && store?.crispyFormat) {
 				window.Vue.watch(
 					() => store.crispyFormat.value,
 					(doc) => {
-						if (doc?.crispy_format_type === "Report" && doc?.report) {
-							page.set_title(__("Editing {0} Report", [doc.report]));
+						if (doc?.name) {
+							page.set_title(__("Editing {0}", [doc.name]));
 						}
 					}
 				);

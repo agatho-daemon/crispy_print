@@ -893,15 +893,22 @@ function buildStore() {
         }
       }
 
+      const reportAdvancedMode = Boolean(doc.is_advanced || doc.raw_typst);
       const persistedReportBuilder =
         (pageSettings.value as any)?.report_builder || {};
-      reportBuilderConfig.value = normalizeReportBuilderConfig(
+      const normalizedReportBuilder = normalizeReportBuilderConfig(
         {
           ...serverDefaults,
           ...persistedReportBuilder,
         },
         doc.generic_report_type,
       );
+      // Set mode before assigning into reactive state so the deep watcher
+      // doesn't generate basic Typst over advanced raw Typst during fetch.
+      if (formatType === "Report") {
+        normalizedReportBuilder.mode = reportAdvancedMode ? "advanced" : "basic";
+      }
+      reportBuilderConfig.value = normalizedReportBuilder;
       pageSettings.value.report_builder = reportBuilderConfig.value;
       migrateLegacyReportBuilderTableStyles(persistedReportBuilder);
 

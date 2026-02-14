@@ -1346,6 +1346,16 @@ export function setupWorker(
 
 	refreshBtn &&
 		(refreshBtn.onclick = () => {
+			// Report-mode builder preview compiles outside setupWorker (via store.compileReportPreview).
+			// Avoid setting "refreshing..." when this worker has no document context.
+			const adapterDoctype = adapter.getDoctype?.()
+			const adapterDocname = adapter.getDocname?.()
+			const canRefreshViaWorker = Boolean(
+				sampleDocSelected || (currentDoctype && currentDocname) || (adapterDoctype && adapterDocname)
+			)
+			if (!canRefreshViaWorker) {
+				return
+			}
 			if (statusEl) {
 				statusEl.textContent = "refreshing..."
 				statusEl.style.color = "#3498db"

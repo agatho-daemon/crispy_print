@@ -237,32 +237,37 @@ def get_reports_without_custom_html(generic_report_type: str | None = None) -> l
 
 		try:
 			module_path = frappe.get_module_path(module)
-			html_path = Path(module_path) / "report" / report_folder / f"{report_folder}.html"
-
-			# Skip reports with custom HTML
-			if html_path.exists():
-				continue
-
-			# Detect tree vs grid from JavaScript config
-			js_path = Path(module_path) / "report" / report_folder / f"{report_folder}.js"
-			is_tree = False
-			if js_path.exists():
-				js_content = js_path.read_text(encoding="utf-8")
-				# Check for tree: true in JavaScript
-				if "tree:" in js_content and "true" in js_content:
-					is_tree = True
-
-			if normalized_report_type == "tree" and not is_tree:
-				continue
-			if normalized_report_type == "grid" and is_tree:
-				continue
-
-			report["is_tree"] = is_tree
-			available_reports.append(report)
-
 		except Exception:
 			# Module not found or path error - skip
-			pass
+			continue
+
+		html_path = Path(module_path) / "report" / report_folder / f"{report_folder}.html"
+
+		# Skip reports with custom HTML
+		try:
+			if Path.exists(html_path):
+				continue
+		except Exception:
+			continue
+
+		# Detect tree vs grid from JavaScript config.
+		# If we cannot inspect JS for any reason, degrade to non-tree (grid).
+		js_path = Path(module_path) / "report" / report_folder / f"{report_folder}.js"
+		is_tree = False
+		try:
+			if Path.exists(js_path):
+				js_content = Path.read_text(js_path, encoding="utf-8")
+				is_tree = bool(re.search(r"tree\s*:\s*true", js_content, re.IGNORECASE))
+		except Exception:
+			is_tree = False
+
+		if normalized_report_type == "tree" and not is_tree:
+			continue
+		if normalized_report_type == "grid" and is_tree:
+			continue
+
+		report["is_tree"] = is_tree
+		available_reports.append(report)
 
 	return available_reports
 
@@ -411,7 +416,7 @@ def _insert_new_format(format_data: dict, copy_name: bool) -> "frappe.model.docu
 	doc_data["doctype"] = "Crispy Format"
 	doc_data["is_default"] = 0
 	doc = frappe.get_doc(doc_data)
-	doc.insert()
+	doc.insert(ignore_links=True)
 	return doc
 
 
@@ -427,6 +432,7 @@ def _overwrite_format(target_name: str, format_data: dict) -> "frappe.model.docu
 		doc.set(field, format_data.get(field))
 
 	doc.is_default = preserved_is_default
+	doc.flags.ignore_links = True
 	doc.save()
 	return doc
 

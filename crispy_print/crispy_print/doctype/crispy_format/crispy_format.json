@@ -10,14 +10,14 @@
   "raw_typst",
   "is_generic",
   "is_advanced",
-  "is_default",
+  "report",
   "column_break_gqub",
   "doc_type",
-  "report",
   "contract",
   "generic_report_type",
   "column_break_pzen",
   "module",
+  "is_default",
   "section_break_bjol",
   "default_print_language",
   "typst_code_section",
@@ -57,17 +57,6 @@
    "label": "DocType",
    "mandatory_depends_on": "eval:doc.crispy_format_type == \"DocType\"",
    "options": "DocType"
-  },
-  {
-   "depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
-   "fieldname": "report",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Report",
-   "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
-   "options": "Report"
   },
   {
    "depends_on": "eval:doc.crispy_format_type == \"Contract\"",
@@ -117,7 +106,6 @@
    "default": "0",
    "fieldname": "is_default",
    "fieldtype": "Check",
-   "hidden": 1,
    "label": "Default"
   },
   {
@@ -167,10 +155,10 @@
   },
   {
    "depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
-   "description": "Select a template type (Grid, Tree, Summary, etc.), or create a custom type.",
+   "description": "Used only for generic fallback templates; ignored for linked/custom report formats.<br>Select a template type (Grid, Tree, Summary, etc.), or create a custom type.",
    "fieldname": "generic_report_type",
    "fieldtype": "Link",
-   "label": "Generic Report Type",
+   "label": "Generic Template Type",
    "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
    "options": "Crispy Generic Report"
   },
@@ -181,12 +169,20 @@
    "fieldname": "is_advanced",
    "fieldtype": "Check",
    "label": "Advanced"
+  },
+  {
+   "depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
+   "fieldname": "report",
+   "fieldtype": "Table",
+   "label": "Report",
+   "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
+   "options": "Crispy Format Reports"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-08 08:47:04.235329",
+ "modified": "2026-02-14 07:39:41.395621",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",
