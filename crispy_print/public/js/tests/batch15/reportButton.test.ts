@@ -1,4 +1,14 @@
 import { describe, expect, it, vi } from "vitest"
+import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+
+function loadReportButtonBundle() {
+	const currentDir = dirname(fileURLToPath(import.meta.url))
+	const bundlePath = resolve(currentDir, "../../report_button.bundle.js")
+	const bundleCode = readFileSync(bundlePath, "utf8")
+	;(0, eval)(bundleCode)
+}
 
 function setupGlobals() {
 	const frappe = {
@@ -28,7 +38,7 @@ describe("report_button", () => {
 		setupGlobals()
 		delete (globalThis as any).__crispy_qr_patched__
 
-		await import("../../report_button.bundle.js")
+		loadReportButtonBundle()
 
 		const report = {
 			report_name: "Sales Register",

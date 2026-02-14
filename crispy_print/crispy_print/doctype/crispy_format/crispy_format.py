@@ -7,6 +7,11 @@ from frappe.query_builder import DocType
 
 
 class CrispyFormat(Document):
+	def _get_linked_reports(self) -> list:
+		"""Return non-disabled linked report rows from report child table."""
+		rows = self.get("report") or []
+		return [row for row in rows if row.get("report") and not row.get("disabled")]
+
 	def autoname(self):
 		"""Auto-generate name for generic templates"""
 		if self.crispy_format_type == "Report" and self.is_generic and self.generic_report_type:
@@ -75,19 +80,21 @@ class CrispyFormat(Document):
 		"""Validate field combinations and keep report raw mode aligned with is_advanced."""
 		# Validate Report mode fields
 		if self.crispy_format_type == "Report":
+			linked_reports = self._get_linked_reports()
+
 			if self.is_generic:
 				# Generic templates must have generic_report_type
 				if not self.generic_report_type:
 					frappe.throw("Generic Report Type is required for generic templates")
 
-				# Generic templates must not have a specific report
-				if self.report:
+				# Generic templates must not have specific linked reports
+				if linked_reports:
 					frappe.throw("Generic templates cannot be linked to a specific report")
 
 			else:
-				# Custom report formats must have a report
-				if not self.report:
-					frappe.throw("Report is required for custom report formats")
+				# Custom report formats must have at least one linked report
+				if not linked_reports:
+					frappe.throw("At least one linked report is required for custom report formats")
 
 				# Custom formats must not have generic_report_type
 				if self.generic_report_type:
@@ -102,10 +109,10 @@ class CrispyFormat(Document):
 				frappe.throw("DocType is required")
 
 			# DocType formats should not have report fields
-			if self.report or self.generic_report_type or self.is_generic:
-				self.report = None
+			if self.generic_report_type or self.is_generic:
 				self.generic_report_type = None
 				self.is_generic = 0
+			self.set("report", [])
 			self.is_advanced = 0
 
 		# Validate Contract mode
@@ -114,10 +121,10 @@ class CrispyFormat(Document):
 				frappe.throw("Contract is required")
 
 			# Contract formats should not have report fields
-			if self.report or self.generic_report_type or self.is_generic:
-				self.report = None
+			if self.generic_report_type or self.is_generic:
 				self.generic_report_type = None
 				self.is_generic = 0
+			self.set("report", [])
 			self.is_advanced = 0
 
 		# Clear other defaults when this format is set as default
@@ -162,23 +169,3 @@ class CrispyFormat(Document):
 		# Clear is_default using frappe.db.set_value for proper transaction handling
 		for record in other_defaults:
 			frappe.db.set_value("Crispy Format", record.name, "is_default", 0, update_modified=False)
-
-
-@frappe.whitelist()
-def make_default(name: str):
-	"""Set Crispy Format as default for its DocType"""
-	try:
-		doc = frappe.get_doc("Crispy Format", name)
-		doc.check_permission("write")
-
-		doc.is_default = 1
-		doc.save()
-
-		frappe.db.commit()  # Explicit commit for safety
-
-		return {"success": True, "message": f"Set {doc.name} as default"}
-	except frappe.PermissionError:
-		frappe.throw(frappe._("You don't have permission to modify this format"))
-	except Exception as e:
-		frappe.log_error(f"Failed to set default format: {e}")
-		return {"success": False, "error": str(e)}

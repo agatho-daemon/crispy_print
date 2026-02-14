@@ -53,6 +53,11 @@ class TestCrispyFormat(FrappeTestCase):
 			for name in names:
 				frappe.db.set_value("Crispy Format", name, "is_default", 1)
 
+	def _set_default(self, name: str):
+		doc = frappe.get_doc("Crispy Format", name)
+		doc.is_default = 1
+		doc.save()
+
 	def test_create_crispy_format(self):
 		"""Test creating a new Crispy Format document"""
 		doc = frappe.get_doc(
@@ -76,8 +81,6 @@ class TestCrispyFormat(FrappeTestCase):
 
 	def test_set_default_format(self):
 		"""Test setting a format as default clears other defaults"""
-		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
-
 		# Create first format
 		format1 = frappe.get_doc(
 			{
@@ -90,7 +93,7 @@ class TestCrispyFormat(FrappeTestCase):
 			}
 		)
 		format1.insert()
-		make_default(format1.name)
+		self._set_default(format1.name)
 		format1.reload()
 		self.assertTrue(format1.is_default)
 
@@ -106,7 +109,7 @@ class TestCrispyFormat(FrappeTestCase):
 			}
 		)
 		format2.insert()
-		make_default(format2.name)
+		self._set_default(format2.name)
 
 		# Reload first format and verify it's no longer default
 		format1.reload()
@@ -120,8 +123,6 @@ class TestCrispyFormat(FrappeTestCase):
 
 	def test_get_current_default(self):
 		"""Test getting the current default format for a DocType"""
-		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
-
 		# Create default format
 		format1 = frappe.get_doc(
 			{
@@ -134,7 +135,7 @@ class TestCrispyFormat(FrappeTestCase):
 			}
 		)
 		format1.insert()
-		make_default(format1.name)
+		self._set_default(format1.name)
 
 		# Create another format for same DocType
 		format2 = frappe.get_doc(
@@ -157,9 +158,8 @@ class TestCrispyFormat(FrappeTestCase):
 		format1.delete()
 		format2.delete()
 
-	def test_make_default_api(self):
-		"""Test the make_default API method"""
-		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
+	def test_set_default_via_document(self):
+		"""Test setting default via document save"""
 
 		# Create format
 		doc = frappe.get_doc(
@@ -178,8 +178,8 @@ class TestCrispyFormat(FrappeTestCase):
 		# Set as administrator to bypass permissions
 		frappe.set_user("Administrator")
 
-		# Make default via API
-		make_default("Test Format Make Default")
+		# Set default via document save
+		self._set_default("Test Format Make Default")
 
 		# Verify it's now default
 		doc.reload()
@@ -221,8 +221,6 @@ class TestCrispyFormat(FrappeTestCase):
 
 	def test_multiple_doctypes_defaults(self):
 		"""Test that different DocTypes can each have their own default"""
-		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
-
 		# Create default for Sales Invoice
 		format_si = frappe.get_doc(
 			{
@@ -235,7 +233,7 @@ class TestCrispyFormat(FrappeTestCase):
 			}
 		)
 		format_si.insert()
-		make_default(format_si.name)
+		self._set_default(format_si.name)
 
 		# Create default for Purchase Invoice
 		format_pi = frappe.get_doc(
@@ -249,7 +247,7 @@ class TestCrispyFormat(FrappeTestCase):
 			}
 		)
 		format_pi.insert()
-		make_default(format_pi.name)
+		self._set_default(format_pi.name)
 
 		# Both should remain as defaults for their respective DocTypes
 		format_si.reload()
