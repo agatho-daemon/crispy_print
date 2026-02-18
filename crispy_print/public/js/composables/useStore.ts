@@ -38,6 +38,7 @@ import {
   buildDummyReportPreviewData,
   getDummyReportFilterColumns,
   getDummyReportTableColumns,
+  renderDummyReportChartSvg,
 } from "../utils/reportPreviewDummy";
 
 let storeInstance: ReturnType<typeof buildStore> | null = null;
@@ -310,6 +311,30 @@ function buildStore() {
     const fontSize = Number(config?.font_size_pt);
     const safeSize = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 9;
     return `#set text(font: "${escapeTypstString(fontFamily)}", size: ${safeSize}pt)`;
+  }
+
+  function buildReportTypstOverrideForPreview(source: string): string {
+    const rawSource = String(source || "");
+    if (!rawSource.trim()) return rawSource;
+    if (!isReportMode.value) return rawSource;
+    if (reportBuilderMode.value !== "advanced") return rawSource;
+    if (!rawSource.includes("data.chart_svg")) return rawSource;
+
+    const width = Math.max(
+      10,
+      Math.min(100, Math.round(Number(reportBuilderConfig.value.chart_width_percent) || 100)),
+    );
+    const height = Math.max(
+      60,
+      Math.min(600, Math.round(Number(reportBuilderConfig.value.chart_max_height_pt) || 220)),
+    );
+
+    // In advanced mode, keep user source but normalize placeholder chart sizing
+    // to match Chart Settings controls used in basic mode.
+    return rawSource.replace(
+      /#image\(data\.chart_svg,\s*width:\s*[^,)\n]+(?:,\s*height:\s*[^)\n]+)?\)/g,
+      `#align(center)[#image(data.chart_svg, width: ${width}%, height: ${height}pt, fit: "contain")]`,
+    );
   }
 
   function migrateLegacyReportBuilderTableStyles(
@@ -1179,7 +1204,10 @@ function buildStore() {
           : getReportColumnConfigFromLayout();
       const includeFilters = Boolean(reportBuilderConfig.value.show_filters);
       const orientation = pageSettings.value?.orientation || "landscape";
-      const pageSettingsPayload = { ...pageSettings.value };
+      const pageSettingsPayload = {
+        ...pageSettings.value,
+        report_builder: { ...reportBuilderConfig.value },
+      };
       const configuredBrandingMode = String(
         pageSettings.value?.brandingMode || "",
       ).toLowerCase();
@@ -1209,10 +1237,21 @@ function buildStore() {
         tableColumns,
         columnConfig: effectiveColumnConfig,
       });
-      const previewChartSvg =
-        typeof previewData.chart_svg === "string" && previewData.chart_svg.trim()
-          ? previewData.chart_svg
-          : null;
+      const chartEnabled = Boolean(reportBuilderConfig.value.chart_enabled);
+      const previewChartSvg = chartEnabled
+        ? await renderDummyReportChartSvg({
+            height: Math.max(
+              140,
+              Math.min(
+                600,
+                Math.round(Number(reportBuilderConfig.value.chart_max_height_pt) || 220),
+              ),
+            ),
+            axisOptions: {
+              yAxisMode: "span",
+            },
+          })
+        : null;
       const previewDataPayload = {
         ...previewData,
         chart_svg: previewChartSvg ? "report_chart.svg" : "",
@@ -1230,7 +1269,9 @@ function buildStore() {
           page_settings: pageSettingsPayload,
           chart_svg: null,
           typst_preamble_override: typstPreambleOverride,
-          typst_code_override: typstCode.value || "",
+          typst_code_override: buildReportTypstOverrideForPreview(
+            typstCode.value || "",
+          ),
           preview_data: previewDataPayload,
           letterhead_image: letterheadImage,
           limit: DEFAULT_REPORT_PREVIEW_LIMIT,

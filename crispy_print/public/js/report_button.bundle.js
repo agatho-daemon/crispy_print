@@ -111,6 +111,16 @@ frappe.provide("crispy_print");
 		crispy_print.add_print_button(report);
 	}
 
+	function withSpanYAxisMode(options) {
+		if (!options || typeof options !== "object") return options;
+		const chartType = String(options.type || "").toLowerCase();
+		const axisTypes = new Set(["bar", "line", "scatter", "axis-mixed"]);
+		if (!axisTypes.has(chartType)) return options;
+		options.axisOptions = options.axisOptions || {};
+		options.axisOptions.yAxisMode = "span";
+		return options;
+	}
+
 	// Try on initial route load
 	setTimeout(tryAddButton, 300);
 
@@ -137,6 +147,26 @@ frappe.provide("crispy_print");
 			return result;
 		};
 		proto.__crispy_refresh_patched__ = true;
+	}
+
+	// Ensure report charts render y-grid lines by default.
+	if (proto && !proto.__crispy_chart_axis_patched__) {
+		if (typeof proto.get_chart_options === "function") {
+			const originalGetChartOptions = proto.get_chart_options;
+			proto.get_chart_options = function (...args) {
+				const options = originalGetChartOptions.apply(this, args);
+				return withSpanYAxisMode(options);
+			};
+		}
+
+		if (typeof proto.render_chart === "function") {
+			const originalRenderChart = proto.render_chart;
+			proto.render_chart = function (options, ...rest) {
+				return originalRenderChart.call(this, withSpanYAxisMode(options), ...rest);
+			};
+		}
+
+		proto.__crispy_chart_axis_patched__ = true;
 	}
 })();
 

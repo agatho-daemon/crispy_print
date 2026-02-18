@@ -28,6 +28,99 @@
 			<div class="settings-pane__form">
 				<div class="settings-pane__section-card card">
 					<button
+						type="button"
+						class="btn btn-link card-header settings-pane__section-header"
+						:class="{ 'is-expanded': isPageSettingsExpanded }"
+						@click="isPageSettingsExpanded = !isPageSettingsExpanded"
+					>
+						<span>Page Settings</span>
+						<svg
+							:class="[
+								'settings-pane__chevron',
+								{ 'settings-pane__chevron--expanded': isPageSettingsExpanded },
+							]"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+
+					<div
+						v-if="isPageSettingsExpanded"
+						class="settings-pane__section-content card-body"
+					>
+						<div class="settings-pane__field">
+							<label class="settings-pane__label">Size</label>
+							<select v-model="pageSettings.pageSize" class="form-control">
+								<option value="A3">A3 (297 × 420 mm)</option>
+								<option value="A4">A4 (210 × 297 mm)</option>
+								<option value="A5">A5 (148 × 210 mm)</option>
+								<option value="Letter">Letter (8.5 × 11 in)</option>
+								<option value="Legal">Legal (8.5 × 14 in)</option>
+								<option value="Tabloid">Tabloid (11 × 17 in)</option>
+								<option value="Executive">Executive (7.25 × 10.5 in)</option>
+							</select>
+						</div>
+
+						<div class="settings-pane__field">
+							<label class="settings-pane__label">Orientation</label>
+							<select v-model="pageSettings.orientation" class="form-control">
+								<option value="portrait">Portrait</option>
+								<option value="landscape">Landscape</option>
+							</select>
+						</div>
+
+						<div class="settings-pane__field">
+							<label class="settings-pane__label">Margins (mm)</label>
+							<div class="settings-pane__margins">
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">top</span>
+									<input
+										v-model.number="pageSettings.margins.top"
+										type="number"
+										placeholder="Top"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">bottom</span>
+									<input
+										v-model.number="pageSettings.margins.bottom"
+										type="number"
+										placeholder="Bottom"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">left</span>
+									<input
+										v-model.number="pageSettings.margins.left"
+										type="number"
+										placeholder="Left"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+								<div class="settings-pane__margin-input">
+									<span class="settings-pane__margin-prefix">right</span>
+									<input
+										v-model.number="pageSettings.margins.right"
+										type="number"
+										placeholder="Right"
+										class="form-control settings-pane__input"
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="settings-pane__section-card card">
+					<button
 						v-if="isReportMode"
 						type="button"
 						class="btn btn-link card-header settings-pane__section-header"
@@ -240,99 +333,6 @@
 										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
 									"
 								/>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div v-if="!isReportMode" class="settings-pane__section-card card">
-					<button
-						type="button"
-						class="btn btn-link card-header settings-pane__section-header"
-						:class="{ 'is-expanded': isPageSettingsExpanded }"
-						@click="isPageSettingsExpanded = !isPageSettingsExpanded"
-					>
-						<span>Page Settings</span>
-						<svg
-							:class="[
-								'settings-pane__chevron',
-								{ 'settings-pane__chevron--expanded': isPageSettingsExpanded },
-							]"
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					</button>
-
-					<div
-						v-if="isPageSettingsExpanded"
-						class="settings-pane__section-content card-body"
-					>
-						<div class="settings-pane__field">
-							<label class="settings-pane__label">Size</label>
-							<select v-model="pageSettings.pageSize" class="form-control">
-								<option value="A3">A3 (297 × 420 mm)</option>
-								<option value="A4">A4 (210 × 297 mm)</option>
-								<option value="A5">A5 (148 × 210 mm)</option>
-								<option value="Letter">Letter (8.5 × 11 in)</option>
-								<option value="Legal">Legal (8.5 × 14 in)</option>
-								<option value="Tabloid">Tabloid (11 × 17 in)</option>
-								<option value="Executive">Executive (7.25 × 10.5 in)</option>
-							</select>
-						</div>
-
-						<div class="settings-pane__field">
-							<label class="settings-pane__label">Orientation</label>
-							<select v-model="pageSettings.orientation" class="form-control">
-								<option value="portrait">Portrait</option>
-								<option value="landscape">Landscape</option>
-							</select>
-						</div>
-
-						<div class="settings-pane__field">
-							<label class="settings-pane__label">Margins (mm)</label>
-							<div class="settings-pane__margins">
-								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">top</span>
-									<input
-										v-model.number="pageSettings.margins.top"
-										type="number"
-										placeholder="Top"
-										class="form-control settings-pane__input"
-									/>
-								</div>
-								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">bottom</span>
-									<input
-										v-model.number="pageSettings.margins.bottom"
-										type="number"
-										placeholder="Bottom"
-										class="form-control settings-pane__input"
-									/>
-								</div>
-								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">left</span>
-									<input
-										v-model.number="pageSettings.margins.left"
-										type="number"
-										placeholder="Left"
-										class="form-control settings-pane__input"
-									/>
-								</div>
-								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">right</span>
-									<input
-										v-model.number="pageSettings.margins.right"
-										type="number"
-										placeholder="Right"
-										class="form-control settings-pane__input"
-									/>
-								</div>
 							</div>
 						</div>
 					</div>

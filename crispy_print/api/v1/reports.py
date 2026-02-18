@@ -218,28 +218,57 @@ def get_report_typst_source(
 		typst_data["chart_svg"] = "report_chart.svg"
 		code = format_doc.typst_code or ""
 		if "data.chart_svg" not in code:
-			chart_block = (
-				"\n// Report chart\n"
-				'#if "chart_svg" in data and data.chart_svg != "" [\n'
-				"  #block(\n"
-				'    stroke: (paint: rgb("#E5E7EB"), thickness: 0.5pt),\n'
-				"    inset: (x: 8pt, y: 8pt),\n"
-				"    radius: 2pt,\n"
-				"  )[\n"
-				"    #image(data.chart_svg, width: 100%)\n"
-				"  ]\n"
-				"  #v(1em)\n"
-				"]\n"
+			report_builder = page_settings_dict.get("report_builder", {}) if page_settings_dict else {}
+			chart_enabled = bool(report_builder.get("chart_enabled", True))
+			chart_card_border = bool(report_builder.get("chart_card_border", True))
+			chart_width_percent = max(
+				10,
+				min(100, int(report_builder.get("chart_width_percent", 100) or 100)),
 			)
-			inserted = False
-			for marker in ("// TABLE SETUP", "#table("):
-				pos = code.find(marker)
-				if pos != -1:
-					format_doc.typst_code = code[:pos] + chart_block + code[pos:]
-					inserted = True
-					break
-			if not inserted:
-				format_doc.typst_code = code + chart_block
+			chart_max_height_pt = max(
+				60,
+				min(600, int(report_builder.get("chart_max_height_pt", 220) or 220)),
+			)
+			chart_spacing_top_pt = max(
+				0,
+				min(120, int(report_builder.get("chart_spacing_top_pt", 0) or 0)),
+			)
+			chart_spacing_bottom_pt = max(
+				0,
+				min(120, int(report_builder.get("chart_spacing_bottom_pt", 12) or 12)),
+			)
+
+			if chart_enabled:
+				top_spacing_line = f"  #v({chart_spacing_top_pt}pt)\n" if chart_spacing_top_pt > 0 else ""
+				bottom_spacing_line = (
+					f"  #v({chart_spacing_bottom_pt}pt)\n" if chart_spacing_bottom_pt > 0 else ""
+				)
+				stroke_value = '(paint: rgb("#E5E7EB"), thickness: 0.5pt)' if chart_card_border else "none"
+				chart_block = (
+					"\n// Report chart\n"
+					'#if "chart_svg" in data and data.chart_svg != "" [\n'
+					f"{top_spacing_line}"
+					"  #block(\n"
+					f"    stroke: {stroke_value},\n"
+					"    inset: (x: 8pt, y: 8pt),\n"
+					"    radius: 2pt,\n"
+					"  )[\n"
+					"    #align(center)[\n"
+					f'      #image(data.chart_svg, width: {chart_width_percent}%, height: {chart_max_height_pt}pt, fit: "contain")\n'
+					"    ]\n"
+					"  ]\n"
+					f"{bottom_spacing_line}"
+					"]\n"
+				)
+				inserted = False
+				for marker in ("// TABLE SETUP", "#table("):
+					pos = code.find(marker)
+					if pos != -1:
+						format_doc.typst_code = code[:pos] + chart_block + code[pos:]
+						inserted = True
+						break
+				if not inserted:
+					format_doc.typst_code = code + chart_block
 
 	# Build Typst document using unified compilation
 	preamble_override = (
