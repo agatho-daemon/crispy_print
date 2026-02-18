@@ -2,7 +2,7 @@
 	<div class="typst-code-pane">
 		<div class="typst-code-pane__header">
 			<div class="typst-code-pane__header-row">
-				<h3 class="typst-code-pane__title">Typst Code</h3>
+				<h3 class="section-title typst-code-pane__title">Typst Code</h3>
 				<div class="typst-code-pane__spacer"></div>
 				<div>
 					<button
@@ -136,9 +136,6 @@ function onDrop(event: DragEvent) {
 
 .typst-code-pane__title {
 	margin: 0;
-	font-size: 14px;
-	font-weight: 600;
-	color: #1e293b;
 }
 
 .typst-code-pane__spacer {

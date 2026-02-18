@@ -271,11 +271,13 @@ export function buildReportTypstFromConfig(
 		lines.push("    inset: (x: 8pt, y: 8pt),")
 		lines.push("    radius: 2pt,")
 		lines.push("  )[")
+		lines.push("    #align(center)[")
 		lines.push(
-			`    #image(data.chart_svg, width: ${Math.round(
+			`      #image(data.chart_svg, width: ${Math.round(
 				config.chart_width_percent
-			)}%, height: ${formatPt(config.chart_max_height_pt)})`
+			)}%, height: ${formatPt(config.chart_max_height_pt)}, fit: "contain")`
 		)
+		lines.push("    ]")
 		lines.push("  ]")
 		if (config.chart_spacing_bottom_pt > 0) {
 			lines.push(`  #v(${formatPt(config.chart_spacing_bottom_pt)})`)
