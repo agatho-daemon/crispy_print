@@ -184,6 +184,8 @@ def run_report_template_parity_check(
 			"chart": {},
 		},
 	)
+	if isinstance(typst_source, dict):
+		typst_source = typst_source.get("typst_source", "")
 
 	comparison = compare_template_signals(legacy_source, typst_source)
 	comparison["report"] = report

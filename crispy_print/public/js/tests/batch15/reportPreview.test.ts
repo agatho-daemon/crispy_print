@@ -140,6 +140,31 @@ describe("useStore report preview", () => {
 		])
 	})
 
+	it("compileReportPreview accepts structured source payload", async () => {
+		vi.resetModules()
+		;(globalThis as any).__ = (msg: string) => msg
+		;(globalThis as any).frappe = {
+			call: vi
+				.fn()
+				.mockResolvedValueOnce({
+					message: {
+						typst_source: "#typst",
+						truncation: { is_truncated: true, returned_rows: 50, original_rows: 120 },
+					},
+				})
+				.mockResolvedValueOnce({ message: { success: true } }),
+		}
+
+		const { useStore } = await import("../../composables/useStore")
+		const store = useStore()
+		store.crispyFormat.value = { name: "Format-1" } as any
+
+		const result = await store.compileReportPreview("Sales Order")
+
+		expect(result).toEqual({ success: true })
+		expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(2)
+	})
+
 	it("compileReportPreview normalizes unitless widths to pt", async () => {
 		vi.resetModules()
 		;(globalThis as any).__ = (msg: string) => msg

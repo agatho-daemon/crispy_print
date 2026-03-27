@@ -135,7 +135,7 @@ def get_report_typst_source(
 	preview_data: dict | str | None = None,
 	letterhead_image: str | None = None,
 	limit: int = 50,
-) -> str:
+) -> dict:
 	return _get_report_typst_source(
 		report=report,
 		format_name=format_name,

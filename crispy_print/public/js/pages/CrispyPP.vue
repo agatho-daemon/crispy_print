@@ -136,6 +136,12 @@
 									<span>Show Chart</span>
 								</label>
 							</div>
+							<p
+								v-if="reportTruncationWarning"
+								class="settings-pane__report-warning text-warning small"
+							>
+								{{ reportTruncationWarning }}
+							</p>
 						</div>
 					</div>
 
@@ -586,6 +592,7 @@ const reportHasChart = computed(() =>
 const isReportColumnsExpanded = ref(true);
 const reportPreviewLoading = ref(false);
 const reportPreviewPending = ref(false);
+const reportTruncationWarning = ref("");
 const reportBrandingInitialized = ref(false);
 const reportOrientationInitialized = ref(false);
 const reportMarginsInitialized = ref(false);
@@ -820,6 +827,7 @@ async function compileReportPreview() {
 
 	try {
 		reportPreviewLoading.value = true;
+		reportTruncationWarning.value = "";
 		const chartSvgPayload = reportShowChart.value
 			? normalizeReportChartSvg(reportChartSvg.value || "")
 			: "";
@@ -852,9 +860,20 @@ async function compileReportPreview() {
 			},
 		});
 
-		const typstSource = sourceResponse?.message;
+		const sourcePayload = sourceResponse?.message;
+		const typstSource =
+			typeof sourcePayload === "string" ? sourcePayload : sourcePayload?.typst_source;
+		const truncation = typeof sourcePayload === "object" ? sourcePayload?.truncation : null;
 		if (!typstSource) {
 			throw new Error("No Typst source returned");
+		}
+		if (truncation?.is_truncated) {
+			const originalRows = Number(truncation?.original_rows || 0);
+			const returnedRows = Number(truncation?.returned_rows || 0);
+			reportTruncationWarning.value = __(
+				"Preview truncated to {0} rows (from {1}). PDF output may also be limited.",
+				[String(returnedRows), String(originalRows)]
+			);
 		}
 		dispatchCrispyPreviewSource({ source: typstSource });
 		lastReportTypstSource.value = typstSource;
@@ -1448,6 +1467,11 @@ defineExpose({
 	font-size: 13px;
 	color: #334155;
 	margin: 0;
+}
+
+.settings-pane__report-warning {
+	margin: 10px 0 0;
+	line-height: 1.4;
 }
 
 /* Preview Pane */

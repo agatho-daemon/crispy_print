@@ -1279,7 +1279,11 @@ function buildStore() {
         },
       });
 
-      const typstSource = sourceResponse?.message;
+      const sourcePayload = sourceResponse?.message;
+      const typstSource =
+        typeof sourcePayload === "string"
+          ? sourcePayload
+          : sourcePayload?.typst_source;
       if (!typstSource) {
         throw new Error("No Typst source returned");
       }

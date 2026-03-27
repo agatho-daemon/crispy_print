@@ -8,6 +8,8 @@ from .compile import compile_typst
 from .formats import get_custom_report_formats
 from .typst_doc import _build_typst_document
 
+MAX_REPORT_RESULT_ROWS = 5000
+
 
 def generate_report_pdf(
 	report: str,
@@ -101,7 +103,7 @@ def get_report_typst_source(
 	preview_data: dict | str | None = None,
 	letterhead_image: str | None = None,
 	limit: int = 50,
-) -> str:
+) -> dict:
 	"""
 	Build Typst source for report preview.
 
@@ -116,7 +118,7 @@ def get_report_typst_source(
 		limit: Maximum rows for preview (default: 50)
 
 	Returns:
-		str: Complete Typst source code
+		dict: {"typst_source": str, "truncation": dict}
 	"""
 	from frappe.utils import cint
 
@@ -181,6 +183,10 @@ def get_report_typst_source(
 		typst_data.setdefault("columns", [])
 		typst_data.setdefault("rows", [])
 		typst_data.setdefault("total_rows", len(typst_data.get("rows") or []))
+		typst_data.setdefault("result_truncated", False)
+		typst_data.setdefault("original_row_count", len(typst_data.get("rows") or []))
+		typst_data.setdefault("returned_row_count", len(typst_data.get("rows") or []))
+		typst_data.setdefault("max_rows", None)
 		typst_data.setdefault("chart", {})
 		typst_data.setdefault("skip_total_row", False)
 	else:
@@ -195,7 +201,10 @@ def get_report_typst_source(
 		)
 
 	# Limit rows for preview
+	preview_truncated = False
+	preview_original_rows = len(typst_data.get("rows") or [])
 	if limit and len(typst_data["rows"]) > limit:
+		preview_truncated = True
 		typst_data["rows"] = typst_data["rows"][:limit]
 		typst_data["total_rows"] = limit
 
@@ -292,7 +301,20 @@ def get_report_typst_source(
 		preamble_override=preamble_override,
 	)
 
-	return typst_source
+	result_truncated = bool(typst_data.get("result_truncated"))
+	is_truncated = bool(preview_truncated or result_truncated)
+	truncation_reason = "preview_limit" if preview_truncated else ("result_cap" if result_truncated else "")
+
+	return {
+		"typst_source": typst_source,
+		"truncation": {
+			"is_truncated": is_truncated,
+			"reason": truncation_reason,
+			"original_rows": typst_data.get("original_row_count", preview_original_rows),
+			"returned_rows": len(typst_data.get("rows") or []),
+			"max_rows": typst_data.get("max_rows") or (limit if limit else None),
+		},
+	}
 
 
 def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
@@ -339,7 +361,7 @@ def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
 	return typst_data
 
 
-def _get_report_data(report: str, filters: dict) -> dict:
+def _get_report_data(report: str, filters: dict, max_rows: int | None = MAX_REPORT_RESULT_ROWS) -> dict:
 	"""Execute report and return raw data"""
 	# Always run live for Crispy preview/PDF so prepared-report queue state
 	# does not return empty placeholder payloads.
@@ -350,9 +372,22 @@ def _get_report_data(report: str, filters: dict) -> dict:
 		are_default_filters=False,
 	)
 
+	raw_result = result.get("result", []) or []
+	original_row_count = len(raw_result) if isinstance(raw_result, list) else 0
+	rows = raw_result
+	result_truncated = False
+
+	if isinstance(raw_result, list) and max_rows and max_rows > 0 and len(raw_result) > max_rows:
+		rows = raw_result[:max_rows]
+		result_truncated = True
+
 	return {
 		"columns": result.get("columns", []),
-		"result": result.get("result", []),
+		"result": rows,
+		"result_truncated": result_truncated,
+		"original_row_count": original_row_count,
+		"returned_row_count": len(rows) if isinstance(rows, list) else original_row_count,
+		"max_rows": max_rows,
 		"message": result.get("message"),
 		"chart": result.get("chart"),
 		"report_summary": result.get("report_summary"),
@@ -516,6 +551,14 @@ def _prepare_typst_report_data(
 		"rows": final_rows,
 		"total_rows": len(base_rows),
 		"show_totals": bool(include_total_row),
+		"result_truncated": bool(report_data.get("result_truncated")),
+		"original_row_count": report_data.get(
+			"original_row_count", len(rows) if isinstance(rows, list) else 0
+		),
+		"returned_row_count": report_data.get(
+			"returned_row_count", len(rows) if isinstance(rows, list) else 0
+		),
+		"max_rows": report_data.get("max_rows"),
 		"filters": _normalize_filters_for_typst(filters),
 		"filters_map": filters_map,
 		"title": report_title,
