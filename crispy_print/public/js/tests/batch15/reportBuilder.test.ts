@@ -105,4 +105,13 @@ describe("reportBuilder utils", () => {
 
 		expect(typst).not.toContain("data.report_summary")
 	})
+
+	it("adds indentation support for first table column in row rendering", () => {
+		const config = getDefaultReportBuilderConfig("Tree")
+		const typst = buildReportTypstFromConfig(config)
+
+		expect(typst).toContain("row.cells.enumerate().map(cell_entry => {")
+		expect(typst).toContain('if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {')
+		expect(typst).toContain("box(inset: (left: row.indent * 2em))[#content]")
+	})
 })

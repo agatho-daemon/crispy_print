@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 
 from .compile import compile_typst
+from .formats import get_custom_report_formats
 from .typst_doc import _build_typst_document
 
 
@@ -91,6 +92,7 @@ def get_report_typst_source(
 	include_filters: int = 0,
 	include_summary: int = 1,
 	include_total_row: int = 1,
+	include_chart: int = 1,
 	orientation: str | None = None,
 	page_settings: dict | str | None = None,
 	chart_svg: str | None = None,
@@ -213,8 +215,8 @@ def get_report_typst_source(
 	else:
 		typst_data["page_settings"] = {"orientation": orientation_value}
 
-	# Attach chart placeholder for Typst if SVG is provided
-	if isinstance(chart_svg, str) and chart_svg.strip():
+	# Attach chart placeholder for Typst if chart rendering is enabled and SVG is provided.
+	if bool(cint(include_chart)) and isinstance(chart_svg, str) and chart_svg.strip():
 		typst_data["chart_svg"] = "report_chart.svg"
 		code = format_doc.typst_code or ""
 		if "data.chart_svg" not in code:
@@ -484,15 +486,27 @@ def _prepare_typst_report_data(
 	processed_rows = []
 	for index, row in enumerate(rows):
 		processed_rows.append(_prepare_row_data(row, visible_columns, index))
+	processed_rows = _enrich_report_rows_for_typst(report, processed_rows)
+	processed_rows = _mark_report_total_like_rows(report, processed_rows)
 	base_rows = [row for row in processed_rows if not row.get("is_total_row")]
-	final_rows = processed_rows if include_total_row else base_rows
+	final_rows = (
+		processed_rows
+		if include_total_row
+		else [
+			row for row in base_rows if not row.get("is_total_like_row") and not row.get("is_auxiliary_row")
+		]
+	)
 
 	# Generate report title
 	report_title = report_data.get("message") or report
+	report_key = frappe.scrub(report or "")
+	filters_map = _normalize_filters_map(filters)
+	show_future_payments = _coerce_filter_bool(filters_map.get("show_future_payments"))
+	show_sales_person = _coerce_filter_bool(filters_map.get("show_sales_person"))
 
 	# Get report chart if any
 	report_chart = report_data.get("chart") or {}
-	report_summary = report_data.get("report_summary") or []
+	report_summary = _normalize_report_summary_for_typst(report_data.get("report_summary") or [])
 	if not include_summary:
 		report_summary = []
 	skip_total_row = bool(report_data.get("skip_total_row"))
@@ -501,13 +515,67 @@ def _prepare_typst_report_data(
 		"columns": visible_columns,
 		"rows": final_rows,
 		"total_rows": len(base_rows),
+		"show_totals": bool(include_total_row),
 		"filters": _normalize_filters_for_typst(filters),
+		"filters_map": filters_map,
 		"title": report_title,
 		"subtitle": "",
 		"chart": report_chart,
 		"report_summary": report_summary,
 		"skip_total_row": skip_total_row,
+		"report_name": report,
+		"report_key": report_key,
+		"report_context": {
+			"is_accounts_receivable": report in ("Accounts Receivable", "Accounts Receivable Summary"),
+			"is_accounts_payable": report in ("Accounts Payable", "Accounts Payable Summary"),
+			"is_summary_report": report.endswith("Summary") if isinstance(report, str) else False,
+			"is_detail_report": not (report.endswith("Summary") if isinstance(report, str) else False),
+			"show_future_payments": show_future_payments,
+			"show_sales_person": show_sales_person,
+			"has_party_filter": bool(filters_map.get("party")),
+		},
 	}
+
+
+def _coerce_filter_bool(value) -> bool:
+	if isinstance(value, bool):
+		return value
+	if value is None:
+		return False
+	text = str(value).strip().lower()
+	return text in {"1", "true", "yes", "y", "on"}
+
+
+def _normalize_report_summary_for_typst(report_summary: list) -> list[dict]:
+	"""Attach report-view-like formatted values and color class hints for Typst templates."""
+	normalized: list[dict] = []
+
+	for item in report_summary:
+		if not isinstance(item, dict):
+			continue
+
+		normalized_item = dict(item)
+		normalized_item.setdefault("type", "")
+		normalized_item.setdefault("label", "")
+		normalized_item.setdefault("value", "")
+		datatype = item.get("datatype") or "Data"
+		df = {"fieldtype": datatype}
+		currency = None
+
+		if datatype == "Currency":
+			df["options"] = "currency"
+			currency = item.get("currency")
+
+		try:
+			formatted = frappe.format(item.get("value"), df, currency=currency, translated=False)
+		except Exception:
+			formatted = "" if item.get("value") is None else str(item.get("value"))
+
+		normalized_item["formatted_value"] = "" if formatted is None else str(formatted)
+		normalized_item["color_class"] = str(item.get("indicator") or item.get("color") or "").strip().lower()
+		normalized.append(normalized_item)
+
+	return normalized
 
 
 def _normalize_filters_for_typst(filters: dict | list | None) -> list[dict]:
@@ -538,27 +606,166 @@ def _normalize_filters_for_typst(filters: dict | list | None) -> list[dict]:
 	return []
 
 
+def _normalize_filters_map(filters: dict | list | None) -> dict[str, str]:
+	"""Return filters as key->value map with normalized keys for Typst branching."""
+	if not filters:
+		return {}
+
+	out: dict[str, str] = {}
+	if isinstance(filters, list):
+		for entry in filters:
+			if not isinstance(entry, dict):
+				continue
+			raw_key = entry.get("fieldname") or entry.get("label")
+			key = _normalize_filter_key(raw_key)
+			if not key:
+				continue
+			value = entry.get("value")
+			out[key] = "" if value is None else str(value)
+		return out
+
+	if isinstance(filters, dict):
+		for raw_key, value in filters.items():
+			key = _normalize_filter_key(raw_key)
+			if not key:
+				continue
+			out[key] = "" if value is None else str(value)
+		return out
+
+	return {}
+
+
+def _normalize_filter_key(raw_key) -> str:
+	if raw_key in (None, ""):
+		return ""
+	return frappe.scrub(str(raw_key))
+
+
+def _enrich_report_rows_for_typst(report: str, rows: list[dict]) -> list[dict]:
+	"""Apply report-specific presentation enrichments without patching source reports."""
+	if report != "Bank Reconciliation Statement" or not rows:
+		return rows
+
+	payment_entry_names = [
+		row.get("payment_entry_raw") or row.get("payment_entry")
+		for row in rows
+		if row.get("payment_document_raw") == "Payment Entry"
+		and (row.get("payment_entry_raw") or row.get("payment_entry"))
+	]
+	if not payment_entry_names:
+		return rows
+
+	payment_entries = frappe.get_all(
+		"Payment Entry",
+		filters={"name": ["in", list(dict.fromkeys(payment_entry_names))]},
+		fields=["name", "party", "party_name"],
+	)
+	party_name_by_entry = {
+		entry["name"]: (entry.get("party_name") or entry.get("party") or "")
+		for entry in payment_entries
+		if entry.get("name")
+	}
+
+	if not party_name_by_entry:
+		return rows
+
+	for row in rows:
+		if row.get("payment_document_raw") != "Payment Entry":
+			continue
+		entry_name = row.get("payment_entry_raw") or row.get("payment_entry")
+		party_name = party_name_by_entry.get(entry_name)
+		if not party_name:
+			continue
+		row["against_account_display"] = str(party_name)
+		row["against_account"] = str(party_name)
+		for cell in row.get("cells", []):
+			if cell.get("fieldname") == "against_account":
+				cell["value"] = str(party_name)
+				break
+
+	return rows
+
+
+def _mark_report_total_like_rows(report: str, rows: list[dict]) -> list[dict]:
+	"""Mark report-specific summary/spacer rows so UI toggles can hide them."""
+	if report != "Bank Reconciliation Statement" or not rows:
+		return rows
+
+	for row in rows:
+		payment_entry_raw = str(row.get("payment_entry_raw") or row.get("payment_entry") or "").strip()
+		has_posting_date = bool(row.get("posting_date_raw") or row.get("posting_date"))
+		has_amount = bool(
+			(row.get("debit_raw") not in (None, "", 0, 0.0))
+			or (row.get("credit_raw") not in (None, "", 0, 0.0))
+		)
+		is_blank_spacer = not has_posting_date and not payment_entry_raw and not has_amount
+		is_total_like = not has_posting_date and payment_entry_raw in {
+			"Bank Statement balance as per General Ledger",
+			"Outstanding Cheques and Deposits to clear",
+			"Cheques and Deposits incorrectly cleared",
+			"Calculated Bank Statement balance",
+		}
+		row["is_total_like_row"] = bool(is_total_like)
+		row["is_auxiliary_row"] = bool(is_blank_spacer)
+
+	return rows
+
+
 def _prepare_row_data(row, columns: list, index: int) -> dict:
 	"""Transform a row into a Typst row dict"""
-	out = {"_idx": index, "cells": [], "is_bold": False, "is_total_row": False}
+	out = {
+		"_idx": index,
+		"cells": [],
+		"is_bold": False,
+		"is_total_row": False,
+		"indent": 0,
+		"warn_if_negative": False,
+	}
 
 	# Row can be list or dict
 	if isinstance(row, dict):
 		out["is_bold"] = bool(row.get("bold") or row.get("is_bold"))
 		out["is_total_row"] = bool(row.get("is_total_row"))
+		out["warn_if_negative"] = bool(row.get("warn_if_negative"))
+		# Preserve hierarchy metadata even when not present in visible columns.
+		out["parent_account"] = row.get("parent_account")
+		out["parent_section"] = row.get("parent_section")
+		try:
+			out["indent"] = int(row.get("indent") or 0)
+		except Exception:
+			out["indent"] = 0
 		for col in columns:
 			fieldname = col.get("fieldname")
 			if fieldname:
-				value = _format_cell_value(row.get(fieldname), col, row)
+				raw_value = row.get(fieldname)
+				value = _format_cell_value(raw_value, col, row)
+				value = _apply_tree_indent_to_value(
+					value,
+					indent=out.get("indent", 0),
+					is_first_cell=len(out["cells"]) == 0,
+				)
 				out[fieldname] = value
+				out[f"{fieldname}_raw"] = raw_value
+				if col.get("fieldtype") == "Currency":
+					currency_display, amount_display = _split_currency_display(
+						value, row.get(col.get("options")) if isinstance(row, dict) else None
+					)
+					out[f"{fieldname}_currency_display"] = currency_display
+					out[f"{fieldname}_amount_display"] = amount_display
 				out["cells"].append(
 					{
 						"value": value,
+						"raw_value": raw_value,
 						"fieldname": fieldname,
 						"label": col.get("label") or fieldname,
 						"is_numeric": bool(col.get("is_numeric")),
 					}
 				)
+				if fieldname == "indent":
+					try:
+						out["indent"] = int(raw_value or 0)
+					except Exception:
+						out["indent"] = 0
 		return out
 
 	# Handle list rows
@@ -567,19 +774,52 @@ def _prepare_row_data(row, columns: list, index: int) -> dict:
 			fieldname = col.get("fieldname")
 			col_index = col.get("col_index")
 			if fieldname and col_index is not None and col_index < len(row):
-				value = _format_cell_value(row[col_index], col, row)
+				raw_value = row[col_index]
+				value = _format_cell_value(raw_value, col, row)
+				value = _apply_tree_indent_to_value(
+					value,
+					indent=out.get("indent", 0),
+					is_first_cell=len(out["cells"]) == 0,
+				)
 				out[fieldname] = value
+				out[f"{fieldname}_raw"] = raw_value
+				if col.get("fieldtype") == "Currency":
+					currency_display, amount_display = _split_currency_display(value, None)
+					out[f"{fieldname}_currency_display"] = currency_display
+					out[f"{fieldname}_amount_display"] = amount_display
 				out["cells"].append(
 					{
 						"value": value,
+						"raw_value": raw_value,
 						"fieldname": fieldname,
 						"label": col.get("label") or fieldname,
 						"is_numeric": bool(col.get("is_numeric")),
 					}
 				)
+				if fieldname == "indent":
+					try:
+						out["indent"] = int(raw_value or 0)
+					except Exception:
+						out["indent"] = 0
 		return out
 
 	return out
+
+
+def _apply_tree_indent_to_value(value: str, indent: int, is_first_cell: bool) -> str:
+	"""Apply visible indentation prefix for tree-style report rows on first column."""
+	if not is_first_cell:
+		return value
+	if not value:
+		return value
+	try:
+		indent_level = int(indent or 0)
+	except Exception:
+		indent_level = 0
+	if indent_level <= 0:
+		return value
+	# Use non-breaking spaces so indentation is preserved in Typst text output.
+	return ("\u00a0" * (indent_level * 4)) + value
 
 
 def _format_cell_value(value, col: dict, row: dict) -> str:
@@ -594,6 +834,13 @@ def _format_cell_value(value, col: dict, row: dict) -> str:
 
 	if _is_numeric_fieldtype(fieldtype):
 		try:
+			if fieldtype == "Currency":
+				currency = None
+				options = col.get("options")
+				if isinstance(row, dict) and options:
+					currency = row.get(options)
+				df = {"fieldtype": "Currency", "options": options}
+				return str(frappe.format(value, df, currency=currency, translated=False))
 			if fieldtype == "Percent":
 				return f"{float(value):,.2f}%"
 			return f"{float(value):,.2f}"
@@ -605,6 +852,20 @@ def _format_cell_value(value, col: dict, row: dict) -> str:
 
 def _is_numeric_fieldtype(fieldtype: str) -> bool:
 	return fieldtype in ("Int", "Float", "Currency", "Percent")
+
+
+def _split_currency_display(formatted_value: str, currency: str | None) -> tuple[str, str]:
+	"""Split a formatted currency value into currency label and numeric portion."""
+	text = "" if formatted_value is None else str(formatted_value).strip()
+	currency_text = "" if currency is None else str(currency).strip()
+
+	if not text:
+		return "", ""
+	if currency_text:
+		prefix = f"{currency_text} "
+		if text.startswith(prefix):
+			return currency_text, text[len(prefix) :]
+	return currency_text, text
 
 
 def _normalize_typst_column_width(width) -> str:
@@ -666,13 +927,9 @@ def _normalize_columns(columns: list) -> list:
 
 def _get_format_for_report(report: str) -> str:
 	"""Auto-select format for report (custom or generic)"""
-	# Check for custom format
-	custom = frappe.db.get_value(
-		"Crispy Format", {"crispy_format_type": "Report", "is_generic": 0, "report": report}, "name"
-	)
-
-	if custom:
-		return custom
+	custom_formats = get_custom_report_formats(report)
+	if custom_formats:
+		return custom_formats[0]["name"]
 
 	# Fallback to first available generic Grid template
 	generic = frappe.db.get_value(

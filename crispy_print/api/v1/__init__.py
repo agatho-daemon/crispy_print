@@ -12,6 +12,7 @@ from .formats import get_default_doctypes as _get_default_doctypes
 from .formats import get_default_report_builder_config as _get_default_report_builder_config
 from .formats import get_reports_without_custom_html as _get_reports_without_custom_html
 from .formats import import_crispy_format as _import_crispy_format
+from .parity import run_report_template_parity_check as _run_report_template_parity_check
 from .reports import generate_report_pdf as _generate_report_pdf
 from .reports import get_report_typst_source as _get_report_typst_source
 from .reports import get_sample_report_data as _get_sample_report_data
@@ -125,6 +126,7 @@ def get_report_typst_source(
 	include_filters: int = 0,
 	include_summary: int = 1,
 	include_total_row: int = 1,
+	include_chart: int = 1,
 	orientation: str | None = None,
 	page_settings: dict | str | None = None,
 	chart_svg: str | None = None,
@@ -142,6 +144,7 @@ def get_report_typst_source(
 		include_filters=include_filters,
 		include_summary=include_summary,
 		include_total_row=include_total_row,
+		include_chart=include_chart,
 		orientation=orientation,
 		page_settings=page_settings,
 		chart_svg=chart_svg,
@@ -156,6 +159,21 @@ def get_report_typst_source(
 @frappe.whitelist()
 def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
 	return _get_sample_report_data(report, filters=filters, limit=limit)
+
+
+@frappe.whitelist()
+def run_report_template_parity_check(
+	report: str,
+	format_name: str,
+	legacy_template_path: str | None = None,
+	filters: dict | str | None = None,
+) -> dict:
+	return _run_report_template_parity_check(
+		report=report,
+		format_name=format_name,
+		legacy_template_path=legacy_template_path,
+		filters=filters,
+	)
 
 
 __all__ = [
@@ -174,4 +192,5 @@ __all__ = [
 	"get_sample_report_data",
 	"get_typst_local_fonts",
 	"import_crispy_format",
+	"run_report_template_parity_check",
 ]

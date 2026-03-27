@@ -100,7 +100,6 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 	def test_get_default_doctypes(self):
 		"""Test retrieving DocTypes with default formats"""
 		from crispy_print.api.v1 import get_default_doctypes
-		from crispy_print.crispy_print.doctype.crispy_format.crispy_format import make_default
 
 		# Create default format for Sales Order
 		format_so = frappe.get_doc(
@@ -114,7 +113,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 			}
 		)
 		format_so.insert()
-		make_default(format_so.name)
+		frappe.db.set_value("Crispy Format", format_so.name, "is_default", 1)
 
 		# Create default format for Purchase Order
 		format_po = frappe.get_doc(
@@ -128,7 +127,8 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 			}
 		)
 		format_po.insert()
-		make_default(format_po.name)
+		frappe.db.set_value("Crispy Format", format_po.name, "is_default", 1)
+		frappe.db.commit()
 
 		# Test retrieval
 		default_doctypes = get_default_doctypes()
@@ -136,6 +136,30 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertIsInstance(default_doctypes, list)
 		self.assertIn("Sales Order", default_doctypes)
 		self.assertIn("Purchase Order", default_doctypes)
+
+	def test_get_default_doctypes_excludes_report_formats(self):
+		from crispy_print.api.v1 import get_default_doctypes
+
+		format_report = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test API Format Default Report",
+				"crispy_format_type": "Report",
+				"module": "Crispy Print",
+				"is_generic": 1,
+				"generic_report_type": "Grid",
+				"typst_code": "#text[Report]",
+				"is_advanced": 1,
+			}
+		)
+		format_report.insert()
+		frappe.db.set_value("Crispy Format", format_report.name, "is_default", 1)
+		frappe.db.commit()
+
+		default_doctypes = get_default_doctypes()
+
+		self.assertNotIn(None, default_doctypes)
+		self.assertNotIn("", default_doctypes)
 
 	def test_get_default_report_builder_config(self):
 		from crispy_print.api.v1 import get_default_report_builder_config
@@ -208,6 +232,52 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 
 		self.assertIsInstance(formats, list)
 		self.assertEqual(len(formats), 0)
+
+	def test_get_available_formats_uses_linked_report_table_for_custom(self):
+		"""Custom report formats should resolve via report child table rows."""
+		from crispy_print.api.v1 import get_available_formats
+
+		report_name = frappe.db.get_value("Report", {}, "name")
+		if not report_name:
+			self.skipTest("No Report records available")
+		generic_report_type = frappe.db.get_value("Crispy Generic Report", {}, "name")
+		if not generic_report_type:
+			self.skipTest("No Crispy Generic Report records available")
+
+		custom_name = "Test API Format Linked Report Custom"
+		generic_name = "Test API Format Linked Report Generic"
+
+		custom = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": custom_name,
+				"crispy_format_type": "Report",
+				"is_generic": 0,
+				"module": "Crispy Print",
+				"report": [{"report": report_name, "disabled": 0}],
+			}
+		)
+		custom.insert()
+
+		generic = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": generic_name,
+				"crispy_format_type": "Report",
+				"is_generic": 1,
+				"generic_report_type": generic_report_type,
+				"module": "Crispy Print",
+			}
+		)
+		generic.insert()
+		frappe.db.commit()
+
+		out = get_available_formats(report_name)
+		custom_names = [row["name"] for row in out.get("custom_formats") or []]
+
+		self.assertIn(custom_name, custom_names)
+		self.assertEqual(out.get("default_format"), custom_name)
+		self.assertEqual(out.get("generic_formats"), [])
 
 
 class TestCrispyFormatImportExportAPI(FrappeTestCase):

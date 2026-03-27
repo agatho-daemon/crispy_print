@@ -300,7 +300,13 @@ export function buildReportTypstFromConfig(
 		lines.push("        .report_summary")
 		lines.push("        .map(item => (")
 		lines.push('          text(size: 8pt, weight: "medium")[#item.label],')
-		lines.push("          text(size: 8pt)[#item.value],")
+		lines.push(
+			'          text(size: 8pt, fill: if "color_class" in item and item.color_class == "green" { rgb("#22C55E") } else if "color_class" in item and item.color_class == "red" { rgb("#EF4444") } else if "color_class" in item and item.color_class == "blue" { rgb("#3B82F6") } else { rgb("#0f172a") })['
+		)
+		lines.push(
+			'            #if "formatted_value" in item and item.formatted_value != "" { item.formatted_value } else { item.value }'
+		)
+		lines.push("          ],")
 		lines.push("        ))")
 		lines.push("        .flatten()")
 		lines.push("    )")
@@ -359,8 +365,10 @@ export function buildReportTypstFromConfig(
 		lines.push("    .filter(row => row.is_total_row != true)")
 	}
 	lines.push("    .map(row => {")
-	lines.push("      row.cells.map(cell => {")
-	lines.push("        if row.is_bold {")
+	lines.push("      row.cells.enumerate().map(cell_entry => {")
+	lines.push("        let idx = cell_entry.at(0)")
+	lines.push("        let cell = cell_entry.at(1)")
+	lines.push("        let content = if row.is_bold {")
 	lines.push(
 		`          text(font: "${bodyFontFamily}", size: ${bodyFontSize}, style: "${bodyFontStyle}", weight: "bold", fill: rgb("${bodyFontColor}"))[#cell.value]`
 	)
@@ -368,6 +376,11 @@ export function buildReportTypstFromConfig(
 	lines.push(
 		`          text(font: "${bodyFontFamily}", size: ${bodyFontSize}, style: "${bodyFontStyle}", weight: "${bodyFontWeight}", fill: rgb("${bodyFontColor}"))[#cell.value]`
 	)
+	lines.push("        }")
+	lines.push('        if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {')
+	lines.push("          box(inset: (left: row.indent * 2em))[#content]")
+	lines.push("        } else {")
+	lines.push("          content")
 	lines.push("        }")
 	lines.push("      })")
 	lines.push("    })")

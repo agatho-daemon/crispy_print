@@ -115,13 +115,25 @@
 									<input v-model="reportIncludeFilters" type="checkbox" />
 									<span>Show Filters</span>
 								</label>
-								<label v-if="reportHasSummary" class="settings-pane__toggle">
+								<label class="settings-pane__toggle">
 									<input v-model="reportShowSummary" type="checkbox" />
 									<span>Show Summary</span>
 								</label>
-								<label v-if="reportHasTotalRow" class="settings-pane__toggle">
-									<input v-model="reportShowTotalRow" type="checkbox" />
-									<span>Show Total Row</span>
+								<label class="settings-pane__toggle">
+									<input
+										v-model="reportShowTotalRow"
+										type="checkbox"
+										:disabled="!reportHasTotalRow"
+									/>
+									<span>Show Totals</span>
+								</label>
+								<label class="settings-pane__toggle">
+									<input
+										v-model="reportShowChart"
+										type="checkbox"
+										:disabled="!reportHasChart"
+									/>
+									<span>Show Chart</span>
 								</label>
 							</div>
 						</div>
@@ -517,6 +529,7 @@ import PreviewRenderer from "../components/PreviewRenderer.vue";
 import { pickFormatName } from "../utils/formatSelection";
 import { useBrandingData } from "../composables/useBrandingData";
 import { loadReportState, normalizeReportChartSvg } from "../utils/reportState";
+import { dispatchCrispyPreviewSource } from "../utils/events";
 import {
 	buildReportFormatOptions,
 	normalizeReportColumns,
@@ -560,12 +573,16 @@ const selectedReportFormat = ref<string>("");
 const reportIncludeFilters = ref(false);
 const reportShowSummary = ref(true);
 const reportShowTotalRow = ref(true);
+const reportShowChart = ref(true);
 const reportColumnsState = ref<ReportColumn[]>([]);
 const reportColumnSelections = ref<Record<string, { selected: boolean; width: string }>>({});
 const reportHasSummary = ref(false);
-const reportHasTotalRow = ref(false);
+const reportHasTotalRow = ref(true);
 const reportFilters = ref<Record<string, any>>(props.reportFilters || {});
 const reportChartSvg = ref<string>(props.reportChartSvg || "");
+const reportHasChart = computed(() =>
+	Boolean(normalizeReportChartSvg(reportChartSvg.value || ""))
+);
 const isReportColumnsExpanded = ref(true);
 const reportPreviewLoading = ref(false);
 const reportPreviewPending = ref(false);
@@ -779,12 +796,15 @@ async function fetchReportColumns() {
 		const normalized = normalizeReportColumns(columns);
 		reportColumnsState.value = normalized;
 		seedReportColumnSelections(normalized);
-		const rawSummary = response?.message?.report_summary;
-		reportHasSummary.value = Array.isArray(rawSummary) && rawSummary.length > 0;
-		const rawRows = Array.isArray(response?.message?.result) ? response.message.result : [];
-		reportHasTotalRow.value = rawRows.some(
+		const message = response?.message || {};
+		const hasSummaryKey = Object.prototype.hasOwnProperty.call(message, "report_summary");
+		reportHasSummary.value = hasSummaryKey;
+		const rawRows = Array.isArray(message?.result) ? message.result : [];
+		const hasExplicitTotalRow = rawRows.some(
 			(row: any) => row && typeof row === "object" && Boolean(row.is_total_row)
 		);
+		const addTotalRowFlag = Boolean(message?.add_total_row);
+		reportHasTotalRow.value = hasExplicitTotalRow || addTotalRowFlag;
 	} catch (error) {
 		logger.error("Failed to load report columns", error);
 	}
@@ -800,7 +820,9 @@ async function compileReportPreview() {
 
 	try {
 		reportPreviewLoading.value = true;
-		const chartSvgPayload = normalizeReportChartSvg(reportChartSvg.value || "");
+		const chartSvgPayload = reportShowChart.value
+			? normalizeReportChartSvg(reportChartSvg.value || "")
+			: "";
 		const letterheadImage = letterheadDoc.value?.image || null;
 		const logoImage = logoSettings.value.image || null;
 		logger.info("Report preview compile requested with letterhead", letterheadDoc.value);
@@ -819,6 +841,7 @@ async function compileReportPreview() {
 				include_filters: reportIncludeFilters.value ? 1 : 0,
 				include_summary: reportShowSummary.value ? 1 : 0,
 				include_total_row: reportShowTotalRow.value ? 1 : 0,
+				include_chart: reportShowChart.value ? 1 : 0,
 				orientation: pageSettings.value.orientation,
 				page_settings: pageSettingsComputed.value,
 				chart_svg: chartSvgPayload || null,
@@ -833,6 +856,7 @@ async function compileReportPreview() {
 		if (!typstSource) {
 			throw new Error("No Typst source returned");
 		}
+		dispatchCrispyPreviewSource({ source: typstSource });
 		lastReportTypstSource.value = typstSource;
 		lastReportChartSvg.value = chartSvgPayload || "";
 
@@ -1013,6 +1037,7 @@ const getReportSettings = () => ({
 	includeFilters: reportIncludeFilters.value ? 1 : 0,
 	includeSummary: reportShowSummary.value ? 1 : 0,
 	includeTotalRow: reportShowTotalRow.value ? 1 : 0,
+	includeChart: reportShowChart.value ? 1 : 0,
 	columnConfig: reportColumnConfig.value,
 	filters: reportFilters.value,
 });
@@ -1087,6 +1112,7 @@ watch(
 		reportIncludeFilters.value,
 		reportShowSummary.value,
 		reportShowTotalRow.value,
+		reportShowChart.value,
 	],
 	() => {
 		compileReportPreview();
