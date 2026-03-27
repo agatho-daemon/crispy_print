@@ -40,6 +40,7 @@ import {
   getDummyReportTableColumns,
   renderDummyReportChartSvg,
 } from "../utils/reportPreviewDummy";
+import { dispatchCrispyPreviewSource } from "../utils/events";
 
 let storeInstance: ReturnType<typeof buildStore> | null = null;
 
@@ -1282,6 +1283,7 @@ function buildStore() {
       if (!typstSource) {
         throw new Error("No Typst source returned");
       }
+      dispatchCrispyPreviewSource({ source: typstSource });
 
       logger.info("Compiling to SVG");
 

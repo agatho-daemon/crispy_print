@@ -15,7 +15,6 @@
   "doc_type",
   "contract",
   "generic_report_type",
-  "column_break_pzen",
   "module",
   "is_default",
   "section_break_bjol",
@@ -150,10 +149,6 @@
    "label": "Generic Report"
   },
   {
-   "fieldname": "column_break_pzen",
-   "fieldtype": "Column Break"
-  },
-  {
    "depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
    "description": "Used only for generic fallback templates; ignored for linked/custom report formats.<br>Select a template type (Grid, Tree, Summary, etc.), or create a custom type.",
    "fieldname": "generic_report_type",
@@ -182,7 +177,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-14 07:39:41.395621",
+ "modified": "2026-02-20 15:58:02.645341",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",

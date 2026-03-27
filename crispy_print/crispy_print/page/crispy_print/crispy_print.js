@@ -67,6 +67,7 @@ frappe.ui.CrispyPrintView = class {
 		this.current = { doctype: frm.doctype, docname: frm.docname, format, frm };
 
 		this.page.set_title(__(frm.docname));
+		this.add_or_update_context_action_icon();
 		this.setup_menu(format);
 
 		if (!same_doc || !same_format) {
@@ -86,6 +87,7 @@ frappe.ui.CrispyPrintView = class {
 
 		const title = context.report ? `${context.report} Report Preview` : "Report Preview";
 		this.page.set_title(__(title));
+		this.add_or_update_context_action_icon();
 		this.setup_menu(null);
 
 		if (!same_report) {
@@ -141,18 +143,38 @@ frappe.ui.CrispyPrintView = class {
 			$download_pdf_btn.attr &&
 			$download_pdf_btn.attr("id", "typst-download");
 
-		this.page.add_action_icon(
-			"es-line-filetype",
-			() => this.go_to_form_view(),
-			"",
-			__("Form")
-		);
+		this.add_or_update_context_action_icon();
+	}
+
+	add_or_update_context_action_icon() {
+		if (this._context_action_icon_btn && this._context_action_icon_btn.remove) {
+			this._context_action_icon_btn.remove();
+			this._context_action_icon_btn = null;
+		}
+
+		const isReportContext =
+			this.current && this.current.source === "report" && this.current.report;
+		const icon = isReportContext ? "es-line-reports" : "es-line-filetype";
+		const tooltip = isReportContext ? __("Report") : __("Form");
+		const onClick = isReportContext
+			? () => this.go_to_report_view()
+			: () => this.go_to_form_view();
+
+		this._context_action_icon_btn = this.page.add_action_icon(icon, onClick, "", tooltip);
 	}
 
 	go_to_form_view() {
 		if (this.current.doctype && this.current.docname) {
 			frappe.set_route("Form", this.current.doctype, this.current.docname);
 		}
+	}
+
+	go_to_report_view() {
+		const reportName = this.current?.report;
+		if (!reportName) return;
+		const savedFilters = this.current?.filters || {};
+		frappe.route_options = { ...savedFilters };
+		frappe.set_route("query-report", reportName);
 	}
 
 	setup_menu(format) {

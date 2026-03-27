@@ -439,6 +439,13 @@ export function setupWorker(
 		dispatchCrispyPreviewSource({ source: lastTypstCode || null })
 	}
 	window.addEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
+	const handleSourceUpdate = (event: any) => {
+		const source = event?.detail?.source
+		if (typeof source === "string") {
+			lastTypstCode = source
+		}
+	}
+	window.addEventListener(CrispyPreviewEvents.Source, handleSourceUpdate)
 
 	// PDF generation request (used by crispy-print toolbar and any other UI)
 	const handlePdfRequest = (event: any) => {
@@ -1424,6 +1431,7 @@ export function setupWorker(
 		window.removeEventListener(CrispyPreviewEvents.SetDoc, handleSetDoc)
 		window.removeEventListener(CrispyPreviewEvents.Refresh, handleRefresh)
 		window.removeEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
+		window.removeEventListener(CrispyPreviewEvents.Source, handleSourceUpdate)
 		window.removeEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
 
 		// Cleanup autocomplete

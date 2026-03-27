@@ -53,7 +53,10 @@ frappe.ui.form.on("Crispy Format", {
 		});
 
 		if (frm.doc.is_default) {
-			frm.dashboard.set_headline(__("Default format for {0}", [frm.doc.doc_type]), "green");
+			frm.dashboard.set_headline(
+				__("Default format for {0}", [getDefaultScopeLabel(frm.doc)]),
+				"green"
+			);
 		}
 
 		// Show alert for generic templates
@@ -103,6 +106,35 @@ function syncReportRawTypstFromAdvanced(frm) {
 
 function getActiveLinkedReports(doc) {
 	return (doc.report || []).filter((row) => row.report && !row.disabled);
+}
+
+function getDefaultScopeLabel(doc) {
+	if (doc.crispy_format_type === "DocType") {
+		return doc.doc_type || __("this DocType");
+	}
+
+	if (doc.crispy_format_type === "Contract") {
+		return doc.contract || __("this Contract");
+	}
+
+	if (doc.crispy_format_type === "Report") {
+		if (doc.is_generic) {
+			return doc.generic_report_type
+				? __("generic {0} reports", [doc.generic_report_type])
+				: __("generic reports");
+		}
+
+		const linkedReports = getActiveLinkedReports(doc).map((row) => row.report);
+		if (linkedReports.length === 1) {
+			return linkedReports[0];
+		}
+		if (linkedReports.length > 1) {
+			return __("{0} linked reports", [linkedReports.length]);
+		}
+		return __("linked reports");
+	}
+
+	return __("this format");
 }
 
 async function exportFormat(name) {

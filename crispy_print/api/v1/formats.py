@@ -4,7 +4,7 @@ from pathlib import Path
 
 import frappe
 from frappe import _
-from frappe.query_builder import DocType
+from frappe.query_builder import DocType, Order
 from frappe.utils import now_datetime
 
 EXPORT_SCHEMA_VERSION = 1
@@ -76,7 +76,9 @@ def get_default_doctypes():
 	results = (
 		frappe.qb.from_(CrispyFormat)
 		.select(CrispyFormat.doc_type)
+		.where(CrispyFormat.crispy_format_type == "DocType")
 		.where(CrispyFormat.is_default == 1)
+		.where(CrispyFormat.doc_type.isnotnull())
 		.run(as_dict=True)
 	)
 
@@ -94,25 +96,25 @@ def get_available_formats(report: str) -> dict:
 			"default_format": str
 		}
 	"""
-	# Custom formats
-	custom_formats = frappe.get_all(
-		"Crispy Format",
-		filters={"crispy_format_type": "Report", "is_generic": 0, "report": report},
-		fields=["name", "modified"],
-	)
+	# Custom formats linked to this report via child table rows.
+	custom_formats = get_custom_report_formats(report)
 
-	# Generic formats
-	generic_formats = frappe.get_all(
-		"Crispy Format",
-		filters={"crispy_format_type": "Report", "is_generic": 1},
-		fields=["name", "generic_report_type"],
-		order_by="generic_report_type asc",
-	)
+	# Generic formats are fallback-only.
+	generic_formats = []
+	if not custom_formats:
+		generic_formats = frappe.get_all(
+			"Crispy Format",
+			filters={"crispy_format_type": "Report", "is_generic": 1},
+			fields=["name", "generic_report_type"],
+			order_by="generic_report_type asc",
+		)
 
-	is_tree = _get_report_is_tree(report)
-	if is_tree is not None:
-		expected_type = "Tree" if is_tree else "Grid"
-		generic_formats = [fmt for fmt in generic_formats if fmt.get("generic_report_type") == expected_type]
+		is_tree = _get_report_is_tree(report)
+		if is_tree is not None:
+			expected_type = "Tree" if is_tree else "Grid"
+			generic_formats = [
+				fmt for fmt in generic_formats if fmt.get("generic_report_type") == expected_type
+			]
 
 	# Determine default
 	default = (
@@ -126,6 +128,27 @@ def get_available_formats(report: str) -> dict:
 		"generic_formats": generic_formats,
 		"default_format": default,
 	}
+
+
+def get_custom_report_formats(report: str) -> list[dict]:
+	"""Return custom report formats linked to a report through child table rows."""
+	CrispyFormat = DocType("Crispy Format")
+	CrispyFormatReport = DocType("Crispy Format Reports")
+
+	return (
+		frappe.qb.from_(CrispyFormat)
+		.inner_join(CrispyFormatReport)
+		.on(CrispyFormatReport.parent == CrispyFormat.name)
+		.select(CrispyFormat.name, CrispyFormat.modified)
+		.where(CrispyFormat.crispy_format_type == "Report")
+		.where(CrispyFormat.is_generic == 0)
+		.where(CrispyFormatReport.parenttype == "Crispy Format")
+		.where(CrispyFormatReport.report == report)
+		.where((CrispyFormatReport.disabled == 0) | CrispyFormatReport.disabled.isnull())
+		.orderby(CrispyFormat.modified, order=Order.desc)
+		.distinct()
+		.run(as_dict=True)
+	)
 
 
 def get_builder_mode(format_name: str) -> dict:
