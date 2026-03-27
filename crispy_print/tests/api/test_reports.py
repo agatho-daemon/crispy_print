@@ -452,5 +452,32 @@ class TestReportDataPrep(FrappeTestCase):
 				},
 			)
 
-		self.assertEqual(out, "#typst")
+		self.assertEqual(out["typst_source"], "#typst")
+		self.assertFalse(out["truncation"]["is_truncated"])
 		self.assertNotIn("chart_svg", captured_data)
+
+	def test_get_report_data_caps_rows(self):
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.reports import _get_report_data
+
+		with mock.patch(
+			"crispy_print.api.v1.reports.frappe.desk",
+			new=SimpleNamespace(
+				query_report=SimpleNamespace(
+					run=mock.Mock(
+						return_value={
+							"columns": [{"label": "Name", "fieldname": "name"}],
+							"result": [[1], [2], [3], [4]],
+						}
+					)
+				)
+			),
+		):
+			out = _get_report_data("Any Report", {}, max_rows=2)
+
+		self.assertEqual(len(out["result"]), 2)
+		self.assertTrue(out["result_truncated"])
+		self.assertEqual(out["original_row_count"], 4)
+		self.assertEqual(out["returned_row_count"], 2)
+		self.assertEqual(out["max_rows"], 2)
