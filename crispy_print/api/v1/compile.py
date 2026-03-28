@@ -376,13 +376,3 @@ def compile_typst(
 	except Exception as exc:
 		frappe.log_error(message=str(exc), title="Typst Compilation Error")
 		frappe.throw(_("Unexpected error during compilation: {0}").format(str(exc)))
-
-	finally:
-		# Cleanup temp directory (includes source file, letterhead, and outputs)
-		if src_path:
-			temp_dir = Path(src_path).parent
-			try:
-				if temp_dir.exists():
-					shutil.rmtree(temp_dir)
-			except Exception as e:
-				frappe.log_error(f"Failed to cleanup temp directory: {e}", "Typst Cleanup Error")

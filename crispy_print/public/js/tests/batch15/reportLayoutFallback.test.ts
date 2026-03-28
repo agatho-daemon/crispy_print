@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../api/crispy", () => ({
-  getCrispyFormat: vi.fn(async () => ({
+  getCrispyFormat: vi.fn(async (): Promise<Record<string, unknown>> => ({
     name: "Generic Report Format",
     crispy_format_type: "Report",
     is_generic: 1,
     is_advanced: 0,
     generic_report_type: "Grid",
     report: "Account Balance",
-    doc_type: null,
+    doc_type: null as unknown,
     layout_json: JSON.stringify({
       sections: [
         {
@@ -21,7 +21,7 @@ vi.mock("../../api/crispy", () => ({
     typst_code: "",
     raw_typst: 0,
   })),
-  getDefaultReportBuilderConfig: vi.fn(async () => ({
+  getDefaultReportBuilderConfig: vi.fn(async (): Promise<Record<string, unknown>> => ({
     mode: "basic",
     preset: "grid",
     show_filters: true,
@@ -45,8 +45,8 @@ vi.mock("../../api/crispy", () => ({
     table_inset_y_pt: 6,
     table_stroke_top_pt: 1,
     table_stroke_body_pt: 0.5,
-    raw_signature: null,
-    report_table_sync_signature: null,
+    raw_signature: null as unknown,
+    report_table_sync_signature: null as unknown,
   })),
   saveCrispyFormat: vi.fn(async () => {}),
 }));
@@ -60,29 +60,29 @@ vi.mock("../../utils/formatLoader", async (orig) => {
   return {
     ...actual,
     parseCrispyFormatDoc: () => ({
-      layout: { sections: [] },
+      layout: { sections: [] as unknown[] },
       pageSettings: {},
       docHeader: "",
       formatDoc: {},
     }),
-    resolveLetterheadDoc: vi.fn(async () => null),
+    resolveLetterheadDoc: vi.fn(async (): Promise<null> => null),
   };
 });
 
 describe("report layout fallback", () => {
   beforeEach(() => {
     vi.resetModules();
-    (globalThis as any).__ = (msg: string) => msg;
+    (globalThis as any).__ = (msg: string): string => msg;
     (globalThis as any).frappe = {
       call: vi.fn(async ({ method }: { method: string }) => {
         if (method === "crispy_print.api.v1.get_builder_mode") {
           return { message: { mode: "visual" } };
         }
         if (method === "frappe.desk.query_report.run") {
-          return { message: { columns: [] } };
+          return { message: { columns: [] as unknown[] } };
         }
         if (method === "crispy_print.api.v1.get_reports_without_custom_html") {
-          return { message: [] };
+          return { message: [] as unknown[] };
         }
         return { message: {} };
       }),

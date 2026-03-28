@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onBeforeUnmount, onMounted } from "vue";
 import FieldsPane from "../components/FieldsPane.vue";
 import LayoutPane from "../components/LayoutPane.vue";
 import TypstCodePane from "../components/TypstCodePane.vue";
@@ -34,7 +34,26 @@ const pageSettings = store.pageSettings;
 onMounted(async () => {
 	const formatName = getCrispyBuilderFormatName();
 	if (formatName) await store.fetch(formatName);
+	window.addEventListener("keydown", handleHistoryShortcuts);
 });
+
+onBeforeUnmount(() => {
+	window.removeEventListener("keydown", handleHistoryShortcuts);
+});
+
+function handleHistoryShortcuts(event: KeyboardEvent) {
+	if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+	const key = event.key.toLowerCase();
+	if (key === "z" && !event.shiftKey) {
+		event.preventDefault();
+		store.undo();
+		return;
+	}
+	if (key === "y" || (key === "z" && event.shiftKey)) {
+		event.preventDefault();
+		store.redo();
+	}
+}
 
 // Watch for route changes
 if (typeof frappe !== "undefined" && frappe?.router?.on) {

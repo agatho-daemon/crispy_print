@@ -2,11 +2,7 @@
 // State management for Crispy Print Format Builder
 
 import { ref, computed, watch, nextTick } from "vue";
-import {
-  createDefaultLayout,
-  createLayoutId,
-  serializeLayout,
-} from "../utils/layout";
+import { serializeLayout } from "../utils/layout";
 import type { CrispyLayout, DocField, TableColumn } from "../utils/layout";
 import {
   defaultTableSettings,
@@ -17,7 +13,6 @@ import {
 } from "../utils/pageSettings";
 import {
   parseCrispyFormatDoc,
-  resolveLetterheadDoc,
 } from "../utils/formatLoader";
 import {
   getCrispyFormat,
@@ -35,18 +30,17 @@ import {
   type ReportBuilderConfig,
 } from "../utils/reportBuilder";
 import {
-  buildDummyReportPreviewData,
   getDummyReportFilterColumns,
   getDummyReportTableColumns,
-  renderDummyReportChartSvg,
 } from "../utils/reportPreviewDummy";
-import { dispatchCrispyPreviewSource } from "../utils/events";
+import { createReportStore } from "./useReportStore";
+import { createLayoutStore } from "./useLayoutStore";
+import { createSettingsStore } from "./useSettingsStore";
 
 let storeInstance: ReturnType<typeof buildStore> | null = null;
+const MAX_HISTORY_ENTRIES = 100;
 
 const logger = getLogger({ module: "Store" });
-const REPORT_TABLE_FIELDNAME = "data.table";
-const DEFAULT_REPORT_PREVIEW_LIMIT = 50;
 
 interface CrispyFormat {
   name: string;
@@ -100,9 +94,19 @@ function buildStore() {
   );
   const reportBasicReadOnly = ref(false);
   const reportModeNotice = ref("");
-  let letterheadRequestSeq = 0;
-
   const pageSettings = ref<PageSettings>({ ...defaultPageSettings });
+  const historyPast = ref<string[]>([]);
+  const historyFuture = ref<string[]>([]);
+  const savedSnapshot = ref("");
+  const applyingHistory = ref(false);
+  const settingsStore = createSettingsStore({
+    loading,
+    initializing,
+    dirty,
+    changeKey,
+    letterhead,
+    builderContext,
+  });
 
   // Computed
   const formatName = computed(() => crispyFormat.value?.name || null);
@@ -165,6 +169,88 @@ function buildStore() {
   const typstPreamble = computed(
     () => crispyFormat.value?.typst_preamble || "",
   );
+  const canUndo = computed(() => historyPast.value.length > 1);
+  const canRedo = computed(() => historyFuture.value.length > 0);
+
+  function buildHistorySnapshot(): string {
+    return JSON.stringify({
+      layout: layout.value || null,
+      pageSettings: pageSettings.value || null,
+      typstCode: typstCode.value || "",
+      rawTypst: Boolean(rawTypst.value),
+      reportBuilderConfig: reportBuilderConfig.value || null,
+    });
+  }
+
+  function applyHistorySnapshot(snapshot: string) {
+    const parsed = JSON.parse(snapshot || "{}");
+    applyingHistory.value = true;
+    try {
+      layout.value = parsed.layout || null;
+      pageSettings.value = parsed.pageSettings || { ...defaultPageSettings };
+      typstCode.value = String(parsed.typstCode || "");
+      rawTypst.value = Boolean(parsed.rawTypst);
+      if (parsed.reportBuilderConfig) {
+        reportBuilderConfig.value = parsed.reportBuilderConfig;
+      }
+      pageSettings.value.report_builder = reportBuilderConfig.value;
+      dirty.value = snapshot !== savedSnapshot.value;
+      changeKey.value++;
+    } finally {
+      applyingHistory.value = false;
+    }
+  }
+
+  function captureHistoryCheckpoint(resetFuture = true) {
+    if (loading.value || initializing.value || applyingHistory.value) return;
+    const snapshot = buildHistorySnapshot();
+    const last = historyPast.value[historyPast.value.length - 1];
+    if (snapshot === last) return;
+
+    historyPast.value.push(snapshot);
+    if (historyPast.value.length > MAX_HISTORY_ENTRIES) {
+      historyPast.value.shift();
+    }
+    if (resetFuture) {
+      historyFuture.value = [];
+    }
+  }
+
+  function resetHistory(saved = false) {
+    const snapshot = buildHistorySnapshot();
+    historyPast.value = [snapshot];
+    historyFuture.value = [];
+    if (saved) {
+      savedSnapshot.value = snapshot;
+      dirty.value = false;
+    }
+  }
+
+  function markDirty() {
+    settingsStore.markDirty();
+    captureHistoryCheckpoint(true);
+    if (!applyingHistory.value) {
+      dirty.value = buildHistorySnapshot() !== savedSnapshot.value;
+    }
+  }
+
+  function undo() {
+    if (!canUndo.value || applyingHistory.value) return;
+    const current = historyPast.value.pop();
+    if (!current) return;
+    historyFuture.value.unshift(current);
+    const previous = historyPast.value[historyPast.value.length - 1];
+    if (!previous) return;
+    applyHistorySnapshot(previous);
+  }
+
+  function redo() {
+    if (!canRedo.value || applyingHistory.value) return;
+    const next = historyFuture.value.shift();
+    if (!next) return;
+    historyPast.value.push(next);
+    applyHistorySnapshot(next);
+  }
 
   function isNumericFieldtype(fieldtype: string | undefined): boolean {
     return ["Int", "Float", "Currency", "Percent"].includes(String(fieldtype || ""));
@@ -287,57 +373,6 @@ function buildStore() {
     return JSON.stringify(normalized);
   }
 
-  function findReportTableField(): any | null {
-    const sections = layout.value?.sections || [];
-    for (const section of sections) {
-      for (const column of section.columns || []) {
-        for (const field of column.fields || []) {
-          if (field?.fieldname === REPORT_TABLE_FIELDNAME) {
-            return field;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  function escapeTypstString(value: string): string {
-    return String(value || "").replace(/"/g, '\\"');
-  }
-
-  function buildReportFontPreambleOverride(): string {
-    const config = reportBuilderConfig.value;
-    const fontFamily = String(config?.font_family || "").trim();
-    if (!fontFamily) return "";
-    const fontSize = Number(config?.font_size_pt);
-    const safeSize = Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 9;
-    return `#set text(font: "${escapeTypstString(fontFamily)}", size: ${safeSize}pt)`;
-  }
-
-  function buildReportTypstOverrideForPreview(source: string): string {
-    const rawSource = String(source || "");
-    if (!rawSource.trim()) return rawSource;
-    if (!isReportMode.value) return rawSource;
-    if (reportBuilderMode.value !== "advanced") return rawSource;
-    if (!rawSource.includes("data.chart_svg")) return rawSource;
-
-    const width = Math.max(
-      10,
-      Math.min(100, Math.round(Number(reportBuilderConfig.value.chart_width_percent) || 100)),
-    );
-    const height = Math.max(
-      60,
-      Math.min(600, Math.round(Number(reportBuilderConfig.value.chart_max_height_pt) || 220)),
-    );
-
-    // In advanced mode, keep user source but normalize placeholder chart sizing
-    // to match Chart Settings controls used in basic mode.
-    return rawSource.replace(
-      /#image\(data\.chart_svg,\s*width:\s*[^,)\n]+(?:,\s*height:\s*[^)\n]+)?\)/g,
-      `#align(center)[#image(data.chart_svg, width: ${width}%, height: ${height}pt, fit: "contain")]`,
-    );
-  }
-
   function migrateLegacyReportBuilderTableStyles(
     persistedReportBuilder: Record<string, any>,
   ) {
@@ -424,7 +459,7 @@ function buildStore() {
   }
 
   function getReportColumnConfigFromLayout(): Array<{ fieldname: string; width: string }> {
-    const tableField = findReportTableField();
+    const tableField = layoutStore.findReportTableField();
     const columns = Array.isArray(tableField?.table_columns)
       ? tableField.table_columns
       : [];
@@ -700,20 +735,6 @@ function buildStore() {
     console.groupEnd();
   }
 
-  function findReportLayoutField(fieldname: string): any | null {
-    const sections = layout.value?.sections || [];
-    for (const section of sections) {
-      for (const column of section.columns || []) {
-        for (const field of column.fields || []) {
-          if (field?.fieldname === fieldname) {
-            return field;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   async function askToRebindReportTableColumns(): Promise<boolean> {
     const message =
       "Report table columns were customized. Rebind to the selected report columns?";
@@ -735,51 +756,34 @@ function buildStore() {
     return false;
   }
 
-  function isReportTableCustomized(): boolean {
-    const tableField = findReportTableField();
-    if (!tableField) return false;
-    const currentSignature = computeColumnsSignature(
-      tableField.table_columns || [],
-    );
-    const latestRuntimeSignature = computeColumnsSignature(buildReportTableColumns());
-    const syncedSignature = reportBuilderConfig.value.report_table_sync_signature;
-    if (syncedSignature) {
-      return currentSignature !== syncedSignature;
-    }
-    return currentSignature !== latestRuntimeSignature;
-  }
+  const layoutStore = createLayoutStore({
+    layout,
+    meta,
+    crispyFormat,
+    isReportMode,
+    pageSettings,
+    reportBuilderConfig,
+    buildReportTableColumns,
+    getReportBlockColumns,
+    computeColumnsSignature,
+    markDirty,
+  });
 
-  function rebuildReportTableColumns(force = false): boolean {
-    if (!isReportMode.value) return false;
-    const tableField = findReportTableField();
-    if (!tableField) return false;
-
-    const newColumns = buildReportTableColumns();
-    const newSignature = computeColumnsSignature(newColumns);
-    const currentSignature = computeColumnsSignature(tableField.table_columns || []);
-    const syncedSignature = reportBuilderConfig.value.report_table_sync_signature;
-    const customized = syncedSignature
-      ? currentSignature !== syncedSignature
-      : currentSignature !== newSignature;
-
-    if (!force && customized) {
-      return false;
-    }
-
-    tableField.table_columns = newColumns;
-    reportBuilderConfig.value.report_table_sync_signature = newSignature;
-    pageSettings.value.report_builder = reportBuilderConfig.value;
-    return true;
-  }
-
-  function syncFiltersBlockColumns(): boolean {
-    if (!isReportMode.value) return false;
-    const filtersField = findReportLayoutField("data.filters");
-    if (!filtersField) return false;
-    const columns = getReportBlockColumns("data.filters");
-    filtersField.table_columns = columns;
-    return true;
-  }
+  const reportStore = createReportStore({
+    formatName,
+    pageSettings,
+    letterhead,
+    typstCode,
+    reportBuilderConfig,
+    reportBuilderMode,
+    selectedReportName,
+    isReportMode,
+    reportColumns,
+    reportFilterFields,
+    reportFilters,
+    getReportColumnConfigFromLayout,
+    getReportTableColumnsForPreview: layoutStore.getReportTableColumnsForPreview,
+  });
 
   /**
    * Fetch Crispy Format document and load DocType metadata
@@ -818,11 +822,11 @@ function buildStore() {
 
       // Load sample reports and initial selection for Report mode.
       if (formatType === "Report") {
-        await loadSampleReports();
+        await reportStore.loadSampleReports();
         logger.info("Sample reports loaded", sampleReports.value);
         selectedReportName.value = "Style Preview";
-        await loadReportFilterFields("Style Preview");
-        await loadReportColumns("Style Preview", {});
+        await reportStore.loadReportFilterFields("Style Preview");
+        await reportStore.loadReportColumns("Style Preview", {});
       }
 
       // Load DocType metadata
@@ -901,7 +905,10 @@ function buildStore() {
       const persistedLayout = parsed.layout;
       const hadNoLayout = !persistedLayout;
       // Generic report builder uses a fixed style-preview layout model.
-      layout.value = formatType === "Report" ? getDefaultLayout() : (persistedLayout || getDefaultLayout());
+      layout.value =
+        formatType === "Report"
+          ? layoutStore.getDefaultLayout()
+          : persistedLayout || layoutStore.getDefaultLayout();
 
       // Load page settings (already merged with defaults by parser)
       pageSettings.value = parsed.pageSettings || { ...defaultPageSettings };
@@ -941,7 +948,7 @@ function buildStore() {
       if (formatType === "Report") {
         initializeReportBuilderMode(doc);
         if (layout.value) {
-          rebuildReportTableColumns(true);
+          layoutStore.rebuildReportTableColumns(true);
         }
       }
       const qrSettings = ensureQrSettings(pageSettings.value);
@@ -953,15 +960,14 @@ function buildStore() {
 
       // Load letterhead if specified
       if (pageSettings.value.letterhead) {
-        letterhead.value = await resolveLetterheadDoc(
-          pageSettings.value.letterhead,
-        );
+        await settingsStore.fetchLetterhead(pageSettings.value.letterhead);
       }
 
       // Auto-save if this was the first time (no layout_json in DB)
       if (hadNoLayout && layout.value) {
         await saveChanges();
       }
+      resetHistory(true);
     } catch (error) {
       logger.error("Failed to fetch Crispy Format", error);
       frappe.throw(__("Failed to load Crispy Format"));
@@ -972,67 +978,6 @@ function buildStore() {
       initializing.value = false;
     }
   }
-  /**
-   * Create default layout from DocType metadata
-   */
-  function getDefaultLayout(): CrispyLayout {
-    if (isReportMode.value) {
-      const reportTableColumns = buildReportTableColumns();
-      reportBuilderConfig.value.report_table_sync_signature =
-        computeColumnsSignature(reportTableColumns);
-
-      const reportFields = [
-        { fieldname: "data.title", label: "Title", fieldtype: "Data" },
-        { fieldname: "data.subtitle", label: "Subtitle", fieldtype: "Data" },
-        {
-          fieldname: "data.filters",
-          label: "Filters",
-          fieldtype: "Table",
-          table_columns: getReportBlockColumns("data.filters"),
-        },
-        {
-          fieldname: "data.report_summary",
-          label: "Report Summary",
-          fieldtype: "Table",
-          table_columns: getReportBlockColumns("data.report_summary"),
-        },
-        { fieldname: "data.chart", label: "Chart", fieldtype: "Table" },
-        {
-          fieldname: "data.table",
-          label: "Report Table",
-          fieldtype: "Table",
-          table_columns: reportTableColumns,
-        },
-      ];
-
-      return {
-        sections: [
-          {
-            id: createLayoutId(),
-            label: "",
-            columns: [
-              {
-                id: createLayoutId(),
-                label: "",
-                fields: reportFields.map((field) => ({
-                  id: createLayoutId(),
-                  align: "left" as const,
-                  ...field,
-                })),
-              },
-            ],
-          },
-        ],
-      };
-    }
-
-    if (!meta.value) {
-      return { sections: [] };
-    }
-
-    return createDefaultLayout(meta.value, crispyFormat.value);
-  }
-
   /**
    * Save changes to backend
    */
@@ -1075,6 +1020,7 @@ function buildStore() {
       });
 
       dirty.value = false;
+      savedSnapshot.value = buildHistorySnapshot();
     } catch (error) {
       logger.error("Failed to save changes", error);
       frappe.show_alert({
@@ -1083,231 +1029,6 @@ function buildStore() {
       });
     } finally {
       loading.value = false;
-    }
-  }
-
-  /**
-   * Mark as dirty when layout changes
-   */
-  function markDirty() {
-    // Don't mark dirty during initial load
-    if (loading.value || initializing.value) {
-      return;
-    }
-
-    dirty.value = true;
-    changeKey.value++;
-  }
-
-  /**
-   * Reset layout to default
-   */
-  function resetLayout() {
-    layout.value = getDefaultLayout();
-    markDirty();
-  }
-
-  /**
-   * Fetch letterhead when letterhead setting changes
-   */
-  async function fetchLetterhead(letterheadName: string) {
-    const requestSeq = ++letterheadRequestSeq;
-    if (typeof frappe === "undefined") {
-      logger.warn("Cannot fetch letterhead - Frappe not available");
-      return;
-    }
-
-    if (!letterheadName) {
-      letterhead.value = null;
-      changeKey.value++;
-      return;
-    }
-
-    // Clear current letterhead immediately to avoid showing stale branding
-    // while the new letterhead document is loading.
-    letterhead.value = null;
-    try {
-      const resolved = await resolveLetterheadDoc(letterheadName);
-      if (requestSeq !== letterheadRequestSeq) return;
-      letterhead.value = resolved;
-      changeKey.value++;
-    } catch (error) {
-      if (requestSeq !== letterheadRequestSeq) return;
-      logger.warn("Failed to resolve letterhead", { letterheadName, error });
-      letterhead.value = null;
-      changeKey.value++;
-    }
-  }
-
-  /**
-   * Set builder context from route options
-   */
-  function setBuilderContext(context: Record<string, any> = {}) {
-    builderContext.value = context;
-    logger.info("Builder context set", context);
-  }
-
-  /**
-   * Load report columns for Report mode
-   */
-  async function loadReportColumns(
-    reportName: string,
-    filters: Record<string, any> = {},
-  ) {
-    void reportName;
-    void filters;
-    reportColumns.value = getDummyReportTableColumns();
-  }
-
-  async function loadReportFilterFields(reportName: string) {
-    void reportName;
-    reportFilterFields.value = getDummyReportFilterColumns().map((col) => ({
-      fieldname: col.fieldname,
-      label: col.label,
-      fieldtype: col.fieldtype || "Data",
-      reqd: false,
-    }));
-  }
-
-  /**
-   * Load sample reports for generic template preview
-   */
-  async function loadSampleReports() {
-    sampleReports.value = [{ name: "Style Preview" }];
-    selectedReportName.value = "Style Preview";
-  }
-
-  async function setSelectedReport(
-    name: string,
-    options: { refreshKey?: boolean; promptOnCustomized?: boolean } = {},
-  ) {
-    void name;
-    void options;
-    selectedReportName.value = "Style Preview";
-    await loadReportFilterFields("Style Preview");
-    await loadReportColumns("Style Preview", {});
-  }
-
-  /**
-   * Build and compile report preview (reuses existing compile_typst)
-   */
-  async function compileReportPreview(
-    reportName: string,
-    columnConfig: any[] = [],
-  ) {
-    try {
-      logger.info("Building report source", reportName);
-
-      // Step 1: Get Typst source
-      const effectiveColumnConfig =
-        Array.isArray(columnConfig) && columnConfig.length
-          ? columnConfig
-          : getReportColumnConfigFromLayout();
-      const includeFilters = Boolean(reportBuilderConfig.value.show_filters);
-      const orientation = pageSettings.value?.orientation || "landscape";
-      const pageSettingsPayload = {
-        ...pageSettings.value,
-        report_builder: { ...reportBuilderConfig.value },
-      };
-      const configuredBrandingMode = String(
-        pageSettings.value?.brandingMode || "",
-      ).toLowerCase();
-      const brandingMode =
-        configuredBrandingMode === "letterhead" ||
-        configuredBrandingMode === "logo"
-          ? configuredBrandingMode
-          : pageSettings.value?.letterhead
-            ? "letterhead"
-            : pageSettings.value?.logo?.image
-              ? "logo"
-              : "none";
-      const letterheadImage =
-        brandingMode === "letterhead" ? letterhead.value?.image || null : null;
-      const logoImage =
-        brandingMode === "logo" ? pageSettings.value?.logo?.image || null : null;
-      const typstPreambleOverride = buildReportFontPreambleOverride();
-      const tableField = findReportTableField();
-      const tableColumns = Array.isArray(tableField?.table_columns)
-        ? tableField.table_columns
-        : buildReportTableColumns();
-      const previewData = buildDummyReportPreviewData({
-        title: reportName || selectedReportName.value || "Style Preview",
-        includeFilters,
-        includeSummary: Boolean(reportBuilderConfig.value.show_summary),
-        includeTotalRow: Boolean(reportBuilderConfig.value.include_total_row),
-        tableColumns,
-        columnConfig: effectiveColumnConfig,
-      });
-      const chartEnabled = Boolean(reportBuilderConfig.value.chart_enabled);
-      const previewChartSvg = chartEnabled
-        ? await renderDummyReportChartSvg({
-            height: Math.max(
-              140,
-              Math.min(
-                600,
-                Math.round(Number(reportBuilderConfig.value.chart_max_height_pt) || 220),
-              ),
-            ),
-            axisOptions: {
-              yAxisMode: "span",
-            },
-          })
-        : null;
-      const previewDataPayload = {
-        ...previewData,
-        chart_svg: previewChartSvg ? "report_chart.svg" : "",
-      };
-
-      const sourceResponse = await frappe.call({
-        method: "crispy_print.api.v1.get_report_typst_source",
-        args: {
-          report: reportName || "Style Preview",
-          format_name: formatName.value,
-          filters: {},
-          column_config: effectiveColumnConfig,
-          include_filters: includeFilters ? 1 : 0,
-          orientation,
-          page_settings: pageSettingsPayload,
-          chart_svg: null,
-          typst_preamble_override: typstPreambleOverride,
-          typst_code_override: buildReportTypstOverrideForPreview(
-            typstCode.value || "",
-          ),
-          preview_data: previewDataPayload,
-          letterhead_image: letterheadImage,
-          limit: DEFAULT_REPORT_PREVIEW_LIMIT,
-        },
-      });
-
-      const sourcePayload = sourceResponse?.message;
-      const typstSource =
-        typeof sourcePayload === "string"
-          ? sourcePayload
-          : sourcePayload?.typst_source;
-      if (!typstSource) {
-        throw new Error("No Typst source returned");
-      }
-      dispatchCrispyPreviewSource({ source: typstSource });
-
-      logger.info("Compiling to SVG");
-
-      // Step 2: Compile using existing endpoint (same as DocType mode)
-      const compileResponse = await frappe.call({
-        method: "crispy_print.api.v1.compile_typst",
-        args: {
-          typst_source: typstSource,
-          output_format: "svg",
-          letterhead_image: letterheadImage,
-          logo_image: logoImage,
-          chart_svg: previewChartSvg,
-        },
-      });
-
-      logger.info("Compilation result", compileResponse?.message);
-      return compileResponse?.message || null;
-    } catch (error) {
-      logger.error("Failed to compile report preview", error);
-      throw error;
     }
   }
 
@@ -1353,7 +1074,7 @@ function buildStore() {
   watch(
     () => pageSettings.value.letterhead,
     (newLetterhead) => {
-      fetchLetterhead(newLetterhead);
+      settingsStore.fetchLetterhead(newLetterhead);
     },
   );
 
@@ -1438,18 +1159,22 @@ function buildStore() {
     fetch,
     saveChanges,
     markDirty,
-    resetLayout,
-    getDefaultLayout,
-    setBuilderContext,
-    loadReportColumns,
-    loadReportFilterFields,
-    loadSampleReports,
-    setSelectedReport,
-    compileReportPreview,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    resetLayout: layoutStore.resetLayout,
+    getDefaultLayout: layoutStore.getDefaultLayout,
+    setBuilderContext: settingsStore.setBuilderContext,
+    loadReportColumns: reportStore.loadReportColumns,
+    loadReportFilterFields: reportStore.loadReportFilterFields,
+    loadSampleReports: reportStore.loadSampleReports,
+    setSelectedReport: reportStore.setSelectedReport,
+    compileReportPreview: reportStore.compileReportPreview,
     syncReportBasicTypst,
     resetReportBasicTemplate,
-    rebuildReportTableColumns,
-    isReportTableCustomized,
+    rebuildReportTableColumns: layoutStore.rebuildReportTableColumns,
+    isReportTableCustomized: layoutStore.isReportTableCustomized,
   };
   return store;
 }

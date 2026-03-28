@@ -19,7 +19,7 @@ vi.mock("../../api/crispy", () => ({
 	getLetterheadDoc: vi.fn(async () => {
 		throw new Error("nope")
 	}),
-	getLetterheads: vi.fn(async () => []),
+	getLetterheads: vi.fn(async (): Promise<unknown[]> => []),
 }))
 
 describe("formatLoader error paths", () => {

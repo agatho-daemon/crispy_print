@@ -387,13 +387,15 @@ export function buildReportTypstFromConfig(
 	lines.push("    .flatten()")
 	lines.push(")")
 
-	lines.push("")
-	lines.push("#v(1em)")
-	lines.push("#align(right)[")
-	lines.push('  #text(size: 8pt, fill: rgb("#666"))[')
-	lines.push("    Total Records: #data.total_rows")
-	lines.push("  ]")
-	lines.push("]")
+	if (config.show_footer_total) {
+		lines.push("")
+		lines.push("#v(1em)")
+		lines.push("#align(right)[")
+		lines.push('  #text(size: 8pt, fill: rgb("#666"))[')
+		lines.push("    Total Records: #data.total_rows")
+		lines.push("  ]")
+		lines.push("]")
+	}
 
 	const body = lines.join("\n").trim()
 	const signature = computeReportBasicSignature(body)

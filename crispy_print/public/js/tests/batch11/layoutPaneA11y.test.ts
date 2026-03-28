@@ -8,7 +8,7 @@ const DraggableStub = defineComponent({
 	props: {
 		modelValue: {
 			type: Array,
-			default: () => [],
+			default: (): unknown[] => [],
 		},
 	},
 	setup(props, { slots }) {
@@ -61,6 +61,10 @@ vi.mock("../../composables/useStore", () => {
 			meta: ref({}),
 			getDefaultLayout: vi.fn(),
 			markDirty: vi.fn(),
+			canUndo: ref(false),
+			canRedo: ref(false),
+			undo: vi.fn(),
+			redo: vi.fn(),
 		}),
 	}
 })

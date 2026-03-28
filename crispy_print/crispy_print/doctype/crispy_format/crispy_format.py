@@ -7,6 +7,15 @@ from frappe.query_builder import DocType
 
 
 class CrispyFormat(Document):
+	def _invalidate_doctype_formats_cache(self):
+		from crispy_print.api.v1.formats import invalidate_crispy_formats_cache_for_doctype
+
+		invalidate_crispy_formats_cache_for_doctype(self.doc_type)
+
+		previous = self.get_doc_before_save()
+		if previous and previous.doc_type != self.doc_type:
+			invalidate_crispy_formats_cache_for_doctype(previous.doc_type)
+
 	def _get_linked_reports(self) -> list:
 		"""Return non-disabled linked report rows from report child table."""
 		rows = self.get("report") or []
@@ -136,6 +145,12 @@ class CrispyFormat(Document):
 				message = f"Replaced {frappe.bold(old_default)} as default for {frappe.bold(self.doc_type)}"
 
 				frappe.msgprint(message, indicator="blue")
+
+	def on_update(self):
+		self._invalidate_doctype_formats_cache()
+
+	def on_trash(self):
+		self._invalidate_doctype_formats_cache()
 
 	def get_current_default(self):
 		"""Get the current default format name for this DocType"""

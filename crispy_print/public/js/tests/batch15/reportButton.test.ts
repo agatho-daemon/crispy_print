@@ -23,7 +23,7 @@ function setupGlobals() {
 		},
 		set_route: vi.fn(),
 		route_options: {},
-		query_report: null,
+		query_report: null as unknown,
 		router: { on: vi.fn() },
 	}
 	;(globalThis as any).frappe = frappe
@@ -41,13 +41,13 @@ describe("report_button", () => {
 		loadReportButtonBundle()
 
 		const report = {
-			report_name: "Sales Register",
-			get_filter_values: () => ({ company: "ACME" }),
-			columns: [{ fieldname: "item" }],
-			page: {
-				btn_typst_print: null,
-				inner_toolbar: [{ querySelector: () => null }],
-				add_inner_button: (label: string, handler: () => void) => {
+				report_name: "Sales Register",
+				get_filter_values: () => ({ company: "ACME" }),
+				columns: [{ fieldname: "item" }],
+				page: {
+					btn_typst_print: null,
+					inner_toolbar: [{ querySelector: (): null => null }],
+					add_inner_button: (label: string, handler: () => void): any[] => {
 					return Object.assign([{
 						setAttribute: vi.fn(),
 					}], { length: 1, _handler: handler })

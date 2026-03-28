@@ -1,5 +1,4 @@
 import json
-import re
 from pathlib import Path
 
 import frappe
@@ -27,6 +26,20 @@ EXPORT_FIELDS = [
 	"typst_code",
 	"default_print_language",
 ]
+FORMAT_LIST_CACHE_TTL_SECONDS = 5 * 60
+
+
+def _get_crispy_formats_cache_key(doctype: str) -> str:
+	return f"crispy_print:formats_for_doctype:{doctype}"
+
+
+def invalidate_crispy_formats_cache_for_doctype(doctype: str | None) -> None:
+	"""Clear cached format list for a specific DocType."""
+	if not doctype:
+		return
+
+	cache_key = _get_crispy_formats_cache_key(doctype)
+	frappe.cache().delete_value(cache_key)
 
 
 def get_crispy_formats_for_doctype(doctype):
@@ -36,11 +49,25 @@ def get_crispy_formats_for_doctype(doctype):
 	- layout_json (reconstructable layout)
 	- page_settings (page configuration)
 	"""
+	if not doctype:
+		return []
+
+	cache_key = _get_crispy_formats_cache_key(doctype)
+	cached_formats = frappe.cache().get_value(cache_key, expires=True)
+	if isinstance(cached_formats, list):
+		return cached_formats
+
+	formats = _compute_crispy_formats_for_doctype(doctype)
+	frappe.cache().set_value(cache_key, formats, expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS)
+	return formats
+
+
+def _compute_crispy_formats_for_doctype(doctype: str) -> list[dict]:
 	CrispyFormat = DocType("Crispy Format")
 
 	formats = (
 		frappe.qb.from_(CrispyFormat)
-		.select(CrispyFormat.name, CrispyFormat.doc_type)
+		.select(CrispyFormat.name, CrispyFormat.doc_type, CrispyFormat.layout_json)
 		.where(CrispyFormat.doc_type == doctype)
 		.where(CrispyFormat.layout_json.isnotnull())  # Must have layout
 		.orderby(CrispyFormat.name)
@@ -51,14 +78,10 @@ def get_crispy_formats_for_doctype(doctype):
 	valid_formats = []
 	for fmt in formats:
 		try:
-			layout = frappe.get_value(
-				"Crispy Format", fmt.name, ["layout_json", "page_settings"], as_dict=True
-			)
-
 			# Check if layout_json is parseable
-			if layout.get("layout_json"):
-				json.loads(layout["layout_json"])  # Validate JSON
-				valid_formats.append(fmt)
+			if fmt.get("layout_json"):
+				json.loads(fmt["layout_json"])  # Validate JSON
+				valid_formats.append({"name": fmt.get("name"), "doc_type": fmt.get("doc_type")})
 		except (json.JSONDecodeError, Exception) as e:
 			frappe.log_error(
 				f"Invalid layout_json for Crispy Format {fmt.name}: {e!s}",
@@ -274,15 +297,10 @@ def get_reports_without_custom_html(generic_report_type: str | None = None) -> l
 			continue
 
 		# Detect tree vs grid from JavaScript config.
-		# If we cannot inspect JS for any reason, degrade to non-tree (grid).
-		js_path = Path(module_path) / "report" / report_folder / f"{report_folder}.js"
-		is_tree = False
-		try:
-			if Path.exists(js_path):
-				js_content = Path.read_text(js_path, encoding="utf-8")
-				is_tree = bool(re.search(r"tree\s*:\s*true", js_content, re.IGNORECASE))
-		except Exception:
-			is_tree = False
+		# Metadata-based detection (no JS parsing).
+		# Unknown reports are treated as non-tree for grid fallback behavior.
+		is_tree_flag = _get_report_is_tree(report_name)
+		is_tree = bool(is_tree_flag)
 
 		if normalized_report_type == "tree" and not is_tree:
 			continue
@@ -302,22 +320,75 @@ def _get_report_is_tree(report: str) -> bool | None:
 
 	try:
 		report_doc = frappe.get_doc("Report", report)
-		module = report_doc.module
-		if not module:
-			return None
-
-		report_name = report_doc.report_name or report_doc.name
-		report_folder = frappe.scrub(report_name)
-		module_path = frappe.get_module_path(module)
-		js_path = Path(module_path) / "report" / report_folder / f"{report_folder}.js"
-
-		if not js_path.exists():
-			return None
-
-		js_content = js_path.read_text(encoding="utf-8")
-		return bool(re.search(r"tree\\s*:\\s*true", js_content, re.IGNORECASE))
+		return _get_report_is_tree_from_doc(report_doc)
 	except Exception:
 		return None
+
+
+def _get_report_is_tree_from_doc(report_doc, _depth: int = 0) -> bool | None:
+	"""Infer tree/grid from Report metadata only (no JS parsing)."""
+	if not report_doc or _depth > 1:
+		return None
+
+	# Report Builder / Custom Report usually persist settings in JSON field.
+	tree_from_json = _extract_tree_flag_from_json(report_doc.get("json"))
+	if tree_from_json is not None:
+		return tree_from_json
+
+	# Custom reports may point to a reference report that has metadata.
+	reference_report = report_doc.get("reference_report")
+	if reference_report:
+		try:
+			return _get_report_is_tree_from_doc(frappe.get_doc("Report", reference_report), _depth + 1)
+		except Exception:
+			return None
+
+	return None
+
+
+def _extract_tree_flag_from_json(raw_json: str | None) -> bool | None:
+	if not raw_json:
+		return None
+
+	try:
+		payload = json.loads(raw_json)
+	except Exception:
+		return None
+
+	return _find_tree_flag(payload)
+
+
+def _find_tree_flag(node) -> bool | None:
+	if isinstance(node, dict):
+		for key in ("tree", "is_tree"):
+			if key in node:
+				coerced = _coerce_tree_bool(node.get(key))
+				if coerced is not None:
+					return coerced
+		for value in node.values():
+			found = _find_tree_flag(value)
+			if found is not None:
+				return found
+	elif isinstance(node, list):
+		for value in node:
+			found = _find_tree_flag(value)
+			if found is not None:
+				return found
+	return None
+
+
+def _coerce_tree_bool(value) -> bool | None:
+	if isinstance(value, bool):
+		return value
+	if isinstance(value, int):
+		return bool(value)
+	if isinstance(value, str):
+		normalized = value.strip().lower()
+		if normalized in {"1", "true", "yes", "on"}:
+			return True
+		if normalized in {"0", "false", "no", "off"}:
+			return False
+	return None
 
 
 def export_crispy_format(name: str) -> dict:

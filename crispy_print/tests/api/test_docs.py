@@ -1,6 +1,8 @@
 # Copyright (c) 2025, Agathodaemon and Contributors
 # See license.txt
 
+from unittest import mock
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -54,3 +56,74 @@ class TestFormattedDocAPI(FrappeTestCase):
 
 		with self.assertRaises(Exception):
 			get_formatted_doc("User", "NON-EXISTENT-USER-12345")
+
+	def test_get_formatted_doc_requires_doctype_and_name(self):
+		"""Missing doctype/name should be rejected early."""
+		from crispy_print.api.v1 import get_formatted_doc
+
+		with self.assertRaises(Exception):
+			get_formatted_doc("", "Administrator")
+
+		with self.assertRaises(Exception):
+			get_formatted_doc("User", "")
+
+	def test_get_formatted_doc_strips_html_for_html_and_text_editor_fields(self):
+		"""Top-level HTML/Text Editor fields should be plain text in Typst payload."""
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		mock_doc = SimpleNamespace(as_dict=lambda: {"name": "DOC-1", "notes": "<p>Hello</p>"})
+		mock_meta = SimpleNamespace(
+			fields=[SimpleNamespace(fieldname="notes", fieldtype="HTML", options=None)]
+		)
+
+		with (
+			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
+			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
+			mock.patch("crispy_print.api.v1.docs.frappe.format", return_value="<p>Hello</p>"),
+			mock.patch("crispy_print.api.v1.docs.frappe.utils.strip_html", return_value="Hello"),
+		):
+			out = get_formatted_doc("Any", "DOC-1")
+
+		self.assertEqual(out["notes"], "Hello")
+
+	def test_get_formatted_doc_keeps_raw_value_when_child_format_fails(self):
+		"""Child-table formatter errors should not break payload generation."""
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		mock_doc = SimpleNamespace(
+			as_dict=lambda: {
+				"name": "DOC-1",
+				"items": [{"description": "raw value", "qty": 2}],
+			}
+		)
+		parent_meta = SimpleNamespace(
+			fields=[SimpleNamespace(fieldname="items", fieldtype="Table", options="Child")]
+		)
+		child_meta = SimpleNamespace(
+			fields=[
+				SimpleNamespace(fieldname="description", fieldtype="Data", options=None),
+				SimpleNamespace(fieldname="qty", fieldtype="Float", options=None),
+			]
+		)
+
+		def mock_get_meta(doctype):
+			return child_meta if doctype == "Child" else parent_meta
+
+		def mock_format(value, df, doc=None, translated=False):
+			if df.fieldname == "description":
+				raise RuntimeError("format failed")
+			return f"formatted:{value}"
+
+		with (
+			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
+			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", side_effect=mock_get_meta),
+			mock.patch("crispy_print.api.v1.docs.frappe.format", side_effect=mock_format),
+		):
+			out = get_formatted_doc("Any", "DOC-1")
+
+		self.assertEqual(out["items"][0]["description"], "raw value")
+		self.assertEqual(out["items"][0]["qty"], "formatted:2")

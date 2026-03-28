@@ -5,7 +5,7 @@ import SettingsPane from "../../components/SettingsPane.vue"
 
 const hoisted = vi.hoisted(() => ({
 	storeMock: {
-		fields: { value: [] },
+		fields: { value: [] as unknown[] },
 		loading: { value: false },
 		initializing: { value: false },
 		isReportMode: { value: false },

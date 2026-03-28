@@ -8,7 +8,7 @@ const DraggableStub = defineComponent({
   props: {
     modelValue: {
       type: Array,
-      default: () => [],
+      default: (): unknown[] => [],
     },
   },
   setup(props, { slots }) {
@@ -53,7 +53,9 @@ describe("TableColumnsDialog report columns source", () => {
     await wrapper.find(".table-dialog__add-btn").trigger("click");
 
     const emitted = wrapper.emitted("update:modelValue") || [];
-    const payload = emitted[emitted.length - 1]?.[0] || [];
+    const payload = (emitted[emitted.length - 1]?.[0] || []) as Array<{
+      fieldname?: string;
+    }>;
     expect(payload[0]?.fieldname).toBe("account");
   });
 });
