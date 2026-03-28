@@ -5,7 +5,7 @@
 		"lib": ["ES2020", "DOM", "DOM.Iterable"],
 		"moduleResolution": "bundler",
 		"allowJs": true,
-		"strict": false,
+		"strict": true,
 		"noImplicitAny": true,
 		"skipLibCheck": true,
 		"allowSyntheticDefaultImports": true,

@@ -28,6 +28,7 @@ describe("report preview dummy data", () => {
 
 		const totalRow = out.rows.find((row: any) => row.is_total_row === true);
 		expect(totalRow).toBeTruthy();
+		if (!totalRow) throw new Error("Expected total row in dummy report payload");
 		expect(totalRow.cells[0].value).toBe("Total (Placeholder)");
 		expect(typeof out.chart_svg).toBe("string");
 		expect(out.chart_svg.length).toBeGreaterThan(0);

@@ -1036,7 +1036,9 @@ export function setupWorker(
 				.join("\n")
 			const usedFields = rawTypst
 				? extractUsedFieldsFromTypstSource(typstFieldSource)
-				: extractUsedFields(layout)
+				: layout
+					? extractUsedFields(layout)
+					: new Set<string>()
 			const filteredDoc = rawTypst
 				? filterDocumentFields(sampleDocData, usedFields, {
 						includeAllChildFieldsIfUnspecified: true,

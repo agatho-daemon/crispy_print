@@ -1,3 +1,5 @@
+from typing import Any
+
 import frappe
 
 from .compile import compile_typst as _compile_typst
@@ -17,6 +19,8 @@ from .reports import generate_report_pdf as _generate_report_pdf
 from .reports import get_report_typst_source as _get_report_typst_source
 from .reports import get_sample_report_data as _get_sample_report_data
 
+JSONDict = dict[str, Any]
+
 
 @frappe.whitelist()
 def get_typst_local_fonts() -> list[str]:
@@ -25,16 +29,16 @@ def get_typst_local_fonts() -> list[str]:
 
 @frappe.whitelist()
 def compile_typst(
-	typst_source,
-	output_format="svg",
-	letterhead_image=None,
-	logo_image=None,
-	chart_svg=None,
-	qr_data=None,
-	qr_filename=None,
+	typst_source: str,
+	output_format: str = "svg",
+	letterhead_image: str | None = None,
+	logo_image: str | None = None,
+	chart_svg: str | None = None,
+	qr_data: str | None = None,
+	qr_filename: str | None = None,
 	output_filename: str | None = None,
 	return_url: int | bool = 0,
-):
+) -> JSONDict | None:
 	return _compile_typst(
 		typst_source,
 		output_format=output_format,
@@ -49,34 +53,34 @@ def compile_typst(
 
 
 @frappe.whitelist()
-def get_formatted_doc(doctype: str, name: str) -> dict:
+def get_formatted_doc(doctype: str, name: str) -> JSONDict:
 	return _get_formatted_doc(doctype, name)
 
 
 @frappe.whitelist()
-def get_crispy_formats_for_doctype(doctype):
+def get_crispy_formats_for_doctype(doctype: str) -> list[dict[str, str]]:
 	return _get_crispy_formats_for_doctype(doctype)
 
 
 @frappe.whitelist()
-def get_default_doctypes():
+def get_default_doctypes() -> list[str]:
 	return _get_default_doctypes()
 
 
 @frappe.whitelist()
-def get_default_report_builder_config(generic_report_type: str | None = None) -> dict:
+def get_default_report_builder_config(generic_report_type: str | None = None) -> JSONDict:
 	return _get_default_report_builder_config(generic_report_type)
 
 
 @frappe.whitelist()
 def generate_report_pdf(
 	report: str,
-	filters: dict | str | None = None,
+	filters: JSONDict | str | None = None,
 	format_name: str | None = None,
 	orientation: str = "landscape",
 	include_filters: int = 0,
-	column_config=None,
-):
+	column_config: list[JSONDict] | str | None = None,
+) -> JSONDict:
 	return _generate_report_pdf(
 		report,
 		filters=filters,
@@ -88,32 +92,32 @@ def generate_report_pdf(
 
 
 @frappe.whitelist()
-def get_available_formats(report: str) -> dict:
+def get_available_formats(report: str) -> JSONDict:
 	return _get_available_formats(report)
 
 
 @frappe.whitelist()
-def get_builder_mode(format_name: str) -> dict:
+def get_builder_mode(format_name: str) -> JSONDict:
 	return _get_builder_mode(format_name)
 
 
 @frappe.whitelist()
-def export_crispy_format(name: str) -> dict:
+def export_crispy_format(name: str) -> JSONDict:
 	return _export_crispy_format(name)
 
 
 @frappe.whitelist()
-def check_import_conflicts(payload: dict | str) -> dict:
+def check_import_conflicts(payload: JSONDict | str) -> JSONDict:
 	return _check_import_conflicts(payload)
 
 
 @frappe.whitelist()
-def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict:
+def import_crispy_format(payload: JSONDict | str, on_conflict: str = "copy") -> JSONDict:
 	return _import_crispy_format(payload, on_conflict=on_conflict)
 
 
 @frappe.whitelist()
-def get_reports_without_custom_html(generic_report_type: str | None = None) -> list[dict]:
+def get_reports_without_custom_html(generic_report_type: str | None = None) -> list[JSONDict]:
 	return _get_reports_without_custom_html(generic_report_type)
 
 
@@ -121,21 +125,21 @@ def get_reports_without_custom_html(generic_report_type: str | None = None) -> l
 def get_report_typst_source(
 	report: str,
 	format_name: str,
-	filters: dict | str | None = None,
-	column_config: list | str | None = None,
+	filters: JSONDict | str | None = None,
+	column_config: list[JSONDict] | str | None = None,
 	include_filters: int = 0,
 	include_summary: int = 1,
 	include_total_row: int = 1,
 	include_chart: int = 1,
 	orientation: str | None = None,
-	page_settings: dict | str | None = None,
+	page_settings: JSONDict | str | None = None,
 	chart_svg: str | None = None,
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
-	preview_data: dict | str | None = None,
+	preview_data: JSONDict | str | None = None,
 	letterhead_image: str | None = None,
 	limit: int = 50,
-) -> dict:
+) -> JSONDict:
 	return _get_report_typst_source(
 		report=report,
 		format_name=format_name,
@@ -157,7 +161,7 @@ def get_report_typst_source(
 
 
 @frappe.whitelist()
-def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
+def get_sample_report_data(report: str, filters: JSONDict | str | None = None, limit: int = 50) -> JSONDict:
 	return _get_sample_report_data(report, filters=filters, limit=limit)
 
 
@@ -166,8 +170,8 @@ def run_report_template_parity_check(
 	report: str,
 	format_name: str,
 	legacy_template_path: str | None = None,
-	filters: dict | str | None = None,
-) -> dict:
+	filters: JSONDict | str | None = None,
+) -> JSONDict:
 	return _run_report_template_parity_check(
 		report=report,
 		format_name=format_name,

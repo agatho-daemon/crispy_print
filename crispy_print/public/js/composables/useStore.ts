@@ -1074,7 +1074,7 @@ function buildStore() {
   watch(
     () => pageSettings.value.letterhead,
     (newLetterhead) => {
-      settingsStore.fetchLetterhead(newLetterhead);
+      settingsStore.fetchLetterhead(newLetterhead ?? "");
     },
   );
 
