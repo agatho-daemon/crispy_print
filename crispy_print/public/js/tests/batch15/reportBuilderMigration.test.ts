@@ -12,18 +12,18 @@ vi.mock("../../api/crispy", () => ({
 
 vi.mock("../../utils/formatLoader", () => ({
 	parseCrispyFormatDoc: vi.fn(),
-	resolveLetterheadDoc: vi.fn(async () => null),
+	resolveLetterheadDoc: vi.fn(async (): Promise<null> => null),
 }));
 
 describe("useStore report builder table migration", () => {
 	beforeEach(() => {
 		vi.resetModules();
-		(globalThis as any).__ = (msg: string) => msg;
-		(globalThis as any).frappe = {
-			call: vi.fn(async () => ({ message: {} })),
-			get_meta: vi.fn(() => ({ fields: [] })),
-			show_alert: vi.fn(),
-		};
+		(globalThis as any).__ = (msg: string): string => msg;
+			(globalThis as any).frappe = {
+				call: vi.fn(async () => ({ message: {} })),
+				get_meta: vi.fn(() => ({ fields: [] as unknown[] })),
+				show_alert: vi.fn(),
+			};
 	});
 
 	it("migrates legacy report_builder table styles when table settings are unset/default", async () => {
@@ -38,7 +38,7 @@ describe("useStore report builder table migration", () => {
 			typst_code: "",
 		});
 		(parseCrispyFormatDoc as any).mockReturnValue({
-			layout: { sections: [] },
+			layout: { sections: [] as unknown[] },
 			pageSettings: {
 				pageSize: "A4",
 				orientation: "portrait",
@@ -81,7 +81,7 @@ describe("useStore report builder table migration", () => {
 			typst_code: "",
 		});
 		(parseCrispyFormatDoc as any).mockReturnValue({
-			layout: { sections: [] },
+			layout: { sections: [] as unknown[] },
 			pageSettings: {
 				pageSize: "A4",
 				orientation: "portrait",

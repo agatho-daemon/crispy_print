@@ -12,6 +12,22 @@
 					</span>
 				</div>
 				<div class="layout-pane__controls">
+					<button
+						class="btn btn-default btn-sm"
+						:disabled="!store.canUndo.value"
+						title="Undo (Ctrl/Cmd+Z)"
+						@click="store.undo()"
+					>
+						Undo
+					</button>
+					<button
+						class="btn btn-default btn-sm"
+						:disabled="!store.canRedo.value"
+						title="Redo (Ctrl/Cmd+Y)"
+						@click="store.redo()"
+					>
+						Redo
+					</button>
 					<button class="btn btn-default btn-sm" @click="resetLayout">
 						Reset to Default
 					</button>

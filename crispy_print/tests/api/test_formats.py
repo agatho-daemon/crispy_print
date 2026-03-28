@@ -97,6 +97,57 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		# Should return empty list or not include the invalid format
 		self.assertIsInstance(formats, list)
 
+	def test_get_crispy_formats_for_doctype_uses_cache(self):
+		from crispy_print.api.v1 import get_crispy_formats_for_doctype
+
+		cached_result = [{"name": "Cached Format", "doc_type": "Sales Invoice"}]
+		mock_cache = mock.Mock()
+		mock_cache.get_value.return_value = cached_result
+
+		with (
+			mock.patch("crispy_print.api.v1.formats.frappe.cache", return_value=mock_cache),
+			mock.patch("crispy_print.api.v1.formats._compute_crispy_formats_for_doctype") as mock_compute,
+		):
+			result = get_crispy_formats_for_doctype("Sales Invoice")
+
+		self.assertEqual(result, cached_result)
+		mock_compute.assert_not_called()
+		mock_cache.set_value.assert_not_called()
+
+	def test_get_crispy_formats_for_doctype_sets_cache_on_miss(self):
+		from crispy_print.api.v1 import get_crispy_formats_for_doctype
+		from crispy_print.api.v1.formats import FORMAT_LIST_CACHE_TTL_SECONDS
+
+		computed_result = [{"name": "Computed Format", "doc_type": "Sales Invoice"}]
+		mock_cache = mock.Mock()
+		mock_cache.get_value.return_value = None
+
+		with (
+			mock.patch("crispy_print.api.v1.formats.frappe.cache", return_value=mock_cache),
+			mock.patch(
+				"crispy_print.api.v1.formats._compute_crispy_formats_for_doctype",
+				return_value=computed_result,
+			) as mock_compute,
+		):
+			result = get_crispy_formats_for_doctype("Sales Invoice")
+
+		self.assertEqual(result, computed_result)
+		mock_compute.assert_called_once_with("Sales Invoice")
+		mock_cache.set_value.assert_called_once_with(
+			"crispy_print:formats_for_doctype:Sales Invoice",
+			computed_result,
+			expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS,
+		)
+
+	def test_invalidate_crispy_formats_cache_for_doctype(self):
+		from crispy_print.api.v1.formats import invalidate_crispy_formats_cache_for_doctype
+
+		mock_cache = mock.Mock()
+		with mock.patch("crispy_print.api.v1.formats.frappe.cache", return_value=mock_cache):
+			invalidate_crispy_formats_cache_for_doctype("Sales Invoice")
+
+		mock_cache.delete_value.assert_called_once_with("crispy_print:formats_for_doctype:Sales Invoice")
+
 	def test_get_default_doctypes(self):
 		"""Test retrieving DocTypes with default formats"""
 		from crispy_print.api.v1 import get_default_doctypes
@@ -194,26 +245,17 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 			},
 		]
 
-		def fake_exists(path_obj):
-			path = str(path_obj)
-			if path.endswith(".html"):
-				return False
-			return path.endswith(".js")
-
-		def fake_read_text(_self, encoding="utf-8"):
-			path = str(_self)
-			if "tree_report.js" in path:
-				return "frappe.query_reports['Tree Report'] = { tree: true }"
-			return "frappe.query_reports['Grid Report'] = { tree: false }"
-
 		with (
 			mock.patch("crispy_print.api.v1.formats.frappe.get_all", return_value=reports),
 			mock.patch(
 				"crispy_print.api.v1.formats.frappe.get_module_path",
 				return_value="/tmp/accounts",
 			),
-			mock.patch("pathlib.Path.exists", side_effect=fake_exists),
-			mock.patch("pathlib.Path.read_text", side_effect=fake_read_text),
+			mock.patch("pathlib.Path.exists", return_value=False),
+			mock.patch(
+				"crispy_print.api.v1.formats._get_report_is_tree",
+				side_effect=lambda report_name: report_name == "Tree Report",
+			),
 		):
 			grid_only = get_reports_without_custom_html("Grid")
 			tree_only = get_reports_without_custom_html("Tree")
@@ -222,6 +264,14 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertEqual([r["name"] for r in grid_only], ["Grid Report"])
 		self.assertEqual([r["name"] for r in tree_only], ["Tree Report"])
 		self.assertCountEqual([r["name"] for r in summary_fallback], ["Tree Report", "Grid Report"])
+
+	def test_extract_tree_flag_from_json_payload(self):
+		from crispy_print.api.v1.formats import _extract_tree_flag_from_json
+
+		self.assertTrue(_extract_tree_flag_from_json('{"tree": true}'))
+		self.assertFalse(_extract_tree_flag_from_json('{"report": {"is_tree": "0"}}'))
+		self.assertIsNone(_extract_tree_flag_from_json('{"foo": "bar"}'))
+		self.assertIsNone(_extract_tree_flag_from_json("not-json"))
 
 	def test_get_crispy_formats_empty_doctype(self):
 		"""Test retrieval for DocType with no formats"""

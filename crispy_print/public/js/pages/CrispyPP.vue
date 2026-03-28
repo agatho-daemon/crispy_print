@@ -518,7 +518,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onBeforeUnmount, onMounted, watch, computed } from "vue";
 import {
 	getFormatsForDoctype,
 	loadFormatData,
@@ -593,6 +593,9 @@ const isReportColumnsExpanded = ref(true);
 const reportPreviewLoading = ref(false);
 const reportPreviewPending = ref(false);
 const reportTruncationWarning = ref("");
+const REPORT_PREVIEW_DEBOUNCE_MS = 250;
+const reportPreviewDebounceTimer = ref<number | null>(null);
+const reportPreviewIntentSeq = ref(0);
 const reportBrandingInitialized = ref(false);
 const reportOrientationInitialized = ref(false);
 const reportMarginsInitialized = ref(false);
@@ -783,7 +786,7 @@ function hydrateReportStateFromStorage() {
 async function onReportFormatChange() {
 	if (!selectedReportFormat.value) return;
 	await loadFormatSettings(selectedReportFormat.value);
-	await compileReportPreview();
+	requestReportPreviewCompile(true);
 }
 
 async function fetchReportColumns() {
@@ -818,6 +821,40 @@ async function fetchReportColumns() {
 }
 
 async function compileReportPreview() {
+	reportPreviewIntentSeq.value += 1;
+	const requestedIntent = reportPreviewIntentSeq.value;
+	if (reportPreviewDebounceTimer.value) {
+		window.clearTimeout(reportPreviewDebounceTimer.value);
+		reportPreviewDebounceTimer.value = null;
+	}
+	await compileReportPreviewForIntent(requestedIntent);
+}
+
+function requestReportPreviewCompile(immediate = false) {
+	if (!isReportMode.value) return;
+
+	reportPreviewIntentSeq.value += 1;
+	const requestedIntent = reportPreviewIntentSeq.value;
+
+	if (reportPreviewDebounceTimer.value) {
+		window.clearTimeout(reportPreviewDebounceTimer.value);
+		reportPreviewDebounceTimer.value = null;
+	}
+
+	const run = () => {
+		reportPreviewDebounceTimer.value = null;
+		void compileReportPreviewForIntent(requestedIntent);
+	};
+
+	if (immediate) {
+		run();
+		return;
+	}
+
+	reportPreviewDebounceTimer.value = window.setTimeout(run, REPORT_PREVIEW_DEBOUNCE_MS);
+}
+
+async function compileReportPreviewForIntent(intentSeq: number) {
 	if (!isReportMode.value) return;
 	if (!reportName.value || !selectedReportFormat.value) return;
 	if (reportPreviewLoading.value) {
@@ -860,6 +897,9 @@ async function compileReportPreview() {
 			},
 		});
 
+		// Ignore stale response if a newer compile intent exists.
+		if (intentSeq !== reportPreviewIntentSeq.value) return;
+
 		const sourcePayload = sourceResponse?.message;
 		const typstSource =
 			typeof sourcePayload === "string" ? sourcePayload : sourcePayload?.typst_source;
@@ -890,6 +930,9 @@ async function compileReportPreview() {
 			},
 		});
 
+		// Ignore stale compile response if a newer compile intent exists.
+		if (intentSeq !== reportPreviewIntentSeq.value) return;
+
 		const result = compileResponse?.message;
 		if (result?.success) {
 			window.dispatchEvent(
@@ -909,9 +952,9 @@ async function compileReportPreview() {
 		});
 	} finally {
 		reportPreviewLoading.value = false;
-		if (reportPreviewPending.value) {
+		if (reportPreviewPending.value || intentSeq !== reportPreviewIntentSeq.value) {
 			reportPreviewPending.value = false;
-			compileReportPreview();
+			requestReportPreviewCompile(true);
 		}
 	}
 }
@@ -1088,7 +1131,7 @@ watch(
 	() => {
 		logger.info("Letterhead doc updated, recompiling preview");
 		if (isReportMode.value) {
-			compileReportPreview();
+			requestReportPreviewCompile();
 		}
 	}
 );
@@ -1134,7 +1177,7 @@ watch(
 		reportShowChart.value,
 	],
 	() => {
-		compileReportPreview();
+		requestReportPreviewCompile();
 	},
 	{ deep: true }
 );
@@ -1143,7 +1186,7 @@ watch(
 	() => pageSettings.value,
 	() => {
 		if (isReportMode.value) {
-			compileReportPreview();
+			requestReportPreviewCompile();
 		}
 	},
 	{ deep: true }
@@ -1151,7 +1194,7 @@ watch(
 
 watch([reportFontFamily, reportFontSizePt], () => {
 	if (isReportMode.value) {
-		compileReportPreview();
+		requestReportPreviewCompile();
 	}
 });
 
@@ -1169,7 +1212,7 @@ watch(
 	() => {
 		logger.info("Logo image updated, recompiling preview");
 		if (isReportMode.value) {
-			compileReportPreview();
+			requestReportPreviewCompile();
 		}
 	}
 );
@@ -1198,6 +1241,13 @@ onMounted(async () => {
 	await initializeData();
 	await initializeReportSettings();
 	await compileReportPreview();
+});
+
+onBeforeUnmount(() => {
+	if (reportPreviewDebounceTimer.value) {
+		window.clearTimeout(reportPreviewDebounceTimer.value);
+		reportPreviewDebounceTimer.value = null;
+	}
 });
 
 watch(isOverridesExpanded, (next) => {

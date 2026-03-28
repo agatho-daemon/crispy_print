@@ -78,6 +78,7 @@ typst --version
 ### Frappe Compatibility
 
 - **Frappe:** v15 or later (all Python/Node.js dependencies already satisfied)
+- **Python dependency:** `pyqrcode` (installed with the app; required for QR SVG generation)
 
 ## Installation
 

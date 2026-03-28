@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import CrispyPFB from "../../pages/CrispyPFB.vue";
 
-const makeStore = (rawTypst: boolean) => ({
+const makeStore = (rawTypst: boolean): Record<string, unknown> => ({
   fields: ref([]),
   reportBuilderFields: ref([]),
   reportBuilderConfig: ref({
@@ -26,7 +26,7 @@ vi.mock("../../composables/useStore", () => ({
 }));
 
 vi.mock("../../utils/routes", () => ({
-  getCrispyBuilderFormatName: vi.fn(() => null),
+  getCrispyBuilderFormatName: vi.fn((): string | null => null),
 }));
 
 describe("CrispyPFB report pane mode", () => {

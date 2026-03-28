@@ -19,7 +19,7 @@ describe("reportBuilder utils", () => {
 		expect(typst).toContain("Total Records: #data.total_rows")
 	})
 
-	it("still renders total records footer when include_total_row is disabled", () => {
+	it("hides total records footer when show_footer_total is disabled", () => {
 		const config = {
 			...getDefaultReportBuilderConfig("Grid"),
 			include_total_row: false,
@@ -28,7 +28,7 @@ describe("reportBuilder utils", () => {
 		const typst = buildReportTypstFromConfig(config)
 
 		expect(typst).toContain(".filter(row => row.is_total_row != true)")
-		expect(typst).toContain("Total Records: #data.total_rows")
+		expect(typst).not.toContain("Total Records: #data.total_rows")
 	})
 
 	it("detects managed template and invalidates tampering", () => {

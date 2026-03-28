@@ -7,7 +7,7 @@ const changeKey = ref(0);
 
 const compileReportPreview = vi.fn(async () => ({
 	success: true,
-	svg_pages: [],
+	svg_pages: [] as unknown[],
 	page_count: 1,
 }));
 
