@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true
+  },
+  "include": [
+    "env.d.ts",
+    "globals.d.ts",
+    "composables/**/*.ts",
+    "utils/**/*.ts"
+  ]
+}

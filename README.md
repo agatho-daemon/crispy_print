@@ -459,6 +459,11 @@ You can create multiple formats for the same DocType without setting them as def
 
 ## API Reference
 
+For a concise endpoint list with arguments and return shapes, see:
+
+- `docs/api-reference.md`
+- `docs/typst-cookbook.md`
+
 ### Python API (Whitelisted Methods)
 
 All methods are accessible via `frappe.call()` from client-side.

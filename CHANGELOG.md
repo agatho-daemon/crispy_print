@@ -5,6 +5,11 @@ All notable changes to Crispy Print will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha.2] - 2026-03-28
+
+### Changed
+- Bumped app version to `0.1.0-alpha.2`.
+
 ## [0.1.0-alpha.1] - 2025-01-03
 
 ### ⚠️ Alpha Release Warning
@@ -38,4 +43,5 @@ See [README.md - Known Limitations](README.md#known-limitations) for full list.
 - Vue 3, Pinia (state management)
 - Vite, Vitest (testing)
 
+[0.1.0-alpha.2]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.1.0-alpha.1

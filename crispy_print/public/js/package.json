@@ -27,6 +27,10 @@
 		"test:unit:batch10": "vitest run tests/batch10",
 		"test:unit:batch11": "vitest run tests/batch11",
 		"test:unit:batch12": "vitest run tests/batch12",
-		"test:unit:batch13": "vitest run tests/batch13"
+		"test:unit:batch13": "vitest run tests/batch13",
+		"test:unit:batch14": "vitest run tests/batch14",
+		"test:unit:batch15": "vitest run tests/batch15",
+		"typecheck:strict:phase1": "npx tsc --noEmit -p tsconfig.strict.phase1.json --pretty false",
+		"typecheck:strict": "npx tsc --noEmit -p ../../../tsconfig.json --pretty false"
 	}
 }
