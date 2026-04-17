@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 import frappe
@@ -9,6 +10,59 @@ from .formats import get_custom_report_formats
 from .typst_doc import _build_typst_document
 
 MAX_REPORT_RESULT_ROWS = 5000
+IMAGE_EXTENSIONS = {
+	"png",
+	"jpg",
+	"jpeg",
+	"svg",
+	"gif",
+	"webp",
+	"bmp",
+	"tif",
+	"tiff",
+	"avif",
+}
+_IMAGE_SUFFIX_RE = re.compile(r"\.([A-Za-z0-9]+)(?:[#?].*)?$")
+
+
+def _is_image_asset_value(value: str) -> bool:
+	if not isinstance(value, str):
+		return False
+	raw = value.strip()
+	if not raw:
+		return False
+	match = _IMAGE_SUFFIX_RE.search(raw)
+	if not match:
+		return False
+	return match.group(1).lower() in IMAGE_EXTENSIONS
+
+
+def _normalize_image_assets(data: dict | list | str | int | float | bool | None) -> tuple[object, list[str]]:
+	"""Normalize image-like string values to basename and collect original asset paths."""
+	collected: list[str] = []
+	seen: set[str] = set()
+
+	def collect_asset(value: str):
+		if value not in seen:
+			seen.add(value)
+			collected.append(value)
+
+	def normalize(value):
+		if isinstance(value, dict):
+			return {key: normalize(item) for key, item in value.items()}
+		if isinstance(value, list):
+			return [normalize(item) for item in value]
+		if isinstance(value, str):
+			raw = value.strip()
+			if not _is_image_asset_value(raw):
+				return value
+			if raw == "report_chart.svg":
+				return raw
+			collect_asset(raw)
+			return Path(raw).name
+		return value
+
+	return normalize(data), collected
 
 
 def generate_report_pdf(
@@ -72,16 +126,17 @@ def generate_report_pdf(
 
 	# Add page settings
 	typst_data["page_settings"] = {"orientation": orientation.lower() if orientation else "landscape"}
+	normalized_typst_data, asset_files = _normalize_image_assets(typst_data)
 
 	# Build Typst document using unified compilation
 	typst_source = _build_typst_document(
 		format_doc=format_doc,
-		data_dict=typst_data,
+		data_dict=normalized_typst_data,
 		variable_name="data",  # Reports use #data.* namespace
 	)
 
 	# Compile to PDF (write to public files and return URL)
-	result = compile_typst(typst_source, output_format="pdf", return_url=1)
+	result = compile_typst(typst_source, output_format="pdf", asset_files=asset_files, return_url=1)
 
 	return {"pdf_url": result.get("pdf_url"), "status": "success"}
 
@@ -101,7 +156,6 @@ def get_report_typst_source(
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
 	preview_data: dict | str | None = None,
-	letterhead_image: str | None = None,
 	limit: int = 50,
 ) -> dict:
 	"""
@@ -211,12 +265,6 @@ def get_report_typst_source(
 	# Add page settings (default to landscape for reports)
 	orientation_value = (orientation or "landscape").lower()
 	if page_settings_dict:
-		logo = page_settings_dict.get("logo") or {}
-		logo_image = logo.get("image") or ""
-		if logo_image:
-			logo["image"] = Path(logo_image).name
-			page_settings_dict["logo"] = logo
-
 		typst_data["page_settings"] = {
 			**page_settings_dict,
 			"orientation": page_settings_dict.get("orientation", orientation_value),
@@ -287,21 +335,30 @@ def get_report_typst_source(
 		if isinstance(typst_preamble_override, str) and typst_preamble_override.strip()
 		else None
 	)
-	letterhead_filename = Path(letterhead_image).name if letterhead_image else None
+	normalized_typst_data, asset_files = _normalize_image_assets(typst_data)
+	page_settings_source = page_settings_dict or {}
+	letterhead_image_path = (
+		page_settings_source.get("letterhead_image") or page_settings_source.get("letterheadImage") or ""
+	)
+	logo_image_path = (
+		((page_settings_source.get("logo") or {}).get("image") or "") if page_settings_source else ""
+	)
+	letterhead_filename = Path(letterhead_image_path).name if letterhead_image_path else None
+	logo_filename = Path(logo_image_path).name if logo_image_path else None
 	page_settings_block = _build_report_page_settings_block(
 		page_settings_dict,
 		letterhead_filename,
-		page_settings_dict.get("logo", {}).get("image") if page_settings_dict else None,
+		logo_filename,
 	)
 	typst_source = _build_typst_document(
 		format_doc=format_doc,
-		data_dict=typst_data,
+		data_dict=normalized_typst_data,
 		variable_name="data",  # Reports use #data.* namespace
 		page_settings_block=page_settings_block,
 		preamble_override=preamble_override,
 	)
 
-	result_truncated = bool(typst_data.get("result_truncated"))
+	result_truncated = bool(normalized_typst_data.get("result_truncated"))
 	is_truncated = bool(preview_truncated or result_truncated)
 	truncation_reason = "preview_limit" if preview_truncated else ("result_cap" if result_truncated else "")
 
@@ -310,10 +367,11 @@ def get_report_typst_source(
 		"truncation": {
 			"is_truncated": is_truncated,
 			"reason": truncation_reason,
-			"original_rows": typst_data.get("original_row_count", preview_original_rows),
-			"returned_rows": len(typst_data.get("rows") or []),
-			"max_rows": typst_data.get("max_rows") or (limit if limit else None),
+			"original_rows": normalized_typst_data.get("original_row_count", preview_original_rows),
+			"returned_rows": len(normalized_typst_data.get("rows") or []),
+			"max_rows": normalized_typst_data.get("max_rows") or (limit if limit else None),
 		},
+		"asset_files": asset_files,
 	}
 
 

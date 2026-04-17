@@ -456,6 +456,73 @@ class TestReportDataPrep(FrappeTestCase):
 		self.assertFalse(out["truncation"]["is_truncated"])
 		self.assertNotIn("chart_svg", captured_data)
 
+	def test_get_report_typst_source_normalizes_image_fields_and_returns_asset_files(self):
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.reports import get_report_typst_source
+
+		captured_data = {}
+
+		def fake_build_typst_document(**kwargs):
+			captured_data.update(kwargs.get("data_dict") or {})
+			return "#typst"
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.get_doc",
+				return_value=SimpleNamespace(typst_code="= Test\n#image(data.logo_image)"),
+			),
+			mock.patch(
+				"crispy_print.api.v1.reports._build_typst_document",
+				side_effect=fake_build_typst_document,
+			),
+		):
+			out = get_report_typst_source(
+				report="Any Report",
+				format_name="Any Format",
+				preview_data={
+					"title": "Any Report",
+					"subtitle": "",
+					"filters": [],
+					"columns": [],
+					"rows": [{"logo_image": "/private/files/brand/logo.svg"}],
+					"report_summary": [],
+				},
+			)
+
+		self.assertEqual(out["typst_source"], "#typst")
+		self.assertEqual(out["asset_files"], ["/private/files/brand/logo.svg"])
+		self.assertEqual(captured_data["rows"][0]["logo_image"], "logo.svg")
+
+	def test_get_report_typst_source_does_not_collect_chart_placeholder_as_asset(self):
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.reports import get_report_typst_source
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.get_doc",
+				return_value=SimpleNamespace(typst_code="#table()"),
+			),
+			mock.patch("crispy_print.api.v1.reports._build_typst_document", return_value="#typst"),
+		):
+			out = get_report_typst_source(
+				report="Any Report",
+				format_name="Any Format",
+				include_chart=1,
+				chart_svg="<svg/>",
+				preview_data={
+					"title": "Any Report",
+					"subtitle": "",
+					"filters": [],
+					"columns": [],
+					"rows": [],
+					"report_summary": [],
+				},
+			)
+
+		self.assertEqual(out["asset_files"], [])
+
 	def test_get_report_data_caps_rows(self):
 		from types import SimpleNamespace
 

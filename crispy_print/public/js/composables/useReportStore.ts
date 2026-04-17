@@ -159,6 +159,9 @@ export function createReportStore(options: CreateReportStoreOptions) {
         brandingMode === "letterhead" ? letterhead.value?.image || null : null;
       const logoImage =
         brandingMode === "logo" ? pageSettings.value?.logo?.image || null : null;
+      const brandingAssetFiles = [letterheadImage, logoImage].filter(
+        (value): value is string => Boolean(value),
+      );
       const typstPreambleOverride = buildReportFontPreambleOverride();
       const tableColumns = getReportTableColumnsForPreview();
       const previewData = buildDummyReportPreviewData({
@@ -200,14 +203,16 @@ export function createReportStore(options: CreateReportStoreOptions) {
           column_config: effectiveColumnConfig,
           include_filters: includeFilters ? 1 : 0,
           orientation,
-          page_settings: pageSettingsPayload,
           chart_svg: null,
           typst_preamble_override: typstPreambleOverride,
           typst_code_override: buildReportTypstOverrideForPreview(
             typstCode.value || "",
           ),
           preview_data: previewDataPayload,
-          letterhead_image: letterheadImage,
+          page_settings: {
+            ...pageSettingsPayload,
+            letterhead_image: letterheadImage || "",
+          },
           limit: DEFAULT_REPORT_PREVIEW_LIMIT,
         },
       });
@@ -217,6 +222,12 @@ export function createReportStore(options: CreateReportStoreOptions) {
         typeof sourcePayload === "string"
           ? sourcePayload
           : sourcePayload?.typst_source;
+      const assetFiles = Array.isArray(sourcePayload?.asset_files)
+        ? sourcePayload.asset_files
+        : [];
+      const compileAssetFiles = Array.from(
+        new Set([...brandingAssetFiles, ...assetFiles]),
+      );
       if (!typstSource) {
         throw new Error("No Typst source returned");
       }
@@ -229,8 +240,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
         args: {
           typst_source: typstSource,
           output_format: "svg",
-          letterhead_image: letterheadImage,
-          logo_image: logoImage,
+          asset_files: compileAssetFiles,
           chart_svg: previewChartSvg,
         },
       });
@@ -251,4 +261,3 @@ export function createReportStore(options: CreateReportStoreOptions) {
     compileReportPreview,
   };
 }
-

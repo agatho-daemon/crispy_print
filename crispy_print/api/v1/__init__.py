@@ -31,19 +31,26 @@ def get_typst_local_fonts() -> list[str]:
 def compile_typst(
 	typst_source: str,
 	output_format: str = "svg",
-	letterhead_image: str | None = None,
-	logo_image: str | None = None,
+	asset_files: list[str] | None = None,
 	chart_svg: str | None = None,
 	qr_data: str | None = None,
 	qr_filename: str | None = None,
 	output_filename: str | None = None,
 	return_url: int | bool = 0,
+	**kwargs: Any,
 ) -> JSONDict | None:
+	filtered_kwargs = {
+		key: value for key, value in kwargs.items() if key not in {"cmd"} and not key.startswith("_")
+	}
+	deprecated = [key for key in ("letterhead_image", "logo_image") if key in filtered_kwargs]
+	if deprecated:
+		frappe.throw("Deprecated params are not supported. Use asset_files only.")
+	if filtered_kwargs:
+		frappe.throw(f"Unsupported compile_typst params: {', '.join(sorted(filtered_kwargs.keys()))}")
 	return _compile_typst(
 		typst_source,
 		output_format=output_format,
-		letterhead_image=letterhead_image,
-		logo_image=logo_image,
+		asset_files=asset_files,
 		chart_svg=chart_svg,
 		qr_data=qr_data,
 		qr_filename=qr_filename,
@@ -137,7 +144,6 @@ def get_report_typst_source(
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
 	preview_data: JSONDict | str | None = None,
-	letterhead_image: str | None = None,
 	limit: int = 50,
 ) -> JSONDict:
 	return _get_report_typst_source(
@@ -155,7 +161,6 @@ def get_report_typst_source(
 		typst_preamble_override=typst_preamble_override,
 		typst_code_override=typst_code_override,
 		preview_data=preview_data,
-		letterhead_image=letterhead_image,
 		limit=limit,
 	)
 

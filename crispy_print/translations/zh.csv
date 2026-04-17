@@ -1,0 +1,65 @@
+Crispy Print,Crispy Print
+Crispy Print List,Crispy Print 列表
+Crispy Format,Crispy 格式
+Crispy Format Reports,Crispy 格式报表
+Crispy Generic Report,Crispy 通用报表
+Open Builder,打开构建器
+Print Settings,打印设置
+Page Settings,页面设置
+Report Template,报表模板
+Preview Overrides,预览覆盖
+Report Format,报表格式
+Print Format,打印格式
+Language,语言
+Default language. More languages coming soon.,默认语言。更多语言即将支持。
+Type,类型
+Module,模块
+DocType,文档类型
+Contract,合同
+Default,默认
+Default Print Language,默认打印语言
+Typst Preamble,Typst 前导设置
+Typst Code,Typst 代码
+Layout JSON,布局 JSON
+Document Header,文档页眉
+Document Footer,文档页脚
+Raw Typst,原始 Typst
+Typst Help,Typst 帮助
+Generic Report,通用报表
+Generic Template Type,通用模板类型
+Advanced,高级
+Report,报表
+Template Type,模板类型
+Description,说明
+Disable,禁用
+Failed to load report formats.,加载报表格式失败。
+Report preview failed.,报表预览失败。
+Report preview not ready yet.,报表预览尚未就绪。
+PDF download started.,PDF 下载已开始。
+PDF opened in a new tab.,PDF 已在新标签页打开。
+Report PDF generation failed.,报表 PDF 生成失败。
+Select a document first,请先选择一个文档
+Typst code not ready yet,Typst 代码尚未就绪
+Typst compilation returned no SVG pages,Typst 编译未返回任何 SVG 页面
+Typst compilation returned an empty PDF,Typst 编译返回了空 PDF
+Typst code saved to Print Format,Typst 代码已保存到打印格式
+Typst code copied to clipboard,Typst 代码已复制到剪贴板
+Section Settings,分区设置
+Apply,应用
+Edit Raw Typst Field,编辑原始 Typst 字段
+Raw Typst Field,原始 Typst 字段
+Configure Spacer,配置间距
+Spacer Value,间距值
+Typst units: 1em, 2cm, 10pt, 5mm, etc.,Typst 单位：1em、2cm、10pt、5mm 等
+Configure Divider,配置分隔线
+Length,长度
+Typst units: 100%, 80%, 10cm, etc.,Typst 单位：100%、80%、10cm 等
+Stroke Width,线宽
+Typst units: 0.5pt, 1pt, 2pt, etc.,Typst 单位：0.5pt、1pt、2pt 等
+Color,颜色
+Field Template,字段模板
+Set Required Report Filters,设置必填报表筛选条件
+Cancel,取消
+Failed to load Crispy Format,加载 Crispy 格式失败
+Crispy Format saved,Crispy 格式已保存
+Failed to save changes,保存更改失败

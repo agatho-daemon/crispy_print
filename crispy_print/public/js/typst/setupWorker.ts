@@ -21,6 +21,18 @@ import {
 import { getLogger } from "../logger"
 
 const logger = getLogger({ module: "TypstPreview" })
+const IMAGE_EXTENSIONS = new Set([
+	"png",
+	"jpg",
+	"jpeg",
+	"svg",
+	"gif",
+	"webp",
+	"bmp",
+	"tif",
+	"tiff",
+	"avif",
+])
 
 /**
  * Parse and format Typst error messages from server responses
@@ -504,7 +516,7 @@ export function setupWorker(
 			outputFormat: "pdf",
 			requestId,
 			seq: nextSeq(requestId),
-			letterheadImage: brandingImage,
+			assetFiles: lastCompileAssetFiles,
 			qrData: qrEnabled ? docNameForQr : null,
 			qrFilename: qrEnabled ? qrFilename : null,
 		})
@@ -726,6 +738,7 @@ export function setupWorker(
 
 	let compilationTimeout: number | undefined
 	let lastTypstCode = ""
+	let lastCompileAssetFiles: string[] = []
 	let lastQrPayload = ""
 	let currentPdfBlob: Blob | null = null
 	let pendingPdfDownload = false
@@ -865,6 +878,38 @@ export function setupWorker(
 		})
 
 		return lines.join("\n")
+	}
+
+	function isImageAssetValue(value: string): boolean {
+		const raw = String(value || "").trim()
+		if (!raw) return false
+		const match = raw.match(/\.([a-zA-Z0-9]+)(?:[#?].*)?$/)
+		if (!match) return false
+		return IMAGE_EXTENSIONS.has(String(match[1] || "").toLowerCase())
+	}
+
+	function normalizeDocImageAssets(value: any, collector: Set<string>): any {
+		if (Array.isArray(value)) {
+			return value.map((item) => normalizeDocImageAssets(item, collector))
+		}
+		if (value && typeof value === "object") {
+			const out: Record<string, any> = {}
+			Object.entries(value as Record<string, any>).forEach(([key, item]) => {
+				out[key] = normalizeDocImageAssets(item, collector)
+			})
+			return out
+		}
+		if (typeof value !== "string") {
+			return value
+		}
+
+		const raw = value.trim()
+		if (!isImageAssetValue(raw)) {
+			return value
+		}
+		collector.add(raw)
+		const filename = raw.split("/").pop()
+		return filename || value
 	}
 
 	function resolveQrPayload() {
@@ -1008,6 +1053,7 @@ export function setupWorker(
 		// Intentionally skip serialized layout diffing; always compile on trigger.
 
 		let typst: string
+		let assetFiles: string[] = []
 		let qrPayloadChanged = false
 		try {
 			const letterheadCandidate =
@@ -1044,6 +1090,9 @@ export function setupWorker(
 						includeAllChildFieldsIfUnspecified: true,
 					})
 				: filterDocumentFields(sampleDocData, usedFields)
+			const assetCollector = new Set<string>()
+			const normalizedDoc = normalizeDocImageAssets(filteredDoc, assetCollector)
+			assetFiles = Array.from(assetCollector)
 			const qrPayload = resolveQrPayload()
 			qrEnabled = qrPayload.qrEnabled
 			docNameForQr = qrPayload.qrData ? String(qrPayload.qrData) : ""
@@ -1055,7 +1104,7 @@ export function setupWorker(
 			// Use filtered document instead of full sampleDocData
 			if (rawTypst) {
 				const parts: string[] = []
-				parts.push(buildDocDictionary(filteredDoc, printFormatName))
+				parts.push(buildDocDictionary(normalizedDoc, printFormatName))
 				parts.push(buildDefaultStyleDefs(pageSettings))
 				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
 				if (headerFooterBlock) {
@@ -1079,7 +1128,7 @@ export function setupWorker(
 				}
 				typst = parts.join("\n\n")
 			} else {
-				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, filteredDoc, {
+				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, normalizedDoc, {
 					...pageSettings,
 					docHeader,
 					docFooter,
@@ -1125,6 +1174,11 @@ export function setupWorker(
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
 		const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
+		if (brandingImage) {
+			assetFiles.push(brandingImage)
+		}
+		assetFiles = Array.from(new Set(assetFiles))
+		lastCompileAssetFiles = assetFiles
 
 		worker.postMessage({
 			typstSrc: typst,
@@ -1132,7 +1186,7 @@ export function setupWorker(
 			outputFormat: previewOutputFormat,
 			requestId: PREVIEW_REQUEST_ID,
 			seq: nextSeq(PREVIEW_REQUEST_ID),
-			letterheadImage: brandingImage,
+			assetFiles,
 			qrData: qrEnabled ? docNameForQr : null,
 			qrFilename: qrEnabled ? qrFilename : null,
 		})
@@ -1295,21 +1349,13 @@ export function setupWorker(
 			viewPdfBtn.disabled = true
 			if (downloadBtn) downloadBtn.disabled = true
 
-			const pageSettings =
-				adapter && typeof adapter.getPageSettings === "function"
-					? adapter.getPageSettings() || {}
-					: {}
-			const letterheadData =
-				adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
-			const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
-
 			worker.postMessage({
 				typstSrc: lastTypstCode,
 				csrfToken: frappe?.csrf_token,
 				outputFormat: "pdf",
 				requestId: VIEW_PDF_REQUEST_ID,
 				seq: nextSeq(VIEW_PDF_REQUEST_ID),
-				letterheadImage: brandingImage,
+				assetFiles: lastCompileAssetFiles,
 				...resolveQrPayload(),
 			})
 		})
@@ -1334,21 +1380,13 @@ export function setupWorker(
 			downloadBtn.disabled = true
 			pendingPdfDownload = true
 
-			const pageSettings =
-				adapter && typeof adapter.getPageSettings === "function"
-					? adapter.getPageSettings() || {}
-					: {}
-			const letterheadData =
-				adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
-			const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
-
 			worker.postMessage({
 				typstSrc: lastTypstCode,
 				csrfToken: frappe?.csrf_token,
 				outputFormat: "pdf",
 				requestId: DOWNLOAD_REQUEST_ID,
 				seq: nextSeq(DOWNLOAD_REQUEST_ID),
-				letterheadImage: brandingImage,
+				assetFiles: lastCompileAssetFiles,
 				...resolveQrPayload(),
 			})
 		})

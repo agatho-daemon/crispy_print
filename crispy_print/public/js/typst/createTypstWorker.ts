@@ -28,15 +28,15 @@ const log = (...args) => emit("log", ...args);
 const warn = (...args) => emit("warn", ...args);
 const BASE_URL = ${JSON.stringify(baseUrl)};
 
-async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterheadImage = null, qrData = null, qrFilename = null) {
+async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', assetFiles = null, qrData = null, qrFilename = null) {
   const apiUrl = BASE_URL + '/api/method/crispy_print.api.v1.compile_typst';
   const body = {
     typst_source: typstSrc,
     output_format: outputFormat
   };
 
-  if (letterheadImage) {
-    body.letterhead_image = letterheadImage;
+  if (Array.isArray(assetFiles) && assetFiles.length) {
+    body.asset_files = assetFiles;
   }
   if (qrData && qrFilename) {
     body.qr_data = qrData;
@@ -97,7 +97,7 @@ async function compileWithCLI(typstSrc, csrfToken, outputFormat = 'svg', letterh
 self.postMessage({ type: 'init', ok: true, wasmReady: false });
 
 self.addEventListener('message', async (event) => {
-  const { typstSrc, csrfToken, outputFormat, requestId, letterheadImage, qrData, qrFilename, seq } = event.data || {};
+  const { typstSrc, csrfToken, outputFormat, requestId, assetFiles, qrData, qrFilename, seq } = event.data || {};
   const desiredFormat = (outputFormat || 'svg').toLowerCase();
 
   if (!typstSrc || !typstSrc.trim()) {
@@ -113,10 +113,10 @@ self.addEventListener('message', async (event) => {
 
   try {
     log(\`Requesting \${desiredFormat.toUpperCase()} from server CLI...\`);
-    if (letterheadImage) {
-      log(\`Including letterhead image: \${letterheadImage}\`);
+    if (Array.isArray(assetFiles) && assetFiles.length) {
+      log(\`Including extra asset files: \${assetFiles.length}\`);
     }
-    const result = await compileWithCLI(typstSrc, csrfToken, desiredFormat, letterheadImage, qrData, qrFilename);
+    const result = await compileWithCLI(typstSrc, csrfToken, desiredFormat, assetFiles, qrData, qrFilename);
     const message = {
       type: 'compile',
       ok: true,

@@ -74,12 +74,11 @@ describe("useStore report preview", () => {
 		expect(Array.isArray(first.args.preview_data?.columns)).toBe(true)
 		expect(Array.isArray(first.args.preview_data?.rows)).toBe(true)
 		expect(first.args.preview_data?.chart_svg).toBe("report_chart.svg")
-		expect(first.args.letterhead_image).toBe("/files/letterhead.png")
+		expect(first.args.page_settings?.letterhead_image).toBe("/files/letterhead.png")
 		expect(first.args.limit).toBe(50)
 		const second = (globalThis as any).frappe.call.mock.calls[1][0]
 		expect(second.method).toBe("crispy_print.api.v1.compile_typst")
-		expect(second.args.letterhead_image).toBe("/files/letterhead.png")
-		expect(second.args.logo_image).toBeNull()
+		expect(second.args.asset_files).toContain("/files/letterhead.png")
 		expect(second.args.chart_svg).toContain("Placeholder Chart")
 	})
 
@@ -149,6 +148,7 @@ describe("useStore report preview", () => {
 				.mockResolvedValueOnce({
 					message: {
 						typst_source: "#typst",
+						asset_files: ["/private/files/logo.svg"],
 						truncation: { is_truncated: true, returned_rows: 50, original_rows: 120 },
 					},
 				})
@@ -163,6 +163,8 @@ describe("useStore report preview", () => {
 
 		expect(result).toEqual({ success: true })
 		expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(2)
+		const compileCall = (globalThis as any).frappe.call.mock.calls[1][0]
+		expect(compileCall.args.asset_files).toEqual(["/private/files/logo.svg"])
 	})
 
 	it("compileReportPreview normalizes unitless widths to pt", async () => {
@@ -235,9 +237,8 @@ describe("useStore report preview", () => {
 
 		const firstSource = (globalThis as any).frappe.call.mock.calls[0][0]
 		const firstCompile = (globalThis as any).frappe.call.mock.calls[1][0]
-		expect(firstSource.args.letterhead_image).toBeNull()
-		expect(firstCompile.args.letterhead_image).toBeNull()
-		expect(firstCompile.args.logo_image).toBe("/files/logo.png")
+		expect(firstSource.args.page_settings?.letterhead_image).toBe("")
+		expect(firstCompile.args.asset_files).toContain("/files/logo.png")
 
 		store.pageSettings.value = {
 			orientation: "landscape",
@@ -251,8 +252,7 @@ describe("useStore report preview", () => {
 
 		const secondSource = (globalThis as any).frappe.call.mock.calls[2][0]
 		const secondCompile = (globalThis as any).frappe.call.mock.calls[3][0]
-		expect(secondSource.args.letterhead_image).toBe("/files/lh.png")
-		expect(secondCompile.args.letterhead_image).toBe("/files/lh.png")
-		expect(secondCompile.args.logo_image).toBeNull()
+		expect(secondSource.args.page_settings?.letterhead_image).toBe("/files/lh.png")
+		expect(secondCompile.args.asset_files).toContain("/files/lh.png")
 	})
 })
