@@ -601,6 +601,7 @@ const reportOrientationInitialized = ref(false);
 const reportMarginsInitialized = ref(false);
 const lastReportTypstSource = ref<string | null>(null);
 const lastReportChartSvg = ref<string>("");
+const lastReportAssetFiles = ref<string[]>([]);
 const availableFonts = ref<string[]>([]);
 const loadingFonts = ref(false);
 const reportFontFamily = ref("Inter 18pt");
@@ -870,6 +871,9 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 			: "";
 		const letterheadImage = letterheadDoc.value?.image || null;
 		const logoImage = logoSettings.value.image || null;
+		const brandingAssetFiles = [letterheadImage, logoImage].filter((value): value is string =>
+			Boolean(value)
+		);
 		logger.info("Report preview compile requested with letterhead", letterheadDoc.value);
 		logger.info("Report preview compile requested with letterhead image", letterheadImage);
 		logger.info(
@@ -888,11 +892,13 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 				include_total_row: reportShowTotalRow.value ? 1 : 0,
 				include_chart: reportShowChart.value ? 1 : 0,
 				orientation: pageSettings.value.orientation,
-				page_settings: pageSettingsComputed.value,
+				page_settings: {
+					...pageSettingsComputed.value,
+					letterhead_image: letterheadImage || "",
+				},
 				chart_svg: chartSvgPayload || null,
 				typst_preamble_override: reportFontPreamble.value,
 				typst_code_override: buildReportTypstCodeOverride(),
-				letterhead_image: letterheadImage,
 				limit: 50,
 			},
 		});
@@ -904,6 +910,11 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		const typstSource =
 			typeof sourcePayload === "string" ? sourcePayload : sourcePayload?.typst_source;
 		const truncation = typeof sourcePayload === "object" ? sourcePayload?.truncation : null;
+		const assetFiles =
+			typeof sourcePayload === "object" && Array.isArray(sourcePayload?.asset_files)
+				? sourcePayload.asset_files
+				: [];
+		const compileAssetFiles = Array.from(new Set([...brandingAssetFiles, ...assetFiles]));
 		if (!typstSource) {
 			throw new Error("No Typst source returned");
 		}
@@ -918,14 +929,14 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		dispatchCrispyPreviewSource({ source: typstSource });
 		lastReportTypstSource.value = typstSource;
 		lastReportChartSvg.value = chartSvgPayload || "";
+		lastReportAssetFiles.value = compileAssetFiles;
 
 		const compileResponse = await frappe.call({
 			method: "crispy_print.api.v1.compile_typst",
 			args: {
 				typst_source: typstSource,
 				output_format: "svg",
-				letterhead_image: letterheadImage,
-				logo_image: logoImage,
+				asset_files: compileAssetFiles,
 				chart_svg: chartSvgPayload || null,
 			},
 		});
@@ -1288,15 +1299,12 @@ async function generateReportPdf(action: "view" | "download") {
 	}
 
 	try {
-		const letterheadImage = letterheadDoc.value?.image || null;
-		const logoImage = logoSettings.value.image || null;
 		const compileResponse = await frappe.call({
 			method: "crispy_print.api.v1.compile_typst",
 			args: {
 				typst_source: lastReportTypstSource.value,
 				output_format: "pdf",
-				letterhead_image: letterheadImage,
-				logo_image: logoImage,
+				asset_files: lastReportAssetFiles.value || [],
 				chart_svg: lastReportChartSvg.value || null,
 			},
 		});
