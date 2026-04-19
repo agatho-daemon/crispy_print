@@ -101,24 +101,24 @@ export function createLayoutStore(options: CreateLayoutStoreOptions) {
         computeColumnsSignature(reportTableColumns);
 
       const reportFields = [
-        { fieldname: "data.title", label: "Title", fieldtype: "Data" },
-        { fieldname: "data.subtitle", label: "Subtitle", fieldtype: "Data" },
+        { fieldname: "data.title", label: __("Title"), fieldtype: "Data" },
+        { fieldname: "data.subtitle", label: __("Subtitle"), fieldtype: "Data" },
         {
           fieldname: "data.filters",
-          label: "Filters",
+          label: __("Filters"),
           fieldtype: "Table",
           table_columns: getReportBlockColumns("data.filters"),
         },
         {
           fieldname: "data.report_summary",
-          label: "Report Summary",
+          label: __("Report Summary"),
           fieldtype: "Table",
           table_columns: getReportBlockColumns("data.report_summary"),
         },
-        { fieldname: "data.chart", label: "Chart", fieldtype: "Table" },
+        { fieldname: "data.chart", label: __("Chart"), fieldtype: "Table" },
         {
           fieldname: "data.table",
-          label: "Report Table",
+          label: __("Report Table"),
           fieldtype: "Table",
           table_columns: reportTableColumns,
         },
@@ -175,4 +175,3 @@ export function createLayoutStore(options: CreateLayoutStoreOptions) {
     getReportTableColumnsForPreview,
   };
 }
-

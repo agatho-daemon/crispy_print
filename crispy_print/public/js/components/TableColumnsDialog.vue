@@ -3,9 +3,13 @@
 		<div class="table-dialog__card">
 			<div class="table-dialog__header">
 				<div>
-					<h3 class="table-dialog__title">Configure columns</h3>
+					<h3 class="table-dialog__title">{{ __("Configure columns") }}</h3>
 					<p class="table-dialog__subtitle">
-						Drag to reorder. Widths use Typst units: auto, 1fr, 2fr, 100pt, 50%, etc.
+						{{
+							__(
+								"Drag to reorder. Widths use Typst units: auto, 1fr, 2fr, 100pt, 50%, etc."
+							)
+						}}
 					</p>
 				</div>
 				<button class="table-dialog__close" @click="$emit('close')" type="button">
@@ -15,7 +19,7 @@
 
 			<div class="table-dialog__body">
 				<div class="table-dialog__row">
-					<span>Columns</span>
+					<span>{{ __("Columns") }}</span>
 				</div>
 
 				<draggable
@@ -27,13 +31,13 @@
 				>
 					<template #item="{ element: column }">
 						<div class="table-dialog__item">
-							<div class="drag-handle" title="Drag">&#8942;</div>
+							<div class="drag-handle" :title="__('Drag')">&#8942;</div>
 							<div class="table-dialog__item-main">
 								<input
 									v-model="column.label"
 									type="text"
 									class="table-dialog__input"
-									placeholder="Column label"
+									:placeholder="__('Column label')"
 								/>
 							</div>
 							<div class="table-dialog__item-controls">
@@ -41,25 +45,25 @@
 									class="table-dialog__align-btn"
 									type="button"
 									@click="cycleColumnAlignment(column)"
-									:title="`Align: ${column.align || 'left'}`"
+									:title="__('Align: {0}', [column.align || 'left'])"
 								>
 									{{ getAlignIcon(column.align) }}
 								</button>
 								<input
 									v-model="column.width"
 									type="text"
-									placeholder="auto"
+									:placeholder="__('auto')"
 									class="table-dialog__width-input"
 									:class="
 										column.invalid_width
 											? 'table-dialog__width-input--invalid'
 											: ''
 									"
-									title="Typst width: auto, 1fr, 2fr, 100pt, etc."
+									:title="__('Typst width: auto, 1fr, 2fr, 100pt, etc.')"
 								/>
 								<button
 									class="table-dialog__remove"
-									title="Remove"
+									:title="__('Remove')"
 									@click="removeColumn(column)"
 									type="button"
 								>
@@ -71,17 +75,19 @@
 				</draggable>
 
 				<div v-if="!localColumns.length" class="table-dialog__empty">
-					No columns yet. Add one below.
+					{{ __("No columns yet. Add one below.") }}
 				</div>
 
 				<div class="table-dialog__add">
-					<label class="table-dialog__add-label" for="add-column">Add column</label>
+					<label class="table-dialog__add-label" for="add-column">{{
+						__("Add column")
+					}}</label>
 					<select
 						id="add-column"
 						v-model="pendingFieldname"
 						class="table-dialog__select"
 					>
-						<option value="" disabled>Select field</option>
+						<option value="" disabled>{{ __("Select field") }}</option>
 						<option
 							v-for="option in availableColumnOptions"
 							:key="option.fieldname"
@@ -96,21 +102,21 @@
 						@click="addColumn"
 						type="button"
 					>
-						Add
+						{{ __("Add") }}
 					</button>
 				</div>
 			</div>
 
 			<div class="table-dialog__footer">
 				<button class="table-dialog__footer-btn" type="button" @click="$emit('close')">
-					Close
+					{{ __("Close") }}
 				</button>
 				<button
 					class="table-dialog__footer-btn table-dialog__footer-btn--primary"
 					type="button"
 					@click="$emit('close')"
 				>
-					Done
+					{{ __("Done") }}
 				</button>
 			</div>
 		</div>
@@ -123,6 +129,7 @@ import draggable from "vuedraggable";
 import type { TableColumn } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
 import { deepClone } from "../utils/json";
+import { __ } from "../utils/i18n";
 
 interface Props {
 	modelValue: TableColumn[];
@@ -178,7 +185,10 @@ watch(
 			// Debounce: only show alert after user stops typing for 800ms
 			validationDebounceTimer = setTimeout(() => {
 				const invalidValues = invalidCols.map((col) => col.width || "(empty)").join(", ");
-				validationMessage.value = `Invalid column width values: ${invalidValues}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc.`;
+				validationMessage.value = __(
+					"Invalid column width values: {0}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc.",
+					[invalidValues]
+				);
 
 				if (typeof frappe !== "undefined") {
 					frappe.show_alert({
@@ -202,7 +212,7 @@ watch(
 const availableColumnOptions = computed(() => {
 	const existing = new Set(localColumns.value.map((c) => c.fieldname));
 	const base: { label: string; fieldname: string; fieldtype: string }[] = [
-		{ label: "Sr No.", fieldname: "idx", fieldtype: "Data" },
+		{ label: __("Sr No."), fieldname: "idx", fieldtype: "Data" },
 	];
 
 	if (Array.isArray(props.availableColumns) && props.availableColumns.length) {

@@ -3,7 +3,7 @@
 		<div class="section-head layout-pane__header">
 			<div class="section-head-content layout-pane__header-row">
 				<div class="layout-pane__title-wrap">
-					<h3 class="section-title layout-pane__title">Layout Builder</h3>
+					<h3 class="section-title layout-pane__title">{{ __("Layout Builder") }}</h3>
 					<span
 						v-if="showGenericReportTypeBadge"
 						class="layout-pane__generic-type-badge"
@@ -15,21 +15,21 @@
 					<button
 						class="btn btn-default btn-sm"
 						:disabled="!store.canUndo.value"
-						title="Undo (Ctrl/Cmd+Z)"
+						:title="__('Undo (Ctrl/Cmd+Z)')"
 						@click="store.undo()"
 					>
-						Undo
+						{{ __("Undo") }}
 					</button>
 					<button
 						class="btn btn-default btn-sm"
 						:disabled="!store.canRedo.value"
-						title="Redo (Ctrl/Cmd+Y)"
+						:title="__('Redo (Ctrl/Cmd+Y)')"
 						@click="store.redo()"
 					>
-						Redo
+						{{ __("Redo") }}
 					</button>
 					<button class="btn btn-default btn-sm" @click="resetLayout">
-						Reset to Default
+						{{ __("Reset to Default") }}
 					</button>
 					<div class="layout-pane__spacer"></div>
 					<div class="layout-pane__help">
@@ -38,7 +38,7 @@
 							class="btn btn-default btn-xs layout-pane__help-btn"
 							popovertarget="layout-help"
 							popovertargetaction="toggle"
-							title="Toggle help"
+							:title="__('Toggle help')"
 							aria-haspopup="dialog"
 							aria-controls="layout-help"
 						>
@@ -46,13 +46,20 @@
 						</button>
 						<div id="layout-help" popover class="layout-pane__help-popover">
 							<ul class="layout-pane__help-list">
-								<li>Drag fields from Fields pane into columns.</li>
+								<li>{{ __("Drag fields from Fields pane into columns.") }}</li>
 								<li>
-									Use handles to reorder sections, columns, and fields in place.
+									{{
+										__(
+											"Use handles to reorder sections, columns, and fields in place."
+										)
+									}}
 								</li>
 								<li>
-									Use the &#8943; menu on a section for add/remove/page
-									break/orientation.
+									{{
+										__(
+											"Use the ⋯ menu on a section for add/remove/page break/orientation."
+										)
+									}}
 								</li>
 							</ul>
 						</div>
@@ -62,14 +69,16 @@
 			<div v-if="isReportFormat" class="layout-pane__report-selector-row">
 				<div class="layout-pane__report-selector-wrap">
 					<span class="layout-pane__preview-note">
-						Style preview mode: layout uses deterministic sample data.
+						{{ __("Style preview mode: layout uses deterministic sample data.") }}
 					</span>
 				</div>
 			</div>
 		</div>
 		<div v-if="!layout" class="layout-pane__empty">
-			No layout loaded.
-			<button class="btn btn-link btn-sm" @click="ensureLayout">Load default</button>
+			{{ __("No layout loaded.") }}
+			<button class="btn btn-link btn-sm" @click="ensureLayout">
+				{{ __("Load default") }}
+			</button>
 		</div>
 
 		<div v-else class="layout-pane__body">
@@ -84,19 +93,21 @@
 					<div class="section-card">
 						<div class="section-card__header">
 							<div class="section-card__title-row">
-								<span class="section-grip" title="Drag section">&#8942;</span>
+								<span class="section-grip" :title="__('Drag section')"
+									>&#8942;</span
+								>
 								<input
 									v-model="section.label"
 									type="text"
 									class="form-control section-title-input"
-									placeholder="Section title"
+									:placeholder="__('Section title')"
 								/>
 							</div>
 							<div class="section-card__actions">
 								<button
 									type="button"
 									class="section-card__menu-btn"
-									title="Section menu"
+									:title="__('Section menu')"
 									@click.stop="toggleSectionMenu(section, sectionIndex, $event)"
 									aria-haspopup="menu"
 									:aria-expanded="
@@ -134,7 +145,7 @@
 											@click="onAddSectionAbove(sectionIndex)"
 											role="menuitem"
 										>
-											Add section above
+											{{ __("Add section above") }}
 										</button>
 										<button
 											type="button"
@@ -142,7 +153,7 @@
 											@click="onAddSectionBelow(sectionIndex)"
 											role="menuitem"
 										>
-											Add section below
+											{{ __("Add section below") }}
 										</button>
 										<div
 											class="section-card__menu-divider"
@@ -155,7 +166,7 @@
 											@click="onAddColumn(section)"
 											role="menuitem"
 										>
-											Add column
+											{{ __("Add column") }}
 										</button>
 										<button
 											type="button"
@@ -164,7 +175,7 @@
 											@click="onRemoveLastColumn(section)"
 											role="menuitem"
 										>
-											Remove column
+											{{ __("Remove column") }}
 										</button>
 										<div
 											class="section-card__menu-divider"
@@ -176,7 +187,7 @@
 											@click="onOpenSectionSettings(section)"
 											role="menuitem"
 										>
-											Section settings
+											{{ __("Section settings") }}
 										</button>
 										<button
 											type="button"
@@ -186,8 +197,8 @@
 										>
 											{{
 												section.page_break
-													? "Remove page break"
-													: "Add page break"
+													? __("Remove page break")
+													: __("Add page break")
 											}}
 										</button>
 										<button
@@ -196,7 +207,7 @@
 											@click="onToggleFieldOrientation(section)"
 											role="menuitem"
 										>
-											Field orientation ({{
+											{{ __("Field orientation") }} ({{
 												getFieldOrientationLabel(section)
 											}})
 										</button>
@@ -210,7 +221,7 @@
 											@click="onRemoveSection(sectionIndex)"
 											role="menuitem"
 										>
-											Remove section
+											{{ __("Remove section") }}
 										</button>
 									</div>
 								</teleport>
@@ -240,7 +251,10 @@
 										<div class="field-card">
 											<div class="field-card__row">
 												<div class="field-card__info">
-													<span class="field-grip" title="Drag field">
+													<span
+														class="field-grip"
+														:title="__('Drag field')"
+													>
 														&#8942;
 													</span>
 													<input
@@ -256,7 +270,7 @@
 													<button
 														type="button"
 														class="field-card__menu-btn"
-														title="Field menu"
+														:title="__('Field menu')"
 														@click.stop="
 															toggleFieldMenu(
 																getFieldMenuId(
@@ -323,7 +337,7 @@
 																	openFieldSubmenu === 'align'
 																"
 															>
-																Align
+																{{ __("Align") }}
 																<span
 																	class="field-card__menu-arrow"
 																	>›</span
@@ -335,7 +349,9 @@
 																@click.stop
 																:ref="setAlignSubmenuRef"
 																role="menu"
-																aria-label="Alignment options"
+																:aria-label="
+																	__('Alignment options')
+																"
 																tabindex="-1"
 																@keydown="onAlignSubmenuKeydown"
 															>
@@ -361,7 +377,7 @@
 																				: ""
 																		}}</span
 																	>
-																	Left
+																	{{ __("Left") }}
 																</button>
 																<button
 																	type="button"
@@ -388,7 +404,7 @@
 																				: ""
 																		}}</span
 																	>
-																	Center
+																	{{ __("Center") }}
 																</button>
 																<button
 																	type="button"
@@ -415,7 +431,7 @@
 																				: ""
 																		}}</span
 																	>
-																	Right
+																	{{ __("Right") }}
 																</button>
 															</div>
 
@@ -427,8 +443,8 @@
 															>
 																{{
 																	(field.label ?? "").trim()
-																		? "Hide label"
-																		: "Show label"
+																		? __("Hide label")
+																		: __("Show label")
 																}}
 															</button>
 
@@ -439,7 +455,7 @@
 																@click="onConfigureColumns(field)"
 																role="menuitem"
 															>
-																Configure columns
+																{{ __("Configure columns") }}
 															</button>
 
 															<button
@@ -453,7 +469,7 @@
 																@click="onEditTypstCode(field)"
 																role="menuitem"
 															>
-																Edit code
+																{{ __("Edit code") }}
 															</button>
 
 															<button
@@ -467,7 +483,7 @@
 																@click="onEditSpacer(field)"
 																role="menuitem"
 															>
-																Configure spacer
+																{{ __("Configure spacer") }}
 															</button>
 
 															<button
@@ -481,7 +497,7 @@
 																@click="onEditDivider(field)"
 																role="menuitem"
 															>
-																Configure divider
+																{{ __("Configure divider") }}
 															</button>
 
 															<div
@@ -500,7 +516,7 @@
 																"
 																role="menuitem"
 															>
-																Remove
+																{{ __("Remove") }}
 															</button>
 														</div>
 													</teleport>
@@ -517,7 +533,9 @@
 													v-for="col in field.table_columns"
 													:key="col.fieldname"
 													class="field-card__column-pill"
-													:title="`Width: ${col.width ?? 'auto'}%`"
+													:title="
+														__('Width: {0}%', [col.width ?? 'auto'])
+													"
 												>
 													{{ col.label }}
 												</div>
@@ -527,12 +545,14 @@
 								</draggable>
 
 								<div v-if="!column.fields.length" class="section-column__empty">
-									Drop fields here
+									{{ __("Drop fields here") }}
 								</div>
 							</div>
 						</div>
 
-						<div v-if="section.page_break" class="section-page-break">Page Break</div>
+						<div v-if="section.page_break" class="section-page-break">
+							{{ __("Page Break") }}
+						</div>
 					</div>
 				</template>
 			</draggable>
@@ -565,6 +585,7 @@ import type {
 import { createLayoutId, getTableColumns } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
 import { deepClone } from "../utils/json";
+import { __ } from "../utils/i18n";
 
 type Section = LayoutSection & {
 	id?: string | number;
@@ -647,17 +668,17 @@ const columnEditorAvailableColumns = computed(() => {
 		}));
 		if (options.length > 0) return options;
 		return [
-			{ label: "Label", fieldname: "label", fieldtype: "Data" },
-			{ label: "Value", fieldname: "value", fieldtype: "Data" },
+			{ label: __("Label"), fieldname: "label", fieldtype: "Data" },
+			{ label: __("Value"), fieldname: "value", fieldtype: "Data" },
 		];
 	}
 	if (fieldname === "data.report_summary") {
 		return [
-			{ label: "Label", fieldname: "label", fieldtype: "Data" },
-			{ label: "Value", fieldname: "value", fieldtype: "Data" },
-			{ label: "Indicator", fieldname: "indicator", fieldtype: "Data" },
-			{ label: "Data Type", fieldname: "datatype", fieldtype: "Data" },
-			{ label: "Currency", fieldname: "currency", fieldtype: "Data" },
+			{ label: __("Label"), fieldname: "label", fieldtype: "Data" },
+			{ label: __("Value"), fieldname: "value", fieldtype: "Data" },
+			{ label: __("Indicator"), fieldname: "indicator", fieldtype: "Data" },
+			{ label: __("Data Type"), fieldname: "datatype", fieldtype: "Data" },
+			{ label: __("Currency"), fieldname: "currency", fieldtype: "Data" },
 		];
 	}
 	return [];
@@ -1184,8 +1205,8 @@ function onToggleFieldOrientation(section: Section) {
 
 function getFieldOrientationLabel(section: Section) {
 	return (section.field_orientation || "left-right") === "left-right"
-		? "Left-Right"
-		: "Top-Down";
+		? __("Left-Right")
+		: __("Top-Down");
 }
 
 async function ensureTableColumns(field: Field) {
@@ -1206,14 +1227,14 @@ async function ensureTableColumns(field: Field) {
 				: [
 						{
 							fieldname: "label",
-							label: "Label",
+							label: __("Label"),
 							fieldtype: "Data",
 							width: "auto",
 							align: "left",
 						},
 						{
 							fieldname: "value",
-							label: "Value",
+							label: __("Value"),
 							fieldtype: "Data",
 							width: "auto",
 							align: "left",
@@ -1225,35 +1246,35 @@ async function ensureTableColumns(field: Field) {
 		field.table_columns = [
 			{
 				fieldname: "label",
-				label: "Label",
+				label: __("Label"),
 				fieldtype: "Data",
 				width: "auto",
 				align: "left",
 			},
 			{
 				fieldname: "value",
-				label: "Value",
+				label: __("Value"),
 				fieldtype: "Data",
 				width: "auto",
 				align: "right",
 			},
 			{
 				fieldname: "indicator",
-				label: "Indicator",
+				label: __("Indicator"),
 				fieldtype: "Data",
 				width: "auto",
 				align: "left",
 			},
 			{
 				fieldname: "datatype",
-				label: "Data Type",
+				label: __("Data Type"),
 				fieldtype: "Data",
 				width: "auto",
 				align: "left",
 			},
 			{
 				fieldname: "currency",
-				label: "Currency",
+				label: __("Currency"),
 				fieldtype: "Data",
 				width: "auto",
 				align: "left",
@@ -1412,7 +1433,7 @@ function editTypstCode(field: Field) {
 	const existing = field.raw_typst_field || "";
 
 	if (typeof frappe === "undefined" || !frappe.ui?.Dialog) {
-		const next = window.prompt("Edit Raw Typst Field", existing);
+		const next = window.prompt(__("Edit Raw Typst Field"), existing);
 		if (next === null) return;
 		field.raw_typst_field = next;
 		store.markDirty();

@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import DocType
 
@@ -94,20 +95,20 @@ class CrispyFormat(Document):
 			if self.is_generic:
 				# Generic templates must have generic_report_type
 				if not self.generic_report_type:
-					frappe.throw("Generic Report Type is required for generic templates")
+					frappe.throw(_("Generic Report Type is required for generic templates"))
 
 				# Generic templates must not have specific linked reports
 				if linked_reports:
-					frappe.throw("Generic templates cannot be linked to a specific report")
+					frappe.throw(_("Generic templates cannot be linked to a specific report"))
 
 			else:
 				# Custom report formats must have at least one linked report
 				if not linked_reports:
-					frappe.throw("At least one linked report is required for custom report formats")
+					frappe.throw(_("At least one linked report is required for custom report formats"))
 
 				# Custom formats must not have generic_report_type
 				if self.generic_report_type:
-					frappe.throw("Custom report formats cannot have a Generic Report Type")
+					frappe.throw(_("Custom report formats cannot have a Generic Report Type"))
 
 			# Report mode source of truth: is_advanced drives raw_typst.
 			self.raw_typst = 1 if self.is_advanced else 0
@@ -115,7 +116,7 @@ class CrispyFormat(Document):
 		# Validate DocType mode
 		elif self.crispy_format_type == "DocType":
 			if not self.doc_type:
-				frappe.throw("DocType is required")
+				frappe.throw(_("DocType is required"))
 
 			# DocType formats should not have report fields
 			if self.generic_report_type or self.is_generic:
@@ -127,7 +128,7 @@ class CrispyFormat(Document):
 		# Validate Contract mode
 		elif self.crispy_format_type == "Contract":
 			if not self.contract:
-				frappe.throw("Contract is required")
+				frappe.throw(_("Contract is required"))
 
 			# Contract formats should not have report fields
 			if self.generic_report_type or self.is_generic:

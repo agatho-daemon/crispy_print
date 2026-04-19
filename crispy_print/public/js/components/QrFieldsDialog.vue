@@ -3,8 +3,10 @@
 		<div class="qr-dialog__card">
 			<div class="qr-dialog__header">
 				<div>
-					<h3 class="qr-dialog__title">QR Code Fields</h3>
-					<p class="qr-dialog__subtitle">Choose fields to include in the QR payload.</p>
+					<h3 class="qr-dialog__title">{{ __("QR Code Fields") }}</h3>
+					<p class="qr-dialog__subtitle">
+						{{ __("Choose fields to include in the QR payload.") }}
+					</p>
 				</div>
 				<button class="qr-dialog__close" type="button" @click="$emit('close')">
 					&#x2715;
@@ -16,7 +18,7 @@
 						v-model="query"
 						type="text"
 						class="qr-dialog__input"
-						placeholder="Search fields..."
+						:placeholder="__('Search fields...')"
 					/>
 				</div>
 				<div class="qr-dialog__list">
@@ -36,18 +38,20 @@
 						</span>
 					</label>
 				</div>
-				<p v-if="!filteredFields.length" class="qr-dialog__empty">No fields found.</p>
+				<p v-if="!filteredFields.length" class="qr-dialog__empty">
+					{{ __("No fields found.") }}
+				</p>
 			</div>
 			<div class="qr-dialog__footer">
 				<button class="qr-dialog__btn" type="button" @click="$emit('close')">
-					Cancel
+					{{ __("Cancel") }}
 				</button>
 				<button
 					class="qr-dialog__btn qr-dialog__btn--primary"
 					type="button"
 					@click="apply"
 				>
-					Apply
+					{{ __("Apply") }}
 				</button>
 			</div>
 		</div>
@@ -57,6 +61,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import type { DocField } from "../utils/layout";
+import { __ } from "../utils/i18n";
 
 interface Props {
 	fields: DocField[];
@@ -82,7 +87,7 @@ watch(
 const virtualFields: DocField[] = [
 	{
 		fieldname: "timestamp",
-		label: "Posting Timestamp",
+		label: __("Posting Timestamp"),
 		fieldtype: "Datetime",
 	},
 ];

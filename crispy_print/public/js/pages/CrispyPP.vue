@@ -3,22 +3,22 @@
 		<!-- Left Pane: Settings -->
 		<div class="settings-pane">
 			<div class="section-head settings-pane__header">
-				<h4 class="pull-left">Print Settings</h4>
+				<h4 class="pull-left">{{ __("Print Settings") }}</h4>
 				<div class="pull-right settings-pane__header-actions">
 					<button
 						type="button"
 						class="btn btn-default btn-xs"
 						@click="resetFormat"
-						title="Reset to saved format"
+						:title="__('Reset to saved format')"
 					>
-						Reset
+						{{ __("Reset") }}
 					</button>
 					<button
 						type="button"
 						class="btn btn-default btn-xs"
 						popovertarget="preview-settings-help"
 						popovertargetaction="toggle"
-						title="Toggle help"
+						:title="__('Toggle help')"
 						aria-haspopup="dialog"
 						aria-controls="preview-settings-help"
 					>
@@ -26,8 +26,8 @@
 					</button>
 					<div id="preview-settings-help" popover class="settings-pane__help-popover">
 						<ul class="settings-pane__help-list">
-							<li>Configure page settings and document options.</li>
-							<li>Changes apply immediately to the preview.</li>
+							<li>{{ __("Configure page settings and document options.") }}</li>
+							<li>{{ __("Changes apply immediately to the preview.") }}</li>
 						</ul>
 					</div>
 				</div>
@@ -41,7 +41,7 @@
 							:class="{ 'is-expanded': isReportTemplateExpanded }"
 							@click="isReportTemplateExpanded = !isReportTemplateExpanded"
 						>
-							<span>Report Template</span>
+							<span>{{ __("Report Template") }}</span>
 							<svg
 								:class="[
 									'settings-pane__chevron',
@@ -66,14 +66,14 @@
 							class="settings-pane__section-content card-body"
 						>
 							<div class="form-group">
-								<label class="control-label">Report Format</label>
+								<label class="control-label">{{ __("Report Format") }}</label>
 								<select
 									v-model="selectedReportFormat"
 									class="form-control"
 									@change="onReportFormatChange"
 								>
 									<option v-if="reportLoading" disabled>
-										Loading formats...
+										{{ __("Loading formats...") }}
 									</option>
 									<option
 										v-for="fmt in reportFormats"
@@ -86,9 +86,11 @@
 							</div>
 
 							<div class="form-group">
-								<label class="control-label">Font</label>
+								<label class="control-label">{{ __("Font") }}</label>
 								<select v-model="reportFontFamily" class="form-control">
-									<option v-if="loadingFonts" disabled>Loading fonts...</option>
+									<option v-if="loadingFonts" disabled>
+										{{ __("Loading fonts...") }}
+									</option>
 									<option
 										v-for="font in availableFonts"
 										:key="font"
@@ -100,7 +102,7 @@
 							</div>
 
 							<div class="form-group">
-								<label class="control-label">Font Size (pt)</label>
+								<label class="control-label">{{ __("Font Size (pt)") }}</label>
 								<input
 									v-model.number="reportFontSizePt"
 									type="number"
@@ -113,11 +115,11 @@
 							<div class="settings-pane__toggles">
 								<label class="settings-pane__toggle">
 									<input v-model="reportIncludeFilters" type="checkbox" />
-									<span>Show Filters</span>
+									<span>{{ __("Show Filters") }}</span>
 								</label>
 								<label class="settings-pane__toggle">
 									<input v-model="reportShowSummary" type="checkbox" />
-									<span>Show Summary</span>
+									<span>{{ __("Show Summary") }}</span>
 								</label>
 								<label class="settings-pane__toggle">
 									<input
@@ -125,7 +127,7 @@
 										type="checkbox"
 										:disabled="!reportHasTotalRow"
 									/>
-									<span>Show Totals</span>
+									<span>{{ __("Show Totals") }}</span>
 								</label>
 								<label class="settings-pane__toggle">
 									<input
@@ -133,7 +135,7 @@
 										type="checkbox"
 										:disabled="!reportHasChart"
 									/>
-									<span>Show Chart</span>
+									<span>{{ __("Show Chart") }}</span>
 								</label>
 							</div>
 							<p
@@ -152,7 +154,7 @@
 							:class="{ 'is-expanded': isReportColumnsExpanded }"
 							@click="isReportColumnsExpanded = !isReportColumnsExpanded"
 						>
-							<span>Columns</span>
+							<span>{{ __("Columns") }}</span>
 							<svg
 								:class="[
 									'settings-pane__chevron',
@@ -180,7 +182,7 @@
 								v-if="reportColumnsState.length === 0"
 								class="help-block text-muted small"
 							>
-								No report columns available.
+								{{ __("No report columns available.") }}
 							</p>
 							<div v-else class="report-columns">
 								<div
@@ -198,7 +200,7 @@
 										v-model.lazy="reportColumnSelections[col.fieldname].width"
 										type="text"
 										class="form-control input-sm report-columns__width"
-										placeholder="auto"
+										:placeholder="__('auto')"
 										:disabled="!reportColumnSelections[col.fieldname].selected"
 									/>
 								</div>
@@ -213,7 +215,7 @@
 							:class="{ 'is-expanded': isOverridesExpanded }"
 							@click="isOverridesExpanded = !isOverridesExpanded"
 						>
-							<span>Preview Overrides</span>
+							<span>{{ __("Preview Overrides") }}</span>
 							<svg
 								:class="[
 									'settings-pane__chevron',
@@ -235,12 +237,12 @@
 							class="settings-pane__section-content card-body"
 						>
 							<p class="help-block text-muted small">
-								Preview-only changes. The saved format is unchanged.
+								{{ __("Preview-only changes. The saved format is unchanged.") }}
 							</p>
 
 							<!-- Print Format (doctype source) -->
 							<div v-if="!isReportMode" class="form-group">
-								<label class="control-label">Print Format</label>
+								<label class="control-label">{{ __("Print Format") }}</label>
 								<select
 									v-model="selectedFormat"
 									class="form-control"
@@ -257,17 +259,17 @@
 							</div>
 
 							<div class="form-group">
-								<label class="control-label">Language</label>
+								<label class="control-label">{{ __("Language") }}</label>
 								<select
 									v-model="pageSettings.language"
 									class="form-control"
 									disabled
 								>
-									<option value="en">English</option>
-									<option value="ar">Arabic</option>
-									<option value="fr">French</option>
-									<option value="de">German</option>
-									<option value="es">Spanish</option>
+									<option value="en">{{ __("English") }}</option>
+									<option value="ar">{{ __("Arabic") }}</option>
+									<option value="fr">{{ __("French") }}</option>
+									<option value="de">{{ __("German") }}</option>
+									<option value="es">{{ __("Spanish") }}</option>
 								</select>
 								<p class="help-block text-muted small">
 									Default language. More languages coming soon.
@@ -282,7 +284,7 @@
 							:class="{ 'is-expanded': isBrandingExpanded }"
 							@click="isBrandingExpanded = !isBrandingExpanded"
 						>
-							<span>Branding</span>
+							<span>{{ __("Branding") }}</span>
 							<svg
 								:class="[
 									'settings-pane__chevron',
@@ -304,20 +306,20 @@
 							class="settings-pane__section-content card-body"
 						>
 							<div class="form-group">
-								<label class="control-label">Branding</label>
+								<label class="control-label">{{ __("Branding") }}</label>
 								<select v-model="brandingMode" class="form-control">
-									<option value="none">None</option>
-									<option value="letterhead">Letterhead</option>
-									<option value="logo">Logo</option>
+									<option value="none">{{ __("None") }}</option>
+									<option value="letterhead">{{ __("Letterhead") }}</option>
+									<option value="logo">{{ __("Logo") }}</option>
 								</select>
 							</div>
 
 							<div v-if="brandingMode === 'letterhead'" class="form-group">
-								<label class="control-label">Letter Head</label>
+								<label class="control-label">{{ __("Letter Head") }}</label>
 								<select v-model="pageSettings.letterhead" class="form-control">
-									<option value="">None</option>
+									<option value="">{{ __("None") }}</option>
 									<option v-if="loadingLetterheads" disabled>
-										Loading letterheads...
+										{{ __("Loading letterheads...") }}
 									</option>
 									<option
 										v-for="lh in availableLetterheads"
@@ -331,14 +333,14 @@
 
 							<div v-if="brandingMode === 'logo'">
 								<p class="help-block text-muted small">
-									Logo is anchored to top-left using #place().
+									{{ __("Logo is anchored to top-left using #place().") }}
 								</p>
 								<div class="form-group">
-									<label class="control-label">Company</label>
+									<label class="control-label">{{ __("Company") }}</label>
 									<select v-model="logoSettings.company" class="form-control">
-										<option value="">Select company</option>
+										<option value="">{{ __("Select company") }}</option>
 										<option v-if="loadingCompanies" disabled>
-											Loading companies...
+											{{ __("Loading companies...") }}
 										</option>
 										<option
 											v-for="company in availableCompanies"
@@ -357,13 +359,13 @@
 									v-if="logoSettings.company && !logoSettings.image"
 									class="help-block text-muted small"
 								>
-									Selected company has no logo set.
+									{{ __("Selected company has no logo set.") }}
 								</p>
 								<div class="row">
 									<div class="col-xs-12 form-group">
-										<label class="control-label text-muted small"
-											>Size (mm)</label
-										>
+										<label class="control-label text-muted small">{{
+											__("Size (mm)")
+										}}</label>
 										<input
 											v-model.number="logoSettings.size"
 											type="number"
@@ -373,9 +375,9 @@
 								</div>
 								<div class="row">
 									<div class="col-xs-6 form-group">
-										<label class="control-label text-muted small"
-											>dx (mm)</label
-										>
+										<label class="control-label text-muted small">{{
+											__("dx (mm)")
+										}}</label>
 										<input
 											v-model.number="logoSettings.dx"
 											type="number"
@@ -383,9 +385,9 @@
 										/>
 									</div>
 									<div class="col-xs-6 form-group">
-										<label class="control-label text-muted small"
-											>dy (mm)</label
-										>
+										<label class="control-label text-muted small">{{
+											__("dy (mm)")
+										}}</label>
 										<input
 											v-model.number="logoSettings.dy"
 											type="number"
@@ -398,7 +400,7 @@
 							<div v-if="!isReportMode" class="checkbox">
 								<label>
 									<input v-model="removeQr" type="checkbox" />
-									Remove QRCode
+									{{ __("Remove QRCode") }}
 								</label>
 							</div>
 						</div>
@@ -410,7 +412,7 @@
 							:class="{ 'is-expanded': isPageSettingsExpanded }"
 							@click="isPageSettingsExpanded = !isPageSettingsExpanded"
 						>
-							<span>Page Settings</span>
+							<span>{{ __("Page Settings") }}</span>
 							<svg
 								:class="[
 									'settings-pane__chevron',
@@ -432,60 +434,62 @@
 							class="settings-pane__section-content card-body"
 						>
 							<div class="form-group">
-								<label class="control-label">Page Size</label>
+								<label class="control-label">{{ __("Page Size") }}</label>
 								<select v-model="pageSettings.pageSize" class="form-control">
-									<option value="A3">A3 (297 × 420 mm)</option>
-									<option value="A4">A4 (210 × 297 mm)</option>
-									<option value="A5">A5 (148 × 210 mm)</option>
-									<option value="Letter">Letter (8.5 × 11 in)</option>
-									<option value="Legal">Legal (8.5 × 14 in)</option>
+									<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
+									<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
+									<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
+									<option value="Letter">
+										{{ __("Letter (8.5 × 11 in)") }}
+									</option>
+									<option value="Legal">{{ __("Legal (8.5 × 14 in)") }}</option>
 								</select>
 							</div>
 
 							<div class="form-group">
-								<label class="control-label">Orientation</label>
+								<label class="control-label">{{ __("Orientation") }}</label>
 								<select v-model="pageSettings.orientation" class="form-control">
-									<option value="portrait">Portrait</option>
-									<option value="landscape">Landscape</option>
+									<option value="portrait">{{ __("Portrait") }}</option>
+									<option value="landscape">{{ __("Landscape") }}</option>
 								</select>
 							</div>
 
 							<div class="form-group">
-								<label class="control-label">Margins (mm)</label>
+								<label class="control-label">{{ __("Margins (mm)") }}</label>
 								<div class="row">
 									<div class="col-xs-6 form-group">
-										<span class="text-muted small">T</span>
+										<span class="text-muted small">{{ __("T") }}</span>
 										<input
 											v-model.number="pageSettings.margins.top"
 											type="number"
-											placeholder="Top"
+											:placeholder="__('Top')"
 											class="form-control input-sm"
 										/>
 									</div>
 									<div class="col-xs-6 form-group">
-										<span class="text-muted small">B</span>
+										<span class="text-muted small">{{ __("B") }}</span>
 										<input
 											v-model.number="pageSettings.margins.bottom"
 											type="number"
-											placeholder="Bottom"
+											:placeholder="__('Bottom')"
 											class="form-control input-sm"
 										/>
 									</div>
 									<div class="col-xs-6 form-group">
-										<span class="text-muted small">L</span>
+										<span class="text-muted small">{{ __("L") }}</span>
 										<input
 											v-model.number="pageSettings.margins.left"
 											type="number"
-											placeholder="Left"
+											:placeholder="__('Left')"
 											class="form-control input-sm"
 										/>
 									</div>
 									<div class="col-xs-6 form-group">
-										<span class="text-muted small">R</span>
+										<span class="text-muted small">{{ __("R") }}</span>
 										<input
 											v-model.number="pageSettings.margins.right"
 											type="number"
-											placeholder="Right"
+											:placeholder="__('Right')"
 											class="form-control input-sm"
 										/>
 									</div>
@@ -544,6 +548,7 @@ import {
 } from "./reportPrintSettings";
 import { getLogger } from "../logger";
 import { fetchTypstFonts, formatPt, parseSize } from "../utils/typstTypography";
+import { __ } from "../utils/i18n";
 
 interface Props {
 	doctype?: string;

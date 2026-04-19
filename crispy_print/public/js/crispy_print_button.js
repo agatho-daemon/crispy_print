@@ -47,8 +47,8 @@
 					frm.add_custom_button(
 						`<img src="/assets/crispy_print/icons/typst.svg"
                              style="width:45px;height:45px;margin-top:2px;"
-                             alt="Crispy Print"
-                             title="Open Crispy Print Preview"/>`,
+                             alt="${__("Crispy Print")}"
+                             title="${__("Open Crispy Print Preview")}"/>`,
 						() => {
 							frappe.set_route("crispy-print", frm.doctype, frm.docname);
 						}

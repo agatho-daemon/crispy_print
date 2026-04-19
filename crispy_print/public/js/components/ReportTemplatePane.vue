@@ -1,10 +1,13 @@
 <template>
 	<div class="report-template-pane">
 		<div class="report-template-pane__header">
-			<h3 class="report-template-pane__title">Report Template</h3>
+			<h3 class="report-template-pane__title">{{ __("Report Template") }}</h3>
 			<p class="report-template-pane__hint">
-				Basic mode is style-preview only. Real report output is rendered by raw Typst
-				templates (CrispyPP/runtime).
+				{{
+					__(
+						"Basic mode is style-preview only. Real report output is rendered by raw Typst templates (CrispyPP/runtime)."
+					)
+				}}
 			</p>
 		</div>
 
@@ -16,30 +19,30 @@
 					class="btn btn-default btn-xs"
 					@click="store.reportBuilderMode.value = 'advanced'"
 				>
-					Stay in Advanced
+					{{ __("Stay in Advanced") }}
 				</button>
 				<button
 					type="button"
 					class="btn btn-primary btn-xs"
 					@click="store.resetReportBasicTemplate"
 				>
-					Reset to Basic Template
+					{{ __("Reset to Basic Template") }}
 				</button>
 			</div>
 		</div>
 
 		<div class="report-template-pane__body">
 			<div class="report-template-pane__row">
-				<label class="report-template-pane__label">Preset</label>
+				<label class="report-template-pane__label">{{ __("Preset") }}</label>
 				<select
 					v-model="store.reportBuilderConfig.value.preset"
 					class="form-control"
 					:disabled="store.reportBasicReadOnly.value"
 				>
-					<option value="grid">Grid</option>
-					<option value="tree">Tree</option>
-					<option value="summary">Summary</option>
-					<option value="minimal">Minimal</option>
+					<option value="grid">{{ __("Grid") }}</option>
+					<option value="tree">{{ __("Tree") }}</option>
+					<option value="summary">{{ __("Summary") }}</option>
+					<option value="minimal">{{ __("Minimal") }}</option>
 				</select>
 			</div>
 			<label class="report-template-pane__toggle">
@@ -48,7 +51,7 @@
 					type="checkbox"
 					:disabled="store.reportBasicReadOnly.value"
 				/>
-				<span>Show filters block</span>
+				<span>{{ __("Show filters block") }}</span>
 			</label>
 			<label class="report-template-pane__toggle">
 				<input
@@ -56,11 +59,11 @@
 					type="checkbox"
 					:disabled="store.reportBasicReadOnly.value"
 				/>
-				<span>Show total records footer</span>
+				<span>{{ __("Show total records footer") }}</span>
 			</label>
 
 			<div class="report-template-pane__source">
-				<div class="report-template-pane__source-label">Generated Typst</div>
+				<div class="report-template-pane__source-label">{{ __("Generated Typst") }}</div>
 				<textarea
 					:value="store.typstCode.value"
 					class="report-template-pane__source-text"
@@ -73,6 +76,7 @@
 
 <script setup lang="ts">
 import { useStore } from "../composables/useStore";
+import { __ } from "../utils/i18n";
 
 const store = useStore();
 </script>

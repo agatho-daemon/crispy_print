@@ -50,8 +50,8 @@ frappe.provide("crispy_print");
 
 		const btn_label = `<img src="/assets/crispy_print/icons/typst.svg"
 			style="width:45px;height:45px;margin-top:2px;"
-			alt="Crispy Print"
-			title="Open Crispy Print Preview"/>`;
+			alt="${__("Crispy Print")}"
+			title="${__("Open Crispy Print Preview")}"/>`;
 
 		qr.page.btn_typst_print = qr.page.add_inner_button(btn_label, () => {
 			const filters = qr.get_filter_values ? qr.get_filter_values() : {};
@@ -382,7 +382,7 @@ crispy_print.show_format_dialog = function (report_name, formats, report_instanc
 // Build HTML for column selector with 2-column grid layout
 crispy_print.build_column_selector_html = function (columns) {
 	if (!columns || columns.length === 0) {
-		return '<p class="text-muted">No columns available</p>';
+		return `<p class="text-muted">${__("No columns available")}</p>`;
 	}
 
 	let html = `
@@ -476,7 +476,7 @@ crispy_print.build_column_selector_html = function (columns) {
 					class="column-width"
 					id="width_${idx}"
 					value="auto"
-					placeholder="auto"
+					placeholder="${__("auto")}"
 					disabled
 				/>
 			</div>

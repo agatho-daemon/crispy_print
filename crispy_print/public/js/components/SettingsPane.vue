@@ -2,7 +2,7 @@
 	<div class="settings-pane">
 		<div class="section-head settings-pane__header">
 			<div class="section-head-content settings-pane__header-row">
-				<h3 class="section-title settings-pane__title">Typst Settings</h3>
+				<h3 class="section-title settings-pane__title">{{ __("Typst Settings") }}</h3>
 				<div class="settings-pane__spacer"></div>
 				<div>
 					<button
@@ -10,7 +10,7 @@
 						class="btn btn-default btn-xs settings-pane__help-btn"
 						popovertarget="settings-help"
 						popovertargetaction="toggle"
-						title="Toggle help"
+						:title="__('Toggle help')"
 						aria-haspopup="dialog"
 						aria-controls="settings-help"
 					>
@@ -18,7 +18,9 @@
 					</button>
 					<div id="settings-help" popover class="settings-pane__help-popover">
 						<ul class="settings-pane__help-list">
-							<li>Configure page size, margins, and typography for Typst.</li>
+							<li>
+								{{ __("Configure page size, margins, and typography for Typst.") }}
+							</li>
 						</ul>
 					</div>
 				</div>
@@ -33,7 +35,7 @@
 						:class="{ 'is-expanded': isPageSettingsExpanded }"
 						@click="isPageSettingsExpanded = !isPageSettingsExpanded"
 					>
-						<span>Page Settings</span>
+						<span>{{ __("Page Settings") }}</span>
 						<svg
 							:class="[
 								'settings-pane__chevron',
@@ -56,62 +58,72 @@
 						class="settings-pane__section-content card-body"
 					>
 						<div class="settings-pane__field">
-							<label class="settings-pane__label">Size</label>
+							<label class="settings-pane__label">{{ __("Size") }}</label>
 							<select v-model="pageSettings.pageSize" class="form-control">
-								<option value="A3">A3 (297 × 420 mm)</option>
-								<option value="A4">A4 (210 × 297 mm)</option>
-								<option value="A5">A5 (148 × 210 mm)</option>
-								<option value="Letter">Letter (8.5 × 11 in)</option>
-								<option value="Legal">Legal (8.5 × 14 in)</option>
-								<option value="Tabloid">Tabloid (11 × 17 in)</option>
-								<option value="Executive">Executive (7.25 × 10.5 in)</option>
+								<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
+								<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
+								<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
+								<option value="Letter">{{ __("Letter (8.5 × 11 in)") }}</option>
+								<option value="Legal">{{ __("Legal (8.5 × 14 in)") }}</option>
+								<option value="Tabloid">{{ __("Tabloid (11 × 17 in)") }}</option>
+								<option value="Executive">
+									{{ __("Executive (7.25 × 10.5 in)") }}
+								</option>
 							</select>
 						</div>
 
 						<div class="settings-pane__field">
-							<label class="settings-pane__label">Orientation</label>
+							<label class="settings-pane__label">{{ __("Orientation") }}</label>
 							<select v-model="pageSettings.orientation" class="form-control">
-								<option value="portrait">Portrait</option>
-								<option value="landscape">Landscape</option>
+								<option value="portrait">{{ __("Portrait") }}</option>
+								<option value="landscape">{{ __("Landscape") }}</option>
 							</select>
 						</div>
 
 						<div class="settings-pane__field">
-							<label class="settings-pane__label">Margins (mm)</label>
+							<label class="settings-pane__label">{{ __("Margins (mm)") }}</label>
 							<div class="settings-pane__margins">
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">top</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Top")
+									}}</span>
 									<input
 										v-model.number="pageSettings.margins.top"
 										type="number"
-										placeholder="Top"
+										:placeholder="__('Top')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">bottom</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Bottom")
+									}}</span>
 									<input
 										v-model.number="pageSettings.margins.bottom"
 										type="number"
-										placeholder="Bottom"
+										:placeholder="__('Bottom')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">left</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Left")
+									}}</span>
 									<input
 										v-model.number="pageSettings.margins.left"
 										type="number"
-										placeholder="Left"
+										:placeholder="__('Left')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">right</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Right")
+									}}</span>
 									<input
 										v-model.number="pageSettings.margins.right"
 										type="number"
-										placeholder="Right"
+										:placeholder="__('Right')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
@@ -127,7 +139,7 @@
 						:class="{ 'is-expanded': isReportTemplateExpanded }"
 						@click="isReportTemplateExpanded = !isReportTemplateExpanded"
 					>
-						<span>Report Template</span>
+						<span>{{ __("Report Template") }}</span>
 						<svg
 							:class="[
 								'settings-pane__chevron',
@@ -149,21 +161,23 @@
 						class="settings-pane__section-content card-body"
 					>
 						<div class="settings-pane__field">
-							<label class="settings-pane__label">Preset</label>
+							<label class="settings-pane__label">{{ __("Preset") }}</label>
 							<select
 								v-model="reportBuilderConfig.preset"
 								class="form-control"
 								:disabled="reportBasicReadOnly"
 							>
-								<option value="grid">Grid</option>
-								<option value="tree">Tree</option>
-								<option value="summary">Summary</option>
-								<option value="minimal">Minimal</option>
+								<option value="grid">{{ __("Grid") }}</option>
+								<option value="tree">{{ __("Tree") }}</option>
+								<option value="summary">{{ __("Summary") }}</option>
+								<option value="minimal">{{ __("Minimal") }}</option>
 							</select>
 						</div>
 						<div class="settings-pane__grid">
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">Font Family</label>
+								<label class="settings-pane__sublabel">{{
+									__("Font Family")
+								}}</label>
 								<select
 									v-model="reportBuilderConfig.font_family"
 									class="form-control"
@@ -179,7 +193,9 @@
 								</select>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">Font Size (pt)</label>
+								<label class="settings-pane__sublabel">{{
+									__("Font Size (pt)")
+								}}</label>
 								<input
 									v-model.number="reportBuilderConfig.font_size_pt"
 									type="number"
@@ -192,7 +208,9 @@
 						</div>
 						<div class="settings-pane__grid settings-pane__grid--stripe">
 							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">Show Filters</label>
+								<label class="settings-pane__sublabel">{{
+									__("Show Filters")
+								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
 										v-model="reportBuilderConfig.show_filters"
@@ -203,7 +221,9 @@
 								</div>
 							</div>
 							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">Show Summary</label>
+								<label class="settings-pane__sublabel">{{
+									__("Show Summary")
+								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
 										v-model="reportBuilderConfig.show_summary"
@@ -214,7 +234,9 @@
 								</div>
 							</div>
 							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">Show Total Row</label>
+								<label class="settings-pane__sublabel">{{
+									__("Show Total Row")
+								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
 										v-model="reportBuilderConfig.include_total_row"
@@ -234,7 +256,7 @@
 						:class="{ 'is-expanded': isChartExpanded }"
 						@click="isChartExpanded = !isChartExpanded"
 					>
-						<span>Chart Settings</span>
+						<span>{{ __("Chart Settings") }}</span>
 						<svg
 							:class="[
 								'settings-pane__chevron',
@@ -254,7 +276,9 @@
 					<div v-if="isChartExpanded" class="settings-pane__section-content card-body">
 						<div class="settings-pane__grid">
 							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">Enable Chart</label>
+								<label class="settings-pane__sublabel">{{
+									__("Enable Chart")
+								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
 										v-model="reportBuilderConfig.chart_enabled"
@@ -265,7 +289,9 @@
 								</div>
 							</div>
 							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">Card Border</label>
+								<label class="settings-pane__sublabel">{{
+									__("Card Border")
+								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
 										v-model="reportBuilderConfig.chart_card_border"
@@ -279,7 +305,9 @@
 								</div>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">Chart Width (%)</label>
+								<label class="settings-pane__sublabel">{{
+									__("Chart Width (%)")
+								}}</label>
 								<input
 									v-model.number="reportBuilderConfig.chart_width_percent"
 									type="number"
@@ -293,7 +321,9 @@
 								/>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">Max Height (pt)</label>
+								<label class="settings-pane__sublabel">{{
+									__("Max Height (pt)")
+								}}</label>
 								<input
 									v-model.number="reportBuilderConfig.chart_max_height_pt"
 									type="number"
@@ -307,7 +337,9 @@
 								/>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">Spacing Top (pt)</label>
+								<label class="settings-pane__sublabel">{{
+									__("Spacing Top (pt)")
+								}}</label>
 								<input
 									v-model.number="reportBuilderConfig.chart_spacing_top_pt"
 									type="number"
@@ -321,7 +353,9 @@
 								/>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">Spacing Bottom (pt)</label>
+								<label class="settings-pane__sublabel">{{
+									__("Spacing Bottom (pt)")
+								}}</label>
 								<input
 									v-model.number="reportBuilderConfig.chart_spacing_bottom_pt"
 									type="number"
@@ -344,7 +378,7 @@
 						:class="{ 'is-expanded': isTypographyExpanded }"
 						@click="isTypographyExpanded = !isTypographyExpanded"
 					>
-						<span>Typography</span>
+						<span>{{ __("Typography") }}</span>
 						<svg
 							:class="[
 								'settings-pane__chevron',
@@ -368,10 +402,12 @@
 					>
 						<!-- Section Labels -->
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Section Labels</label>
+							<label class="settings-pane__label">{{ __("Section Labels") }}</label>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Family</label>
+									<label class="settings-pane__sublabel">{{
+										__("Family")
+									}}</label>
 									<select
 										v-model="typography.sectionLabel.fontFamily"
 										class="form-control"
@@ -386,7 +422,9 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Size (pt)</label>
+									<label class="settings-pane__sublabel">{{
+										__("Size (pt)")
+									}}</label>
 									<input
 										v-model.number="sectionLabelFontSizePt"
 										type="number"
@@ -396,45 +434,53 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Style</label>
+									<label class="settings-pane__sublabel">{{
+										__("Style")
+									}}</label>
 									<select
 										v-model="typography.sectionLabel.fontStyle"
 										class="form-control"
 									>
-										<option value="normal">Normal</option>
-										<option value="italic">Italic</option>
-										<option value="oblique">Oblique</option>
+										<option value="normal">{{ __("Normal") }}</option>
+										<option value="italic">{{ __("Italic") }}</option>
+										<option value="oblique">{{ __("Oblique") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Weight</label>
+									<label class="settings-pane__sublabel">{{
+										__("Weight")
+									}}</label>
 									<select
 										v-model="typography.sectionLabel.fontWeight"
 										class="form-control"
 									>
-										<option value="thin">Thin</option>
-										<option value="extralight">Extralight</option>
-										<option value="light">Light</option>
-										<option value="regular">Regular</option>
-										<option value="medium">Medium</option>
-										<option value="semibold">Semibold</option>
-										<option value="bold">Bold</option>
-										<option value="extrabold">Extrabold</option>
-										<option value="black">Black</option>
+										<option value="thin">{{ __("Thin") }}</option>
+										<option value="extralight">{{ __("Extralight") }}</option>
+										<option value="light">{{ __("Light") }}</option>
+										<option value="regular">{{ __("Regular") }}</option>
+										<option value="medium">{{ __("Medium") }}</option>
+										<option value="semibold">{{ __("Semibold") }}</option>
+										<option value="bold">{{ __("Bold") }}</option>
+										<option value="extrabold">{{ __("Extrabold") }}</option>
+										<option value="black">{{ __("Black") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Color</label>
+									<label class="settings-pane__sublabel">{{
+										__("Color")
+									}}</label>
 									<ColorInput v-model="typography.sectionLabel.color" />
 								</div>
 							</div>
 						</div>
 						<!-- Field Labels -->
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Field Labels</label>
+							<label class="settings-pane__label">{{ __("Field Labels") }}</label>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Family</label>
+									<label class="settings-pane__sublabel">{{
+										__("Family")
+									}}</label>
 									<select
 										v-model="typography.fieldLabel.fontFamily"
 										class="form-control"
@@ -449,7 +495,9 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Size (pt)</label>
+									<label class="settings-pane__sublabel">{{
+										__("Size (pt)")
+									}}</label>
 									<input
 										v-model.number="fieldLabelFontSizePt"
 										type="number"
@@ -459,45 +507,53 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Style</label>
+									<label class="settings-pane__sublabel">{{
+										__("Style")
+									}}</label>
 									<select
 										v-model="typography.fieldLabel.fontStyle"
 										class="form-control"
 									>
-										<option value="normal">Normal</option>
-										<option value="italic">Italic</option>
-										<option value="oblique">Oblique</option>
+										<option value="normal">{{ __("Normal") }}</option>
+										<option value="italic">{{ __("Italic") }}</option>
+										<option value="oblique">{{ __("Oblique") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Weight</label>
+									<label class="settings-pane__sublabel">{{
+										__("Weight")
+									}}</label>
 									<select
 										v-model="typography.fieldLabel.fontWeight"
 										class="form-control"
 									>
-										<option value="thin">Thin</option>
-										<option value="extralight">Extralight</option>
-										<option value="light">Light</option>
-										<option value="regular">Regular</option>
-										<option value="medium">Medium</option>
-										<option value="semibold">Semibold</option>
-										<option value="bold">Bold</option>
-										<option value="extrabold">Extrabold</option>
-										<option value="black">Black</option>
+										<option value="thin">{{ __("Thin") }}</option>
+										<option value="extralight">{{ __("Extralight") }}</option>
+										<option value="light">{{ __("Light") }}</option>
+										<option value="regular">{{ __("Regular") }}</option>
+										<option value="medium">{{ __("Medium") }}</option>
+										<option value="semibold">{{ __("Semibold") }}</option>
+										<option value="bold">{{ __("Bold") }}</option>
+										<option value="extrabold">{{ __("Extrabold") }}</option>
+										<option value="black">{{ __("Black") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Color</label>
+									<label class="settings-pane__sublabel">{{
+										__("Color")
+									}}</label>
 									<ColorInput v-model="typography.fieldLabel.color" />
 								</div>
 							</div>
 						</div>
 						<!-- Field Values -->
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Field Values</label>
+							<label class="settings-pane__label">{{ __("Field Values") }}</label>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Family</label>
+									<label class="settings-pane__sublabel">{{
+										__("Family")
+									}}</label>
 									<select
 										v-model="typography.fieldValue.fontFamily"
 										class="form-control"
@@ -512,7 +568,9 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Size (pt)</label>
+									<label class="settings-pane__sublabel">{{
+										__("Size (pt)")
+									}}</label>
 									<input
 										v-model.number="fieldValueFontSizePt"
 										type="number"
@@ -522,35 +580,41 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Style</label>
+									<label class="settings-pane__sublabel">{{
+										__("Style")
+									}}</label>
 									<select
 										v-model="typography.fieldValue.fontStyle"
 										class="form-control"
 									>
-										<option value="normal">Normal</option>
-										<option value="italic">Italic</option>
-										<option value="oblique">Oblique</option>
+										<option value="normal">{{ __("Normal") }}</option>
+										<option value="italic">{{ __("Italic") }}</option>
+										<option value="oblique">{{ __("Oblique") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Weight</label>
+									<label class="settings-pane__sublabel">{{
+										__("Weight")
+									}}</label>
 									<select
 										v-model="typography.fieldValue.fontWeight"
 										class="form-control"
 									>
-										<option value="thin">Thin</option>
-										<option value="extralight">Extralight</option>
-										<option value="light">Light</option>
-										<option value="regular">Regular</option>
-										<option value="medium">Medium</option>
-										<option value="semibold">Semibold</option>
-										<option value="bold">Bold</option>
-										<option value="extrabold">Extrabold</option>
-										<option value="black">Black</option>
+										<option value="thin">{{ __("Thin") }}</option>
+										<option value="extralight">{{ __("Extralight") }}</option>
+										<option value="light">{{ __("Light") }}</option>
+										<option value="regular">{{ __("Regular") }}</option>
+										<option value="medium">{{ __("Medium") }}</option>
+										<option value="semibold">{{ __("Semibold") }}</option>
+										<option value="bold">{{ __("Bold") }}</option>
+										<option value="extrabold">{{ __("Extrabold") }}</option>
+										<option value="black">{{ __("Black") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Color</label>
+									<label class="settings-pane__sublabel">{{
+										__("Color")
+									}}</label>
 									<ColorInput v-model="typography.fieldValue.color" />
 								</div>
 							</div>
@@ -564,7 +628,7 @@
 						:class="{ 'is-expanded': isTableExpanded }"
 						@click="isTableExpanded = !isTableExpanded"
 					>
-						<span>Table Settings</span>
+						<span>{{ __("Table Settings") }}</span>
 						<svg
 							:class="[
 								'settings-pane__chevron',
@@ -584,41 +648,49 @@
 
 					<div v-if="isTableExpanded" class="settings-pane__section-content card-body">
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Spacing (pt)</label>
+							<label class="settings-pane__label">{{ __("Spacing (pt)") }}</label>
 							<div class="settings-pane__margins">
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">top</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Top")
+									}}</span>
 									<input
 										v-model.number="tableSettings.inset.top"
 										type="number"
-										placeholder="Top"
+										:placeholder="__('Top')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">bottom</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Bottom")
+									}}</span>
 									<input
 										v-model.number="tableSettings.inset.bottom"
 										type="number"
-										placeholder="Bottom"
+										:placeholder="__('Bottom')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">left</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Left")
+									}}</span>
 									<input
 										v-model.number="tableSettings.inset.left"
 										type="number"
-										placeholder="Left"
+										:placeholder="__('Left')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
 								<div class="settings-pane__margin-input">
-									<span class="settings-pane__margin-prefix">right</span>
+									<span class="settings-pane__margin-prefix">{{
+										__("Right")
+									}}</span>
 									<input
 										v-model.number="tableSettings.inset.right"
 										type="number"
-										placeholder="Right"
+										:placeholder="__('Right')"
 										class="form-control settings-pane__input"
 									/>
 								</div>
@@ -626,10 +698,12 @@
 						</div>
 
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Borders</label>
+							<label class="settings-pane__label">{{ __("Borders") }}</label>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Stroke (pt)</label>
+									<label class="settings-pane__sublabel">{{
+										__("Stroke (pt)")
+									}}</label>
 									<input
 										v-model.number="tableSettings.stroke.width"
 										type="number"
@@ -639,25 +713,29 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Color</label>
+									<label class="settings-pane__sublabel">{{
+										__("Color")
+									}}</label>
 									<ColorInput v-model="tableSettings.stroke.color" />
 								</div>
 							</div>
 						</div>
 
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Colors</label>
+							<label class="settings-pane__label">{{ __("Colors") }}</label>
 							<div class="settings-pane__grid settings-pane__grid--colors">
 								<div class="settings-pane__field settings-pane__field--span">
-									<label class="settings-pane__sublabel"
-										>Header Background</label
-									>
+									<label class="settings-pane__sublabel">{{
+										__("Header Background")
+									}}</label>
 									<ColorInput v-model="tableSettings.header.backgroundColor" />
 								</div>
 							</div>
 							<div class="settings-pane__grid settings-pane__grid--stripe">
 								<div class="settings-pane__field settings-pane__field--toggle">
-									<label class="settings-pane__sublabel">Striping</label>
+									<label class="settings-pane__sublabel">{{
+										__("Striping")
+									}}</label>
 									<div class="settings-pane__checkbox-wrap">
 										<input
 											v-model="tableSettings.stripe.enabled"
@@ -667,7 +745,9 @@
 									</div>
 								</div>
 								<div class="settings-pane__field settings-pane__field--color">
-									<label class="settings-pane__sublabel">Stripe Color</label>
+									<label class="settings-pane__sublabel">{{
+										__("Stripe Color")
+									}}</label>
 									<ColorInput
 										v-model="tableSettings.stripe.color"
 										:disabled="!tableSettings.stripe.enabled"
@@ -677,10 +757,14 @@
 						</div>
 
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Header Typography</label>
+							<label class="settings-pane__label">{{
+								__("Header Typography")
+							}}</label>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Header Family</label>
+									<label class="settings-pane__sublabel">{{
+										__("Header Family")
+									}}</label>
 									<select
 										v-model="tableSettings.typography.header.fontFamily"
 										class="form-control"
@@ -695,7 +779,9 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Header Size (pt)</label>
+									<label class="settings-pane__sublabel">{{
+										__("Header Size (pt)")
+									}}</label>
 									<input
 										v-model.number="tableHeaderFontSizePt"
 										type="number"
@@ -705,45 +791,53 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Header Style</label>
+									<label class="settings-pane__sublabel">{{
+										__("Header Style")
+									}}</label>
 									<select
 										v-model="tableSettings.typography.header.fontStyle"
 										class="form-control"
 									>
-										<option value="normal">Normal</option>
-										<option value="italic">Italic</option>
-										<option value="oblique">Oblique</option>
+										<option value="normal">{{ __("Normal") }}</option>
+										<option value="italic">{{ __("Italic") }}</option>
+										<option value="oblique">{{ __("Oblique") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Header Weight</label>
+									<label class="settings-pane__sublabel">{{
+										__("Header Weight")
+									}}</label>
 									<select
 										v-model="tableSettings.typography.header.fontWeight"
 										class="form-control"
 									>
-										<option value="thin">Thin</option>
-										<option value="extralight">Extralight</option>
-										<option value="light">Light</option>
-										<option value="regular">Regular</option>
-										<option value="medium">Medium</option>
-										<option value="semibold">Semibold</option>
-										<option value="bold">Bold</option>
-										<option value="extrabold">Extrabold</option>
-										<option value="black">Black</option>
+										<option value="thin">{{ __("Thin") }}</option>
+										<option value="extralight">{{ __("Extralight") }}</option>
+										<option value="light">{{ __("Light") }}</option>
+										<option value="regular">{{ __("Regular") }}</option>
+										<option value="medium">{{ __("Medium") }}</option>
+										<option value="semibold">{{ __("Semibold") }}</option>
+										<option value="bold">{{ __("Bold") }}</option>
+										<option value="extrabold">{{ __("Extrabold") }}</option>
+										<option value="black">{{ __("Black") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Header Color</label>
+									<label class="settings-pane__sublabel">{{
+										__("Header Color")
+									}}</label>
 									<ColorInput v-model="tableSettings.typography.header.color" />
 								</div>
 							</div>
 						</div>
 
 						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">Body Typography</label>
+							<label class="settings-pane__label">{{ __("Body Typography") }}</label>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Body Family</label>
+									<label class="settings-pane__sublabel">{{
+										__("Body Family")
+									}}</label>
 									<select
 										v-model="tableSettings.typography.body.fontFamily"
 										class="form-control"
@@ -758,7 +852,9 @@
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Body Size (pt)</label>
+									<label class="settings-pane__sublabel">{{
+										__("Body Size (pt)")
+									}}</label>
 									<input
 										v-model.number="tableBodyFontSizePt"
 										type="number"
@@ -768,35 +864,41 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Body Style</label>
+									<label class="settings-pane__sublabel">{{
+										__("Body Style")
+									}}</label>
 									<select
 										v-model="tableSettings.typography.body.fontStyle"
 										class="form-control"
 									>
-										<option value="normal">Normal</option>
-										<option value="italic">Italic</option>
-										<option value="oblique">Oblique</option>
+										<option value="normal">{{ __("Normal") }}</option>
+										<option value="italic">{{ __("Italic") }}</option>
+										<option value="oblique">{{ __("Oblique") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Body Weight</label>
+									<label class="settings-pane__sublabel">{{
+										__("Body Weight")
+									}}</label>
 									<select
 										v-model="tableSettings.typography.body.fontWeight"
 										class="form-control"
 									>
-										<option value="thin">Thin</option>
-										<option value="extralight">Extralight</option>
-										<option value="light">Light</option>
-										<option value="regular">Regular</option>
-										<option value="medium">Medium</option>
-										<option value="semibold">Semibold</option>
-										<option value="bold">Bold</option>
-										<option value="extrabold">Extrabold</option>
-										<option value="black">Black</option>
+										<option value="thin">{{ __("Thin") }}</option>
+										<option value="extralight">{{ __("Extralight") }}</option>
+										<option value="light">{{ __("Light") }}</option>
+										<option value="regular">{{ __("Regular") }}</option>
+										<option value="medium">{{ __("Medium") }}</option>
+										<option value="semibold">{{ __("Semibold") }}</option>
+										<option value="bold">{{ __("Bold") }}</option>
+										<option value="extrabold">{{ __("Extrabold") }}</option>
+										<option value="black">{{ __("Black") }}</option>
 									</select>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Body Color</label>
+									<label class="settings-pane__sublabel">{{
+										__("Body Color")
+									}}</label>
 									<ColorInput v-model="tableSettings.typography.body.color" />
 								</div>
 							</div>
@@ -811,7 +913,7 @@
 						:class="{ 'is-expanded': isBrandingExpanded }"
 						@click="isBrandingExpanded = !isBrandingExpanded"
 					>
-						<span>Branding</span>
+						<span>{{ __("Branding") }}</span>
 						<svg
 							:class="[
 								'settings-pane__chevron',
@@ -834,20 +936,20 @@
 						class="settings-pane__section-content card-body"
 					>
 						<div class="settings-pane__field">
-							<label class="settings-pane__label">Type</label>
+							<label class="settings-pane__label">{{ __("Type") }}</label>
 							<select v-model="brandingMode" class="form-control">
-								<option value="none">None</option>
-								<option value="letterhead">Letterhead</option>
-								<option value="logo">Logo</option>
+								<option value="none">{{ __("None") }}</option>
+								<option value="letterhead">{{ __("Letterhead") }}</option>
+								<option value="logo">{{ __("Logo") }}</option>
 							</select>
 						</div>
 
 						<div v-if="brandingMode === 'letterhead'" class="settings-pane__field">
-							<label class="settings-pane__label">Letterhead</label>
+							<label class="settings-pane__label">{{ __("Letterhead") }}</label>
 							<select v-model="pageSettings.letterhead" class="form-control">
-								<option value="">None</option>
+								<option value="">{{ __("None") }}</option>
 								<option v-if="loadingLetterheads" disabled>
-									Loading letterheads...
+									{{ __("Loading letterheads...") }}
 								</option>
 								<option
 									v-for="letterhead in availableLetterheads"
@@ -861,14 +963,14 @@
 
 						<div v-if="brandingMode === 'logo'">
 							<p class="settings-pane__hint">
-								Logo is anchored to top-left using #place().
+								{{ __("Logo is anchored to top-left using #place().") }}
 							</p>
 							<div class="settings-pane__field">
-								<label class="settings-pane__label">Company</label>
+								<label class="settings-pane__label">{{ __("Company") }}</label>
 								<select v-model="logoSettings.company" class="form-control">
-									<option value="">Select company</option>
+									<option value="">{{ __("Select company") }}</option>
 									<option v-if="loadingCompanies" disabled>
-										Loading companies...
+										{{ __("Loading companies...") }}
 									</option>
 									<option
 										v-for="company in availableCompanies"
@@ -887,11 +989,13 @@
 								v-if="logoSettings.company && !logoSettings.image"
 								class="settings-pane__hint"
 							>
-								Selected company has no logo set.
+								{{ __("Selected company has no logo set.") }}
 							</p>
 							<div class="settings-pane__grid">
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">Size (mm)</label>
+									<label class="settings-pane__sublabel">{{
+										__("Size (mm)")
+									}}</label>
 									<input
 										v-model.number="logoSettings.size"
 										type="number"
@@ -899,7 +1003,9 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">dx (mm)</label>
+									<label class="settings-pane__sublabel">{{
+										__("dx (mm)")
+									}}</label>
 									<input
 										v-model.number="logoSettings.dx"
 										type="number"
@@ -907,7 +1013,9 @@
 									/>
 								</div>
 								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">dy (mm)</label>
+									<label class="settings-pane__sublabel">{{
+										__("dy (mm)")
+									}}</label>
 									<input
 										v-model.number="logoSettings.dy"
 										type="number"
@@ -933,7 +1041,7 @@
 					<span class="disp-area" style="display: none">
 						<input type="checkbox" disabled class="disabled-deselected" />
 					</span>
-					<span class="label-area settings-pane__label">Enable QR Code</span>
+					<span class="label-area settings-pane__label">{{ __("Enable QR Code") }}</span>
 					<span class="ml-1 help"></span>
 				</label>
 
@@ -945,7 +1053,7 @@
 							:class="{ 'is-expanded': isQrExpanded }"
 							@click="isQrExpanded = !isQrExpanded"
 						>
-							<span>QR-Code</span>
+							<span>{{ __("QR-Code") }}</span>
 							<svg
 								class="settings-pane__chevron"
 								:class="{ 'settings-pane__chevron--expanded': isQrExpanded }"
@@ -959,10 +1067,12 @@
 						</button>
 						<div v-if="isQrExpanded" class="settings-pane__section-content card-body">
 							<p class="settings-pane__hint">
-								QR Code is anchored to bottom-left using #place().
+								{{ __("QR Code is anchored to bottom-left using #place().") }}
 							</p>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">Size (mm)</label>
+								<label class="settings-pane__sublabel">{{
+									__("Size (mm)")
+								}}</label>
 								<input
 									v-model.number="qrSettings.size"
 									type="number"
@@ -970,7 +1080,7 @@
 								/>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">dx (mm)</label>
+								<label class="settings-pane__sublabel">{{ __("dx (mm)") }}</label>
 								<input
 									v-model.number="qrSettings.dx"
 									type="number"
@@ -978,7 +1088,7 @@
 								/>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">dy (mm)</label>
+								<label class="settings-pane__sublabel">{{ __("dy (mm)") }}</label>
 								<input
 									v-model.number="qrSettings.dy"
 									type="number"
@@ -986,14 +1096,16 @@
 								/>
 							</div>
 							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">QR fields</label>
+								<label class="settings-pane__sublabel">{{
+									__("QR fields")
+								}}</label>
 								<div class="settings-pane__qr-row">
 									<button
 										type="button"
 										class="btn btn-default btn-xs settings-pane__qr-btn"
 										@click="showQrDialog = true"
 									>
-										Select fields
+										{{ __("Select fields") }}
 									</button>
 									<span class="settings-pane__qr-summary">{{
 										qrFieldsSummary
@@ -1032,6 +1144,7 @@ import { useStore } from "../composables/useStore";
 import QrFieldsDialog from "./QrFieldsDialog.vue";
 import { getLogger } from "../logger";
 import { getDefaultReportBuilderConfig } from "../utils/reportBuilder";
+import { __ } from "../utils/i18n";
 
 interface Props {
 	pageSettings: PageSettings;
@@ -1091,9 +1204,9 @@ const qrAvailableFields = computed(() => store.fields.value || []);
 
 const qrFieldsSummary = computed(() => {
 	const count = qrSettings.value.fields?.length || 0;
-	if (!count) return "No fields selected";
-	if (count === 1) return "1 field selected";
-	return `${count} fields selected`;
+	if (!count) return __("No fields selected");
+	if (count === 1) return __("1 field selected");
+	return __("{0} fields selected", [count]);
 });
 
 const updateQrFields = (fields: string[]) => {

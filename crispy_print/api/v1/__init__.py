@@ -1,6 +1,7 @@
 from typing import Any
 
 import frappe
+from frappe import _
 
 from .compile import compile_typst as _compile_typst
 from .compile import get_typst_local_fonts as _get_typst_local_fonts
@@ -44,9 +45,11 @@ def compile_typst(
 	}
 	deprecated = [key for key in ("letterhead_image", "logo_image") if key in filtered_kwargs]
 	if deprecated:
-		frappe.throw("Deprecated params are not supported. Use asset_files only.")
+		frappe.throw(_("Deprecated params are not supported. Use asset_files only."))
 	if filtered_kwargs:
-		frappe.throw(f"Unsupported compile_typst params: {', '.join(sorted(filtered_kwargs.keys()))}")
+		frappe.throw(
+			_("Unsupported compile_typst params: {0}").format(", ".join(sorted(filtered_kwargs.keys())))
+		)
 	return _compile_typst(
 		typst_source,
 		output_format=output_format,

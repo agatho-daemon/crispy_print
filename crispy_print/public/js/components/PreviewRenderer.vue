@@ -6,14 +6,14 @@
 		<div class="preview-pane__body">
 			<div id="typst-svg-container">
 				<div id="typst-preview-placeholder" class="preview-placeholder">
-					Preview output will render here.
+					{{ __("Preview output will render here.") }}
 				</div>
 			</div>
 			<div v-if="errorPanel" class="preview-error">
 				<div class="preview-error__header">
-					<span class="preview-error__title">Typst Error</span>
+					<span class="preview-error__title">{{ __("Typst Error") }}</span>
 					<button class="preview-error__copy" type="button" @click="copyError">
-						Copy
+						{{ __("Copy") }}
 					</button>
 				</div>
 				<pre class="preview-error__body">{{ errorPanel }}</pre>
@@ -27,6 +27,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { setupWorker } from "../typst/setupWorker";
 import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
 import { getLogger } from "../logger";
+import { __ } from "../utils/i18n";
 
 interface Props {
 	formatName: string | null;

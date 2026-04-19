@@ -2,7 +2,7 @@
 	<div class="typst-code-pane">
 		<div class="typst-code-pane__header">
 			<div class="typst-code-pane__header-row">
-				<h3 class="section-title typst-code-pane__title">Typst Code</h3>
+				<h3 class="section-title typst-code-pane__title">{{ __("Typst Code") }}</h3>
 				<div class="typst-code-pane__spacer"></div>
 				<div>
 					<button
@@ -10,7 +10,7 @@
 						class="typst-code-pane__help-btn"
 						popovertarget="typst-code-help"
 						popovertargetaction="toggle"
-						title="Toggle help"
+						:title="__('Toggle help')"
 						aria-haspopup="dialog"
 						aria-controls="typst-code-help"
 					>
@@ -24,13 +24,21 @@
 					>
 						<ul class="typst-code-pane__help-list">
 							<li>
-								Raw Typst mode; drag fields into the editor to insert
-								`#doc.fieldname`.
+								{{
+									__(
+										"Raw Typst mode; drag fields into the editor to insert `#doc.fieldname`."
+									)
+								}}
 							</li>
-							<li>Use Refresh in the preview pane to compile changes.</li>
 							<li>
-								Optional: add `// fields: customer, items.item_code` to narrow
-								payload fields.
+								{{ __("Use Refresh in the preview pane to compile changes.") }}
+							</li>
+							<li>
+								{{
+									__(
+										"Optional: add `// fields: customer, items.item_code` to narrow payload fields."
+									)
+								}}
 							</li>
 						</ul>
 					</div>
@@ -46,7 +54,9 @@
 					{ 'typst-code-pane__editor--drag': isDragOver },
 				]"
 				spellcheck="false"
-				placeholder="Write Typst code here... (drag fields in to insert #doc.fieldname)"
+				:placeholder="
+					__('Write Typst code here... (drag fields in to insert #doc.fieldname)')
+				"
 				@dragover.prevent="onDragOver"
 				@dragleave="onDragLeave"
 				@drop.prevent="onDrop"
@@ -58,6 +68,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useStore } from "../composables/useStore";
+import { __ } from "../utils/i18n";
 
 const store = useStore();
 const editorRef = ref<HTMLTextAreaElement | null>(null);

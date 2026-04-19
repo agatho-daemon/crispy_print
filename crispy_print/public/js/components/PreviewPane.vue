@@ -18,7 +18,7 @@
 		<template #menu>
 			<div class="section-head preview-pane__header">
 				<div class="section-head-content preview-pane__header-row">
-					<h3 class="section-title preview-pane__title">Typst Preview</h3>
+					<h3 class="section-title preview-pane__title">{{ __("Typst Preview") }}</h3>
 					<div class="preview-pane__spacer"></div>
 					<div class="preview-pane__help">
 						<button
@@ -26,7 +26,7 @@
 							class="btn btn-default btn-xs preview-pane__help-btn"
 							popovertarget="preview-help"
 							popovertargetaction="toggle"
-							title="Toggle help"
+							:title="__('Toggle help')"
 							aria-haspopup="dialog"
 							aria-controls="preview-help"
 						>
@@ -40,11 +40,11 @@
 						>
 							<ul class="preview-pane__help-list">
 								<li v-if="isReportMode">
-									Style preview uses deterministic sample data.
+									{{ __("Style preview uses deterministic sample data.") }}
 								</li>
-								<li v-else>Pick a document to preview.</li>
-								<li>Refresh regenerates the preview.</li>
-								<li>View code shows the generated Typst source.</li>
+								<li v-else>{{ __("Pick a document to preview.") }}</li>
+								<li>{{ __("Refresh regenerates the preview.") }}</li>
+								<li>{{ __("View code shows the generated Typst source.") }}</li>
 							</ul>
 						</div>
 					</div>
@@ -57,7 +57,7 @@
 					<div v-if="isReportMode" class="preview-search">
 						<div class="preview-search__input-wrap">
 							<span class="preview-search__note">
-								Style preview with placeholder data
+								{{ __("Style preview with placeholder data") }}
 							</span>
 						</div>
 					</div>
@@ -67,7 +67,7 @@
 								<input
 									id="typst-sample-doc-input"
 									type="text"
-									placeholder="Sample Document..."
+									:placeholder="__('Sample Document...')"
 									autocomplete="off"
 									class="form-control preview-search__input"
 								/>
@@ -75,7 +75,7 @@
 						</div>
 					</div>
 
-					<span id="typst-status" class="preview-status">idle</span>
+					<span id="typst-status" class="preview-status">{{ __("idle") }}</span>
 
 					<div class="preview-pane__spacer"></div>
 
@@ -84,18 +84,18 @@
 							id="typst-refresh"
 							class="btn btn-default btn-sm preview-btn"
 							type="button"
-							title="Refresh preview"
+							:title="__('Refresh preview')"
 							@click="onRefreshClick"
 						>
-							Refresh
+							{{ __("Refresh") }}
 						</button>
 						<button
 							id="typst-view-code"
 							class="btn btn-default btn-sm preview-btn"
 							type="button"
-							title="View Typst code"
+							:title="__('View Typst code')"
 						>
-							View code
+							{{ __("View code") }}
 						</button>
 					</div>
 				</div>
@@ -109,6 +109,7 @@ import PreviewRenderer from "./PreviewRenderer.vue";
 import { useStore } from "../composables/useStore";
 import { computed, watch } from "vue";
 import { getLogger } from "../logger";
+import { __ } from "../utils/i18n";
 
 const store = useStore();
 const logger = getLogger({ component: "PreviewPane" });
@@ -131,7 +132,7 @@ async function compileSelectedReport(reportName: string) {
 	try {
 		// Show compiling status
 		const statusEl = document.getElementById("typst-status");
-		if (statusEl) statusEl.textContent = "Compiling...";
+		if (statusEl) statusEl.textContent = __("Compiling...");
 
 		// Trigger preview compilation via store
 		const result = await store.compileReportPreview(reportName, []);
@@ -150,7 +151,7 @@ async function compileSelectedReport(reportName: string) {
 				})
 			);
 
-			if (statusEl) statusEl.textContent = `${result.page_count} page(s)`;
+			if (statusEl) statusEl.textContent = __("{0} page(s)", [result.page_count]);
 		}
 	} catch (error) {
 		if (requestSeq !== reportCompileRequestSeq) {
@@ -158,8 +159,8 @@ async function compileSelectedReport(reportName: string) {
 		}
 		logger.error("Preview compilation failed", error);
 		const statusEl = document.getElementById("typst-status");
-		if (statusEl) statusEl.textContent = "Error";
-		frappe.show_alert({ message: "Preview compilation failed", indicator: "red" });
+		if (statusEl) statusEl.textContent = __("Error");
+		frappe.show_alert({ message: __("Preview compilation failed"), indicator: "red" });
 	}
 }
 

@@ -350,7 +350,7 @@ export function setupWorker(
 		lastTypstCode = ""
 
 		if (statusEl) {
-			statusEl.textContent = "fetching document…"
+			statusEl.textContent = __("fetching document…")
 			statusEl.style.color = "#3498db"
 		}
 		dispatchStatus("fetching", docname)
@@ -359,7 +359,7 @@ export function setupWorker(
 			if (!doc) {
 				logger.warn("Failed to fetch document", { doctype, docname })
 				if (statusEl) {
-					statusEl.textContent = "document not found"
+					statusEl.textContent = __("document not found")
 					statusEl.style.color = "#e74c3c"
 				}
 				dispatchStatus("error", "document not found")
@@ -489,7 +489,7 @@ export function setupWorker(
 		}
 
 		if (statusEl) {
-			statusEl.textContent = "generating pdf…"
+			statusEl.textContent = __("generating pdf…")
 			statusEl.style.color = "#3498db"
 		}
 
@@ -635,7 +635,7 @@ export function setupWorker(
 					return
 				}
 
-				statusEl && (statusEl.textContent = "fetching document...")
+				statusEl && (statusEl.textContent = __("fetching document..."))
 				if (statusEl) statusEl.style.color = "#3498db"
 
 				setCurrentDoc(currentDoctype, selectedDoc, { force: true })
@@ -722,7 +722,7 @@ export function setupWorker(
 					return
 				}
 
-				statusEl && (statusEl.textContent = "fetching document...")
+				statusEl && (statusEl.textContent = __("fetching document..."))
 				if (statusEl) statusEl.style.color = "#3498db"
 
 				setCurrentDoc(currentDoctype, selectedDoc, { force: true })
@@ -1015,7 +1015,7 @@ export function setupWorker(
 		if (!sampleDocData) {
 			logger.warn("No document data; skipping compile")
 			if (statusEl) {
-				statusEl.textContent = "select a document"
+				statusEl.textContent = __("select a document")
 				statusEl.style.color = "#e67e22"
 			}
 			// Don't dispatch error - just waiting for user to select a document
@@ -1029,7 +1029,7 @@ export function setupWorker(
 		if (!layout && !rawTypst) {
 			logger.error("No layout found from adapter")
 			if (statusEl) {
-				statusEl.textContent = "waiting for layout..."
+				statusEl.textContent = __("waiting for layout...")
 				statusEl.style.color = "#e67e22"
 			}
 			if (missingLayoutRetries < 5) {
@@ -1042,7 +1042,7 @@ export function setupWorker(
 				logger.error("Max retries (5) reached. Disabling compilation.")
 				compilationDisabled = true
 				if (statusEl) {
-					statusEl.textContent = "no layout data"
+					statusEl.textContent = __("no layout data")
 					statusEl.style.color = "#e74c3c"
 				}
 			}
@@ -1142,7 +1142,7 @@ export function setupWorker(
 			logger.error("Translation error", e)
 			const formattedError = parseTypstError(e)
 			if (statusEl) {
-				statusEl.textContent = "translation error"
+				statusEl.textContent = __("translation error")
 				statusEl.style.color = "#e74c3c"
 			}
 			dispatchStatus("error", formattedError)
@@ -1152,7 +1152,7 @@ export function setupWorker(
 
 		if (typst === lastTypstCode && !qrPayloadChanged) {
 				if (statusEl) {
-					statusEl.textContent = "up to date"
+					statusEl.textContent = __("up to date")
 					statusEl.style.color = "#95a5a6"
 				}
 			return
@@ -1160,7 +1160,7 @@ export function setupWorker(
 		lastTypstCode = typst
 
 		if (statusEl) {
-			statusEl.textContent = "compiling…"
+			statusEl.textContent = __("compiling…")
 			statusEl.style.color = "#f39c12"
 		}
 		dispatchStatus("compiling")
@@ -1220,7 +1220,7 @@ export function setupWorker(
 				logger.error("Compilation failed", error)
 				const formattedError = parseTypstError(error)
 				if (statusEl) {
-					statusEl.textContent = isDownload || isViewPdf ? "pdf error" : "error"
+					statusEl.textContent = isDownload || isViewPdf ? __("pdf error") : __("error")
 					statusEl.style.color = "#e74c3c"
 				}
 				dispatchStatus("error", formattedError)
@@ -1239,7 +1239,7 @@ export function setupWorker(
 			if (format === "svg") {
 				if (!Array.isArray(svgPages) || svgPages.length === 0) {
 					if (statusEl) {
-						statusEl.textContent = "svg missing"
+						statusEl.textContent = __("svg missing")
 						statusEl.style.color = "#e67e22"
 					}
 					frappe?.show_alert({
@@ -1257,7 +1257,7 @@ export function setupWorker(
 						markHasPages()
 					}
 					if (statusEl) {
-						statusEl.textContent = "compiled ✓"
+						statusEl.textContent = __("compiled ✓")
 						statusEl.style.color = "#27ae60"
 					}
 					dispatchStatus("ready")
@@ -1275,7 +1275,7 @@ export function setupWorker(
 
 			if (!pdfArray.length) {
 				if (statusEl) {
-					statusEl.textContent = "empty pdf"
+					statusEl.textContent = __("empty pdf")
 					statusEl.style.color = "#e67e22"
 				}
 				frappe?.show_alert({
@@ -1297,7 +1297,7 @@ export function setupWorker(
 				setTimeout(() => URL.revokeObjectURL(url), 1000)
 
 				if (statusEl) {
-					statusEl.textContent = "pdf opened ✓"
+					statusEl.textContent = __("pdf opened ✓")
 					statusEl.style.color = "#27ae60"
 				}
 				if (viewPdfBtn) viewPdfBtn.disabled = false
@@ -1307,7 +1307,7 @@ export function setupWorker(
 
 			if (isDownload) {
 				if (statusEl) {
-					statusEl.textContent = "pdf ready ✓"
+					statusEl.textContent = __("pdf ready ✓")
 					statusEl.style.color = "#27ae60"
 				}
 				if (downloadBtn) downloadBtn.disabled = false
@@ -1318,7 +1318,7 @@ export function setupWorker(
 			} else {
 				logger.warn("PDF response received for preview request")
 				if (statusEl) {
-					statusEl.textContent = "unexpected pdf"
+					statusEl.textContent = __("unexpected pdf")
 					statusEl.style.color = "#e67e22"
 				}
 			}
@@ -1343,7 +1343,7 @@ export function setupWorker(
 			}
 
 			if (statusEl) {
-				statusEl.textContent = "generating pdf…"
+				statusEl.textContent = __("generating pdf…")
 				statusEl.style.color = "#3498db"
 			}
 			viewPdfBtn.disabled = true
@@ -1374,7 +1374,7 @@ export function setupWorker(
 			}
 
 			if (statusEl) {
-				statusEl.textContent = "generating pdf…"
+				statusEl.textContent = __("generating pdf…")
 				statusEl.style.color = "#3498db"
 			}
 			downloadBtn.disabled = true
@@ -1404,7 +1404,7 @@ export function setupWorker(
 				return
 			}
 			if (statusEl) {
-				statusEl.textContent = "refreshing..."
+				statusEl.textContent = __("refreshing...")
 				statusEl.style.color = "#3498db"
 			}
 			lastTypstCode = "" // Force recompilation by clearing cached code
@@ -1416,17 +1416,17 @@ export function setupWorker(
 	viewCodeBtn &&
 		(viewCodeBtn.onclick = () => {
 			const d = new frappe.ui.Dialog({
-				title: "Typst Code",
+				title: __("Typst Code"),
 				fields: [
 					{
 						fieldtype: "Code",
 						fieldname: "typst_code",
-						label: "Typst Source",
+						label: __("Typst Source"),
 						options: "Rust",
 						default: lastTypstCode,
 					},
 				],
-				primary_action_label: "Save to Print Format",
+				primary_action_label: __("Save to Print Format"),
 				primary_action: (values: any) => {
 					const typstCode = values.typst_code || d.get_value("typst_code")
 
@@ -1449,7 +1449,7 @@ export function setupWorker(
 						},
 					})
 				},
-				secondary_action_label: "Copy to Clipboard",
+				secondary_action_label: __("Copy to Clipboard"),
 				secondary_action: () => {
 					const typstCode = d.get_value("typst_code")
 					navigator.clipboard.writeText(typstCode)

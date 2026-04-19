@@ -119,22 +119,22 @@ function buildStore() {
   const reportBaseFields = computed<DocField[]>(() => {
     if (!isReportMode.value) return [];
     return [
-      { fieldname: "data.title", label: "Title", fieldtype: "Data" },
-      { fieldname: "data.subtitle", label: "Subtitle", fieldtype: "Data" },
-      { fieldname: "data.filters", label: "Filters", fieldtype: "Table" },
+      { fieldname: "data.title", label: __("Title"), fieldtype: "Data" },
+      { fieldname: "data.subtitle", label: __("Subtitle"), fieldtype: "Data" },
+      { fieldname: "data.filters", label: __("Filters"), fieldtype: "Table" },
       {
         fieldname: "data.report_summary",
-        label: "Report Summary",
+        label: __("Report Summary"),
         fieldtype: "Table",
       },
       {
         fieldname: "data.chart",
-        label: "Chart",
+        label: __("Chart"),
         fieldtype: "Table",
       },
       {
         fieldname: "data.table",
-        label: "Report Table",
+        label: __("Report Table"),
         fieldtype: "Table",
       },
     ];
@@ -305,14 +305,14 @@ function buildStore() {
       return [
         {
           fieldname: "label",
-          label: "Label",
+          label: __("Label"),
           fieldtype: "Data",
           width: "auto",
           align: "left",
         },
         {
           fieldname: "value",
-          label: "Value",
+          label: __("Value"),
           fieldtype: "Data",
           width: "auto",
           align: "left",
@@ -323,35 +323,35 @@ function buildStore() {
       return [
         {
           fieldname: "label",
-          label: "Label",
+          label: __("Label"),
           fieldtype: "Data",
           width: "auto",
           align: "left",
         },
         {
           fieldname: "value",
-          label: "Value",
+          label: __("Value"),
           fieldtype: "Data",
           width: "auto",
           align: "right",
         },
         {
           fieldname: "indicator",
-          label: "Indicator",
+          label: __("Indicator"),
           fieldtype: "Data",
           width: "auto",
           align: "left",
         },
         {
           fieldname: "datatype",
-          label: "Data Type",
+          label: __("Data Type"),
           fieldtype: "Data",
           width: "auto",
           align: "left",
         },
         {
           fieldname: "currency",
-          label: "Currency",
+          label: __("Currency"),
           fieldtype: "Data",
           width: "auto",
           align: "left",
@@ -851,16 +851,16 @@ function buildStore() {
           }));
 
         const extras: DocField[] = [
-          { label: "DocType", fieldname: "doctype", fieldtype: "Data" },
-          { label: "ID (name)", fieldname: "name", fieldtype: "Data" },
+          { label: __("DocType"), fieldname: "doctype", fieldtype: "Data" },
+          { label: __("ID (name)"), fieldname: "name", fieldtype: "Data" },
           {
-            label: "Custom Typst",
+            label: __("Custom Typst"),
             fieldname: "_typst_snippet",
             fieldtype: "Typst",
           },
-          { label: "Empty Field", fieldname: "empty", fieldtype: "Empty" },
-          { label: "Spacer", fieldname: "spacer", fieldtype: "Spacer" },
-          { label: "Divider", fieldname: "divider", fieldtype: "Divider" },
+          { label: __("Empty Field"), fieldname: "empty", fieldtype: "Empty" },
+          { label: __("Spacer"), fieldname: "spacer", fieldtype: "Spacer" },
+          { label: __("Divider"), fieldname: "divider", fieldtype: "Divider" },
         ];
         const templateFields: DocField[] = !crispyFormat.value?.__onload
           ?.print_templates
@@ -887,7 +887,7 @@ function buildStore() {
                 if (!df?.fieldname) return null;
 
                 return {
-                  label: `${df.label} (Field Template)`,
+                  label: `${df.label} (${__("Field Template")})`,
                   fieldname: `${df.fieldname}_template`,
                   fieldtype: "Field Template",
                   options: template.name,

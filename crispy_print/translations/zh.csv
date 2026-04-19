@@ -50,12 +50,9 @@ Edit Raw Typst Field,编辑原始 Typst 字段
 Raw Typst Field,原始 Typst 字段
 Configure Spacer,配置间距
 Spacer Value,间距值
-Typst units: 1em, 2cm, 10pt, 5mm, etc.,Typst 单位：1em、2cm、10pt、5mm 等
 Configure Divider,配置分隔线
 Length,长度
-Typst units: 100%, 80%, 10cm, etc.,Typst 单位：100%、80%、10cm 等
 Stroke Width,线宽
-Typst units: 0.5pt, 1pt, 2pt, etc.,Typst 单位：0.5pt、1pt、2pt 等
 Color,颜色
 Field Template,字段模板
 Set Required Report Filters,设置必填报表筛选条件
@@ -63,3 +60,359 @@ Cancel,取消
 Failed to load Crispy Format,加载 脆皮打印 格式失败
 Crispy Format saved,Crispy 格式已保存
 Failed to save changes,保存更改失败
+{0} page(s),{0} 页
+Add,添加
+Add column,添加列
+Add section above,在上方添加分区
+Add section below,在下方添加分区
+Arabic,阿拉伯语
+Basic mode is style-preview only. Real report output is rendered by raw Typst templates (CrispyPP/runtime).,基础模式仅用于样式预览。实际报表输出由原始 Typst 模板渲染（CrispyPP/runtime）。
+Body Color,正文颜色
+Body Family,正文字体
+Body Size (pt),正文大小（pt）
+Body Style,正文样式
+Body Typography,正文排版
+Body Weight,正文粗细
+Borders,边框
+Branding,品牌
+Card Border,卡片边框
+Changes apply immediately to the preview.,更改会立即应用到预览。
+Chart,图表
+Chart Settings,图表设置
+Chart Width (%),图表宽度（%）
+Choose fields to include in the QR payload.,选择要包含在 QR 载荷中的字段。
+Close,关闭
+Colors,颜色
+Columns,列
+Company,公司
+compiled ✓,已编译 ✓
+compiling…,正在编译…
+Compiling...,正在编译...
+Configure columns,配置列
+Configure page settings and document options.,配置页面设置和文档选项。
+Copy,复制
+Copy to Clipboard,复制到剪贴板
+Currency,币种
+Custom Typst,自定义 Typst
+Data Type,数据类型
+Divider,分隔线
+document not found,未找到文档
+Done,完成
+Drag fields from Fields pane into columns.,将字段面板中的字段拖入列中。
+Drag report blocks into the layout builder to compose your print format.,将报表块拖入布局构建器以组合你的打印格式。
+dx (mm),dx（mm）
+dy (mm),dy（mm）
+Empty Field,空字段
+empty pdf,空 PDF
+Enable Chart,启用图表
+English,英语
+error,错误
+Error,错误
+Failed to initialize preview: {0},初始化预览失败：{0}
+Failed to load format: {0},加载格式失败：{0}
+Family,字体
+fetching document…,正在获取文档…
+fetching document...,正在获取文档...
+Field Labels,字段标签
+Field Values,字段值
+Fields,字段
+Filters,筛选条件
+Font,字体
+Font Family,字体族
+Font Size (pt),字体大小（pt）
+French,法语
+Generated Typst,生成的 Typst
+generating pdf…,正在生成 PDF…
+German,德语
+Grid,网格
+Header Color,表头颜色
+Header Family,表头字体
+Header Size (pt),表头大小（pt）
+Header Style,表头样式
+Header Typography,表头排版
+Header Weight,表头粗细
+Hover over a field to see its fieldname and type.,悬停在字段上可查看其字段名和类型。
+ID (name),ID（name）
+idle,空闲
+Indicator,指示器
+Label,标签
+Landscape,横向
+Layout Builder,布局构建器
+Letter Head,信头
+Letterhead,信头
+Load default,加载默认
+Loading companies...,正在加载公司...
+Loading fields...,正在加载字段...
+Loading fonts...,正在加载字体...
+Loading formats...,正在加载格式...
+Loading letterheads...,正在加载信头...
+Logo,Logo
+Logo is anchored to top-left using #place().,Logo 使用 #place() 锚定在左上角。
+Margins (mm),边距（mm）
+Max Height (pt),最大高度（pt）
+Minimal,简约
+No columns yet. Add one below.,尚无列。在下方添加一个。
+No fields available yet!,暂时没有可用字段！
+No fields found.,未找到字段。
+No fields match {0}!,没有字段匹配 {0}！
+no layout data,无布局数据
+No layout loaded.,未加载布局。
+No report columns available.,没有可用报表列。
+None,无
+Orientation,方向
+Page Break,分页符
+Page Size,页面大小
+pdf error,PDF 错误
+pdf opened ✓,PDF 已打开 ✓
+pdf ready ✓,PDF 已就绪 ✓
+Pick a document to preview.,选择一个文档进行预览。
+Portrait,纵向
+Posting Timestamp,提交时间戳
+Preset,预设
+Preview compilation failed,预览编译失败
+Preview loaded: {0},预览已加载：{0}
+Preview output will render here.,预览输出将显示在此处。
+Preview-only changes. The saved format is unchanged.,仅预览更改。已保存格式不受影响。
+QR Code Fields,QR 码字段
+QR fields,QR 字段
+QR-Code,QR 码
+Raw Typst mode; drag fields into the editor to insert `#doc.fieldname`.,Raw Typst 模式：将字段拖入编辑器以插入 `#doc.fieldname`。
+Redo,重做
+Refresh,刷新
+Refresh regenerates the preview.,刷新会重新生成预览。
+refreshing...,正在刷新...
+Remove QRCode,移除二维码
+Report Fields,报表字段
+Report Summary,报表汇总
+Report Table,报表表格
+Reset,重置
+Reset to Basic Template,重置为基础模板
+Reset to Default,重置为默认
+Save to Print Format,保存到打印格式
+Section Labels,分区标签
+select a document,选择一个文档
+Select company,选择公司
+Select field,选择字段
+Selected company has no logo set.,所选公司未设置 logo。
+Show Chart,显示图表
+Show Filters,显示筛选条件
+Show filters block,显示筛选区块
+Show Summary,显示汇总
+Show total records footer,显示总记录页脚
+Show Total Row,显示总计行
+Show Totals,显示合计
+Size,大小
+Size (mm),大小（mm）
+Size (pt),大小（pt）
+Spacer,间距
+Spacing (pt),间距（pt）
+Spacing Bottom (pt),下间距（pt）
+Spacing Top (pt),上间距（pt）
+Spanish,西班牙语
+Sr No.,序号
+Stay in Advanced,保持高级模式
+Stripe Color,斑马纹颜色
+Striping,斑马纹
+Stroke (pt),线宽（pt）
+Style,样式
+Style preview mode: layout uses deterministic sample data.,样式预览模式：布局使用确定性示例数据。
+Style preview uses deterministic sample data.,样式预览使用确定性示例数据。
+Style preview with placeholder data,使用占位数据进行样式预览
+Subtitle,副标题
+Summary,汇总
+svg missing,缺少 SVG
+Table Settings,表格设置
+Title,标题
+translation error,翻译错误
+Tree,树形
+Typography,排版
+Typst Error,Typst 错误
+Typst Preview,Typst 预览
+Typst Settings,Typst 设置
+Typst Source,Typst 源码
+Undo,撤销
+unexpected pdf,异常 PDF
+up to date,已是最新
+Use Refresh in the preview pane to compile changes.,使用预览面板中的刷新来编译更改。
+Use the ⋯ menu on a section for add/remove/page break/orientation.,使用分区上的 ⋯ 菜单进行添加/删除/分页/方向设置。
+Use the search box to quickly find specific fields.,使用搜索框快速查找特定字段。
+Value,值
+View code,查看代码
+View code shows the generated Typst source.,查看代码会显示生成的 Typst 源码。
+waiting for layout...,等待布局中...
+Weight,粗细
+{0} is ambiguous in {1} files: {2},{1} 文件目录中 {0} 存在歧义：{2}
+{0} linked reports,{0} 个关联报表
+{0} must contain valid JSON,{0} 必须包含有效的 JSON
+{0} not found in private/files or public/files: {1},在 private/files 或 public/files 中未找到 {0}：{1}
+{0} not found: {1},{0} 未找到：{1}
+Action,操作
+Asset file resolution failed:\n{0},资源文件解析失败：\n{0}
+asset_files must be a list of image file paths,asset_files 必须是图片文件路径列表
+At least one linked report is required for custom report formats,自定义报表格式至少需要关联一个报表
+Change Format,更改格式
+Compilation timed out. The document may be too complex.,编译超时。文档可能过于复杂。
+Compiled PDF was not produced,未生成编译后的 PDF
+Compiled SVG was not produced,未生成编译后的 SVG
+"Configure page size, margins, and typography for Typst.",配置 Typst 的页面大小、边距和排版。
+Contract is required,合同为必填项
+Create,新建
+Create New,新建
+Create or Edit Crispy Format,创建或编辑 Crispy 格式
+Crispy Format Builder,Crispy 格式构建器
+Custom Formats,自定义格式
+Custom report formats cannot have a Generic Report Type,自定义报表格式不能设置通用报表类型
+Customize,自定义
+Default format for {0},{0} 的默认格式
+Deprecated params are not supported. Use asset_files only.,不支持已弃用参数。请仅使用 asset_files。
+Deselect All,取消全选
+doctype and name are required,doctype 和 name 为必填项
+DocType is required,DocType 为必填项
+Download,下载
+"Drag to reorder. Widths use Typst units: auto, 1fr, 2fr, 100pt, 50%, etc.",拖拽可重新排序。宽度使用 Typst 单位：auto、1fr、2fr、100pt、50% 等。
+Edit,编辑
+Edit Existing,编辑现有
+Edit Properties,编辑属性
+Editing {0},正在编辑 {0}
+Export,导出
+Export Failed,导出失败
+Exported format: {0},已导出格式：{0}
+Failed to check import payload.,检查导入载荷失败。
+Failed to export format.,导出格式失败。
+Failed to import format.,导入格式失败。
+File not found for logo image path: {0},未找到 Logo 图片路径对应文件：{0}
+Form,表单
+Format name is required,格式名称为必填项
+Format name is required in payload,载荷中必须包含格式名称
+Generate PDF,生成 PDF
+Generating PDF...,正在生成 PDF...
+generic {0} reports,通用 {0} 报表
+Generic Report Type is required for generic templates,通用模板必须指定通用报表类型
+generic reports,通用报表
+Generic template for {0} reports,用于 {0} 报表的通用模板
+Generic Templates,通用模板
+Generic templates cannot be linked to a specific report,通用模板不能关联到特定报表
+Import,导入
+Import Failed,导入失败
+Import payload cannot be empty,导入载荷不能为空
+Import Warnings,导入警告
+Imported format: {0},已导入格式：{0}
+Imported with warnings:,导入完成（含警告）：
+Include Filters,包含筛选条件
+Invalid asset_files entries:\n{0},asset_files 条目无效：\n{0}
+"Invalid column width values: {0}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc.",列宽值无效：{0}。请使用 Typst 单位，例如：auto、1fr、2fr、100pt、50%、2cm 等。
+Invalid column_config format,column_config 格式无效
+Invalid conflict action: {0},冲突处理动作无效：{0}
+Invalid filters format,filters 格式无效
+Invalid JSON payload,JSON 载荷无效
+linked reports,关联报表
+Loading preview...,正在加载预览...
+Missing export payload,缺少导出载荷
+Missing reference: {0} '{1}' (field: {2}),缺少引用：{0} '{1}'（字段：{2}）
+Missing reference: Company '{0}',缺少引用：公司 '{0}'
+Missing reference: Letter Head '{0}',缺少引用：信头 '{0}'
+New Format Name,新格式名称
+No Formats Available,没有可用格式
+No print format found for report '{0}',未找到报表 '{0}' 的打印格式
+Not Saved,未保存
+"Optional: add `// fields: customer, items.item_code` to narrow payload fields.","可选：添加 `// fields: customer, items.item_code` 来缩小载荷字段范围。"
+page_settings could not be parsed for reference checks,无法解析 page_settings 以进行引用检查
+Payload must be a JSON object,载荷必须是 JSON 对象
+Payload must be a JSON object or JSON string,载荷必须是 JSON 对象或 JSON 字符串
+Payload must include a 'format' object,载荷必须包含 'format' 对象
+PDF,PDF
+PDF generated successfully,PDF 生成成功
+PDF Generation Failed,PDF 生成失败
+PDF generation not available,PDF 生成功能不可用
+Please add at least one linked Report first,请先至少添加一个关联报表
+Please save the format before exporting.,请先保存格式再导出。
+Please select {0} first,请先选择 {0}
+Please select Generic Report Type first,请先选择通用报表类型
+Print,打印
+Printing {0}...,正在打印 {0}...
+Reset Changes,重置更改
+Save,保存
+Saved,已保存
+Select All,全选
+Select Crispy Format,选择 Crispy 格式
+Select Document Type,选择文档类型
+this Contract,此合同
+this DocType,此 DocType
+this format,此格式
+Typst compilation failed: {0},Typst 编译失败：{0}
+Typst compiler not found. Please install Typst CLI: brew install typst,未找到 Typst 编译器。请安装 Typst CLI：brew install typst
+Typst source code is required,必须提供 Typst 源代码
+"Typst units: 0.5pt, 1pt, 2pt, etc.",Typst 单位：0.5pt、1pt、2pt 等
+"Typst units: 100%, 80%, 10cm, etc.",Typst 单位：100%、80%、10cm 等
+"Typst units: 1em, 2cm, 10pt, 5mm, etc.",Typst 单位：1em、2cm、10pt、5mm 等
+Unexpected error during compilation: {0},编译期间发生意外错误：{0}
+Unknown error occurred,发生未知错误
+Unsupported compile_typst params: {0},不支持的 compile_typst 参数：{0}
+Unsupported schema_version. Expected {0},不支持的 schema_version。期望值：{0}
+Unsupported Typst output format: {0},不支持的 Typst 输出格式：{0}
+"Use handles to reorder sections, columns, and fields in place.",使用拖拽手柄可在原位重排分区、列和字段。
+You don't have permission to create Crispy Format,你没有权限创建 Crispy 格式
+A3 (297 × 420 mm),A3 (297 × 420 mm)
+A4 (210 × 297 mm),A4 (210 × 297 mm)
+A5 (148 × 210 mm),A5 (148 × 210 mm)
+Letter (8.5 × 11 in),Letter (8.5 × 11 in)
+Legal (8.5 × 14 in),Legal (8.5 × 14 in)
+Tabloid (11 × 17 in),Tabloid (11 × 17 in)
+Executive (7.25 × 10.5 in),Executive (7.25 × 10.5 in)
+Top,上
+Bottom,下
+Left,左
+Right,右
+Normal,常规
+Italic,斜体
+Oblique,倾斜
+Thin,细体
+Extralight,特细
+Light,轻体
+Regular,常规
+Medium,中等
+Semibold,半粗
+Bold,粗体
+Extrabold,特粗
+Black,黑体
+Header Background,表头背景
+Enable QR Code,启用二维码
+QR Code is anchored to bottom-left using #place().,二维码通过 #place() 锚定在左下角。
+Select fields,选择字段
+No fields selected,未选择字段
+1 field selected,已选择 1 个字段
+{0} fields selected,已选择 {0} 个字段
+Remove column,移除列
+Section settings,分区设置
+Remove page break,移除分页
+Add page break,添加分页
+Field orientation,字段方向
+Remove section,移除分区
+Drag field,拖拽字段
+Field menu,字段菜单
+Align,对齐
+Alignment options,对齐选项
+Center,居中
+Hide label,隐藏标签
+Show label,显示标签
+Edit code,编辑代码
+Configure spacer,配置间隔
+Configure divider,配置分隔线
+Remove,移除
+Width: {0}%,宽度：{0}%
+Drop fields here,将字段拖放到此处
+Left-Right,左到右
+Top-Down,上到下
+Drag section,拖拽分区
+Section menu,分区菜单
+Section title,分区标题
+Undo (Ctrl/Cmd+Z),撤销 (Ctrl/Cmd+Z)
+Redo (Ctrl/Cmd+Y),重做 (Ctrl/Cmd+Y)
+Reset to saved format,重置为已保存格式
+T,T
+B,B
+L,L
+R,R
+Open Crispy Print Preview,打开 Crispy Print 预览
+No columns available,没有可用列
+auto,auto

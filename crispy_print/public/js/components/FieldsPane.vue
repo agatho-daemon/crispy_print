@@ -3,7 +3,7 @@
 		<div class="section-head fields-pane__header">
 			<div class="section-head-content fields-pane__header-row">
 				<h3 class="section-title fields-pane__title">
-					{{ isReportMode ? "Report Fields" : "Fields" }}
+					{{ isReportMode ? __("Report Fields") : __("Fields") }}
 				</h3>
 				<div class="fields-pane__spacer"></div>
 				<div class="fields-pane__help">
@@ -12,7 +12,7 @@
 						class="btn btn-default btn-xs fields-pane__help-btn"
 						popovertarget="fields-help"
 						popovertargetaction="toggle"
-						title="Toggle help"
+						:title="__('Toggle help')"
 						aria-haspopup="dialog"
 						aria-controls="fields-help"
 					>
@@ -21,11 +21,16 @@
 					<div id="fields-help" popover class="fields-pane__help-popover">
 						<ul class="fields-pane__help-list">
 							<li v-if="isReportMode">
-								Drag report blocks into the layout builder to compose your print
-								format.
+								{{
+									__(
+										"Drag report blocks into the layout builder to compose your print format."
+									)
+								}}
 							</li>
-							<li v-else>Use the search box to quickly find specific fields.</li>
-							<li>Hover over a field to see its fieldname and type.</li>
+							<li v-else>
+								{{ __("Use the search box to quickly find specific fields.") }}
+							</li>
+							<li>{{ __("Hover over a field to see its fieldname and type.") }}</li>
 						</ul>
 					</div>
 				</div>
@@ -36,20 +41,20 @@
 				<input
 					v-model="searchQuery"
 					type="text"
-					:placeholder="`Search ${filteredFields.length} fields...`"
+					:placeholder="__('Search {0} fields...', [filteredFields.length])"
 					class="form-control search-input"
 				/>
 			</div>
 			<div v-if="loading" class="loading-indicator">
-				<span class="loading-text">Loading fields...</span>
+				<span class="loading-text">{{ __("Loading fields...") }}</span>
 			</div>
 		</div>
 		<div class="fields-list">
 			<div v-if="filteredFields.length === 0" class="empty-state">
 				<p v-if="searchQuery" class="empty-message">
-					No fields match "{{ searchQuery }}!"
+					{{ __("No fields match {0}!", [searchQuery]) }}
 				</p>
-				<p v-else class="empty-message">No fields available yet!</p>
+				<p v-else class="empty-message">{{ __("No fields available yet!") }}</p>
 			</div>
 
 			<div
@@ -58,7 +63,7 @@
 				class="field-item"
 				draggable="true"
 				@dragstart="onFieldDragStart($event, field)"
-				:title="`(${field.fieldname} — ${field.fieldtype || 'Unknown'})`"
+				:title="`(${field.fieldname} — ${field.fieldtype || __('Unknown')})`"
 			>
 				<div class="field-label">
 					{{ field.label }}
@@ -74,6 +79,7 @@
 <script setup lang="ts">
 import { computed, ref, unref, type MaybeRef } from "vue";
 import type { DocField } from "../utils/layout";
+import { __ } from "../utils/i18n";
 
 interface Props {
 	fields: MaybeRef<DocField[]>;
