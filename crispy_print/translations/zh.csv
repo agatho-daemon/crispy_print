@@ -1,8 +1,8 @@
-Crispy Print,Crispy Print
-Crispy Print List,Crispy Print 列表
-Crispy Format,Crispy 格式
-Crispy Format Reports,Crispy 格式报表
-Crispy Generic Report,Crispy 通用报表
+Crispy Print,脆皮打印
+Crispy Print List,脆皮打印 列表
+Crispy Format,脆皮打印 格式
+Crispy Format Reports,脆皮打印 格式报表
+Crispy Generic Report,脆皮打印 通用报表
 Open Builder,打开构建器
 Print Settings,打印设置
 Page Settings,页面设置
@@ -60,6 +60,6 @@ Color,颜色
 Field Template,字段模板
 Set Required Report Filters,设置必填报表筛选条件
 Cancel,取消
-Failed to load Crispy Format,加载 Crispy 格式失败
+Failed to load Crispy Format,加载 脆皮打印 格式失败
 Crispy Format saved,Crispy 格式已保存
 Failed to save changes,保存更改失败
