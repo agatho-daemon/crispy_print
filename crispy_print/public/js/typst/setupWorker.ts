@@ -631,7 +631,7 @@ export function setupWorker(
 				currentDocname = selectedDoc
 
 				if (!selectedDoc || !currentDoctype) {
-					logger.warn("No document or doctype selected")
+					logger.debug("No document or doctype selected")
 					return
 				}
 
@@ -718,7 +718,7 @@ export function setupWorker(
 				currentDocname = selectedDoc
 
 				if (!selectedDoc || !currentDoctype) {
-					logger.warn("No document or doctype selected")
+					logger.debug("No document or doctype selected")
 					return
 				}
 

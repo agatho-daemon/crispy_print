@@ -2,6 +2,7 @@
 	<div class="settings-pane">
 		<div class="section-head settings-pane__header">
 			<div class="section-head-content settings-pane__header-row">
+				<slot name="header-actions"></slot>
 				<h3 class="section-title settings-pane__title">{{ __("Typst Settings") }}</h3>
 				<div class="settings-pane__spacer"></div>
 				<div>
@@ -1363,13 +1364,26 @@ watch(availableCompanies, () => {
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
+	border-color: transparent !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: #334155;
+	font-size: 13px;
+	font-weight: 500;
+	transition: color 0.15s ease, font-size 0.15s ease, font-weight 0.15s ease;
 }
 
 .settings-pane__header-row {
 	align-items: center;
 }
 
-.settings-pane__help-btn:hover {
+.settings-pane__help-btn:hover,
+.settings-pane__help-btn:focus-visible {
+	border-color: transparent !important;
+	background: transparent !important;
+	color: #0f172a;
+	font-size: 14px;
+	font-weight: 700;
 }
 
 .settings-pane__help-popover {

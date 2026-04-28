@@ -1752,6 +1752,22 @@ function onEditDivider(field: Field) {
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
+	border-color: transparent !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: #334155;
+	font-size: 13px;
+	font-weight: 500;
+	transition: color 0.15s ease, font-size 0.15s ease, font-weight 0.15s ease;
+}
+
+.layout-pane__help-btn:hover,
+.layout-pane__help-btn:focus-visible {
+	border-color: transparent !important;
+	background: transparent !important;
+	color: #0f172a;
+	font-size: 14px;
+	font-weight: 700;
 }
 
 .layout-pane__help {

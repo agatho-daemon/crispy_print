@@ -75,4 +75,222 @@ describe("PreviewRenderer", () => {
 		await nextTick()
 		expect(wrapper.find(".preview-error").exists()).toBe(false)
 	})
+
+	it("emits zoom changes from the preview toolbar", async () => {
+		const wrapper = mount(PreviewRenderer, {
+			props: {
+				formatName: "Format-1",
+				layout: { sections: [] },
+				docHeader: "",
+				docFooter: "",
+				typstPreamble: "",
+				qrEnabled: false,
+				pageSettings: {
+					pageSize: "A4",
+					orientation: "portrait",
+					margins: { top: 10, bottom: 10, left: 10, right: 10 },
+					language: "en",
+				},
+				letterhead: null,
+				docType: "Invoice",
+				zoomMode: "fit",
+				zoomPercent: 100,
+			},
+		})
+
+		await wrapper.findAll(".preview-zoom-toolbar button")[1].trigger("click")
+		expect(wrapper.emitted("update:zoomMode")?.[0]).toEqual(["manual"])
+		expect(wrapper.emitted("update:zoomPercent")?.[0]).toEqual([100])
+
+		await wrapper.findAll(".preview-zoom-toolbar button")[0].trigger("click")
+		expect(wrapper.emitted("update:zoomMode")?.[1]).toEqual(["fit"])
+	})
+
+	it("allows typing an exact zoom percentage", async () => {
+		const wrapper = mount(PreviewRenderer, {
+			props: {
+				formatName: "Format-1",
+				layout: { sections: [] },
+				docHeader: "",
+				docFooter: "",
+				typstPreamble: "",
+				qrEnabled: false,
+				pageSettings: {
+					pageSize: "A4",
+					orientation: "portrait",
+					margins: { top: 10, bottom: 10, left: 10, right: 10 },
+					language: "en",
+				},
+				letterhead: null,
+				docType: "Invoice",
+				zoomMode: "fit",
+				zoomPercent: 100,
+			},
+		})
+
+		await wrapper.find(".preview-zoom-toolbar__value").trigger("click")
+		const input = wrapper.find(".preview-zoom-toolbar__input")
+		expect(input.exists()).toBe(true)
+		await input.setValue("83%")
+		await input.trigger("keydown.enter")
+
+		expect(wrapper.emitted("update:zoomMode")?.[0]).toEqual(["manual"])
+		expect(wrapper.emitted("update:zoomPercent")?.[0]).toEqual([83])
+	})
+
+	it("cancels exact zoom editing with Escape", async () => {
+		const wrapper = mount(PreviewRenderer, {
+			props: {
+				formatName: "Format-1",
+				layout: { sections: [] },
+				docHeader: "",
+				docFooter: "",
+				typstPreamble: "",
+				qrEnabled: false,
+				pageSettings: {
+					pageSize: "A4",
+					orientation: "portrait",
+					margins: { top: 10, bottom: 10, left: 10, right: 10 },
+					language: "en",
+				},
+				letterhead: null,
+				docType: "Invoice",
+				zoomMode: "manual",
+				zoomPercent: 100,
+			},
+		})
+
+		await wrapper.find(".preview-zoom-toolbar__value").trigger("click")
+		await wrapper.find(".preview-zoom-toolbar__input").setValue("140")
+		await wrapper.find(".preview-zoom-toolbar__input").trigger("keydown.escape")
+
+		expect(wrapper.emitted("update:zoomMode")).toBeUndefined()
+		expect(wrapper.emitted("update:zoomPercent")).toBeUndefined()
+		expect(wrapper.find(".preview-zoom-toolbar__input").exists()).toBe(false)
+	})
+
+	it("increments from the displayed fit percentage to the next 10 percent boundary", async () => {
+		const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth")
+		Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+			configurable: true,
+			get() {
+				return 900
+			},
+		})
+		try {
+			const wrapper = mount(PreviewRenderer, {
+				props: {
+					formatName: "Format-1",
+					layout: { sections: [] },
+					docHeader: "",
+					docFooter: "",
+					typstPreamble: "",
+					qrEnabled: false,
+					pageSettings: {
+						pageSize: "A4",
+						orientation: "portrait",
+						margins: { top: 10, bottom: 10, left: 10, right: 10 },
+						language: "en",
+					},
+					letterhead: null,
+					docType: "Invoice",
+					zoomMode: "fit",
+					zoomPercent: 100,
+				},
+			})
+
+			await new Promise((resolve) => requestAnimationFrame(resolve))
+			await nextTick()
+			await wrapper.findAll(".preview-zoom-toolbar__icon")[1].trigger("click")
+
+			expect(wrapper.emitted("update:zoomMode")?.[0]).toEqual(["manual"])
+			expect(wrapper.emitted("update:zoomPercent")?.[0]).toEqual([120])
+		} finally {
+			if (descriptor) {
+				Object.defineProperty(HTMLElement.prototype, "clientWidth", descriptor)
+			} else {
+				delete (HTMLElement.prototype as any).clientWidth
+			}
+		}
+	})
+
+	it("decrements from the displayed fit percentage to the previous 10 percent boundary", async () => {
+		const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth")
+		Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+			configurable: true,
+			get() {
+				return 900
+			},
+		})
+		try {
+			const wrapper = mount(PreviewRenderer, {
+				props: {
+					formatName: "Format-1",
+					layout: { sections: [] },
+					docHeader: "",
+					docFooter: "",
+					typstPreamble: "",
+					qrEnabled: false,
+					pageSettings: {
+						pageSize: "A4",
+						orientation: "portrait",
+						margins: { top: 10, bottom: 10, left: 10, right: 10 },
+						language: "en",
+					},
+					letterhead: null,
+					docType: "Invoice",
+					zoomMode: "fit",
+					zoomPercent: 100,
+				},
+			})
+
+			await new Promise((resolve) => requestAnimationFrame(resolve))
+			await nextTick()
+			await wrapper.findAll(".preview-zoom-toolbar__icon")[0].trigger("click")
+
+			expect(wrapper.emitted("update:zoomMode")?.[0]).toEqual(["manual"])
+			expect(wrapper.emitted("update:zoomPercent")?.[0]).toEqual([110])
+		} finally {
+			if (descriptor) {
+				Object.defineProperty(HTMLElement.prototype, "clientWidth", descriptor)
+			} else {
+				delete (HTMLElement.prototype as any).clientWidth
+			}
+		}
+	})
+
+	it("renders report SVG pages inside the zoomable stage", async () => {
+		const wrapper = mount(PreviewRenderer, {
+			props: {
+				formatName: "Format-1",
+				layout: { sections: [] },
+				docHeader: "",
+				docFooter: "",
+				typstPreamble: "",
+				qrEnabled: false,
+				pageSettings: {
+					pageSize: "A4",
+					orientation: "portrait",
+					margins: { top: 10, bottom: 10, left: 10, right: 10 },
+					language: "en",
+				},
+				letterhead: null,
+				docType: "Invoice",
+			},
+		})
+
+		window.dispatchEvent(
+			new CustomEvent("crispy-report-preview", {
+				detail: {
+					svg_pages: ['<svg viewBox="0 0 100 100"></svg>'],
+					page_count: 1,
+				},
+			})
+		)
+		await nextTick()
+
+		expect(wrapper.find(".preview-stage #typst-svg-container").exists()).toBe(true)
+		expect(wrapper.find(".typst-page").exists()).toBe(true)
+		expect(wrapper.find("#typst-svg-container").classes()).toContain("has-pages")
+	})
 })

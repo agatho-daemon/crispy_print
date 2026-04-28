@@ -14,12 +14,34 @@
 		:page-settings="store.pageSettings.value"
 		:change-key="store.changeKey.value"
 		:watch-data-changes="!isReportMode"
+		:zoom-mode="zoomMode"
+		:zoom-percent="zoomPercent"
+		@update:zoom-mode="(value) => emit('update:zoomMode', value)"
+		@update:zoom-percent="(value) => emit('update:zoomPercent', value)"
 	>
 		<template #menu>
 			<div class="section-head preview-pane__header">
 				<div class="section-head-content preview-pane__header-row">
 					<h3 class="section-title preview-pane__title">{{ __("Typst Preview") }}</h3>
 					<div class="preview-pane__spacer"></div>
+					<div
+						class="preview-mode-toggle"
+						role="group"
+						:aria-label="__('Preview focus')"
+					>
+						<button
+							v-for="mode in previewModes"
+							:key="mode.value"
+							type="button"
+							class="btn btn-default btn-xs preview-mode-toggle__button"
+							:class="{ 'is-active': previewMode === mode.value }"
+							:title="mode.title"
+							:aria-pressed="previewMode === mode.value"
+							@click="emit('update:previewMode', mode.value)"
+						>
+							{{ mode.label }}
+						</button>
+					</div>
 					<div class="preview-pane__help">
 						<button
 							type="button"
@@ -111,10 +133,39 @@ import { computed, watch } from "vue";
 import { getLogger } from "../logger";
 import { __ } from "../utils/i18n";
 
+type PreviewMode = "normal" | "half" | "full";
+type PreviewZoomMode = "fit" | "manual";
+
+const props = withDefaults(
+	defineProps<{
+		previewMode?: PreviewMode;
+		zoomMode?: PreviewZoomMode;
+		zoomPercent?: number;
+	}>(),
+	{
+		previewMode: "normal",
+		zoomMode: "fit",
+		zoomPercent: 100,
+	}
+);
+const emit = defineEmits<{
+	(event: "update:previewMode", value: PreviewMode): void;
+	(event: "update:zoomMode", value: PreviewZoomMode): void;
+	(event: "update:zoomPercent", value: number): void;
+}>();
+
 const store = useStore();
 const logger = getLogger({ component: "PreviewPane" });
 const qrEnabled = computed(() => store.qrEnabled.value);
 let reportCompileRequestSeq = 0;
+const previewMode = computed(() => props.previewMode);
+const zoomMode = computed(() => props.zoomMode);
+const zoomPercent = computed(() => props.zoomPercent);
+const previewModes = computed(() => [
+	{ value: "normal" as const, label: __("Normal"), title: __("Regular builder layout") },
+	{ value: "half" as const, label: __("Half"), title: __("Preview-focused split") },
+	{ value: "full" as const, label: __("Full"), title: __("Maximum preview width") },
+]);
 
 const isReportMode = computed(() => {
 	const format = store.crispyFormat.value;
@@ -213,6 +264,26 @@ watch(
 	margin-left: auto;
 }
 
+.preview-mode-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 2px;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	background: #f8fafc;
+}
+
+.preview-mode-toggle__button {
+	border: none;
+	box-shadow: none;
+}
+
+.preview-mode-toggle__button.is-active {
+	background: #0f172a;
+	color: #fff;
+}
+
 .preview-pane__help-btn {
 	display: inline-flex;
 	align-items: center;
@@ -220,6 +291,13 @@ watch(
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
+	border-color: transparent !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: #334155;
+	font-size: 13px;
+	font-weight: 500;
+	transition: color 0.15s ease, font-size 0.15s ease, font-weight 0.15s ease;
 }
 
 .preview-pane__help {
@@ -227,7 +305,13 @@ watch(
 	align-items: center;
 }
 
-.preview-pane__help-btn:hover {
+.preview-pane__help-btn:hover,
+.preview-pane__help-btn:focus-visible {
+	border-color: transparent !important;
+	background: transparent !important;
+	color: #0f172a;
+	font-size: 14px;
+	font-weight: 700;
 }
 
 .preview-pane__help-popover {

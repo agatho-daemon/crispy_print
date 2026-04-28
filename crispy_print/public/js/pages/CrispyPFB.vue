@@ -1,25 +1,140 @@
 <template>
-	<div id="crispy-print-root" class="crispy-layout">
-		<FieldsPane
-			class="pane pane--fields"
-			:fields="store.fields"
-			:report-fields="store.reportBuilderFields"
-			:is-report-mode="store.isReportMode"
-			:loading="store.loading"
-		/>
+	<div
+		id="crispy-print-root"
+		class="crispy-layout"
+		:class="{ 'crispy-layout--resizing': isResizing }"
+		:style="layoutStyle"
+	>
+		<div
+			class="pane-shell pane-shell--fields"
+			:class="{ 'pane-shell--collapsed': effectiveFieldsCollapsed }"
+		>
+			<div v-if="effectiveFieldsCollapsed" class="pane-rail">
+				<button
+					type="button"
+					class="pane-toggle pane-toggle--rail pane-toggle--fields pane-toggle--right"
+					:title="__('Expand Fields')"
+					:aria-label="__('Expand Fields')"
+					:aria-expanded="false"
+					@click="toggleFieldsPane"
+				>
+					<svg class="es-icon icon-md pane-toggle__placeholder" aria-hidden="true">
+						<use href="#es-line-align-justify"></use>
+					</svg>
+					<span class="pane-toggle__icon">
+						<svg class="es-icon icon-md" aria-hidden="true">
+							<use href="#es-line-sidebar-collapse"></use>
+						</svg>
+					</span>
+				</button>
+				<span class="pane-rail__label">{{
+					store.isReportMode.value ? __("Report Fields") : __("Fields")
+				}}</span>
+			</div>
+			<FieldsPane
+				v-else
+				class="pane pane--fields"
+				:fields="store.fields"
+				:report-fields="store.reportBuilderFields"
+				:is-report-mode="store.isReportMode"
+				:loading="store.loading"
+			>
+				<template #header-actions>
+					<button
+						type="button"
+						class="pane-toggle pane-toggle--inline pane-toggle--fields pane-toggle--left"
+						:title="__('Collapse Fields')"
+						:aria-label="__('Collapse Fields')"
+						:aria-expanded="true"
+						@click="toggleFieldsPane"
+					>
+						<svg class="es-icon icon-md pane-toggle__placeholder" aria-hidden="true">
+							<use href="#es-line-align-justify"></use>
+						</svg>
+						<span class="pane-toggle__icon">
+							<svg class="es-icon icon-md" aria-hidden="true">
+								<use href="#es-line-sidebar-expand"></use>
+							</svg>
+						</span>
+					</button>
+				</template>
+			</FieldsPane>
+		</div>
 		<LayoutPane v-if="!store.rawTypst.value" class="pane pane--layout" />
 		<TypstCodePane v-else class="pane pane--layout" />
-		<PreviewPane class="pane pane--preview" />
-		<SettingsPane
-			class="pane pane--settings"
-			:page-settings="pageSettings"
-			:mark-dirty="store.markDirty"
+		<button
+			type="button"
+			class="middle-resize-handle"
+			:title="__('Drag to resize builder and preview')"
+			:aria-label="__('Resize builder and preview panes')"
+			@pointerdown="onResizePointerDown"
+			@dblclick="resetMiddleSplit"
+		></button>
+		<PreviewPane
+			class="pane pane--preview"
+			:preview-mode="previewMode"
+			:zoom-mode="previewZoomMode"
+			:zoom-percent="previewZoomPercent"
+			@update:preview-mode="setPreviewMode"
+			@update:zoom-mode="setPreviewZoomMode"
+			@update:zoom-percent="setPreviewZoomPercent"
 		/>
+		<div
+			class="pane-shell pane-shell--settings"
+			:class="{ 'pane-shell--collapsed': effectiveSettingsCollapsed }"
+		>
+			<div v-if="effectiveSettingsCollapsed" class="pane-rail">
+				<button
+					type="button"
+					class="pane-toggle pane-toggle--rail pane-toggle--settings pane-toggle--left"
+					:title="__('Expand Typst Settings')"
+					:aria-label="__('Expand Typst Settings')"
+					:aria-expanded="false"
+					@click="toggleSettingsPane"
+				>
+					<svg class="es-icon icon-md pane-toggle__placeholder" aria-hidden="true">
+						<use href="#es-line-align-justify"></use>
+					</svg>
+					<span class="pane-toggle__icon">
+						<svg class="es-icon icon-md" aria-hidden="true">
+							<use href="#es-line-sidebar-expand"></use>
+						</svg>
+					</span>
+				</button>
+				<span class="pane-rail__label">{{ __("Settings") }}</span>
+			</div>
+			<SettingsPane
+				v-else
+				class="pane pane--settings"
+				:page-settings="pageSettings"
+				:mark-dirty="store.markDirty"
+			>
+				<template #header-actions>
+					<button
+						type="button"
+						class="pane-toggle pane-toggle--inline pane-toggle--settings pane-toggle--right"
+						:title="__('Collapse Typst Settings')"
+						:aria-label="__('Collapse Typst Settings')"
+						:aria-expanded="true"
+						@click="toggleSettingsPane"
+					>
+						<svg class="es-icon icon-md pane-toggle__placeholder" aria-hidden="true">
+							<use href="#es-line-align-justify"></use>
+						</svg>
+						<span class="pane-toggle__icon">
+							<svg class="es-icon icon-md" aria-hidden="true">
+								<use href="#es-line-sidebar-collapse"></use>
+							</svg>
+						</span>
+					</button>
+				</template>
+			</SettingsPane>
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import FieldsPane from "../components/FieldsPane.vue";
 import LayoutPane from "../components/LayoutPane.vue";
 import TypstCodePane from "../components/TypstCodePane.vue";
@@ -27,11 +142,65 @@ import PreviewPane from "../components/PreviewPane.vue";
 import SettingsPane from "../components/SettingsPane.vue";
 import { useStore } from "../composables/useStore";
 import { getCrispyBuilderFormatName } from "../utils/routes";
+import { __ } from "../utils/i18n";
 
 const store = useStore();
 const pageSettings = store.pageSettings;
+const STORAGE_KEY = "crispy-print:format-builder-layout:v1";
+const MIN_SPLIT = 30;
+const MAX_SPLIT = 70;
+
+type PreviewMode = "normal" | "half" | "full";
+type PreviewZoomMode = "fit" | "manual";
+interface BuilderLayoutState {
+	fieldsCollapsed: boolean;
+	settingsCollapsed: boolean;
+	middleSplitPercent: number;
+	previewMode: PreviewMode;
+}
+
+const defaultLayoutState: BuilderLayoutState = {
+	fieldsCollapsed: true,
+	settingsCollapsed: true,
+	middleSplitPercent: 50,
+	previewMode: "normal",
+};
+
+const fieldsCollapsed = ref(defaultLayoutState.fieldsCollapsed);
+const settingsCollapsed = ref(defaultLayoutState.settingsCollapsed);
+const middleSplitPercent = ref(defaultLayoutState.middleSplitPercent);
+const previewMode = ref<PreviewMode>(defaultLayoutState.previewMode);
+const previewZoomMode = ref<PreviewZoomMode>("fit");
+const previewZoomPercent = ref(100);
+const isResizing = ref(false);
+let resizeCleanup: (() => void) | null = null;
+
+const effectiveFieldsCollapsed = computed(
+	() => fieldsCollapsed.value || previewMode.value !== "normal"
+);
+const effectiveSettingsCollapsed = computed(
+	() => settingsCollapsed.value || previewMode.value !== "normal"
+);
+const effectiveMiddleSplit = computed(() => {
+	if (previewMode.value === "full") return 30;
+	if (previewMode.value === "half") return 40;
+	return middleSplitPercent.value;
+});
+
+const layoutStyle = computed(() => {
+	const fieldsWidth = effectiveFieldsCollapsed.value ? "44px" : "280px";
+	const settingsWidth = effectiveSettingsCollapsed.value ? "44px" : "280px";
+	const split = effectiveMiddleSplit.value;
+	const layoutWidth = `minmax(320px, ${split}fr)`;
+	const previewWidth = `minmax(360px, ${100 - split}fr)`;
+
+	return {
+		gridTemplateColumns: `${fieldsWidth} ${layoutWidth} 10px ${previewWidth} ${settingsWidth}`,
+	};
+});
 
 onMounted(async () => {
+	loadLayoutState();
 	const formatName = getCrispyBuilderFormatName();
 	if (formatName) await store.fetch(formatName);
 	window.addEventListener("keydown", handleHistoryShortcuts);
@@ -39,7 +208,10 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
 	window.removeEventListener("keydown", handleHistoryShortcuts);
+	resizeCleanup?.();
 });
+
+watch([fieldsCollapsed, settingsCollapsed, middleSplitPercent, previewMode], saveLayoutState);
 
 function handleHistoryShortcuts(event: KeyboardEvent) {
 	if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
@@ -55,6 +227,126 @@ function handleHistoryShortcuts(event: KeyboardEvent) {
 	}
 }
 
+function clamp(value: number, min: number, max: number) {
+	return Math.min(max, Math.max(min, value));
+}
+
+function isPreviewMode(value: unknown): value is PreviewMode {
+	return value === "normal" || value === "half" || value === "full";
+}
+
+function loadLayoutState() {
+	if (typeof window === "undefined") return;
+	try {
+		const raw = window.localStorage.getItem(STORAGE_KEY);
+		if (!raw) return;
+		const parsed = JSON.parse(raw) as Partial<BuilderLayoutState>;
+		fieldsCollapsed.value =
+			typeof parsed.fieldsCollapsed === "boolean"
+				? parsed.fieldsCollapsed
+				: defaultLayoutState.fieldsCollapsed;
+		settingsCollapsed.value =
+			typeof parsed.settingsCollapsed === "boolean"
+				? parsed.settingsCollapsed
+				: defaultLayoutState.settingsCollapsed;
+		middleSplitPercent.value = Number.isFinite(parsed.middleSplitPercent)
+			? clamp(Number(parsed.middleSplitPercent), MIN_SPLIT, MAX_SPLIT)
+			: defaultLayoutState.middleSplitPercent;
+		previewMode.value = isPreviewMode(parsed.previewMode)
+			? parsed.previewMode
+			: defaultLayoutState.previewMode;
+	} catch {
+		fieldsCollapsed.value = defaultLayoutState.fieldsCollapsed;
+		settingsCollapsed.value = defaultLayoutState.settingsCollapsed;
+		middleSplitPercent.value = defaultLayoutState.middleSplitPercent;
+		previewMode.value = defaultLayoutState.previewMode;
+	}
+	previewZoomMode.value = "fit";
+	previewZoomPercent.value = 100;
+}
+
+function saveLayoutState() {
+	if (typeof window === "undefined") return;
+	try {
+		const payload: BuilderLayoutState = {
+			fieldsCollapsed: fieldsCollapsed.value,
+			settingsCollapsed: settingsCollapsed.value,
+			middleSplitPercent: middleSplitPercent.value,
+			previewMode: previewMode.value,
+		};
+		window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+	} catch {
+		// Layout persistence is best-effort; editing should continue without storage.
+	}
+}
+
+function toggleFieldsPane() {
+	fieldsCollapsed.value = !effectiveFieldsCollapsed.value;
+	if (previewMode.value !== "normal") previewMode.value = "normal";
+}
+
+function toggleSettingsPane() {
+	settingsCollapsed.value = !effectiveSettingsCollapsed.value;
+	if (previewMode.value !== "normal") previewMode.value = "normal";
+}
+
+function setPreviewMode(value: PreviewMode) {
+	previewMode.value = value;
+}
+
+function setPreviewZoomMode(value: PreviewZoomMode) {
+	previewZoomMode.value = value;
+}
+
+function setPreviewZoomPercent(value: number) {
+	previewZoomPercent.value = clamp(value, 25, 200);
+}
+
+function resetMiddleSplit() {
+	middleSplitPercent.value = defaultLayoutState.middleSplitPercent;
+	if (previewMode.value !== "normal") previewMode.value = "normal";
+}
+
+function onResizePointerDown(event: PointerEvent) {
+	const root = (event.currentTarget as HTMLElement | null)?.closest("#crispy-print-root");
+	if (!root) return;
+	event.preventDefault();
+	previewMode.value = "normal";
+	isResizing.value = true;
+	const middlePanes = root.querySelectorAll<HTMLElement>(".pane--layout, .pane--preview");
+	const layoutPane = middlePanes[0];
+	const previewPane = middlePanes[1];
+	const layoutRect = layoutPane?.getBoundingClientRect();
+	const previewRect = previewPane?.getBoundingClientRect();
+	if (!layoutRect || !previewRect) {
+		isResizing.value = false;
+		return;
+	}
+	const start = layoutRect.left;
+	const total = previewRect.right - layoutRect.left;
+	if (total <= 0) {
+		isResizing.value = false;
+		return;
+	}
+
+	const onMove = (moveEvent: PointerEvent) => {
+		const next = ((moveEvent.clientX - start) / total) * 100;
+		middleSplitPercent.value = clamp(next, MIN_SPLIT, MAX_SPLIT);
+	};
+	const onUp = () => {
+		isResizing.value = false;
+		resizeCleanup?.();
+		resizeCleanup = null;
+	};
+	resizeCleanup?.();
+	window.addEventListener("pointermove", onMove);
+	window.addEventListener("pointerup", onUp, { once: true });
+	resizeCleanup = () => {
+		window.removeEventListener("pointermove", onMove);
+		window.removeEventListener("pointerup", onUp);
+	};
+}
+
 // Watch for route changes
 if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	frappe.router.on("change", async () => {
@@ -68,8 +360,7 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 /* CrispyPFB.vue */
 .crispy-layout {
 	display: grid;
-	grid-template-columns: 280px minmax(0, 1fr) minmax(0, 1fr) 280px;
-	gap: 16px;
+	gap: 12px;
 	background: #fff;
 	padding: 16px;
 	align-items: stretch;
@@ -77,24 +368,167 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	height: calc(100vh - 60px);
 }
 
+.crispy-layout--resizing {
+	user-select: none;
+	cursor: col-resize;
+}
+
+.pane-shell {
+	position: relative;
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+}
+
+.pane-shell--collapsed {
+	border: 1px solid #e2e8f0;
+	background: #f8fafc;
+	overflow: hidden;
+}
+
 .pane {
 	min-height: 0;
 	background: #fff;
+	min-width: 0;
 }
 
 .pane--fields {
-	grid-column-start: 1;
+	width: 100%;
 }
 
 .pane--layout {
 	grid-column-start: 2;
+	overflow: hidden;
 }
 
 .pane--preview {
-	grid-column-start: 3;
+	grid-column-start: 4;
+	overflow: hidden;
 }
 
 .pane--settings {
-	grid-column-start: 4;
+	width: 100%;
+}
+
+.pane-toggle {
+	width: 28px;
+	height: 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid transparent;
+	background: transparent;
+	color: #4b5563;
+	border-radius: 6px;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: none;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.pane-toggle--inline {
+	position: static;
+	flex: 0 0 auto;
+	margin-left: 2px;
+}
+
+.pane-toggle--settings.pane-toggle--inline {
+	margin-left: 0;
+	margin-right: 2px;
+}
+
+.pane-toggle:hover {
+	background: transparent;
+	border-color: transparent;
+	color: #0f172a;
+}
+
+.pane-toggle:focus-visible {
+	outline: 2px solid #2563eb;
+	outline-offset: 2px;
+}
+
+.pane-toggle__icon {
+	display: none;
+	align-items: center;
+	justify-content: center;
+}
+
+.pane-toggle .es-icon {
+	flex: 0 0 auto;
+	--icon-stroke: currentColor;
+	--icon-fill: transparent;
+}
+
+.pane-toggle:hover .pane-toggle__placeholder,
+.pane-toggle:focus-visible .pane-toggle__placeholder {
+	display: none;
+}
+
+.pane-toggle:hover .pane-toggle__icon,
+.pane-toggle:focus-visible .pane-toggle__icon {
+	display: inline-flex;
+}
+
+.pane-rail {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 14px;
+	padding: 10px 0;
+	color: #475569;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.pane-rail__label {
+	display: inline-flex;
+	writing-mode: vertical-rl;
+	transform: rotate(180deg);
+	line-height: 1;
+	margin-top: 2px;
+}
+
+.pane-toggle--rail {
+	position: static;
+	flex: 0 0 auto;
+}
+
+.middle-resize-handle {
+	grid-column-start: 3;
+	border: 0;
+	padding: 0;
+	width: 10px;
+	min-width: 10px;
+	height: 100%;
+	background: transparent;
+	cursor: col-resize;
+	position: relative;
+}
+
+.middle-resize-handle::before {
+	content: "";
+	position: absolute;
+	top: 8px;
+	bottom: 8px;
+	left: 4px;
+	width: 2px;
+	border-radius: 9999px;
+	background: #cbd5e1;
+}
+
+.middle-resize-handle:hover::before,
+.middle-resize-handle:focus-visible::before,
+.crispy-layout--resizing .middle-resize-handle::before {
+	background: #64748b;
+}
+
+.middle-resize-handle:focus-visible {
+	outline: 2px solid #2563eb;
+	outline-offset: 2px;
 }
 </style>

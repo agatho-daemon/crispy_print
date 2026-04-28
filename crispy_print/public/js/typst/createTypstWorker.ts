@@ -12,8 +12,9 @@ export interface TypstWorkerHandle {
 export function createTypstWorker(): TypstWorkerHandle {
 	const baseUrl = window.location?.origin || ""
 	const enableWorkerLogs = Boolean(
-		(window as any).CRISPY_DEBUG ||
-			((window as any).frappe?.boot && (window as any).frappe.boot.developer_mode)
+		(window as any).CRISPY_DEBUG === true ||
+			(window as any).CRISPY_DEBUG === "true" ||
+			(window as any).CRISPY_DEBUG === 1
 	)
 	const workerCode = `
 const ENABLE_WORKER_LOGS = ${JSON.stringify(enableWorkerLogs)};

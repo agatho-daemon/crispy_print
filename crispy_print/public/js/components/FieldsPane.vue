@@ -34,6 +34,7 @@
 						</ul>
 					</div>
 				</div>
+				<slot name="header-actions"></slot>
 			</div>
 		</div>
 		<div class="fields-pane__search-area">
@@ -162,6 +163,22 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
+	border-color: transparent !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: #334155;
+	font-size: 13px;
+	font-weight: 500;
+	transition: color 0.15s ease, font-size 0.15s ease, font-weight 0.15s ease;
+}
+
+.fields-pane__help-btn:hover,
+.fields-pane__help-btn:focus-visible {
+	border-color: transparent !important;
+	background: transparent !important;
+	color: #0f172a;
+	font-size: 14px;
+	font-weight: 700;
 }
 
 .fields-pane__help {

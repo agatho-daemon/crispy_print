@@ -1,0 +1,159 @@
+import { mount } from "@vue/test-utils";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { nextTick, ref } from "vue";
+import CrispyPFB from "../../pages/CrispyPFB.vue";
+
+const STORAGE_KEY = "crispy-print:format-builder-layout:v1";
+let storage: Record<string, string>;
+
+const makeStore = (): Record<string, unknown> => ({
+	fields: ref([]),
+	reportBuilderFields: ref([]),
+	reportBuilderConfig: ref({
+		show_filters: true,
+		show_summary: true,
+		include_total_row: true,
+	}),
+	isReportMode: ref(false),
+	loading: ref(false),
+	pageSettings: ref({}),
+	rawTypst: ref(false),
+	markDirty: vi.fn(),
+	fetch: vi.fn(async () => {}),
+});
+
+vi.mock("../../composables/useStore", () => ({
+	useStore: vi.fn(),
+}));
+
+vi.mock("../../utils/routes", () => ({
+	getCrispyBuilderFormatName: vi.fn((): string | null => null),
+}));
+
+async function mountBuilder() {
+	const { useStore } = await import("../../composables/useStore");
+	(useStore as any).mockReturnValue(makeStore());
+
+	const wrapper = mount(CrispyPFB, {
+		global: {
+			stubs: {
+				FieldsPane: {
+					template:
+						'<div class="pane pane--fields" data-test="fields-pane"><slot name="header-actions" /></div>',
+				},
+				LayoutPane: { template: '<div class="pane pane--layout" data-test="layout-pane" />' },
+				TypstCodePane: { template: '<div data-test="typst-pane" />' },
+				PreviewPane: { template: '<div class="pane pane--preview" data-test="preview-pane" />' },
+				SettingsPane: {
+					template:
+						'<div class="pane pane--settings" data-test="settings-pane"><slot name="header-actions" /></div>',
+				},
+			},
+		},
+	});
+	await nextTick();
+	return wrapper;
+}
+
+describe("CrispyPFB persisted pane layout", () => {
+	beforeEach(() => {
+		storage = {};
+		Object.defineProperty(window, "localStorage", {
+			value: {
+				getItem: vi.fn((key: string) => storage[key] ?? null),
+				setItem: vi.fn((key: string, value: string) => {
+					storage[key] = String(value);
+				}),
+				removeItem: vi.fn((key: string) => {
+					delete storage[key];
+				}),
+				clear: vi.fn(() => {
+					storage = {};
+				}),
+			},
+			configurable: true,
+		});
+		vi.clearAllMocks();
+	});
+
+	it("starts collapsed, toggles side panes, and persists expanded state", async () => {
+		const wrapper = await mountBuilder();
+
+		expect(wrapper.find(".pane-shell--fields").classes()).toContain(
+			"pane-shell--collapsed"
+		);
+
+		await wrapper.find(".pane-toggle--fields").trigger("click");
+		await nextTick();
+
+		expect(wrapper.find(".pane-shell--fields").classes()).not.toContain(
+			"pane-shell--collapsed"
+		);
+		const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
+		expect(stored.fieldsCollapsed).toBe(false);
+	});
+
+	it("loads persisted layout state and clamps invalid split values", async () => {
+		window.localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({
+				fieldsCollapsed: true,
+				settingsCollapsed: true,
+				middleSplitPercent: 95,
+				previewMode: "normal",
+			})
+		);
+
+		const wrapper = await mountBuilder();
+		await nextTick();
+
+		expect(wrapper.find(".pane-shell--fields").classes()).toContain(
+			"pane-shell--collapsed"
+		);
+		const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
+		expect(stored.middleSplitPercent).toBe(70);
+		expect(stored.previewZoomMode).toBeUndefined();
+		expect(stored.previewZoomPercent).toBeUndefined();
+	});
+
+	it("falls back safely when persisted state is malformed", async () => {
+		window.localStorage.setItem(STORAGE_KEY, "{bad json");
+
+		const wrapper = await mountBuilder();
+		await nextTick();
+
+		expect(wrapper.find(".pane-shell--fields").classes()).toContain(
+			"pane-shell--collapsed"
+		);
+		expect(wrapper.attributes("style")).toContain("50fr");
+	});
+
+	it("drags and clamps the middle split, then resets on double click", async () => {
+		const wrapper = await mountBuilder();
+		const layout = wrapper.find(".pane--layout").element as HTMLElement;
+		const preview = wrapper.find(".pane--preview").element as HTMLElement;
+		layout.getBoundingClientRect = vi.fn(
+			() => ({ left: 100, right: 500, top: 0, bottom: 0, width: 400, height: 0 }) as DOMRect
+		);
+		preview.getBoundingClientRect = vi.fn(
+			() => ({ left: 510, right: 900, top: 0, bottom: 0, width: 390, height: 0 }) as DOMRect
+		);
+
+		await wrapper.find(".middle-resize-handle").trigger("pointerdown", {
+			clientX: 500,
+			button: 0,
+		});
+		window.dispatchEvent(new MouseEvent("pointermove", { clientX: 1000 }) as any);
+		window.dispatchEvent(new MouseEvent("pointerup") as any);
+		await nextTick();
+
+		let stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
+		expect(stored.middleSplitPercent).toBe(70);
+
+		await wrapper.find(".middle-resize-handle").trigger("dblclick");
+		await nextTick();
+
+		stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
+		expect(stored.middleSplitPercent).toBe(50);
+	});
+});

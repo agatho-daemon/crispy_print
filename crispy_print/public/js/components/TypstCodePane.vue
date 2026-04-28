@@ -160,18 +160,23 @@ function onDrop(event: DragEvent) {
 	width: 24px;
 	height: 24px;
 	border-radius: 9999px;
-	border: 1px solid #e2e8f0;
-	background: #fff;
-	color: #4f46e5;
-	font-size: 14px;
-	font-weight: 600;
+	border: 1px solid transparent;
+	background: transparent;
+	color: #334155;
+	font-size: 13px;
+	font-weight: 500;
 	cursor: pointer;
-	transition: background-color 0.2s ease, border-color 0.2s ease;
+	box-shadow: none;
+	transition: color 0.15s ease, font-size 0.15s ease, font-weight 0.15s ease;
 }
 
-.typst-code-pane__help-btn:hover {
-	background: #eef2ff;
-	border-color: #c7d2fe;
+.typst-code-pane__help-btn:hover,
+.typst-code-pane__help-btn:focus-visible {
+	border-color: transparent;
+	background: transparent;
+	color: #0f172a;
+	font-size: 14px;
+	font-weight: 700;
 }
 
 .typst-code-pane__help-popover {
