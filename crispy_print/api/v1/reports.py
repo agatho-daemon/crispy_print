@@ -1,15 +1,24 @@
 import json
 import re
+from copy import copy
 from pathlib import Path
 
 import frappe
 from frappe import _
 
+from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
+	resolve_effective_presentation_settings,
+)
+
 from .compile import compile_typst
 from .formats import get_custom_report_formats
+from .security import enforce_rate_limit
 from .typst_doc import _build_typst_document
 
 MAX_REPORT_RESULT_ROWS = 5000
+MAX_REPORT_COLUMNS = 100
+MAX_REPORT_CELL_BYTES = 2 * 1024
+MAX_REPORT_PAYLOAD_BYTES = 512 * 1024
 IMAGE_EXTENSIONS = {
 	"png",
 	"jpg",
@@ -23,6 +32,82 @@ IMAGE_EXTENSIONS = {
 	"avif",
 }
 _IMAGE_SUFFIX_RE = re.compile(r"\.([A-Za-z0-9]+)(?:[#?].*)?$")
+
+
+class ReportTruncationTracker:
+	def __init__(self):
+		self.columns_truncated = False
+		self.original_column_count = 0
+		self.returned_column_count = 0
+		self.cells_truncated_count = 0
+		self.truncated_fieldnames: set[str] = set()
+
+	def mark_columns(self, original_count: int, returned_count: int) -> None:
+		self.original_column_count = original_count
+		self.returned_column_count = returned_count
+		self.columns_truncated = returned_count < original_count
+
+	def mark_cell(self, fieldname: str | None = None) -> None:
+		self.cells_truncated_count += 1
+		if fieldname:
+			self.truncated_fieldnames.add(str(fieldname))
+
+	def as_dict(self) -> dict:
+		return {
+			"columns_truncated": self.columns_truncated,
+			"original_column_count": self.original_column_count,
+			"returned_column_count": self.returned_column_count,
+			"cells_truncated_count": self.cells_truncated_count,
+			"cells_truncated": self.cells_truncated_count > 0,
+			"truncated_fieldnames": sorted(self.truncated_fieldnames),
+		}
+
+
+def _ensure_report_read_permission(report: str) -> None:
+	report_doc = frappe.get_doc("Report", report)
+	report_doc.check_permission("read")
+
+
+def _build_truncation_payload(
+	*,
+	original_rows: int,
+	returned_rows: int,
+	max_rows: int | None,
+	result_truncated: bool,
+	columns_truncated: bool,
+	original_column_count: int,
+	returned_column_count: int,
+	cells_truncated_count: int,
+	truncated_fieldnames: list[str] | None = None,
+) -> dict:
+	return {
+		"is_truncated": bool(result_truncated or columns_truncated or cells_truncated_count),
+		"rows": {
+			"truncated": bool(result_truncated),
+			"original": int(original_rows),
+			"returned": int(returned_rows),
+			"max": max_rows,
+		},
+		"columns": {
+			"truncated": bool(columns_truncated),
+			"original": int(original_column_count),
+			"returned": int(returned_column_count),
+			"max": MAX_REPORT_COLUMNS,
+		},
+		"cells_truncated_count": int(cells_truncated_count),
+		"truncated_fieldnames": list(truncated_fieldnames or []),
+	}
+
+
+def _throw_if_report_payload_too_large(payload: object, label: str = "Report payload") -> None:
+	try:
+		size = len(json.dumps(payload, default=str, separators=(",", ":")).encode("utf-8"))
+	except Exception:
+		size = len(str(payload).encode("utf-8"))
+	if size > MAX_REPORT_PAYLOAD_BYTES:
+		frappe.throw(
+			_("{0} exceeds the maximum size of {1} KB.").format(label, MAX_REPORT_PAYLOAD_BYTES // 1024)
+		)
 
 
 def _is_image_asset_value(value: str) -> bool:
@@ -98,6 +183,7 @@ def generate_report_pdf(
 			frappe.throw(_("Invalid filters format"))
 	if not isinstance(filters, dict):
 		filters = {}
+	_ensure_report_read_permission(report)
 
 	# Parse column_config if it's a string
 	column_filter = None
@@ -110,22 +196,34 @@ def generate_report_pdf(
 		elif isinstance(column_config, list):
 			column_filter = column_config
 
-	# Get report data
-	report_data = _get_report_data(report, filters or {})
-
 	# Get or auto-select format
 	if not format_name:
 		format_name = _get_format_for_report(report)
 
 	format_doc = frappe.get_doc("Crispy Format", format_name)
+	format_doc.check_permission("read")
+
+	# Get report data only after the selected format is readable.
+	report_data = _get_report_data(report, filters or {})
 
 	# Prepare data for Typst
 	typst_data = _prepare_typst_report_data(
 		report, report_data, filters if cint(include_filters) else None, column_filter
 	)
+	_throw_if_report_payload_too_large(typst_data)
 
-	# Add page settings
-	typst_data["page_settings"] = {"orientation": orientation.lower() if orientation else "landscape"}
+	# Add canonical presentation settings.
+	format_presentation_settings = {}
+	if format_doc.get("presentation_settings"):
+		try:
+			format_presentation_settings = json.loads(format_doc.get("presentation_settings") or "{}")
+		except json.JSONDecodeError:
+			format_presentation_settings = {}
+	format_presentation_settings = resolve_effective_presentation_settings(format_presentation_settings)
+	format_presentation_settings.setdefault("page", {})
+	format_presentation_settings["page"]["orientation"] = orientation.lower() if orientation else "landscape"
+	report_presentation_settings = _normalize_report_presentation_settings(format_presentation_settings)
+	typst_data["presentation_settings"] = report_presentation_settings
 	normalized_typst_data, asset_files = _normalize_image_assets(typst_data)
 
 	# Build Typst document using unified compilation
@@ -138,7 +236,30 @@ def generate_report_pdf(
 	# Compile to PDF (write to public files and return URL)
 	result = compile_typst(typst_source, output_format="pdf", asset_files=asset_files, return_url=1)
 
-	return {"pdf_url": result.get("pdf_url"), "status": "success"}
+	report_truncation = normalized_typst_data.get("truncation") or {}
+	return {
+		"pdf_url": result.get("pdf_url"),
+		"status": "success",
+		"truncation": _build_truncation_payload(
+			original_rows=normalized_typst_data.get(
+				"original_row_count", len(normalized_typst_data.get("rows") or [])
+			),
+			returned_rows=len(normalized_typst_data.get("rows") or []),
+			max_rows=normalized_typst_data.get("max_rows"),
+			result_truncated=bool(normalized_typst_data.get("result_truncated")),
+			columns_truncated=bool(report_truncation.get("columns_truncated")),
+			original_column_count=int(
+				report_truncation.get("original_column_count")
+				or len(normalized_typst_data.get("columns") or [])
+			),
+			returned_column_count=int(
+				report_truncation.get("returned_column_count")
+				or len(normalized_typst_data.get("columns") or [])
+			),
+			cells_truncated_count=int(report_truncation.get("cells_truncated_count") or 0),
+			truncated_fieldnames=report_truncation.get("truncated_fieldnames") or [],
+		),
+	}
 
 
 def get_report_typst_source(
@@ -151,7 +272,7 @@ def get_report_typst_source(
 	include_total_row: int = 1,
 	include_chart: int = 1,
 	orientation: str | None = None,
-	page_settings: dict | str | None = None,
+	presentation_settings: dict | str | None = None,
 	chart_svg: str | None = None,
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
@@ -195,6 +316,8 @@ def get_report_typst_source(
 			filters = {}
 	if not isinstance(filters, dict):
 		filters = {}
+	if not preview_data_dict:
+		_ensure_report_read_permission(report)
 
 	# Fill missing required filters with defaults only for live report previews.
 	if not preview_data_dict:
@@ -211,21 +334,31 @@ def get_report_typst_source(
 		elif isinstance(column_config, list):
 			column_filter = column_config
 
-	# Parse page settings if string
-	page_settings_dict = None
-	if page_settings:
-		if isinstance(page_settings, str):
+	# Parse canonical presentation settings.
+	presentation_settings_dict = None
+	if presentation_settings:
+		if isinstance(presentation_settings, str):
 			try:
-				page_settings_dict = json.loads(page_settings)
+				presentation_settings_dict = json.loads(presentation_settings)
 			except json.JSONDecodeError:
-				page_settings_dict = None
-		elif isinstance(page_settings, dict):
-			page_settings_dict = page_settings
+				presentation_settings_dict = None
+		elif isinstance(presentation_settings, dict):
+			presentation_settings_dict = presentation_settings
+	presentation_settings_dict = _normalize_report_presentation_settings(
+		resolve_effective_presentation_settings(presentation_settings_dict),
+		(orientation or "landscape").lower(),
+	)
 
 	# Get format document
 	format_doc = frappe.get_doc("Crispy Format", format_name)
+	format_doc.check_permission("read")
+	format_doc_for_render = copy(format_doc)
 	if isinstance(typst_code_override, str) and typst_code_override.strip():
-		format_doc.typst_code = typst_code_override
+		# Raw Typst overrides are trusted editor input. They are concatenated
+		# directly into the generated Typst, but only writable callers can supply
+		# them and Typst execution remains sandboxed.
+		format_doc.check_permission("write")
+		format_doc_for_render.typst_code = typst_code_override
 
 	# Prepare data for Typst
 	if preview_data_dict:
@@ -243,6 +376,12 @@ def get_report_typst_source(
 		typst_data.setdefault("max_rows", None)
 		typst_data.setdefault("chart", {})
 		typst_data.setdefault("skip_total_row", False)
+		typst_data["columns"] = [
+			{**col, **_normalize_typst_column_width_parts(col.get("width", "auto"))}
+			if isinstance(col, dict)
+			else col
+			for col in typst_data.get("columns") or []
+		]
 	else:
 		report_data = _get_report_data(report, filters or {})
 		typst_data = _prepare_typst_report_data(
@@ -254,6 +393,8 @@ def get_report_typst_source(
 			include_total_row=bool(cint(include_total_row)),
 		)
 
+	_throw_if_report_payload_too_large(typst_data)
+
 	# Limit rows for preview
 	preview_truncated = False
 	preview_original_rows = len(typst_data.get("rows") or [])
@@ -262,39 +403,36 @@ def get_report_typst_source(
 		typst_data["rows"] = typst_data["rows"][:limit]
 		typst_data["total_rows"] = limit
 
-	# Add page settings (default to landscape for reports)
+	# Add presentation settings (default to landscape for reports)
 	orientation_value = (orientation or "landscape").lower()
-	if page_settings_dict:
-		typst_data["page_settings"] = {
-			**page_settings_dict,
-			"orientation": page_settings_dict.get("orientation", orientation_value),
-		}
-	else:
-		typst_data["page_settings"] = {"orientation": orientation_value}
+	presentation_settings_dict["page"]["orientation"] = (
+		presentation_settings_dict.get("page", {}).get("orientation") or orientation_value
+	)
+	typst_data["presentation_settings"] = presentation_settings_dict
 
 	# Attach chart placeholder for Typst if chart rendering is enabled and SVG is provided.
 	if bool(cint(include_chart)) and isinstance(chart_svg, str) and chart_svg.strip():
 		typst_data["chart_svg"] = "report_chart.svg"
-		code = format_doc.typst_code or ""
+		code = format_doc_for_render.typst_code or ""
 		if "data.chart_svg" not in code:
-			report_builder = page_settings_dict.get("report_builder", {}) if page_settings_dict else {}
-			chart_enabled = bool(report_builder.get("chart_enabled", True))
-			chart_card_border = bool(report_builder.get("chart_card_border", True))
+			report_settings = presentation_settings_dict.get("report") or {}
+			chart_enabled = bool(report_settings.get("chart_enabled", True))
+			chart_card_border = bool(report_settings.get("chart_card_border", True))
 			chart_width_percent = max(
 				10,
-				min(100, int(report_builder.get("chart_width_percent", 100) or 100)),
+				min(100, int(report_settings.get("chart_width_percent", 100) or 100)),
 			)
 			chart_max_height_pt = max(
 				60,
-				min(600, int(report_builder.get("chart_max_height_pt", 220) or 220)),
+				min(600, int(report_settings.get("chart_max_height_pt", 220) or 220)),
 			)
 			chart_spacing_top_pt = max(
 				0,
-				min(120, int(report_builder.get("chart_spacing_top_pt", 0) or 0)),
+				min(120, int(report_settings.get("chart_spacing_top_pt", 0) or 0)),
 			)
 			chart_spacing_bottom_pt = max(
 				0,
-				min(120, int(report_builder.get("chart_spacing_bottom_pt", 12) or 12)),
+				min(120, int(report_settings.get("chart_spacing_bottom_pt", 12) or 12)),
 			)
 
 			if chart_enabled:
@@ -323,11 +461,11 @@ def get_report_typst_source(
 				for marker in ("// TABLE SETUP", "#table("):
 					pos = code.find(marker)
 					if pos != -1:
-						format_doc.typst_code = code[:pos] + chart_block + code[pos:]
+						format_doc_for_render.typst_code = code[:pos] + chart_block + code[pos:]
 						inserted = True
 						break
 				if not inserted:
-					format_doc.typst_code = code + chart_block
+					format_doc_for_render.typst_code = code + chart_block
 
 	# Build Typst document using unified compilation
 	preamble_override = (
@@ -336,42 +474,109 @@ def get_report_typst_source(
 		else None
 	)
 	normalized_typst_data, asset_files = _normalize_image_assets(typst_data)
-	page_settings_source = page_settings_dict or {}
-	letterhead_image_path = (
-		page_settings_source.get("letterhead_image") or page_settings_source.get("letterheadImage") or ""
-	)
-	logo_image_path = (
-		((page_settings_source.get("logo") or {}).get("image") or "") if page_settings_source else ""
-	)
+	branding_settings = presentation_settings_dict.get("branding") or {}
+	letterhead_image_path = branding_settings.get("letterhead_image") or ""
+	logo_image_path = (branding_settings.get("logo") or {}).get("image") or ""
 	letterhead_filename = Path(letterhead_image_path).name if letterhead_image_path else None
 	logo_filename = Path(logo_image_path).name if logo_image_path else None
-	page_settings_block = _build_report_page_settings_block(
-		page_settings_dict,
+	presentation_settings_block = _build_report_presentation_settings_block(
+		presentation_settings_dict,
 		letterhead_filename,
 		logo_filename,
 	)
 	typst_source = _build_typst_document(
-		format_doc=format_doc,
+		format_doc=format_doc_for_render,
 		data_dict=normalized_typst_data,
 		variable_name="data",  # Reports use #data.* namespace
-		page_settings_block=page_settings_block,
+		presentation_settings_block=presentation_settings_block,
 		preamble_override=preamble_override,
 	)
 
-	result_truncated = bool(normalized_typst_data.get("result_truncated"))
-	is_truncated = bool(preview_truncated or result_truncated)
-	truncation_reason = "preview_limit" if preview_truncated else ("result_cap" if result_truncated else "")
+	report_truncation = normalized_typst_data.get("truncation") or {}
+	result_truncated = bool(preview_truncated or normalized_typst_data.get("result_truncated"))
 
 	return {
 		"typst_source": typst_source,
-		"truncation": {
-			"is_truncated": is_truncated,
-			"reason": truncation_reason,
-			"original_rows": normalized_typst_data.get("original_row_count", preview_original_rows),
-			"returned_rows": len(normalized_typst_data.get("rows") or []),
-			"max_rows": normalized_typst_data.get("max_rows") or (limit if limit else None),
-		},
+		"truncation": _build_truncation_payload(
+			original_rows=normalized_typst_data.get("original_row_count", preview_original_rows),
+			returned_rows=len(normalized_typst_data.get("rows") or []),
+			max_rows=limit
+			if preview_truncated
+			else (normalized_typst_data.get("max_rows") or (limit if limit else None)),
+			result_truncated=result_truncated,
+			columns_truncated=bool(report_truncation.get("columns_truncated")),
+			original_column_count=int(
+				report_truncation.get("original_column_count")
+				or len(normalized_typst_data.get("columns") or [])
+			),
+			returned_column_count=int(
+				report_truncation.get("returned_column_count")
+				or len(normalized_typst_data.get("columns") or [])
+			),
+			cells_truncated_count=int(report_truncation.get("cells_truncated_count") or 0),
+			truncated_fieldnames=report_truncation.get("truncated_fieldnames") or [],
+		),
 		"asset_files": asset_files,
+	}
+
+
+def compile_report_preview(
+	report: str,
+	format_name: str,
+	filters: dict | str | None = None,
+	column_config: list | str | None = None,
+	include_filters: int = 0,
+	include_summary: int = 1,
+	include_total_row: int = 1,
+	include_chart: int = 1,
+	orientation: str | None = None,
+	presentation_settings: dict | str | None = None,
+	chart_svg: str | None = None,
+	typst_preamble_override: str | None = None,
+	typst_code_override: str | None = None,
+	preview_data: dict | str | None = None,
+	limit: int = 50,
+	asset_files: list | str | None = None,
+) -> dict:
+	"""Build and compile report preview SVG in one request."""
+	source_payload = get_report_typst_source(
+		report=report,
+		format_name=format_name,
+		filters=filters,
+		column_config=column_config,
+		include_filters=include_filters,
+		include_summary=include_summary,
+		include_total_row=include_total_row,
+		include_chart=include_chart,
+		orientation=orientation,
+		presentation_settings=presentation_settings,
+		chart_svg=chart_svg,
+		typst_preamble_override=typst_preamble_override,
+		typst_code_override=typst_code_override,
+		preview_data=preview_data,
+		limit=limit,
+	)
+	compile_asset_files = list(source_payload.get("asset_files") or [])
+	if asset_files:
+		if isinstance(asset_files, str):
+			try:
+				asset_files = json.loads(asset_files)
+			except json.JSONDecodeError:
+				asset_files = []
+		if isinstance(asset_files, list):
+			compile_asset_files.extend(str(item) for item in asset_files if item)
+	compile_asset_files = list(dict.fromkeys(compile_asset_files))
+	result = compile_typst(
+		source_payload.get("typst_source") or "",
+		output_format="svg",
+		asset_files=compile_asset_files,
+		chart_svg=chart_svg,
+	)
+	return {
+		**result,
+		"typst_source": source_payload.get("typst_source") or "",
+		"truncation": source_payload.get("truncation") or {},
+		"asset_files": compile_asset_files,
 	}
 
 
@@ -421,6 +626,9 @@ def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
 
 def _get_report_data(report: str, filters: dict, max_rows: int | None = MAX_REPORT_RESULT_ROWS) -> dict:
 	"""Execute report and return raw data"""
+	_ensure_report_read_permission(report)
+	enforce_rate_limit("report_data", limit=20, window_seconds=60)
+	enforce_rate_limit(f"report_data:{frappe.scrub(report)}", limit=10, window_seconds=60)
 	# Always run live for Crispy preview/PDF so prepared-report queue state
 	# does not return empty placeholder payloads.
 	result = frappe.desk.query_report.run(
@@ -466,6 +674,7 @@ def _fill_default_report_filters(report: str, filters: dict) -> dict:
 		return filters
 
 	report_doc = frappe.get_doc("Report", report)
+	report_doc.check_permission("read")
 	report_filters = report_doc.filters or []
 	filled = dict(filters or {})
 
@@ -538,11 +747,20 @@ def _prepare_typst_report_data(
 	"""
 	from frappe.utils import cint, flt
 
+	truncation_tracker = ReportTruncationTracker()
 	columns = _normalize_columns(report_data["columns"])
 	rows = report_data["result"]
 
 	# Filter visible columns
 	visible_columns = [col for col in columns if col.get("label") and col.get("_id") != "_check"]
+	original_column_count = len(visible_columns)
+	if len(visible_columns) > MAX_REPORT_COLUMNS:
+		frappe.logger().warning(
+			f"[Crispy Print] Report {report} has {len(visible_columns)} visible columns; "
+			f"truncating to {MAX_REPORT_COLUMNS}"
+		)
+		visible_columns = visible_columns[:MAX_REPORT_COLUMNS]
+	truncation_tracker.mark_columns(original_column_count, len(visible_columns))
 	# Default width semantics are backend-owned: report metadata widths are ignored unless
 	# caller provides explicit column_config widths.
 	for col in visible_columns:
@@ -574,11 +792,12 @@ def _prepare_typst_report_data(
 	for col in visible_columns:
 		if col.get("fieldname") in width_map:
 			col["width"] = _normalize_typst_column_width(width_map[col.get("fieldname")])
+		col.update(_normalize_typst_column_width_parts(col.get("width")))
 
 	# Convert rows to dictionary for Typst
 	processed_rows = []
 	for index, row in enumerate(rows):
-		processed_rows.append(_prepare_row_data(row, visible_columns, index))
+		processed_rows.append(_prepare_row_data(row, visible_columns, index, truncation_tracker))
 	processed_rows = _enrich_report_rows_for_typst(report, processed_rows)
 	processed_rows = _mark_report_total_like_rows(report, processed_rows)
 	base_rows = [row for row in processed_rows if not row.get("is_total_row")]
@@ -635,6 +854,7 @@ def _prepare_typst_report_data(
 			"show_sales_person": show_sales_person,
 			"has_party_filter": bool(filters_map.get("party")),
 		},
+		"truncation": truncation_tracker.as_dict(),
 	}
 
 
@@ -756,16 +976,25 @@ def _enrich_report_rows_for_typst(report: str, rows: list[dict]) -> list[dict]:
 	if not payment_entry_names:
 		return rows
 
-	payment_entries = frappe.get_all(
-		"Payment Entry",
-		filters={"name": ["in", list(dict.fromkeys(payment_entry_names))]},
-		fields=["name", "party", "party_name"],
-	)
-	party_name_by_entry = {
-		entry["name"]: (entry.get("party_name") or entry.get("party") or "")
-		for entry in payment_entries
-		if entry.get("name")
-	}
+	unique_payment_entries = tuple(dict.fromkeys(payment_entry_names))
+	request_cache = getattr(frappe.local, "cache", None)
+	cache_key = ("crispy_print:payment_entry_party_names", unique_payment_entries)
+	party_name_by_entry = None
+	if isinstance(request_cache, dict):
+		party_name_by_entry = request_cache.get(cache_key)
+	if party_name_by_entry is None:
+		payment_entries = frappe.get_list(
+			"Payment Entry",
+			filters={"name": ["in", list(unique_payment_entries)]},
+			fields=["name", "party", "party_name"],
+		)
+		party_name_by_entry = {
+			entry["name"]: (entry.get("party_name") or entry.get("party") or "")
+			for entry in payment_entries
+			if entry.get("name")
+		}
+		if isinstance(request_cache, dict):
+			request_cache[cache_key] = party_name_by_entry
 
 	if not party_name_by_entry:
 		return rows
@@ -812,7 +1041,12 @@ def _mark_report_total_like_rows(report: str, rows: list[dict]) -> list[dict]:
 	return rows
 
 
-def _prepare_row_data(row, columns: list, index: int) -> dict:
+def _prepare_row_data(
+	row,
+	columns: list,
+	index: int,
+	truncation_tracker: ReportTruncationTracker | None = None,
+) -> dict:
 	"""Transform a row into a Typst row dict"""
 	out = {
 		"_idx": index,
@@ -840,13 +1074,16 @@ def _prepare_row_data(row, columns: list, index: int) -> dict:
 			if fieldname:
 				raw_value = row.get(fieldname)
 				value = _format_cell_value(raw_value, col, row)
+				value = _truncate_report_cell_value(value, fieldname, truncation_tracker)
 				value = _apply_tree_indent_to_value(
 					value,
 					indent=out.get("indent", 0),
 					is_first_cell=len(out["cells"]) == 0,
 				)
 				out[fieldname] = value
-				out[f"{fieldname}_raw"] = raw_value
+				out[f"{fieldname}_raw"] = _truncate_report_cell_value(
+					raw_value, fieldname, truncation_tracker
+				)
 				if col.get("fieldtype") == "Currency":
 					currency_display, amount_display = _split_currency_display(
 						value, row.get(col.get("options")) if isinstance(row, dict) else None
@@ -856,7 +1093,7 @@ def _prepare_row_data(row, columns: list, index: int) -> dict:
 				out["cells"].append(
 					{
 						"value": value,
-						"raw_value": raw_value,
+						"raw_value": _truncate_report_cell_value(raw_value, fieldname, truncation_tracker),
 						"fieldname": fieldname,
 						"label": col.get("label") or fieldname,
 						"is_numeric": bool(col.get("is_numeric")),
@@ -877,13 +1114,16 @@ def _prepare_row_data(row, columns: list, index: int) -> dict:
 			if fieldname and col_index is not None and col_index < len(row):
 				raw_value = row[col_index]
 				value = _format_cell_value(raw_value, col, row)
+				value = _truncate_report_cell_value(value, fieldname, truncation_tracker)
 				value = _apply_tree_indent_to_value(
 					value,
 					indent=out.get("indent", 0),
 					is_first_cell=len(out["cells"]) == 0,
 				)
 				out[fieldname] = value
-				out[f"{fieldname}_raw"] = raw_value
+				out[f"{fieldname}_raw"] = _truncate_report_cell_value(
+					raw_value, fieldname, truncation_tracker
+				)
 				if col.get("fieldtype") == "Currency":
 					currency_display, amount_display = _split_currency_display(value, None)
 					out[f"{fieldname}_currency_display"] = currency_display
@@ -891,7 +1131,7 @@ def _prepare_row_data(row, columns: list, index: int) -> dict:
 				out["cells"].append(
 					{
 						"value": value,
-						"raw_value": raw_value,
+						"raw_value": _truncate_report_cell_value(raw_value, fieldname, truncation_tracker),
 						"fieldname": fieldname,
 						"label": col.get("label") or fieldname,
 						"is_numeric": bool(col.get("is_numeric")),
@@ -905,6 +1145,27 @@ def _prepare_row_data(row, columns: list, index: int) -> dict:
 		return out
 
 	return out
+
+
+def _truncate_report_cell_value(
+	value,
+	fieldname: str | None = None,
+	truncation_tracker: ReportTruncationTracker | None = None,
+):
+	if value in (None, ""):
+		return value
+	if isinstance(value, int | float | bool):
+		return value
+	text = str(value)
+	if len(text.encode("utf-8")) <= MAX_REPORT_CELL_BYTES:
+		return value
+	truncated = text.encode("utf-8")[:MAX_REPORT_CELL_BYTES].decode("utf-8", errors="ignore")
+	if truncation_tracker:
+		truncation_tracker.mark_cell(fieldname)
+	frappe.logger().warning(
+		"[Crispy Print] Truncated oversized report cell" + (f" for field {fieldname}" if fieldname else "")
+	)
+	return f"{truncated}..."
 
 
 def _apply_tree_indent_to_value(value: str, indent: int, is_first_cell: bool) -> str:
@@ -994,6 +1255,25 @@ def _normalize_typst_column_width(width) -> str:
 	return "auto"
 
 
+def _normalize_typst_column_width_parts(width) -> dict:
+	"""Return a Typst-safe column width descriptor without requiring Typst eval()."""
+	import re
+
+	width_token = _normalize_typst_column_width(width)
+	if width_token == "auto":
+		return {"width": "auto", "width_kind": "auto", "width_value": None}
+
+	match = re.fullmatch(r"(\d+(?:\.\d+)?)(fr|pt|em|rem|%|cm|mm|in)", width_token)
+	if not match:
+		return {"width": "auto", "width_kind": "auto", "width_value": None}
+
+	value = float(match.group(1))
+	if value.is_integer():
+		value = int(value)
+
+	return {"width": width_token, "width_kind": match.group(2), "width_value": value}
+
+
 def _normalize_columns(columns: list) -> list:
 	"""Normalize report columns to a consistent format"""
 	normalized = []
@@ -1045,23 +1325,25 @@ def _get_format_for_report(report: str) -> str:
 	frappe.throw(_("No print format found for report '{0}'").format(report))
 
 
-def _build_report_page_settings_block(
-	page_settings: dict | None,
+def _build_report_presentation_settings_block(
+	presentation_settings: dict | None,
 	letterhead_filename: str | None,
 	logo_filename: str | None,
 ) -> str:
-	"""Build a #set page() block for report previews using page settings."""
-	page_settings = page_settings or {}
-	page_size = str(page_settings.get("pageSize") or "A4").lower()
+	"""Build a #set page() block for report previews using presentation settings."""
+	presentation_settings = _normalize_report_presentation_settings(presentation_settings) or {}
+	page = presentation_settings.get("page") or {}
+	branding = presentation_settings.get("branding") or {}
+	page_size = str(page.get("size") or "A4").lower()
 	# Reports default to landscape unless explicitly overridden
-	orientation = str(page_settings.get("orientation") or "landscape").lower()
-	margins = page_settings.get("margins") or {}
+	orientation = str(page.get("orientation") or "landscape").lower()
+	margins = page.get("margins") or {}
 	margin_top = margins.get("top", 25)
 	margin_bottom = margins.get("bottom", 20)
 	margin_left = margins.get("left", 20)
 	margin_right = margins.get("right", 20)
-	branding_mode = str(page_settings.get("brandingMode") or "none")
-	logo = page_settings.get("logo") or {}
+	branding_mode = str(branding.get("mode") or "none")
+	logo = branding.get("logo") or {}
 	logo_image = logo_filename or logo.get("image") or ""
 	logo_size = logo.get("size", 25)
 	logo_dx = logo.get("dx", 0)
@@ -1090,3 +1372,28 @@ def _build_report_page_settings_block(
 
 	lines.append(")")
 	return "\n".join(lines)
+
+
+def _normalize_report_presentation_settings(
+	settings: dict | None,
+	orientation: str = "landscape",
+) -> dict:
+	settings = settings or {}
+	page = dict(settings.get("page") or {})
+	page.setdefault("size", "A4")
+	page.setdefault("orientation", orientation)
+	page.setdefault("margins", {})
+	branding = dict(settings.get("branding") or {})
+	branding.setdefault("mode", "none")
+	branding.setdefault("letterhead", "")
+	branding.setdefault("letterhead_image", "")
+	branding.setdefault("logo", {})
+	return {
+		**settings,
+		"page": page,
+		"branding": branding,
+		"typography": settings.get("typography") or {},
+		"table": settings.get("table") or {},
+		"qr": settings.get("qr") or {},
+		"report": settings.get("report") or {},
+	}

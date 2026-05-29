@@ -33,4 +33,38 @@ describe("layout round trip", () => {
 		expect(parsed?.sections?.[0]?.columns?.[0]?.fields?.length).toBe(1)
 		expect(normalized.sections[0].columns[0].fields[0].align).toBe("right")
 	})
+
+	it("preserves Typst Block references but strips transient code", () => {
+		const layout = {
+			sections: [
+				{
+					label: "Blocks",
+					columns: [
+						{
+							label: "",
+							fields: [
+								{
+									fieldname: "_crispy_typst_block",
+									fieldtype: "Crispy Typst Block",
+									label: "Crispy Typst Block",
+									crispy_typst_block: "invoice_header",
+									crispy_typst_block_name: "Invoice Header",
+									crispy_typst_block_code: "#text[#doc.customer_name]",
+								},
+							],
+						},
+					],
+				},
+			],
+		}
+
+		const serialized = serializeLayout(layout as any)
+		const parsed = deserializeLayout(serialized)
+		const field = parsed?.sections?.[0]?.columns?.[0]?.fields?.[0] as any
+
+		expect(serialized).toContain("invoice_header")
+		expect(serialized).not.toContain("crispy_typst_block_code")
+		expect(field?.crispy_typst_block).toBe("invoice_header")
+		expect(field?.crispy_typst_block_name).toBe("Invoice Header")
+	})
 })

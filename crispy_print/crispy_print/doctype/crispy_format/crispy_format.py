@@ -30,14 +30,21 @@ class CrispyFormat(Document):
 
 	def before_insert(self):
 		"""Clear is_default when duplicating a format"""
-		# When duplicating via Frappe's "Duplicate" feature, is_default shouldn't carry over
-		# Only one format can be default per DocType
-		if self.is_default:
+		if self.is_default and self._is_duplicate_insert():
 			self.is_default = 0
 
 		# Set default template for new Report formats
 		if self.crispy_format_type == "Report" and self.is_generic and not self.typst_code:
 			self._set_default_report_template()
+
+	def _is_duplicate_insert(self) -> bool:
+		"""Return true when caller explicitly marks this insert as a copied document."""
+		return bool(
+			self.flags.get("from_copy")
+			or self.flags.get("copied_from")
+			or self.get("_copied_from")
+			or self.get("__copied_from")
+		)
 
 	def _set_default_report_template(self):
 		"""Load default Typst template for Report mode"""
@@ -56,7 +63,7 @@ class CrispyFormat(Document):
 #set page(
   paper: "a4",
   margin: (x: 1.5cm, y: 2cm),
-  flipped: data.page_settings.orientation == "landscape",
+  flipped: data.presentation_settings.page.orientation == "landscape",
   header: header_block,
   footer: footer_block,
 )
@@ -70,10 +77,23 @@ class CrispyFormat(Document):
 #v(1em)
 
 // Table
+#let cp_column_width(col) = {
+  if "width_kind" in col {
+    if col.width_kind == "auto" { auto }
+    else if col.width_kind == "fr" { col.width_value * 1fr }
+    else if col.width_kind == "pt" { col.width_value * 1pt }
+    else if col.width_kind == "em" { col.width_value * 1em }
+    else if col.width_kind == "rem" { col.width_value * 1em }
+    else if col.width_kind == "%" { col.width_value * 1% }
+    else if col.width_kind == "cm" { col.width_value * 1cm }
+    else if col.width_kind == "mm" { col.width_value * 1mm }
+    else if col.width_kind == "in" { col.width_value * 1in }
+    else { auto }
+  } else { auto }
+}
+
 #table(
-  columns: data.columns.map(col => {
-    if col.width == "auto" { auto } else { eval(col.width) }
-  }),
+  columns: data.columns.map(cp_column_width),
   stroke: 0.5pt,
   inset: 8pt,
   align: (x, y) => if y == 0 { center } else if data.columns.at(x).is_numeric { right } else { left },

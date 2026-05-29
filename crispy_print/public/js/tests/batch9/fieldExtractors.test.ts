@@ -60,6 +60,34 @@ describe("layout field extractor", () => {
 		expect(filtered.items[0].item_code).toBe("A-1")
 		expect(filtered.items[0].qty).toBe(2)
 	})
+
+	it("extracts document fields from Crispy Typst Block code", () => {
+		const used = extractUsedFields({
+			sections: [
+				{
+					label: "Blocks",
+					columns: [
+						{
+							label: "",
+							fields: [
+								{
+									fieldname: "_crispy_typst_block",
+									fieldtype: "Crispy Typst Block",
+									label: "Crispy Typst Block",
+									crispy_typst_block: "invoice_totals",
+									crispy_typst_block_code: "#text[#doc.grand_total #doc.customer_name]",
+								},
+							],
+						},
+					],
+				},
+			],
+		} as any)
+
+		expect(used.has("grand_total")).toBe(true)
+		expect(used.has("customer_name")).toBe(true)
+		expect(used.has("_crispy_typst_block")).toBe(false)
+	})
 })
 
 describe("typst field extractor", () => {

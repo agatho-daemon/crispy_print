@@ -40,10 +40,18 @@ vi.mock("../../composables/useStore", () => ({
 		changeKey: ref(0),
 		sampleReports: ref([]),
 		crispyFormat: ref({ crispy_format_type: "DocType", is_generic: 0 }),
-		pageSettings: ref({
-			pageSize: "A4",
-			orientation: "portrait",
-			margins: { top: 10, bottom: 10, left: 10, right: 10 },
+		presentation_settings: ref({
+			page: {
+				size: "A4",
+				orientation: "portrait",
+				margins: { top: 10, bottom: 10, left: 10, right: 10 },
+			},
+			branding: {
+				mode: "none",
+				letterhead: "",
+				letterhead_image: "",
+				logo: { company: "", image: "", size: 25, dx: 0, dy: 0 },
+			},
 			language: "en",
 		}),
 	}),
@@ -60,12 +68,19 @@ describe("Help button accessibility", () => {
 
 		const settings = mount(SettingsPane, {
 			props: {
-				pageSettings: {
-					brandingMode: "none",
-					logo: { company: "", image: "", size: 20, dx: 0, dy: 0 },
-					margins: { top: 10, bottom: 10, left: 10, right: 10 },
+				presentation_settings: {
+					page: {
+						size: "A4",
+						orientation: "portrait",
+						margins: { top: 10, bottom: 10, left: 10, right: 10 },
+					},
+					branding: {
+						mode: "none",
+						letterhead: "",
+						letterhead_image: "",
+						logo: { company: "", image: "", size: 20, dx: 0, dy: 0 },
+					},
 					typography: {},
-					letterhead: "",
 					qr: {},
 				},
 				markDirty: vi.fn(),

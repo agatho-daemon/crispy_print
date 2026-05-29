@@ -12,10 +12,18 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_js = [
-	"crispy_print.bundle.js",
-	"crispy_preview.bundle.js",
+	# "crispy_print.bundle.js",
+	# "crispy_preview.bundle.js",
 	"report_button.bundle.js",
 	"/assets/crispy_print/js/crispy_print_button.js",
 ]
 
 fixtures = [{"dt": "Crispy Format"}]
+
+after_install = "crispy_print.install.after_install"
+
+doc_events = {
+	"Company": {
+		"after_insert": "crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile.on_company_after_insert"
+	}
+}

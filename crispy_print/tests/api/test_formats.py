@@ -27,6 +27,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 	def tearDown(self):
 		"""Clean up after tests"""
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test API Format%"]})
+		frappe.db.delete("Crispy Typst Block", {"block_key": ["like", "test_api_format_block%"]})
 		restore_defaults(self._saved_defaults)
 		frappe.db.commit()
 
@@ -43,7 +44,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 				"doc_type": "Sales Invoice",
 				"module": "Crispy Print",
 				"layout_json": json.dumps({"sections": []}),
-				"page_settings": json.dumps({"pageSize": "A4"}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
 			}
 		)
 		format1.insert()
@@ -69,6 +70,63 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		format_names = [f["name"] for f in formats]
 		self.assertIn("Test API Format 1", format_names)
 		self.assertIn("Test API Format 2", format_names)
+
+	def test_get_crispy_format_hydrates_typst_blocks(self):
+		from crispy_print.api.v1 import get_crispy_format
+
+		block = frappe.get_doc(
+			{
+				"doctype": "Crispy Typst Block",
+				"block_name": "Test API Format Block",
+				"block_key": "test_api_format_block",
+				"enabled": 1,
+				"typst_code": "#text[#doc.customer_name]",
+			}
+		)
+		block.append("applicable_documents", {"document_type": "Sales Invoice"})
+		block.insert(ignore_permissions=True)
+
+		layout = {
+			"sections": [
+				{
+					"columns": [
+						{
+							"fields": [
+								{
+									"fieldtype": "Crispy Typst Block",
+									"fieldname": "_crispy_typst_block",
+									"crispy_typst_block": "test_api_format_block",
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+		fmt = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test API Format With Block",
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"module": "Crispy Print",
+				"layout_json": json.dumps(layout),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
+			}
+		)
+		fmt.insert()
+
+		result = get_crispy_format(fmt.name)
+		resolved_layout = json.loads(result["layout_json"])
+		field = resolved_layout["sections"][0]["columns"][0]["fields"][0]
+
+		self.assertEqual(field["crispy_typst_block_name"], "Test API Format Block")
+		self.assertEqual(field["crispy_typst_block_code"], "#text[#doc.customer_name]")
+		stored_layout = json.loads(frappe.db.get_value("Crispy Format", fmt.name, "layout_json"))
+		self.assertNotIn(
+			"crispy_typst_block_code",
+			stored_layout["sections"][0]["columns"][0]["fields"][0],
+		)
 
 	def test_get_crispy_formats_excludes_invalid_json(self):
 		"""Test that formats with invalid JSON are excluded"""
@@ -246,7 +304,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		]
 
 		with (
-			mock.patch("crispy_print.api.v1.formats.frappe.get_all", return_value=reports),
+			mock.patch("crispy_print.api.v1.formats.frappe.get_list", return_value=reports),
 			mock.patch(
 				"crispy_print.api.v1.formats.frappe.get_module_path",
 				return_value="/tmp/accounts",
@@ -264,6 +322,29 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertEqual([r["name"] for r in grid_only], ["Grid Report"])
 		self.assertEqual([r["name"] for r in tree_only], ["Tree Report"])
 		self.assertCountEqual([r["name"] for r in summary_fallback], ["Tree Report", "Grid Report"])
+
+	def test_get_custom_report_formats_uses_child_table_query(self):
+		from crispy_print.api.v1.formats import get_custom_report_formats
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.formats.frappe.get_all",
+				return_value=[
+					{"parent": "FMT-1"},
+					{"parent": "FMT-2"},
+				],
+			) as mock_get_all,
+			mock.patch(
+				"crispy_print.api.v1.formats.frappe.get_list",
+				return_value=[{"name": "FMT-2", "modified": "2026-01-02 00:00:00"}],
+			) as mock_get_list,
+		):
+			result = get_custom_report_formats("Sales Register")
+
+		self.assertEqual([row["name"] for row in result], ["FMT-2"])
+		mock_get_all.assert_called_once()
+		mock_get_list.assert_called_once()
+		self.assertIn("name", mock_get_list.call_args.kwargs["filters"])
 
 	def test_extract_tree_flag_from_json_payload(self):
 		from crispy_print.api.v1.formats import _extract_tree_flag_from_json
@@ -352,7 +433,7 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 				"doc_type": "Sales Invoice",
 				"module": "Crispy Print",
 				"layout_json": json.dumps({"sections": []}),
-				"page_settings": json.dumps({"pageSize": "A4", "language": "en"}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}, "language": "en"}),
 				"doc_header": "#let header_block = []",
 				"doc_footer": "#let footer_block = []",
 				"typst_preamble": "#set text(size: 10pt)",
@@ -410,7 +491,7 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 				"generic_report_type": "Grid",
 				"raw_typst": 0,
 				"layout_json": json.dumps({"sections": []}),
-				"page_settings": json.dumps({"pageSize": "A4", "language": "en"}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}, "language": "en"}),
 				"doc_header": "",
 				"doc_footer": "",
 				"typst_preamble": "",
@@ -479,12 +560,14 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		payload = export_crispy_format("Test ImportExport Warn Source")
 		payload["format"]["name"] = "Test ImportExport Warn Imported"
 		payload["format"]["default_print_language"] = "Missing-Language"
-		payload["format"]["page_settings"] = json.dumps(
+		payload["format"]["presentation_settings"] = json.dumps(
 			{
-				"pageSize": "A4",
+				"page": {"size": "A4"},
 				"language": "en",
-				"letterhead": "Missing Letterhead",
-				"logo": {"company": "Missing Co", "image": "/files/missing-logo.png"},
+				"branding": {
+					"letterhead": "Missing Letterhead",
+					"logo": {"company": "Missing Co", "image": "/files/missing-logo.png"},
+				},
 			}
 		)
 

@@ -10,7 +10,7 @@ def _build_typst_document(
 	variable_name: str = "doc",
 	header_block: str | None = None,
 	footer_block: str | None = None,
-	page_settings_block: str | None = None,
+	presentation_settings_block: str | None = None,
 	preamble_override: str | None = None,
 ) -> str:
 	"""
@@ -22,7 +22,7 @@ def _build_typst_document(
 		variable_name: Typst variable name for data (default: "doc")
 		header_block: Optional header block (used for letterhead)
 		footer_block: Optional footer block
-		page_settings_block: Optional #set page() block
+		presentation_settings_block: Optional #set page() block
 		preamble_override: Optional full preamble override for reports
 
 	Returns:
@@ -57,9 +57,9 @@ def _build_typst_document(
 	elif format_doc.doc_footer:
 		sections.append(f"\n// Footer\n{format_doc.doc_footer}")
 
-	# 6. Page settings block (optional)
-	if page_settings_block:
-		sections.append(f"\n// Page settings\n{page_settings_block}")
+	# 6. Presentation settings block (optional)
+	if presentation_settings_block:
+		sections.append(f"\n// Presentation settings\n{presentation_settings_block}")
 
 	# 7. Main template code
 	sections.append(f"\n// Main template\n{format_doc.typst_code}")
@@ -71,10 +71,24 @@ _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _quote_typst_string(value: str) -> str:
-	value = value.replace("\\\\", "\\\\\\\\")
-	value = value.replace('"', '\\"')
-	value = value.replace("\n", "\\n")
-	return f'"{value}"'
+	out: list[str] = []
+	for char in str(value):
+		codepoint = ord(char)
+		if char == "\\":
+			out.append("\\\\")
+		elif char == '"':
+			out.append('\\"')
+		elif char == "\n":
+			out.append("\\n")
+		elif char == "\r":
+			out.append("\\r")
+		elif char == "\t":
+			out.append("\\t")
+		elif codepoint < 0x20 or codepoint == 0x7F:
+			out.append(f"\\u{codepoint:04x}")
+		else:
+			out.append(char)
+	return f'"{"".join(out)}"'
 
 
 def _format_typst_key(key: str) -> str:
@@ -107,10 +121,16 @@ def _python_to_typst_dict(data: dict | list | str | int | float | bool | None) -
 			return "(" + ", ".join(serialize_value(item) for item in val) + ")"
 		elif isinstance(val, dict):
 			items = []
+			seen_keys: set[str] = set()
 			for k, v in val.items():
 				raw_key = str(k)
 				safe_key = frappe.scrub(raw_key).replace("-", "_")
-				key = _format_typst_key(safe_key if safe_key else raw_key)
+				candidate_key = safe_key if safe_key else raw_key
+				if candidate_key in seen_keys:
+					key = _quote_typst_string(raw_key)
+				else:
+					key = _format_typst_key(candidate_key)
+					seen_keys.add(candidate_key)
 				items.append(f"{key}: {serialize_value(v)}")
 			return "(" + ", ".join(items) + ")"
 		else:

@@ -1,19 +1,21 @@
 import { describe, expect, it } from "vitest"
 import { parseCrispyFormatDoc } from "../../utils/formatLoader"
-import { defaultPageSettings } from "../../utils/pageSettings"
+import { default_presentation_settings } from "../../utils/presentation_settings"
 
 describe("format loader resilience", () => {
 	it("falls back when layout_json is invalid", () => {
 		const parsed = parseCrispyFormatDoc({
 			layout_json: "{bad json",
-			page_settings: JSON.stringify({ pageSize: "A4" }),
+			presentation_settings: JSON.stringify({
+				page: { size: "A4", orientation: "portrait", margins: { top: 25, bottom: 20, left: 20, right: 20 } },
+			}),
 		} as any)
 		expect(parsed.layout).toBeNull()
-		expect(parsed.pageSettings.pageSize).toBe("A4")
+		expect(parsed.presentation_settings.page.size).toBe("A4")
 	})
 
-	it("keeps defaults when page_settings missing", () => {
+	it("keeps defaults when presentation_settings missing", () => {
 		const parsed = parseCrispyFormatDoc({} as any)
-		expect(parsed.pageSettings.pageSize).toBe(defaultPageSettings.pageSize)
+		expect(parsed.presentation_settings.page.size).toBe(default_presentation_settings.page.size)
 	})
 })

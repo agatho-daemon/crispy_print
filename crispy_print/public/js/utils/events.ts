@@ -5,20 +5,24 @@ export type CrispyPreviewStatus = "fetching" | "compiling" | "ready" | "error"
 export type CrispyPreviewStatusDetail = {
 	status: CrispyPreviewStatus
 	message?: string
+	instanceId?: string
 }
 
 export type CrispyPreviewSourceDetail = {
 	source: string | null
+	instanceId?: string
 }
 
 export type CrispyPreviewSetDocDetail = {
 	doctype: string
 	docname: string
+	instanceId?: string
 }
 
 export type CrispyPreviewPdfAction = "view" | "download"
 export type CrispyPreviewPdfRequestDetail = {
 	action: CrispyPreviewPdfAction
+	instanceId?: string
 }
 
 export const CrispyPreviewEvents = {

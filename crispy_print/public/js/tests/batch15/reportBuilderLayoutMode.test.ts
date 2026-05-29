@@ -15,7 +15,7 @@ const makeStore = (rawTypst: boolean): Record<string, unknown> => ({
   reportColumns: ref([]),
   isReportMode: ref(true),
   loading: ref(false),
-  pageSettings: ref({}),
+  presentation_settings: ref({}),
   rawTypst: ref(rawTypst),
   markDirty: vi.fn(),
   fetch: vi.fn(async () => {}),

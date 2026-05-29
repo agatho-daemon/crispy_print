@@ -5,9 +5,23 @@ vi.mock("../../api/crispy", () => ({
 		name: "Test Format",
 		doc_type: "Sales Invoice",
 		layout_json: JSON.stringify({ sections: [] }),
-		page_settings: JSON.stringify({ pageSize: "A4" }),
+		presentation_settings: JSON.stringify({
+			page: { size: "A4", orientation: "portrait", margins: { top: 1, bottom: 1, left: 1, right: 1 } },
+			branding: { mode: "none", letterhead: "", letterhead_image: "", logo: { company: "", image: "", size: 25, dx: 0, dy: 0 } },
+		}),
 		raw_typst: 0,
 	}),
+	getApplicableTypstBlocks: async () => [
+		{
+			name: "invoice_header",
+			block_key: "invoice_header",
+			block_name: "Invoice Header",
+			category: "Header",
+			description: "Header block",
+			typst_code: "#text[#doc.customer_name]",
+			version: "1.0.0",
+		},
+	],
 	saveCrispyFormat: async () => {},
 }))
 
@@ -21,10 +35,9 @@ vi.mock("../../utils/formatLoader", async (orig) => {
 			...actual,
 			parseCrispyFormatDoc: () => ({
 				layout: { sections: [] as unknown[] },
-				pageSettings: {
-				pageSize: "A4",
-				orientation: "portrait",
-				margins: { top: 1, bottom: 1, left: 1, right: 1 },
+				presentation_settings: {
+				page: { size: "A4", orientation: "portrait", margins: { top: 1, bottom: 1, left: 1, right: 1 } },
+				branding: { mode: "none", letterhead: "", letterhead_image: "", logo: { company: "", image: "", size: 25, dx: 0, dy: 0 } },
 				language: "en",
 			},
 			docHeader: "",
@@ -35,6 +48,7 @@ vi.mock("../../utils/formatLoader", async (orig) => {
 
 describe("useStore", () => {
 	beforeEach(() => {
+		vi.resetModules();
 		(globalThis as any).__ = (msg: string): string => msg;
 		(globalThis as any).frappe = {
 			call: vi.fn(async () => ({ message: {} })),
@@ -81,5 +95,56 @@ describe("useStore", () => {
 
 		store.redo()
 		expect(JSON.stringify(store.layout.value)).toBe(after)
+	})
+
+	it("adds Crispy Typst Block to fields and resolves block references", async () => {
+		const { useStore } = await import("../../composables/useStore")
+		const store = useStore()
+		;(globalThis as any).frappe.get_meta = vi.fn(() => ({
+			fields: [
+				{
+					fieldname: "customer_name",
+					label: "Customer Name",
+					fieldtype: "Data",
+				},
+			],
+		}))
+
+		await store.fetch("Test Format")
+
+		expect(
+			store.fields.value.some(
+				(field: any) =>
+					field.fieldname === "_crispy_typst_block" &&
+					field.fieldtype === "Crispy Typst Block"
+			)
+		).toBe(true)
+
+		store.layout.value = {
+			sections: [
+				{
+					label: "",
+					columns: [
+						{
+							label: "",
+							fields: [
+								{
+									fieldname: "_crispy_typst_block",
+									fieldtype: "Crispy Typst Block",
+									label: "Crispy Typst Block",
+									crispy_typst_block: "invoice_header",
+								},
+							],
+						},
+					],
+				},
+			],
+		} as any
+
+		store.resolveLayoutTypstBlocks()
+
+		const field = store.layout.value?.sections[0].columns[0].fields[0] as any
+		expect(field.crispy_typst_block_name).toBe("Invoice Header")
+		expect(field.crispy_typst_block_code).toContain("#doc.customer_name")
 	})
 })

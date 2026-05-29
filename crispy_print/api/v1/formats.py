@@ -3,11 +3,35 @@ from pathlib import Path
 
 import frappe
 from frappe import _
-from frappe.query_builder import DocType, Order
 from frappe.utils import now_datetime
+
+from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
+	resolve_effective_presentation_settings,
+)
+from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block import (
+	resolve_layout_json_typst_blocks,
+)
+
+from .security import ensure_doctype_read_permission
 
 EXPORT_SCHEMA_VERSION = 1
 ALLOWED_IMPORT_CONFLICT_ACTIONS = {"copy", "overwrite"}
+MAX_IMPORT_FIELD_BYTES = {
+	"name": 140,
+	"crispy_format_type": 40,
+	"doc_type": 140,
+	"report": 140,
+	"contract": 140,
+	"generic_report_type": 140,
+	"raw_typst": 256 * 1024,
+	"layout_json": 512 * 1024,
+	"presentation_settings": 128 * 1024,
+	"doc_header": 128 * 1024,
+	"doc_footer": 128 * 1024,
+	"typst_preamble": 256 * 1024,
+	"typst_code": 512 * 1024,
+	"default_print_language": 140,
+}
 EXPORT_FIELDS = [
 	"name",
 	"crispy_format_type",
@@ -19,7 +43,7 @@ EXPORT_FIELDS = [
 	"generic_report_type",
 	"raw_typst",
 	"layout_json",
-	"page_settings",
+	"presentation_settings",
 	"doc_header",
 	"doc_footer",
 	"typst_preamble",
@@ -47,10 +71,11 @@ def get_crispy_formats_for_doctype(doctype):
 
 	Returns formats that have both:
 	- layout_json (reconstructable layout)
-	- page_settings (page configuration)
+	- presentation_settings (rendering presentation configuration)
 	"""
 	if not doctype:
 		return []
+	ensure_doctype_read_permission("Crispy Format")
 
 	cache_key = _get_crispy_formats_cache_key(doctype)
 	cached_formats = frappe.cache().get_value(cache_key, expires=True)
@@ -62,16 +87,35 @@ def get_crispy_formats_for_doctype(doctype):
 	return formats
 
 
-def _compute_crispy_formats_for_doctype(doctype: str) -> list[dict]:
-	CrispyFormat = DocType("Crispy Format")
+def get_crispy_format(name: str) -> dict:
+	"""Return a Crispy Format payload with server-side transient render hydration."""
+	if not name:
+		frappe.throw(_("Format name is required"))
 
-	formats = (
-		frappe.qb.from_(CrispyFormat)
-		.select(CrispyFormat.name, CrispyFormat.doc_type, CrispyFormat.layout_json)
-		.where(CrispyFormat.doc_type == doctype)
-		.where(CrispyFormat.layout_json.isnotnull())  # Must have layout
-		.orderby(CrispyFormat.name)
-		.run(as_dict=True)
+	doc = frappe.get_doc("Crispy Format", name)
+	doc.check_permission("read")
+	data = {field: doc.get(field) for field in EXPORT_FIELDS}
+	data["is_default"] = doc.get("is_default")
+
+	if data.get("layout_json"):
+		try:
+			data["layout_json"] = resolve_layout_json_typst_blocks(
+				data.get("layout_json"),
+				data.get("doc_type") or "",
+			)
+		except json.JSONDecodeError:
+			# Let the existing frontend parser surface invalid layout_json consistently.
+			pass
+
+	return data
+
+
+def _compute_crispy_formats_for_doctype(doctype: str) -> list[dict]:
+	formats = frappe.get_list(
+		"Crispy Format",
+		fields=["name", "doc_type", "layout_json"],
+		filters={"doc_type": doctype},
+		order_by="name asc",
 	)
 
 	# Filter formats that have valid layout_json
@@ -94,15 +138,11 @@ def _compute_crispy_formats_for_doctype(doctype: str) -> list[dict]:
 
 def get_default_doctypes():
 	"""Get all DocTypes that have a default Crispy Format set"""
-	CrispyFormat = DocType("Crispy Format")
-
-	results = (
-		frappe.qb.from_(CrispyFormat)
-		.select(CrispyFormat.doc_type)
-		.where(CrispyFormat.crispy_format_type == "DocType")
-		.where(CrispyFormat.is_default == 1)
-		.where(CrispyFormat.doc_type.isnotnull())
-		.run(as_dict=True)
+	ensure_doctype_read_permission("Crispy Format")
+	results = frappe.get_list(
+		"Crispy Format",
+		fields=["doc_type"],
+		filters={"crispy_format_type": "DocType", "is_default": 1},
 	)
 
 	return [res.doc_type for res in results]
@@ -119,13 +159,14 @@ def get_available_formats(report: str) -> dict:
 			"default_format": str
 		}
 	"""
+	ensure_doctype_read_permission("Crispy Format")
 	# Custom formats linked to this report via child table rows.
 	custom_formats = get_custom_report_formats(report)
 
 	# Generic formats are fallback-only.
 	generic_formats = []
 	if not custom_formats:
-		generic_formats = frappe.get_all(
+		generic_formats = frappe.get_list(
 			"Crispy Format",
 			filters={"crispy_format_type": "Report", "is_generic": 1},
 			fields=["name", "generic_report_type"],
@@ -155,22 +196,29 @@ def get_available_formats(report: str) -> dict:
 
 def get_custom_report_formats(report: str) -> list[dict]:
 	"""Return custom report formats linked to a report through child table rows."""
-	CrispyFormat = DocType("Crispy Format")
-	CrispyFormatReport = DocType("Crispy Format Reports")
+	ensure_doctype_read_permission("Crispy Format")
+	report_rows = frappe.get_all(
+		"Crispy Format Reports",
+		fields=["parent"],
+		filters={
+			"parenttype": "Crispy Format",
+			"report": report,
+			"disabled": 0,
+		},
+	)
+	parent_names = list(dict.fromkeys(row.get("parent") for row in report_rows if row.get("parent")))
+	if not parent_names:
+		return []
 
-	return (
-		frappe.qb.from_(CrispyFormat)
-		.inner_join(CrispyFormatReport)
-		.on(CrispyFormatReport.parent == CrispyFormat.name)
-		.select(CrispyFormat.name, CrispyFormat.modified)
-		.where(CrispyFormat.crispy_format_type == "Report")
-		.where(CrispyFormat.is_generic == 0)
-		.where(CrispyFormatReport.parenttype == "Crispy Format")
-		.where(CrispyFormatReport.report == report)
-		.where((CrispyFormatReport.disabled == 0) | CrispyFormatReport.disabled.isnull())
-		.orderby(CrispyFormat.modified, order=Order.desc)
-		.distinct()
-		.run(as_dict=True)
+	return frappe.get_list(
+		"Crispy Format",
+		fields=["name", "modified"],
+		filters={
+			"name": ["in", parent_names],
+			"crispy_format_type": "Report",
+			"is_generic": 0,
+		},
+		order_by="modified desc",
 	)
 
 
@@ -189,6 +237,7 @@ def get_builder_mode(format_name: str) -> dict:
 		}
 	"""
 	format_doc = frappe.get_doc("Crispy Format", format_name)
+	format_doc.check_permission("read")
 
 	# Determine builder mode
 	mode = "visual"  # Default for DocType formats
@@ -260,7 +309,7 @@ def get_reports_without_custom_html(generic_report_type: str | None = None) -> l
 	Returns:
 		list: [{"name": "Sales Register", "report_type": "Script Report", "is_tree": false}, ...]
 	"""
-	reports = frappe.get_all(
+	reports = frappe.get_list(
 		"Report",
 		fields=["name", "report_type", "ref_doctype", "module"],
 		filters={"disabled": 0, "report_type": ["in", ["Script Report", "Query Report"]]},
@@ -411,6 +460,7 @@ def export_crispy_format(name: str) -> dict:
 
 def check_import_conflicts(payload: dict | str) -> dict:
 	"""Preflight payload validation and collision check."""
+	_ensure_create_permission()
 	parsed = _parse_import_payload(payload)
 	format_data = _validate_import_payload(parsed)
 	name = format_data.get("name")
@@ -486,13 +536,24 @@ def _validate_import_payload(parsed: dict) -> dict:
 	if not isinstance(format_data, dict):
 		frappe.throw(_("Payload must include a 'format' object"))
 
-	for key in ("layout_json", "page_settings"):
+	unknown_fields = sorted(set(format_data) - set(EXPORT_FIELDS))
+	if unknown_fields:
+		frappe.throw(_("Unsupported import fields: {0}").format(", ".join(unknown_fields)))
+
+	for key in ("layout_json", "presentation_settings"):
 		value = format_data.get(key)
 		if value:
 			try:
 				json.loads(value)
 			except json.JSONDecodeError:
 				frappe.throw(_("{0} must contain valid JSON").format(key))
+
+	for field, max_bytes in MAX_IMPORT_FIELD_BYTES.items():
+		value = format_data.get(field)
+		if value is None:
+			continue
+		if len(str(value).encode("utf-8")) > max_bytes:
+			frappe.throw(_("{0} exceeds the maximum size of {1} KB").format(field, max_bytes // 1024))
 
 	return {field: format_data.get(field) for field in EXPORT_FIELDS}
 
@@ -564,21 +625,28 @@ def _collect_reference_warnings(doc) -> list[str]:
 		if value and not frappe.db.exists(doctype, value):
 			warnings.append(_("Missing reference: {0} '{1}' (field: {2})").format(doctype, value, fieldname))
 
-	page_settings_raw = doc.get("page_settings")
-	page_settings = {}
-	if page_settings_raw:
+	presentation_settings_raw = doc.get("presentation_settings")
+	presentation_settings = {}
+	if presentation_settings_raw:
 		try:
-			page_settings = json.loads(page_settings_raw)
+			presentation_settings = json.loads(presentation_settings_raw)
 		except json.JSONDecodeError:
 			# Should already be validated, keep as safety net.
-			warnings.append(_("page_settings could not be parsed for reference checks"))
-			page_settings = {}
+			warnings.append(_("presentation_settings could not be parsed for reference checks"))
+			presentation_settings = {}
 
-	letterhead = page_settings.get("letterhead")
+	branding = presentation_settings.get("branding") or {}
+	try:
+		presentation_settings = resolve_effective_presentation_settings(presentation_settings)
+		branding = presentation_settings.get("branding") or {}
+	except Exception:
+		warnings.append(_("Could not resolve selected Crispy Branding Profile for reference checks"))
+
+	letterhead = branding.get("letterhead")
 	if letterhead and not frappe.db.exists("Letter Head", letterhead):
 		warnings.append(_("Missing reference: Letter Head '{0}'").format(letterhead))
 
-	logo = page_settings.get("logo") or {}
+	logo = branding.get("logo") or {}
 	company = logo.get("company")
 	if company and not frappe.db.exists("Company", company):
 		warnings.append(_("Missing reference: Company '{0}'").format(company))

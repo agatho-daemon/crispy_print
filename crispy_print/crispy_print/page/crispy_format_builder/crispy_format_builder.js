@@ -47,7 +47,7 @@ function load_crispy_format_builder(wrapper) {
 		parent.innerHTML =
 			'<div id="crispy-print-root" style="height: calc(100vh - 60px);"></div>';
 
-		if (window.mountCrispyPrint) {
+		load_crispy_print_bundle(() => {
 			const vueApp = window.mountCrispyPrint("#crispy-print-root");
 
 			if (!vueApp) {
@@ -123,9 +123,7 @@ function load_crispy_format_builder(wrapper) {
 			if (reset_changes_btn) {
 				reset_changes_btn.style.display = "none";
 			}
-		} else {
-			console.error("[CrispyPrint] mountCrispyPrint not found. Bundle may not be loaded.");
-		}
+		});
 	} else {
 		// No format specified - show dialog to create/edit
 		let d = new frappe.ui.Dialog({
@@ -217,4 +215,18 @@ function load_crispy_format_builder(wrapper) {
 		d.set_value("action", "Create");
 		d.show();
 	}
+}
+
+function load_crispy_print_bundle(callback) {
+	if (window.mountCrispyPrint) {
+		callback();
+		return;
+	}
+	frappe.require("crispy_print.bundle.js", () => {
+		if (!window.mountCrispyPrint) {
+			console.error("[CrispyPrint] mountCrispyPrint not found. Bundle may not be loaded.");
+			return;
+		}
+		callback();
+	});
 }

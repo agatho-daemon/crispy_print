@@ -44,7 +44,7 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
 
 	column.fields.forEach((field) => {
 		// Regular field
-		if (field.fieldname && field.fieldname !== "_template") {
+		if (field.fieldname && field.fieldname !== "_template" && !isBuilderOnlyField(field)) {
 			usedFields.add(field.fieldname)
 		}
 
@@ -74,7 +74,20 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
 			const extractedFields = extractUsedFieldsFromTypstSource(typstCode)
 			extractedFields.forEach((fieldname) => usedFields.add(fieldname))
 		}
+
+		if (field.fieldtype === "Crispy Typst Block" && field.crispy_typst_block_code) {
+			const typstCode = String(field.crispy_typst_block_code)
+			const extractedFields = extractUsedFieldsFromTypstSource(typstCode)
+			extractedFields.forEach((fieldname) => usedFields.add(fieldname))
+		}
 	})
+}
+
+function isBuilderOnlyField(field: { fieldname?: string; fieldtype?: string }): boolean {
+	if (field.fieldname?.startsWith("_")) return true
+	return ["Typst", "Spacer", "Divider", "Empty", "Crispy Typst Block"].includes(
+		field.fieldtype || ""
+	)
 }
 
 /**
@@ -142,21 +155,18 @@ export function filterDocumentFields(
 						Object.keys(childDoc).forEach((childField) => {
 							childFiltered[childField] = childDoc[childField]
 						})
-					} else {
-						directFields.forEach((childField) => {
+					} else if (tableFields && tableFields.size) {
+						// Only copy the child-table columns referenced in the layout.
+						// (Previously this loop iterated `directFields` — the PARENT
+						// field set — which leaked unrelated parent-level field names
+						// into child rows.)
+						tableFields.forEach((childField) => {
 							if (childField in childDoc) {
 								childFiltered[childField] = childDoc[childField]
+							} else {
+								childFiltered[childField] = ""
 							}
 						})
-						if (tableFields && tableFields.size) {
-							tableFields.forEach((childField) => {
-								if (childField in childDoc) {
-									childFiltered[childField] = childDoc[childField]
-								} else {
-									childFiltered[childField] = ""
-								}
-							})
-						}
 					}
 
 					// Always include essential child table fields

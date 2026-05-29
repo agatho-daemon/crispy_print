@@ -16,7 +16,7 @@ const makeStore = (): Record<string, unknown> => ({
 	}),
 	isReportMode: ref(false),
 	loading: ref(false),
-	pageSettings: ref({}),
+	presentation_settings: ref({}),
 	rawTypst: ref(false),
 	markDirty: vi.fn(),
 	fetch: vi.fn(async () => {}),

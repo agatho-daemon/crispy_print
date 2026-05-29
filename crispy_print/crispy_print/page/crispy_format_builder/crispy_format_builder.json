@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2025-11-20 06:24:12.618987",
+ "modified": "2026-05-16 07:20:32.558851",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "crispy-format-builder",
@@ -19,5 +19,5 @@
  "standard": "Yes",
  "style": null,
  "system_page": 0,
- "title": ""
+ "title": "Crispy Format Builder"
 }

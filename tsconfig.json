@@ -14,11 +14,7 @@
 		"isolatedModules": true,
 		"jsx": "preserve",
 		"types": ["node"],
-		"noEmit": true,
-		"baseUrl": "crispy_print/public/js",
-		"paths": {
-			"*": ["./*"]
-		}
+		"noEmit": true
 	},
 	"include": [
 		"crispy_print/public/js/**/*.ts",

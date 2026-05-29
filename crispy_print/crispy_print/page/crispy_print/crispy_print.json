@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2025-12-05 09:01:43.291443",
+ "modified": "2026-05-16 07:20:21.340371",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "crispy-print",
@@ -14,5 +14,6 @@
  "script": null,
  "standard": "Yes",
  "style": null,
- "system_page": 0
+ "system_page": 0,
+ "title": "Crispy Print Preview"
 }

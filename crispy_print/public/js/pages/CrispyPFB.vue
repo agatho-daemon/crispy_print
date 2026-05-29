@@ -87,8 +87,8 @@
 				<button
 					type="button"
 					class="pane-toggle pane-toggle--rail pane-toggle--settings pane-toggle--left"
-					:title="__('Expand Typst Settings')"
-					:aria-label="__('Expand Typst Settings')"
+					:title="__('Expand Presentation')"
+					:aria-label="__('Expand Presentation')"
 					:aria-expanded="false"
 					@click="toggleSettingsPane"
 				>
@@ -106,15 +106,15 @@
 			<SettingsPane
 				v-else
 				class="pane pane--settings"
-				:page-settings="pageSettings"
+				:presentation_settings="presentation_settings"
 				:mark-dirty="store.markDirty"
 			>
 				<template #header-actions>
 					<button
 						type="button"
 						class="pane-toggle pane-toggle--inline pane-toggle--settings pane-toggle--right"
-						:title="__('Collapse Typst Settings')"
-						:aria-label="__('Collapse Typst Settings')"
+						:title="__('Collapse Presentation')"
+						:aria-label="__('Collapse Presentation')"
 						:aria-expanded="true"
 						@click="toggleSettingsPane"
 					>
@@ -145,7 +145,7 @@ import { getCrispyBuilderFormatName } from "../utils/routes";
 import { __ } from "../utils/i18n";
 
 const store = useStore();
-const pageSettings = store.pageSettings;
+const presentation_settings = store.presentation_settings;
 const STORAGE_KEY = "crispy-print:format-builder-layout:v1";
 const MIN_SPLIT = 30;
 const MAX_SPLIT = 70;

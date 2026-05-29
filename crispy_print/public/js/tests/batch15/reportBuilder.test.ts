@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { defaultTableSettings } from "../../utils/pageSettings"
+import { defaultTableSettings } from "../../utils/presentation_settings"
 import {
 	buildReportTypstFromConfig,
 	computeReportBasicSignature,
@@ -16,6 +16,8 @@ describe("reportBuilder utils", () => {
 
 		expect(typst).toContain("CRISPY_REPORT_BASIC_SIGNATURE:")
 		expect(typst).toContain("data.columns")
+		expect(typst).toContain("data.columns.map(cp_column_width)")
+		expect(typst).not.toContain("eval(col.width)")
 		expect(typst).toContain("Total Records: #data.total_rows")
 	})
 

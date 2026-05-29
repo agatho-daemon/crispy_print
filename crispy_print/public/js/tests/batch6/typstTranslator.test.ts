@@ -9,8 +9,11 @@ describe("JSONToTypst translator", () => {
 			"Sales Invoice",
 			{ name: "INV-0001" },
 			{
-				pageSize: "A4",
-				margins: { top: 10, bottom: 10, left: 10, right: 10 },
+				page: {
+					size: "A4",
+					orientation: "portrait",
+					margins: { top: 10, bottom: 10, left: 10, right: 10 },
+				},
 				docHeader: "#let header_block = []",
 				docFooter: "#let footer_block = []",
 			}

@@ -29,6 +29,7 @@ function setupGlobals() {
 	;(globalThis as any).frappe = frappe
 	;(globalThis as any).window = globalThis
 	;(globalThis as any).window.frappe = frappe
+	;(globalThis as any).__ = (value: string) => value
 	;(globalThis as any).$ = () => ({ on: vi.fn() })
 }
 

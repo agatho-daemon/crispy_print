@@ -9,6 +9,19 @@ from frappe.tests.utils import FrappeTestCase
 class TestReportDataPrep(FrappeTestCase):
 	"""Test report data shaping for Typst templates"""
 
+	def _fake_format_doc(self, **kwargs):
+		from types import SimpleNamespace
+
+		values = {
+			"typst_code": "",
+			"typst_preamble": "",
+			"doc_header": "",
+			"doc_footer": "",
+			"filters": [],
+		}
+		values.update(kwargs)
+		return SimpleNamespace(check_permission=mock.Mock(), **values)
+
 	def test_prepare_typst_report_data_cells_and_defaults(self):
 		"""Rows should include cells and default flags used by generic templates."""
 		from crispy_print.api.v1.reports import _prepare_typst_report_data
@@ -60,10 +73,13 @@ class TestReportDataPrep(FrappeTestCase):
 		]
 
 		out = _prepare_typst_report_data("Sample Report", report_data, column_filter=column_filter)
-		width_map = {col["fieldname"]: col.get("width") for col in out["columns"]}
+		width_map = {
+			col["fieldname"]: (col.get("width"), col.get("width_kind"), col.get("width_value"))
+			for col in out["columns"]
+		}
 
-		self.assertEqual(width_map.get("item_code"), "120pt")
-		self.assertEqual(width_map.get("qty"), "80pt")
+		self.assertEqual(width_map.get("item_code"), ("120pt", "pt", 120))
+		self.assertEqual(width_map.get("qty"), ("80pt", "pt", 80))
 
 	def test_prepare_typst_report_data_defaults_widths_to_auto(self):
 		"""Backend should ignore report metadata widths unless column_filter provides one."""
@@ -91,10 +107,13 @@ class TestReportDataPrep(FrappeTestCase):
 		}
 
 		out = _prepare_typst_report_data("Sample Report", report_data, column_filter=None)
-		width_map = {col["fieldname"]: col.get("width") for col in out["columns"]}
+		width_map = {
+			col["fieldname"]: (col.get("width"), col.get("width_kind"), col.get("width_value"))
+			for col in out["columns"]
+		}
 
-		self.assertEqual(width_map.get("item_code"), "auto")
-		self.assertEqual(width_map.get("qty"), "auto")
+		self.assertEqual(width_map.get("item_code"), ("auto", "auto", None))
+		self.assertEqual(width_map.get("qty"), ("auto", "auto", None))
 
 	def test_prepare_typst_report_data_includes_filter_map_and_context_flags(self):
 		from crispy_print.api.v1.reports import _prepare_typst_report_data
@@ -236,6 +255,105 @@ class TestReportDataPrep(FrappeTestCase):
 		self.assertEqual(out["report_summary"][1]["color_class"], "blue")
 		self.assertEqual(out["report_summary"][0]["formatted_value"], str(expected_currency_value))
 
+	def test_get_report_data_enforces_internal_permission_and_rate_limits(self):
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.reports import _get_report_data
+
+		with (
+			mock.patch("crispy_print.api.v1.reports._ensure_report_read_permission") as mock_perm,
+			mock.patch("crispy_print.api.v1.reports.enforce_rate_limit") as mock_limit,
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.desk",
+				new=SimpleNamespace(
+					query_report=SimpleNamespace(run=mock.Mock(return_value={"columns": [], "result": []}))
+				),
+			),
+		):
+			_get_report_data("General Ledger", {})
+
+		mock_perm.assert_called_once_with("General Ledger")
+		self.assertEqual(mock_limit.call_count, 2)
+		mock_limit.assert_any_call("report_data", limit=20, window_seconds=60)
+		mock_limit.assert_any_call("report_data:general_ledger", limit=10, window_seconds=60)
+
+	def test_get_report_typst_source_returns_structured_truncation(self):
+		from crispy_print.api.v1.reports import get_report_typst_source
+
+		format_doc = self._fake_format_doc(typst_code="#text[Hello]")
+		report_data = {
+			"columns": [{"label": "A", "fieldname": "a", "fieldtype": "Data", "col_index": 0}],
+			"result": [["x"], ["y"]],
+			"message": "Sample Report",
+		}
+
+		with (
+			mock.patch("crispy_print.api.v1.reports.frappe.get_doc", return_value=format_doc),
+			mock.patch("crispy_print.api.v1.reports._get_report_data", return_value=report_data),
+		):
+			result = get_report_typst_source("Sample Report", "Any Format", limit=1)
+
+		truncation = result["truncation"]
+		self.assertTrue(truncation["is_truncated"])
+		self.assertEqual(truncation["rows"]["original"], 2)
+		self.assertEqual(truncation["rows"]["returned"], 1)
+		self.assertEqual(truncation["rows"]["max"], 1)
+		self.assertIn("columns", truncation)
+		self.assertIn("cells_truncated_count", truncation)
+
+	def test_get_report_typst_source_rejects_oversized_live_payload(self):
+		from crispy_print.api.v1.reports import MAX_REPORT_PAYLOAD_BYTES, get_report_typst_source
+
+		format_doc = self._fake_format_doc(typst_code="#text[Hello]")
+		oversized_payload = {
+			"title": "Oversized",
+			"subtitle": "",
+			"columns": [],
+			"rows": [{"value": "x" * MAX_REPORT_PAYLOAD_BYTES}],
+			"report_summary": [],
+		}
+
+		with (
+			mock.patch("crispy_print.api.v1.reports.frappe.get_doc", return_value=format_doc),
+			mock.patch(
+				"crispy_print.api.v1.reports._get_report_data",
+				return_value={"columns": [], "result": [], "message": "Any Report"},
+			),
+			mock.patch(
+				"crispy_print.api.v1.reports._prepare_typst_report_data",
+				return_value=oversized_payload,
+			),
+		):
+			with self.assertRaises(Exception):
+				get_report_typst_source("Any Report", "Any Format")
+
+	def test_generate_report_pdf_rejects_oversized_payload(self):
+		from crispy_print.api.v1.reports import MAX_REPORT_PAYLOAD_BYTES, generate_report_pdf
+
+		format_doc = self._fake_format_doc(typst_code="#text[Hello]", presentation_settings="{}")
+		oversized_payload = {
+			"title": "Oversized",
+			"subtitle": "",
+			"columns": [],
+			"rows": [{"value": "x" * MAX_REPORT_PAYLOAD_BYTES}],
+			"report_summary": [],
+		}
+
+		with (
+			mock.patch("crispy_print.api.v1.reports._ensure_report_read_permission"),
+			mock.patch("crispy_print.api.v1.reports.frappe.get_doc", return_value=format_doc),
+			mock.patch(
+				"crispy_print.api.v1.reports._get_report_data",
+				return_value={"columns": [], "result": [], "message": "Any Report"},
+			),
+			mock.patch(
+				"crispy_print.api.v1.reports._prepare_typst_report_data",
+				return_value=oversized_payload,
+			),
+		):
+			with self.assertRaises(Exception):
+				generate_report_pdf("Any Report", format_name="Any Format")
+
 	def test_prepare_typst_report_data_normalizes_separator_summary_items(self):
 		from crispy_print.api.v1.reports import _prepare_typst_report_data
 
@@ -294,7 +412,7 @@ class TestReportDataPrep(FrappeTestCase):
 		}
 
 		with mock.patch(
-			"crispy_print.api.v1.reports.frappe.get_all",
+			"crispy_print.api.v1.reports.frappe.get_list",
 			return_value=[
 				{"name": "ACC-PAY-0001", "party": "CUST-23-006", "party_name": "Manaf Ameen Hasan Hasan"}
 			],
@@ -417,8 +535,6 @@ class TestReportDataPrep(FrappeTestCase):
 		mock_get_value.assert_not_called()
 
 	def test_get_report_typst_source_skips_chart_when_include_chart_disabled(self):
-		from types import SimpleNamespace
-
 		from crispy_print.api.v1.reports import get_report_typst_source
 
 		captured_data = {}
@@ -430,7 +546,11 @@ class TestReportDataPrep(FrappeTestCase):
 		with (
 			mock.patch(
 				"crispy_print.api.v1.reports.frappe.get_doc",
-				return_value=SimpleNamespace(typst_code="#table()"),
+				side_effect=[
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(typst_code="#table()"),
+				],
 			),
 			mock.patch(
 				"crispy_print.api.v1.reports._build_typst_document",
@@ -456,9 +576,52 @@ class TestReportDataPrep(FrappeTestCase):
 		self.assertFalse(out["truncation"]["is_truncated"])
 		self.assertNotIn("chart_svg", captured_data)
 
-	def test_get_report_typst_source_normalizes_image_fields_and_returns_asset_files(self):
-		from types import SimpleNamespace
+	def test_get_report_typst_source_normalizes_preview_column_width_parts(self):
+		from crispy_print.api.v1.reports import get_report_typst_source
 
+		captured_data = {}
+		preview_column = {"label": "Item", "fieldname": "item_code", "width": "2fr"}
+
+		def fake_build_typst_document(**kwargs):
+			captured_data.update(kwargs.get("data_dict") or {})
+			return "#typst"
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.get_doc",
+				side_effect=[
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(typst_code="#table()"),
+				],
+			),
+			mock.patch(
+				"crispy_print.api.v1.reports._build_typst_document",
+				side_effect=fake_build_typst_document,
+			),
+		):
+			get_report_typst_source(
+				report="Any Report",
+				format_name="Any Format",
+				preview_data={
+					"title": "Any Report",
+					"subtitle": "",
+					"filters": [],
+					"columns": [preview_column, {"label": "Qty", "fieldname": "qty", "width": 80}],
+					"rows": [],
+					"report_summary": [],
+				},
+			)
+
+		self.assertEqual(captured_data["columns"][0]["width"], "2fr")
+		self.assertEqual(captured_data["columns"][0]["width_kind"], "fr")
+		self.assertEqual(captured_data["columns"][0]["width_value"], 2)
+		self.assertEqual(captured_data["columns"][1]["width"], "80pt")
+		self.assertEqual(captured_data["columns"][1]["width_kind"], "pt")
+		self.assertEqual(captured_data["columns"][1]["width_value"], 80)
+		self.assertNotIn("width_kind", preview_column)
+
+	def test_get_report_typst_source_normalizes_image_fields_and_returns_asset_files(self):
 		from crispy_print.api.v1.reports import get_report_typst_source
 
 		captured_data = {}
@@ -470,7 +633,7 @@ class TestReportDataPrep(FrappeTestCase):
 		with (
 			mock.patch(
 				"crispy_print.api.v1.reports.frappe.get_doc",
-				return_value=SimpleNamespace(typst_code="= Test\n#image(data.logo_image)"),
+				return_value=self._fake_format_doc(typst_code="= Test\n#image(data.logo_image)"),
 			),
 			mock.patch(
 				"crispy_print.api.v1.reports._build_typst_document",
@@ -494,15 +657,65 @@ class TestReportDataPrep(FrappeTestCase):
 		self.assertEqual(out["asset_files"], ["/private/files/brand/logo.svg"])
 		self.assertEqual(captured_data["rows"][0]["logo_image"], "logo.svg")
 
-	def test_get_report_typst_source_does_not_collect_chart_placeholder_as_asset(self):
-		from types import SimpleNamespace
+	def test_get_report_typst_source_accepts_presentation_settings(self):
+		from crispy_print.api.v1.reports import get_report_typst_source
 
+		captured = {}
+
+		def fake_build_typst_document(**kwargs):
+			captured.update(kwargs)
+			return "#typst"
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.get_doc",
+				return_value=self._fake_format_doc(typst_code="= Test"),
+			),
+			mock.patch(
+				"crispy_print.api.v1.reports._build_typst_document",
+				side_effect=fake_build_typst_document,
+			),
+		):
+			get_report_typst_source(
+				report="Any Report",
+				format_name="Any Format",
+				presentation_settings={
+					"page": {"size": "A5", "orientation": "portrait", "margins": {"left": 8}},
+					"branding": {
+						"mode": "letterhead",
+						"letterhead": "LH-1",
+						"letterhead_image": "/files/lh.png",
+						"logo": {"image": "/files/logo.png"},
+					},
+					"report": {"chart_enabled": False},
+				},
+				preview_data={
+					"title": "Any Report",
+					"subtitle": "",
+					"filters": [],
+					"columns": [],
+					"rows": [],
+					"report_summary": [],
+				},
+			)
+
+		data = captured["data_dict"]
+		self.assertEqual(data["presentation_settings"]["page"]["size"], "A5")
+		self.assertEqual(data["presentation_settings"]["branding"]["mode"], "letterhead")
+		self.assertEqual(data["presentation_settings"]["page"]["orientation"], "portrait")
+		self.assertIn("#set page(", captured["presentation_settings_block"])
+
+	def test_get_report_typst_source_does_not_collect_chart_placeholder_as_asset(self):
 		from crispy_print.api.v1.reports import get_report_typst_source
 
 		with (
 			mock.patch(
 				"crispy_print.api.v1.reports.frappe.get_doc",
-				return_value=SimpleNamespace(typst_code="#table()"),
+				side_effect=[
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(typst_code="#table()"),
+				],
 			),
 			mock.patch("crispy_print.api.v1.reports._build_typst_document", return_value="#typst"),
 		):
@@ -528,17 +741,21 @@ class TestReportDataPrep(FrappeTestCase):
 
 		from crispy_print.api.v1.reports import _get_report_data
 
-		with mock.patch(
-			"crispy_print.api.v1.reports.frappe.desk",
-			new=SimpleNamespace(
-				query_report=SimpleNamespace(
-					run=mock.Mock(
-						return_value={
-							"columns": [{"label": "Name", "fieldname": "name"}],
-							"result": [[1], [2], [3], [4]],
-						}
+		with (
+			mock.patch("crispy_print.api.v1.reports._ensure_report_read_permission"),
+			mock.patch("crispy_print.api.v1.reports.enforce_rate_limit"),
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.desk",
+				new=SimpleNamespace(
+					query_report=SimpleNamespace(
+						run=mock.Mock(
+							return_value={
+								"columns": [{"label": "Name", "fieldname": "name"}],
+								"result": [[1], [2], [3], [4]],
+							}
+						)
 					)
-				)
+				),
 			),
 		):
 			out = _get_report_data("Any Report", {}, max_rows=2)
@@ -548,3 +765,131 @@ class TestReportDataPrep(FrappeTestCase):
 		self.assertEqual(out["original_row_count"], 4)
 		self.assertEqual(out["returned_row_count"], 2)
 		self.assertEqual(out["max_rows"], 2)
+
+	def test_prepare_typst_report_data_reports_column_and_cell_truncation(self):
+		from crispy_print.api.v1 import reports
+		from crispy_print.api.v1.reports import _prepare_typst_report_data
+
+		columns = [
+			{"label": f"Col {idx}", "fieldname": f"col_{idx}", "fieldtype": "Data", "col_index": idx}
+			for idx in range(reports.MAX_REPORT_COLUMNS + 1)
+		]
+		row = {f"col_{idx}": "x" for idx in range(reports.MAX_REPORT_COLUMNS + 1)}
+		row["col_0"] = "x" * (reports.MAX_REPORT_CELL_BYTES + 10)
+
+		out = _prepare_typst_report_data(
+			"Wide Report",
+			{
+				"columns": columns,
+				"result": [row],
+				"message": "Wide Report",
+			},
+		)
+
+		self.assertEqual(len(out["columns"]), reports.MAX_REPORT_COLUMNS)
+		self.assertTrue(out["truncation"]["columns_truncated"])
+		self.assertEqual(out["truncation"]["original_column_count"], reports.MAX_REPORT_COLUMNS + 1)
+		self.assertGreaterEqual(out["truncation"]["cells_truncated_count"], 1)
+		self.assertIn("col_0", out["truncation"]["truncated_fieldnames"])
+
+	def test_get_report_typst_source_returns_truncation_metadata(self):
+		from crispy_print.api.v1 import reports
+		from crispy_print.api.v1.reports import get_report_typst_source
+
+		columns = [
+			{"label": f"Col {idx}", "fieldname": f"col_{idx}", "fieldtype": "Data", "col_index": idx}
+			for idx in range(reports.MAX_REPORT_COLUMNS + 1)
+		]
+		row = {f"col_{idx}": "ok" for idx in range(reports.MAX_REPORT_COLUMNS + 1)}
+		row["col_0"] = "x" * (reports.MAX_REPORT_CELL_BYTES + 10)
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.get_doc",
+				side_effect=[
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(filters=[]),
+					self._fake_format_doc(typst_code="#table()"),
+				],
+			),
+			mock.patch("crispy_print.api.v1.reports._build_typst_document", return_value="#typst"),
+			mock.patch(
+				"crispy_print.api.v1.reports._get_report_data",
+				return_value={
+					"columns": columns,
+					"result": [row],
+					"message": "Wide Report",
+				},
+			),
+		):
+			out = get_report_typst_source(
+				report="Wide Report",
+				format_name="Any Format",
+				limit=50,
+			)
+
+		self.assertTrue(out["truncation"]["is_truncated"])
+		self.assertTrue(out["truncation"]["columns"]["truncated"])
+		self.assertEqual(out["truncation"]["columns"]["original"], len(columns))
+		self.assertEqual(out["truncation"]["columns"]["returned"], reports.MAX_REPORT_COLUMNS)
+		self.assertGreaterEqual(out["truncation"]["cells_truncated_count"], 1)
+
+	def test_payment_entry_enrichment_uses_permission_aware_get_list(self):
+		from crispy_print.api.v1.reports import _enrich_report_rows_for_typst
+
+		rows = [
+			{
+				"payment_document_raw": "Payment Entry",
+				"payment_entry_raw": "PE-0001",
+				"against_account": "Original",
+				"cells": [{"fieldname": "against_account", "value": "Original"}],
+			}
+		]
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.reports.frappe.get_list",
+				return_value=[{"name": "PE-0001", "party": "CUST-0001", "party_name": "Customer One"}],
+			) as mock_get_list,
+			mock.patch("crispy_print.api.v1.reports.frappe.get_all") as mock_get_all,
+		):
+			out = _enrich_report_rows_for_typst("Bank Reconciliation Statement", rows)
+
+		mock_get_list.assert_called_once()
+		mock_get_all.assert_not_called()
+		self.assertEqual(out[0]["against_account"], "Customer One")
+		self.assertEqual(out[0]["cells"][0]["value"], "Customer One")
+
+	def test_get_report_typst_source_requires_write_for_code_override(self):
+		from crispy_print.api.v1.reports import get_report_typst_source
+
+		format_doc = self._fake_format_doc(typst_code="#table()")
+		format_doc.check_permission.side_effect = (
+			lambda perm: (_ for _ in ()).throw(Exception("no write")) if perm == "write" else None
+		)
+
+		with mock.patch("crispy_print.api.v1.reports.frappe.get_doc", return_value=format_doc):
+			with self.assertRaises(Exception):
+				get_report_typst_source(
+					report="Any Report",
+					format_name="Any Format",
+					typst_code_override="#text[override]",
+					preview_data={
+						"title": "Any Report",
+						"subtitle": "",
+						"filters": [],
+						"columns": [],
+						"rows": [],
+						"report_summary": [],
+					},
+				)
+
+	def test_fill_default_report_filters_checks_report_permission(self):
+		from crispy_print.api.v1.reports import _fill_default_report_filters
+
+		report_doc = self._fake_format_doc(filters=[])
+		report_doc.check_permission.side_effect = Exception("no read")
+
+		with mock.patch("crispy_print.api.v1.reports.frappe.get_doc", return_value=report_doc):
+			with self.assertRaises(Exception):
+				_fill_default_report_filters("Hidden Report", {})

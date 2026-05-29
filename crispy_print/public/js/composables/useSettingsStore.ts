@@ -57,10 +57,18 @@ export function createSettingsStore(options: CreateSettingsStoreOptions) {
     logger.info("Builder context set", context);
   }
 
+  function reset() {
+    // Invalidate any in-flight letterhead fetches so their late responses
+    // can't overwrite freshly loaded state.
+    letterheadRequestSeq++;
+    letterhead.value = null;
+  }
+
   return {
     markDirty,
     fetchLetterhead,
     setBuilderContext,
+    reset,
   };
 }
 

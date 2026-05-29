@@ -111,17 +111,19 @@ frappe.ui.CrispyPrintView = class {
 			this._remove_refresh_listener = null;
 		}
 
-		// Mount Vue component if not already mounted
-		if (!this.vue_instance) {
-			this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
-				doctype: frm.doctype,
-				docname: frm.docname,
-				format,
-				...extraProps,
-			});
-		}
+		load_crispy_preview_bundle(() => {
+			// Mount Vue component if not already mounted
+			if (!this.vue_instance) {
+				this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
+					doctype: frm.doctype,
+					docname: frm.docname,
+					format,
+					...extraProps,
+				});
+			}
 
-		this.status_el.text(__("")); // clear after mount
+			this.status_el.text(__("")); // clear after mount
+		});
 	}
 
 	// Optional: call this when tearing down the page to avoid lingering listeners
@@ -238,3 +240,17 @@ frappe.ui.CrispyPrintView = class {
 		}
 	}
 };
+
+function load_crispy_preview_bundle(callback) {
+	if (window.mountCrispyPreview) {
+		callback();
+		return;
+	}
+	frappe.require("crispy_preview.bundle.js", () => {
+		if (!window.mountCrispyPreview) {
+			console.error("[CrispyPrint] mountCrispyPreview not found. Bundle may not be loaded.");
+			return;
+		}
+		callback();
+	});
+}

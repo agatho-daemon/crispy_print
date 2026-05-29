@@ -1,17 +1,108 @@
 # Crispy Print
 
-Modern print format designer for Frappe using the [Typst](https://typst.app/) typesetting system. Build PDF‑native print formats with a Vue 3 visual builder and real-time preview.
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-96%20passing-brightgreen)]()
+[![Status](https://img.shields.io/badge/status-alpha-orange)]()
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Frappe](https://img.shields.io/badge/frappe-v15+-orange.svg)](https://frappeframework.com/)
+
+> [!CAUTION]
+> # MAJOR UPDATE
+> ## This commit will break existing formats.
+>
+> This is due to changes in fields representation in the backend and exchange of that data between Python and TS/JS parts along with Typst translation logic. Please backup your formats before pulling this update.
+>
+> A migration patch is provided to convert existing formats to the new structure, but complex custom layouts may require manual adjustments in the builder after migration.
+>
+> After update run `bench migrate` to apply database changes and data migration. Then open each format in the builder and verify that the layout is correct. Some fields may need to be re-dragged or reconfigured due to changes in field properties and layout structure.
+
+## Alpha 3 Testing Request
+
+Feature work is frozen for alpha 3. Please test existing workflows and report bugs, regressions, confusing behavior, and documentation gaps.
+
+- Test DocType print preview and PDF generation with real documents.
+- Test the visual format builder: drag fields, configure tables, save, reload, reset, and export/import formats.
+- Test Branding Profile Builder, including logo, letterhead, typography, margins, and QR placement.
+- Test Raw Typst mode and reusable Typst blocks.
+- Test QR and document-code flows where applicable. Regulatory QR support especially needs feedback from users in tax-regulated regions because the maintainer cannot validate real-world tax QR requirements locally; the maintainer's country does not currently have tax-related document QR regulations. Please test whether QR Regulatory Profiles, Fiscal Credentials, Document Code Profiles, and generated payloads can model your local authority requirements, invoice fields, environment rules, and verification expectations. If your region requires additional fields for QR generation, please report the required field names, data types, source documents, validation rules, and example payload structure where possible.
+- Test report preview and report PDF generation, but treat reports as **WIP**. Report support is still being stabilized and may change before beta. Contract support is also **WIP**.
+- Include Frappe version, Typst version, browser, console errors, server traceback, and reproduction steps when opening issues.
+
+> [!NOTE]
+> This README describes the current alpha architecture at a high level. For exact migration details and edge-case behavior, prefer the checked-in patches and tests as the source of truth.
 
 ## Project Status
 
 **Alpha / Work in progress.** Expect frequent changes while features are still settling.
 
-> **Why Typst instead of HTML/CSS?** Typst provides superior PDF typography, precise layout control, and professional typesetting features that are difficult to achieve with browser-based rendering. Perfect for invoices, reports, certificates, and other print-critical documents.
+Crispy Print is a next-generation document publishing engine for ERPNext built around deterministic rendering, structured document composition, and publication-grade PDF generation. Instead of treating business documents as browser pages exported to PDF, Crispy Print treats them as formal documents with stable pagination, precise layout control, reusable branding systems, and machine-verifiable document workflows. Built on [Typst](https://typst.app/), Crispy Print moves ERP printing beyond fragile HTML print pipelines into a modern, regulation-ready publishing architecture designed for invoices, quotations, vouchers, contracts, compliance documents, technical reports, and future digital business-document ecosystems.
+
+**Why Typst instead of HTML/CSS?** Typst provides superior PDF typography, precise layout control, and professional typesetting features that are difficult to achieve with browser-based rendering. Perfect for invoices, reports, certificates, and other print-critical documents.
+
+## Why Crispy Print Exists
+
+For more than a decade, ERP printing systems across the industry have largely relied on HTML templates, browser rendering, wkhtmltopdf, and print-specific CSS workarounds. While functional, these approaches introduced long-standing problems that businesses and developers learned to tolerate:
+
+- Unstable pagination and broken page breaks
+- Inconsistent PDF rendering across engines and environments
+- Layout drift after browser, CSS, or wkhtmltopdf changes
+- Weak typography and fragile headers/footers
+- Difficult long-table handling
+- Unreliable absolute positioning for regulated or pre-printed forms
+- Browser-dependent output that is hard to audit or reproduce
+
+Crispy Print is designed to solve these problems at the architecture level by converting ERP data into a structured document model and rendering it through Typst as a real document, not as a simulated browser print page.
+
+## What Makes Crispy Print Different
+
+- **Deterministic PDF rendering** - The same input should produce stable output without browser-layout unpredictability.
+- **Publication-grade document composition** - Clean typography, consistent spacing, precise alignment, and professional business-document output.
+- **Structured rendering pipeline** - ERP data is transformed into a structured print model before Typst renders the final document.
+- **True document engine architecture** - Built around document composition principles rather than browser-print workflows.
+- **Stable multi-page layouts** - Designed for invoices, quotations, reports, vouchers, and technical documents with predictable pagination.
+- **Precise layout control** - Suitable for invoices, certificates, regulatory forms, vouchers, compliance documents, and branded output.
+- **Reusable branding profiles** - Centralized company styling, typography, page setup, letterhead, logo, QR, and table presentation settings.
+- **Regulatory QR abstraction** - A foundation for machine-verifiable business documents and evolving compliance requirements.
+- **Modern programmable publishing stack** - Uses Typst for structured, programmable, deterministic business-document generation.
+- **Designed for ERP workflows** - Focused on operational business documents rather than generic desktop publishing.
+
+## Technical Value For Admins
+
+- **Server-side rendering through Typst CLI** keeps document generation consistent across user browsers.
+- **Permission-aware APIs** respect Frappe read/write access for documents, formats, reports, Typst blocks, and document-code workflows.
+- **Controlled asset handling** restricts Typst image/file inputs to approved site/app asset roots and rejects traversal, symlinks, external URLs, and unsafe duplicate filenames.
+- **Rate-limited compile and report endpoints** reduce accidental server overload during heavy preview or PDF generation.
+- **Compile caching** reduces repeated Typst work for unchanged preview inputs.
+- **Centralized Branding Profiles** let admins enforce company-wide visual identity without editing every print format.
+- **Manual release-gating friendly** workflows use `bench build`, `bench migrate`, `bench run-tests`, and `pre-commit` without requiring CI.
+- **Auditable document-code foundation** supports QR/regulatory profile configuration separately from layout templates.
+
+## Architectural Direction
+
+Most ERP systems approach printing as:
+
+```text
+ERP Data -> HTML -> Browser -> PDF
+```
+
+Crispy Print instead approaches printing as:
+
+```text
+ERP Data -> Structured Document Model -> Typst -> Deterministic Business Document
+```
+
+This distinction changes layout stability, rendering quality, pagination behavior, compliance extensibility, document reliability, and long-term maintainability.
+
+## Long-Term Vision
+
+Crispy Print is not intended to be just another print designer. The long-term goal is to provide ERPNext with modern business-document infrastructure capable of supporting:
+
+- Publication-grade invoices, quotations, vouchers, contracts, and compliance documents
+- Digitally signed PDFs and archival workflows
+- Machine-verifiable business documents
+- Reusable enterprise branding systems
+- Compliance-ready document workflows
+- Technical and engineering documentation
+- Future electronic-document ecosystems
 
 ## Table of Contents
 
@@ -21,31 +112,36 @@ Modern print format designer for Frappe using the [Typst](https://typst.app/) ty
 - [Quick Start](#quick-start)
 - [Usage](#usage)
 - [Font Configuration](#font-configuration)
-- [Architecture](#architecture)
-- [Development](#development)
-- [API Reference](#api-reference)
 - [Known Limitations](#known-limitations)
 - [Roadmap](#roadmap)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Testing](#testing)
+- [Development](#development)
+- [Architecture](#architecture)
+- [API Reference](#api-reference)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Features
 
-- **Visual Print Format Builder** - Drag-and-drop interface for designing print layouts
-- **Real-time Typst Preview** - See PDF output as you design with live SVG preview
-- **Native PDF Generation** - High-quality PDFs via Typst CLI (no browser printing)
-- **DocType Integration** - Create custom formats for any Frappe DocType
-- **Letterhead Support** - Use Letter Head documents with automatic image handling
-- **Logo Support** - Add company logo to page.
-- **Custom Fonts** - Support for system fonts, custom fonts, and bundled fonts
-- **Print Preview Page** - Dedicated preview page for testing formats with actual documents
-- **QR Code Integration** - Automatic QR code generation for documents
-- **Raw Typst Mode** - Advanced users can write Typst markup directly
-- **Dual-Mode Report Builder** - Basic visual controls for report templates with Advanced Raw Typst mode for full customization
-- **Report Mode Guardrails** - Safe Basic/Advanced switching with signature checks to prevent accidental overwrite of custom Typst
+- **Deterministic Typst Rendering Pipeline** - Converts Frappe documents into structured Typst sources and server-rendered PDF/SVG output.
+- **Visual Document Composition Builder** - Drag-and-drop builder for DocType print formats with sections, columns, fields, tables, images, QR elements, and custom Typst blocks.
+- **Native PDF Generation** - Uses the Typst CLI for publication-grade PDF generation instead of browser printing or wkhtmltopdf.
+- **Live SVG Preview** - Server-rendered preview flow for format design, document previews, and report previews without relying on browser print layout.
+- **Reusable Branding Profiles** - Centralized page, typography, table, logo, letterhead, QR, and spacing settings for consistent company-wide document output.
+- **Branding Profile Builder** - Dedicated visual builder for reusable presentation systems with generated Typst preview and controlled profile publication.
+- **Reusable Typst Blocks** - Governed snippets for repeatable custom document fragments, scoped by category and linked DocType usage.
+- **DocType-Aware Format Registry** - Crispy Format records link formats to target DocTypes, format types, branding profiles, custom builders, and generated Typst.
+- **Report Format Infrastructure (WIP)** - Report-linked formats with Basic/Advanced modes, column selection, filters, chart assets, and guarded raw Typst overrides.
+- **Contract Format Foundation (WIP)** - Contract format support is reserved for future structured contract publishing workflows.
+- **Regulatory QR Layer** - QR Regulatory Profiles, Fiscal Credentials, and helper APIs for building machine-verifiable fiscal and compliance QR payloads.
+- **Document Code Infrastructure** - Document Code Profiles and Rules for deterministic reference codes, naming patterns, and compliance-oriented document identifiers.
+- **Permission-Aware API Surface** - Versioned Frappe APIs with read/write permission checks, manager-only operations, and rate limits around expensive compile paths.
+- **Controlled Asset Resolution** - Typst image assets resolve through approved site/app roots with traversal, symlink, external URL, and duplicate-basename protections.
+- **Compile Caching and Preview Optimizations** - Short-lived Typst compile cache, document fetch cache, report preview consolidation, lazy page bundles, SVG rerender avoidance, and bounded undo snapshots.
+- **Import, Export, and Migration Support** - Structured format import/export, schema validation, backfill patches, and compatibility tests for evolving format data.
+- **Typed Frontend Architecture** - Vue 3 and TypeScript modules for builder state, report state, presentation settings, Typst translation, workers, and sanitization utilities.
 
 ## Requirements
 
@@ -105,7 +201,7 @@ bench --site your-site list-apps | grep crispy_print
 bench --site your-site console
 ```
 ```python
->>> from crispy_print.api import get_typst_local_fonts
+>>> from crispy_print.api.v1 import get_typst_local_fonts
 >>> fonts = get_typst_local_fonts()
 >>> print(len(fonts), "fonts available")
 ```
@@ -126,6 +222,13 @@ bench build --app crispy_print
 ### Creating Your First Print Format
 
 > ⚠️ **CRITICAL:** You must set at least one format as **Default** for a DocType. The Typst print button appears on document forms **only when a default format exists** for that DocType.
+
+Recommended setup order:
+
+1. Create or select a **Crispy Branding Profile** for company-wide page, typography, letterhead, logo, table, and QR defaults.
+2. Create a **Crispy Format** for the target DocType.
+3. Design the layout in the builder, attach the branding profile, save, and test with real documents.
+4. Configure document-code or regulatory QR profiles only if the document workflow needs compliance-oriented identifiers.
 
 **Step-by-step:**
 
@@ -153,8 +256,9 @@ bench build --app crispy_print
    - **Paper Size:** A4, Letter, etc.
    - **Margins:** Adjust spacing
    - **Fonts:** Select font family
-   - **Letterhead:** Optional background image
-   - **QR Code:** Enable for verification
+   - **Branding Profile:** Apply reusable company presentation settings
+   - **Letterhead / Logo:** Use Frappe Letter Head, uploaded assets, or branding profile defaults
+   - **QR / Document Code:** Enable only when the target workflow requires verification or compliance metadata
 
 5. **Save and test**
    - Click **Save**
@@ -176,6 +280,103 @@ Once a default format exists, the **Typst** button appears automatically on all 
 ```
 /app/crispy-print/{doctype}/{docname}/{format_name}
 ```
+
+## Usage
+
+### Print Format Workflow
+
+The typical workflow for using Crispy Print:
+
+1. **Create or select Branding Profile** -> define reusable page, typography, table, logo, letterhead, and QR defaults
+2. **Create Crispy Format** -> select format type and target DocType/report
+3. **Design in builder** -> compose sections, fields, tables, assets, QR elements, and Typst blocks
+4. **Save and set default** -> enable the Typst button for that DocType
+5. **Open document** -> click `Typst` -> preview and download PDF
+
+### Report Builder Workflow (Dual Mode)
+
+For `Crispy Format Type = Report`, builder now supports two editing modes:
+
+- **Basic mode**: non-technical controls generate a managed Typst report template
+- **Advanced mode**: direct Raw Typst editing
+
+Key behavior:
+
+1. **Basic to Advanced** is always allowed.
+2. **Advanced to Basic** only unlocks full Basic editing when the template is still Basic-managed.
+3. If custom Raw Typst changes are detected, Basic opens in **read-only** with options to:
+   - stay in Advanced mode, or
+   - reset/regenerate the Basic template.
+
+This keeps report editing accessible while protecting advanced customizations.
+
+Reports are still **WIP** in alpha 3. Treat the current report flow as a stabilization target for testing, not as a final report publishing contract.
+
+### Branding Profile Workflow
+
+Branding Profiles centralize presentation settings that should not be duplicated across every format:
+
+1. Create a **Crispy Branding Profile** for the company.
+2. Configure page size, margins, typography, table style, letterhead, logo, and QR defaults.
+3. Open the Branding Profile Builder to preview the generated Typst specimen.
+4. Attach the profile to Crispy Formats that should inherit the same presentation system.
+
+### Letterhead, Headers, And Footers
+
+Crispy Print does not treat headers and footers as mandatory separate HTML-style blocks. That separation comes from legacy browser-print workflows where letterheads were often just images placed at the top of a page and headers/footers had to be managed as separate template regions.
+
+Crispy Print uses Typst and SVG/PDF-oriented composition instead. A letterhead can be a full-page SVG asset sized exactly to the document page, with the header, footer, watermark, borders, legal text, brand marks, and other static elements already composed into the page background.
+
+For many business documents, the recommended model is:
+
+```text
+Full-page SVG letterhead/background
++ structured Typst document content
++ optional dynamic QR, document code, signatures, tables, and totals
+-> deterministic PDF/SVG output
+```
+
+Use separate Crispy Typst Blocks for headers, footers, or repeated sections only when those elements are dynamic, conditional, or data-driven. Static brand furniture usually belongs in the page-sized letterhead/background asset or Branding Profile.
+
+### Document Code and Regulatory QR Workflow
+
+Use this layer only when documents need deterministic identifiers or machine-verifiable compliance payloads:
+
+1. Create a **Crispy QR Regulatory Profile** for the relevant authority/country behavior.
+2. Add **Crispy Fiscal Credential** records for company/environment-specific identity values.
+3. Configure **Crispy Document Code Profile** and related rules.
+4. Use QR or document-code fields in the format or branding profile.
+
+### Advanced: Creating Formats Without Default
+
+You can create multiple formats for the same DocType without setting them as default:
+
+- Access via direct URL: `/app/crispy-print/{doctype}/{docname}/{format_name}`
+- Or programmatically via API (see [API Reference](#api-reference))
+
+### Common Layout Recipes
+
+**Invoice with Logo and Table:**
+1. Section 1 (2 columns): Company logo left, Invoice details right
+2. Section 2: Customer information
+3. Section 3: Items table (drag "items" table field)
+4. Section 4: Totals (align right)
+5. Section 5 (footer): Terms and conditions
+
+**Certificate:**
+1. Enable letterhead background
+2. Section 1: Centered title
+3. Section 2: Recipient name (large font)
+4. Section 3: Certificate text
+5. Section 4: Signatures (3 columns)
+6. Add QR code in corner for verification
+
+**Report with Branded Page Background:**
+1. Use a Branding Profile or full-page SVG background for static report furniture
+2. Section 1: Dynamic report title and date
+3. Section 2: Summary metrics (4 columns)
+4. Section 3: Data table
+5. Section 4: Charts or dynamic visual sections where applicable
 
 ## Font Configuration
 
@@ -206,10 +407,11 @@ bench restart
 
 #### Option 2: Typst Font Directory
 
-Set the dedicated Typst font directory:
+Set the dedicated Typst font path (the official Typst CLI env var; accepts
+multiple colon-separated directories):
 
 ```bash
-export TYPST_FONT_DIR="$HOME/.fonts/typst"
+export TYPST_FONT_PATHS="$HOME/.fonts/typst"
 ```
 
 Create the directory and add fonts:
@@ -240,66 +442,236 @@ This includes:
 - Fonts in `TYPST_FONT_PATHS`
 - Bundled fonts from `crispy_print/public/vendor/typst/`
 
-## Architecture
+## Known Limitations
 
-### Build System
+As an **alpha release**, Crispy Print has several known limitations:
 
-This app uses **Frappe v15's native esbuild bundler** - no separate Vite or webpack setup required.
+### System & Dependencies
 
-- **Bundle Entry:** `crispy_print/public/js/crispy_print.bundle.js`
-- **Build Command:** `bench build --app crispy_print`
-- **Output:** Single JavaScript bundle with inlined CSS (~1.7MB)
-- **Plugin:** Uses `frappe-vue-style` to automatically inline Vue SFC styles
+- **Typst CLI Required**: Must be installed separately; document rendering will not work without it.
+- **Frappe v15+ Only**: Older Frappe versions are not supported.
+- **Server-Side Rendering**: PDF and SVG compilation happen on the server through Typst CLI.
+- **Font Discovery**: Depends on system font configuration, bundled fonts, and `TYPST_FONT_PATHS`.
 
-### Project Structure
+### Layout Builder
+
+- **Field Coverage**: Standard document fields and child tables are the main target; complex custom fields may require Raw Typst.
+- **Grid Model**: The visual builder uses a constrained column layout to keep output predictable.
+- **Conditional Logic**: Visual conditional visibility is not implemented yet.
+- **Report Scope**: Report support is WIP; Basic mode covers common report patterns while complex report logic still requires Advanced Raw Typst.
+- **Contract Scope**: Contract format type exists as a foundation, but contract authoring workflows are WIP.
+
+### Typst Integration
+
+- **Raw Typst Mode Limitations**:
+  - Requires knowledge of Typst syntax
+  - Preview requires explicit recompilation
+  - Syntax errors not caught until compilation
+- **QR Code Format**: QR output is SVG-based.
+- **Table Styling**: Visual controls expose common table options; full Typst table control is available through Raw Typst.
+
+### PDF Generation
+
+- **Browser Preview**: The preview surface renders sanitized SVG; downloaded PDFs are native Typst output.
+- **Image Formats**: Letterhead, logo, and asset files must use formats supported by Typst.
+- **No Real-Time Collaboration**: Multiple users cannot safely edit the same format simultaneously.
+- **Text Editor / HTML Fields**: HTML content is reduced to text-oriented output before rendering.
+
+### Letterhead & Branding
+
+- **Letterhead Source**: Frappe Letter Head documents and uploaded assets are supported, but full letterhead authoring remains outside Crispy Print.
+- **Absolute Branding Placement**: Logo and QR offsets are explicit numeric positioning controls.
+
+### Data & Compatibility
+
+- **LTR Languages Only**: Builder UI and text direction currently support left-to-right languages only (English, Spanish, French, etc.). RTL support (Arabic, Hebrew) not yet implemented. Multi-language content is possible via Raw Typst Mode if document fields contain the target language data.
+- **No Jinja Support**: Crispy Print uses structured layouts and Typst, not Frappe Print Format Jinja templates.
+- **No Python Scripts**: Formats do not execute custom Python code.
+- **Import/Export Scope**: Format import/export exists, but cross-site migration should still be tested carefully in alpha.
+- **No Version History**: Previous versions of formats are not stored.
+
+### Performance
+
+- **First Compile Cost**: Initial Typst compilation can take longer than cached repeat previews.
+- **SVG Preview Size**: Multi-page SVG previews can be memory-intensive in the browser.
+- **Font Loading**: Large custom font collections may slow down font discovery.
+- **Report Preview Cost**: Report previews may execute report data loading plus Typst compilation.
+
+## Roadmap
+
+### Future Features
+
+The following areas are planned or under active stabilization:
+
+- [ ] Expand Crispy Typst Block as the Typst-native replacement component layer for reusable field renderers, table blocks, address blocks, QR/regulatory blocks, headers, footers, signatures, payment sections, and custom document components
+- [ ] Batch printing from list view
+- [ ] Progress indicator for multi-document compilation
+- [ ] Configurable batch size limits
+- [ ] Multi-language format support
+- [ ] Report publishing stabilization
+- [ ] Contract authoring workflow
+- [ ] Add Crispy Issued Document registry for immutable issued snapshots, opaque verification tokens, artifact tracking, revocation/supersession state, and future signature workflows
+- [ ] Add trust-event and regulatory-submission child tables for future signature, certificate, timestamp, authority submission, and validation workflows after feedback from regulated regions
+- [ ] Format version history
+- [ ] PDF/A, digital-signature, and archival workflow research
+- [ ] Machine-verifiable document workflow extensions
+
+## Troubleshooting
+
+### Typst Not Found
 
 ```
-crispy_print/
-├── crispy_print/
-│   ├── api.py                            # Whitelisted API methods
-│   ├── hooks.py                          # App hooks
-│   ├── public/
-│   │   ├── js/
-│   │   │   ├── crispy_print.bundle.js    # Main entry (builder)
-│   │   │   ├── crispy_preview.bundle.js  # Preview page entry
-│   │   │   ├── components/               # Reusable Vue components
-│   │   │   ├── composables/              # Vue composables (useStore)
-│   │   │   ├── pages/
-│   │   │   │   ├── CrispyPFB.vue         # Print Format Builder
-│   │   │   │   └── CrispyPP.vue          # Print Preview
-│   │   │   ├── typst/
-│   │   │   │   ├── createTypstWorker.ts  # Web worker factory
-│   │   │   │   ├── setupWorker.ts        # Worker orchestration
-│   │   │   │   ├── JSONToTypst.ts        # Layout → Typst translator
-│   │   │   │   └── worker.ts             # Typst compilation worker
-│   │   │   └── utils/
-│   │   │       ├── layout.ts             # Layout type definitions
-│   │   │       └── formatLoader.ts       # Format data utilities
-│   │   └── vendor/typst/                 # Bundled fonts (optional)
-│   ├── doctype/
-│   │   └── crispy_format/                # Crispy Format DocType
-│   └── page/
-│       ├── crispy_print_builder/         # Builder page (Frappe desk)
-│       └── typst_print/                  # Preview page (Frappe desk)
-├── pyproject.toml                        # Python dependencies & config
-└── README.md
+Error running typst fonts: [Errno 2] No such file or directory: 'typst'
 ```
 
-### Key Components
+**Solution:** Install Typst CLI (see Requirements section)
 
-**Pages:**
-- **Crispy Format Builder** (`/app/crispy-format-builder`) - 4-pane builder; DocType uses visual layout, Report supports Basic + Advanced Raw Typst modes
-- **Crispy Print Preview** (`/app/crispy-print/{doctype}/{docname}/{format}`) - Document preview page
+### Fonts Not Showing
 
-**Core Files:**
-- **`api.py`** - Backend API: Typst compilation, font discovery, letterhead handling
-- **`CrispyPFB.vue`** - Main builder component with drag-drop layout editor
-- **`CrispyPP.vue`** - Preview component with format/settings controls
-- **`useStore.ts`** - Centralized state management (layout, page settings, metadata)
-- **`setupWorker.ts`** - Typst worker lifecycle and compilation orchestration
-- **`JSONToTypst.ts`** - Translates JSON layout structure to Typst markup
-- **`worker.ts`** - Web Worker for async Typst compilation via API
-- **`formatLoader.ts`** - Utilities for loading Crispy Format documents
+**Check available fonts:**
+
+```bash
+typst fonts
+```
+
+From Frappe:
+
+```bash
+bench --site your-site execute crispy_print.api.v1.get_typst_local_fonts
+```
+
+If expected fonts are missing:
+
+1. Verify the font is installed on the server running the bench.
+2. Check `TYPST_FONT_PATHS` if fonts are stored outside system font directories.
+3. Restart the bench after changing font paths.
+
+### Format Not Appearing in Document
+
+If Typst button doesn't show or format isn't available:
+
+1. **Verify installation:**
+   ```bash
+   bench --site your-site list-apps | grep crispy_print
+   ```
+
+2. **Check format has layout_json:**
+   - Open Crispy Format document
+   - Ensure it was saved via builder (not manually created)
+
+3. **Check default selection:**
+   - At least one format must be marked default for the target DocType
+   - Non-default formats can still be opened by direct preview URL
+
+4. **Verify permissions:**
+   - User needs read access to Crispy Format doctype
+   - Check Role Permission Manager
+
+5. **Check browser console** for API errors
+
+### Compilation Errors
+
+**"Typst compiler not found"**
+
+Solution: Install Typst CLI (see [Requirements](#requirements))
+
+**"Compilation timed out"**
+
+Causes:
+- Server under heavy load
+- Infinite loop in raw Typst code
+
+Solutions:
+- Simplify layout
+- Check raw Typst syntax
+
+**"Letterhead image not found"**
+
+Causes:
+- Letter Head document doesn't have image field
+- Image file deleted from /files/
+
+Solution:
+- Re-upload letterhead image
+- Verify file path in Letter Head document
+
+### Slow PDF Generation
+
+If PDF generation takes more than 5 seconds:
+
+1. Reduce layout complexity where possible.
+2. Limit preview rows for reports and large child tables.
+3. Compress large letterhead/logo images.
+4. Check server CPU, memory, and Typst process contention.
+5. Repeat the same preview once to distinguish first-compile cost from cached compile behavior.
+
+### Preview Not Updating
+
+If changes don't appear in preview:
+
+1. Use the preview refresh control after Raw Typst changes.
+2. Clear browser cache: `Ctrl+Shift+R` or `Cmd+Shift+R` on macOS.
+3. Clear Frappe cache: `bench clear-cache && bench clear-website-cache`.
+4. Rebuild app assets: `bench build --app crispy_print`.
+5. Check browser console and server logs for API errors.
+
+### Debug Mode
+
+Enable debug logging:
+
+```python
+# In site_config.json
+{
+    "developer_mode": 1,
+    "logging": 2
+}
+```
+
+Check logs:
+```bash
+tail -f sites/your-site/logs/frappe.log
+```
+
+## FAQ
+
+**Q: Can I use Crispy Print with ERPNext?**  
+A: Yes. It is designed for ERPNext/Frappe document workflows such as invoices, quotations, vouchers, and other business documents.
+
+**Q: Does it work offline?**  
+A: Users need access to the Frappe server. Typst runs server-side and fonts should be installed locally on that server or bundled with the app.
+
+**Q: Can I export formats between sites?**  
+A: Yes, format import/export exists. In alpha, verify imported formats carefully because related assets, branding profiles, and compliance records may need site-specific setup.
+
+**Q: How do I customize fonts?**  
+A: Add fonts to system, set `TYPST_FONT_PATHS` environment variable, then restart bench. See [Font Configuration](#font-configuration).
+
+**Q: Can I use custom Typst functions?**  
+A: Yes, in Raw Typst mode or reusable Typst blocks. Syntax errors surface during compilation.
+
+**Q: What's the difference from Print Designer?**  
+A: Print Designer uses HTML/CSS/Jinja browser-oriented rendering. Crispy Print uses structured layouts and Typst for deterministic document rendering.
+
+**Q: Can I mix Jinja and Typst?**  
+A: No. Crispy Print uses JSON layouts, not Jinja templates.
+
+**Q: Is it production-ready?**  
+A: It is in alpha. Use it for testing and non-critical workflows until the beta readiness criteria are met.
+
+**Q: How do I report bugs?**  
+A: Open an issue on GitHub with Frappe version, Typst version, and error logs.
+
+**Q: Does it support multi-language?**  
+A: Builder UI and default flow target LTR languages. Advanced language behavior may be possible through Typst, but full multilingual/RTL support is not complete.
+
+## Testing
+
+This app includes comprehensive test coverage:
+
+- **343 tests/test methods** (175 frontend + 168 backend)
+- **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
+
+Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 
 ## Development
 
@@ -363,11 +735,11 @@ bench --site your-site run-tests --doctype "Crispy Format"
 ```
 
 **Test Coverage:**
-- **Frontend:** 67 tests across 27 test files (100% passing)
-- **Backend:** 29 tests across 2 test files (100% passing)
-- **Total:** 96 tests
+- **Frontend:** 175 tests across 52 test files
+- **Backend:** 168 test methods across 16 test files
+- **Total:** 343 tests/test methods
 
-See [TEST_COVERAGE.md](TEST_COVERAGE.md) for details.
+Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 
 ### Vue Component Guidelines
 
@@ -399,517 +771,175 @@ page.style.marginBottom = "1.5rem"
 page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25)"
 ```
 
-## Usage
+## Architecture
 
-### Print Format Workflow
+### Build System
 
-The typical workflow for using Crispy Print:
+This app uses **Frappe v15's native esbuild bundler** - no separate Vite or webpack setup required.
 
-1. **Create format** → Design in builder → Save
-2. **Set as default** → To enable Typst button for DocType
-3. **Open document** → Click `typst` button → Download PDF
+- **Main Builder Bundle:** `crispy_print/public/js/crispy_print.bundle.js`
+- **Preview Bundle:** `crispy_print/public/js/crispy_preview.bundle.js`
+- **Desk Button Bundle:** `crispy_print/public/js/report_button.bundle.js`
+- **Build Command:** `bench build --app crispy_print`
+- **Loading Model:** Lightweight desk hooks plus page-specific builder/preview bundles
+- **Plugin:** Uses `frappe-vue-style` to automatically inline Vue SFC styles
 
-### Report Builder Workflow (Dual Mode)
+### Current Product Structure
 
-For `Crispy Format Type = Report`, builder now supports two editing modes:
+This alpha structure is documented here for orientation only. It is expected to move into dedicated docs before beta so the README can stay focused on installation, testing, and release status.
 
-- **Basic mode**: non-technical controls generate a managed Typst report template
-- **Advanced mode**: direct Raw Typst editing
+```
+crispy_print/
+├── crispy_print/
+│   ├── hooks.py                          # Frappe hooks, fixtures, desk assets
+│   ├── api/
+│   │   └── v1/                           # Versioned backend API surface
+│   │       ├── compile.py                # Typst compile, cache, asset controls
+│   │       ├── docs.py                   # Document fetch and print data helpers
+│   │       ├── formats.py                # Crispy Format query/import/export APIs
+│   │       ├── branding_profiles.py      # Branding Profile APIs
+│   │       ├── reports.py                # Report preview/rendering APIs
+│   │       ├── document_codes.py         # Document-code generation APIs
+│   │       ├── qr_regulatory_profiles.py # Regulatory QR profile APIs
+│   │       ├── fiscal_credentials.py     # Fiscal credential APIs
+│   │       └── security.py               # Shared API validation helpers
+│   ├── public/
+│   │   ├── js/
+│   │   │   ├── crispy_print.bundle.js    # Format Builder entry
+│   │   │   ├── crispy_preview.bundle.js  # Print Preview entry
+│   │   │   ├── report_button.bundle.js   # Desk integration entry
+│   │   │   ├── api/                      # Typed Frappe/Crispy API clients
+│   │   │   ├── components/               # Reusable Vue components
+│   │   │   ├── composables/              # Builder/report/settings stores
+│   │   │   ├── pages/
+│   │   │   │   ├── CrispyPFB.vue         # Format Builder shell
+│   │   │   │   ├── CrispyPP.vue          # Print Preview shell
+│   │   │   │   ├── CbpBuilder.vue        # Branding Profile Builder shell
+│   │   │   │   └── cbpBuilderTypst.ts    # Branding Typst generation
+│   │   │   ├── typst/
+│   │   │   │   ├── JSONToTypst.ts        # Layout-to-Typst translator
+│   │   │   │   ├── branding.ts           # Branding Profile Typst helpers
+│   │   │   │   ├── setupWorker.ts        # Worker orchestration
+│   │   │   │   └── worker*.ts            # Compile/autocomplete/PDF workers
+│   │   │   └── utils/
+│   │   │       ├── layout.ts             # Layout model and helpers
+│   │   │       ├── reportState.ts        # Report builder state helpers
+│   │   │       ├── presentation_settings.ts
+│   │   │       └── safeSvg.ts            # Preview SVG sanitization
+│   │   └── vendor/typst/                 # Bundled fonts (optional)
+│   ├── doctype/
+│   │   ├── crispy_format/                # Format registry and generated Typst
+│   │   ├── crispy_branding_profile/      # Reusable presentation profile
+│   │   ├── crispy_typst_block/           # Reusable Typst snippet library
+│   │   ├── crispy_qr_regulatory_profile/ # Compliance QR profile
+│   │   ├── crispy_fiscal_credential/     # Fiscal/compliance identity data
+│   │   ├── crispy_document_code_profile/ # Document-code strategy
+│   │   ├── crispy_document_code_rule/    # Document-code rule rows
+│   │   └── crispy_format_reports/        # Report links for formats
+│   └── page/
+│       ├── crispy_format_builder/        # Format Builder Desk page
+│       ├── crispy_print/                 # Print Preview Desk page
+│       └── cbp_builder/                  # Branding Profile Builder page
+├── fixtures/
+│   └── crispy_format.json                # Demo/seed formats
+├── patches/                             # Schema/data backfill patches
+├── dev_utils/
+│   └── perf_benchmarks.py                # Local benchmark helper
+├── pyproject.toml                        # Python dependencies & config
+└── README.md
+```
 
-Key behavior:
+### Key Components
 
-1. **Basic → Advanced** is always allowed.
-2. **Advanced → Basic** only unlocks full Basic editing when the template is still Basic-managed.
-3. If custom Raw Typst changes are detected, Basic opens in **read-only** with options to:
-   - stay in Advanced mode, or
-   - reset/regenerate the Basic template.
+**Pages:**
+- **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType, Report (WIP), and Contract (WIP) formats.
+- **Crispy Print Preview** (`/app/crispy-print/{doctype}/{docname}/{format}`) - Server-rendered document preview and PDF workflow.
+- **Crispy Branding Profile Builder** (`/app/cbp-builder`) - Dedicated builder for reusable page, typography, branding, table, and QR presentation profiles.
 
-This keeps report editing accessible while protecting advanced customizations.
+**Core Files:**
 
-### Advanced: Creating Formats Without Default
+Backend:
+- **`api/v1/__init__.py`** - Whitelisted v1 RPC facade used by Frappe clients.
+- **`api/v1/compile.py`** - Server-side Typst compile flow, short-lived cache, asset resolution, and preview/PDF output.
+- **`api/v1/docs.py`** - Permission-aware document fetch and formatted-value preparation.
+- **`api/v1/formats.py`** - Format listing, import/export, conflict detection, builder mode, and report-format lookup.
+- **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
+- **`api/v1/reports.py`** - Report sample data, Typst source generation, combined preview compilation, and report PDF helpers.
+- **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
+- **`api/v1/security.py`** - Shared permission checks, rate limits, path validation, and RPC input hardening.
 
-You can create multiple formats for the same DocType without setting them as default:
+Frontend:
+- **`CrispyPFB.vue`** - Main format builder shell with visual layout, raw Typst, report, and settings surfaces.
+- **`CbpBuilder.vue`** - Branding Profile Builder shell for presentation-system authoring.
+- **`CrispyPP.vue`** - Preview shell with format selection and compile/download controls.
+- **`useStore.ts`, `useReportStore.ts`, `useSettingsStore.ts`** - State modules for document layout, report modes, and presentation settings.
+- **`JSONToTypst.ts`, `branding.ts`, `cbpBuilderTypst.ts`** - Typst generation paths for formats and branding profile specimens.
+- **`safeSvg.ts`** - Browser-side SVG sanitization before preview injection.
 
-- Access via direct URL: `/app/crispy-print/{doctype}/{docname}/{format_name}`
-- Or programmatically via API (see [API Reference](#api-reference))
-
-### Common Layout Recipes
-
-**Invoice with Logo and Table:**
-1. Section 1 (2 columns): Company logo left, Invoice details right
-2. Section 2: Customer information
-3. Section 3: Items table (drag "items" table field)
-4. Section 4: Totals (align right)
-5. Section 5 (footer): Terms and conditions
-
-**Certificate:**
-1. Enable letterhead background
-2. Section 1: Centered title
-3. Section 2: Recipient name (large font)
-4. Section 3: Certificate text
-5. Section 4: Signatures (3 columns)
-6. Add QR code in corner for verification
-
-**Report with Headers:**
-1. Configure page header in settings
-2. Section 1: Report title and date
-3. Section 2: Summary metrics (4 columns)
-4. Section 3: Data table
-5. Section 4: Charts (if using HTML fields)
+Data model:
+- **`Crispy Format`** - Format registry for DocType, Report, and Contract format records.
+- **`Crispy Branding Profile`** - Reusable company presentation profile.
+- **`Crispy Typst Block`** - Governed reusable Typst snippet library.
+- **`Crispy QR Regulatory Profile`**, **`Crispy Fiscal Credential`**, **`Crispy Document Code Profile`**, and **`Crispy Document Code Rule`** - Compliance-oriented document identity and verification layer.
 
 ## API Reference
 
-For a concise endpoint list with arguments and return shapes, see:
+The public RPC surface is exposed through versioned whitelisted methods:
+
+```text
+crispy_print.api.v1.<endpoint>
+```
+
+For endpoint arguments and return shapes, see:
 
 - `docs/api-reference.md`
 - `docs/typst-cookbook.md`
 
-### Python API (Whitelisted Methods)
+Key endpoint groups:
 
-All methods are accessible via `frappe.call()` from client-side.
+- **Compile and fonts:** `get_typst_local_fonts`, `compile_typst`
+- **Documents and formats:** `get_formatted_doc`, `get_crispy_format`, `get_crispy_formats_for_doctype`, `export_crispy_format`, `import_crispy_format`
+- **Branding:** `get_branding_profiles`, `get_branding_profile_presentation_settings`
+- **Reports:** `get_available_formats`, `get_sample_report_data`, `get_report_typst_source`, `compile_report_preview`, `generate_report_pdf`
+- **Compliance and verification:** `resolve_document_code`, `generate_document_code`, `get_qr_regulatory_profiles`, `get_fiscal_credential_status`
+- **Issued document scaffolding:** `get_issued_document`, `get_issued_document_by_token`, `verify_issued_document_token`, `create_issued_document_snapshot`
 
-#### `get_typst_local_fonts()`
-
-Returns list of available font families.
-
-```python
-@frappe.whitelist()
-def get_typst_local_fonts() -> list[str]
-```
-
-**Returns:** `list[str]` - Font family names  
-**Example:**
-```python
-fonts = frappe.call('crispy_print.api.get_typst_local_fonts')
-# ['EB Garamon', 'Roboto', 'Liberation Sans', ...]
-```
-
----
-
-#### `compile_typst()`
-
-Compiles Typst source to PDF or SVG.
-
-```python
-@frappe.whitelist()
-def compile_typst(
-    typst_source: str,
-    output_format: str = "svg",
-    letterhead_image: str = None,
-    qr_data: str = None,
-    qr_filename: str = None
-) -> dict
-```
-
-**Parameters:**
-- `typst_source` (str, required) - Typst markup code
-- `output_format` (str) - "pdf" or "svg" (default: "svg")
-- `letterhead_image` (str) - Path to letterhead image (e.g., "/files/letterhead.png")
-- `qr_data` (str) - Data to encode in QR code
-- `qr_filename` (str) - QR SVG filename
-
-**Returns:** `dict`
-```python
-# PDF format:
-{
-    "success": True,
-    "format": "pdf",
-    "pdf_data": "base64_encoded_pdf_string"
-}
-
-# SVG format:
-{
-    "success": True,
-    "format": "svg",
-    "svg_pages": ["<svg>...</svg>", "<svg>...</svg>"],
-    "page_count": 2
-}
-```
-
-**Raises:** `frappe.ValidationError` if compilation fails
-
-**Example:**
-```python
-result = frappe.call('crispy_print.api.compile_typst',
-    typst_source='#set page(paper: "a4")\n= Hello Typst',
-    output_format='pdf'
-)
-pdf_bytes = base64.b64decode(result['pdf_data'])
-```
-
----
-
-#### `get_formatted_doc()`
-
-Returns document with server-side formatted field values.
-
-```python
-@frappe.whitelist()
-def get_formatted_doc(doctype: str, name: str) -> dict
-```
-
-**Parameters:**
-- `doctype` (str, required) - DocType name
-- `name` (str, required) - Document name
-
-**Returns:** `dict` - Document with formatted fields (currency, dates, etc.)
-
-**Example:**
-```python
-doc = frappe.call('crispy_print.api.get_formatted_doc',
-    doctype='Sales Invoice',
-    name='SI-2024-001'
-)
-# doc['grand_total'] is now formatted as "1,234.56"
-```
-
----
-
-#### `get_crispy_formats_for_doctype()`
-
-Get all Crispy Formats for a DocType.
-
-```python
-@frappe.whitelist()
-def get_crispy_formats_for_doctype(doctype: str) -> list[dict]
-```
-
-**Returns:** `list[dict]` - List of format names and DocTypes
-
----
-
-#### `get_default_doctypes()`
-
-Get DocTypes that have default Crispy Formats set.
-
-```python
-@frappe.whitelist()
-def get_default_doctypes() -> list[str]
-```
-
-**Returns:** `list[str]` - List of DocType names
-
----
-
-#### `get_default_report_builder_config()`
-
-Returns canonical backend defaults for report Basic mode controls.
-
-```python
-@frappe.whitelist()
-def get_default_report_builder_config(generic_report_type: str | None = None) -> dict
-```
-
-**Parameters:**
-- `generic_report_type` (str, optional) - e.g. `"Grid"`, `"Tree"`, `"Summary"`, `"Minimal"`
-
-**Returns:** `dict`
-```python
-{
-    "mode": "basic",
-    "preset": "grid",              # or tree/summary/minimal
-    "show_filters": True,
-    "show_footer_total": True,
-    "header_fill": "#B3D7FF",
-    "header_text_weight": "bold",
-    "font_family": "Inter 18pt",
-    "font_size_pt": 9,
-    "row_striping": False,
-    "row_stripe_fill": "#F8FBFF",
-    "column_align_strategy": "auto",
-    "table_inset_x_pt": 8,
-    "table_inset_y_pt": 6,
-    "table_stroke_top_pt": 1,
-    "table_stroke_body_pt": 0.5,
-    "raw_signature": None
-}
-```
-
-Used by the frontend as the server-side single source of truth for report builder defaults.
-
----
-
-### JavaScript API
-
-These functions are available globally in the builder and preview pages.
-
-#### `window.mountCrispyPrint()`
-
-Mounts the Vue 3 print format builder app.
+Example:
 
 ```javascript
-window.mountCrispyPrint(containerId: string, formatName: string): void
+await frappe.call({
+  method: "crispy_print.api.v1.compile_typst",
+  args: {
+    typst_source: "#set page(paper: \"a4\")\n= Hello Typst",
+    output_format: "svg",
+  },
+})
 ```
-
-**Used internally by:** Frappe page loader
-
----
-
-#### `window.setupWorker()`
-
-Initializes the Typst compilation web worker.
-
-```javascript
-window.setupWorker(
-    formatName: string,
-    previewContainer: HTMLElement,
-    adapter: object
-): () => void
-```
-
-**Returns:** Teardown function to cleanup worker
-
-**Used internally by:** Preview page
-
-## Known Limitations
-
-As an **alpha release**, Crispy Print has several known limitations:
-
-### System & Dependencies
-
-- **Typst CLI Required**: Must be installed separately; app won't work without it
-- **Frappe v15+ Only**: Not  tested for compatibility with older Frappe versions
-- **Server-Side Rendering**: All PDF compilation happens on the server (no client-side rendering)
-- **Font Discovery**: Depends on system font configuration and `TYPST_FONT_PATHS` environment variable
-
-### Layout Builder
-
-- **Limited Field Types**: Currently supports basic fields; complex custom fields may not render correctly
-- **Fixed Grid System**: 4-column layout structure cannot be customized
-- **No Conditional Visibility**: Cannot hide/show elements based on document conditions
-- **Report Basic Mode Scope**: Basic mode intentionally covers common report patterns; complex custom report logic still requires Advanced Raw Typst mode
-
-### Typst Integration
-
-- **Raw Typst Mode Limitations**: 
-  - Requires knowledge of Typst syntax
-  - No visual preview while editing raw code
-  - Syntax errors not caught until compilation
-  - 🔄 **Tip:** Use the **Refresh** button in the preview pane to recompile after editing raw Typst code
-- **QR Code Format**: Only SVG format supported (no PNG/bitmap QR codes)
-- **Table Styling**: Limited compared to full Typst table capabilities
-
-### PDF Generation
-
-- **Browser Preview**: SVG rendering in browser preview (actual PDF downloads are native Typst output)
-- **Image Formats**: Letterhead images must be in formats supported by Typst (PNG, JPEG, SVG)
-- **No Real-Time Collaboration**: Multiple users cannot edit the same format simultaneously
-- **Text Editor / HTML Fields**: Content is converted to plain text (HTML stripped) before rendering
-
-### Letterhead & Branding
-
-- **No Built-in Letterhead Editor**: Must use existing Frappe Letter Head documents
-- **Fixed Branding Position**: Logo and QR code placements use absolute positioning
-
-### Data & Compatibility
-
-- **LTR Languages Only**: Builder UI and text direction currently support left-to-right languages only (English, Spanish, French, etc.). RTL support (Arabic, Hebrew) not yet implemented. Multi-language content is possible via Raw Typst Mode if document fields contain the target language data.
-- **No Jinja Support**: Completely different from standard Frappe Print Formats - uses JSON layouts instead of Jinja templates
-- **No Python Scripts**: Cannot execute custom Python code like standard Print Formats
-- **Export Only**: Formats cannot be imported/exported between sites (yet)
-- **No Version History**: Previous versions of formats are not stored
-
-### Performance
-
-- **Web Worker Compilation**: Initial compilation may take 2-3 seconds for complex layouts
-- **SVG Preview Size**: Multi-page SVG previews can be memory-intensive in browser
-- **Font Loading**: Large custom font collections may slow down font discovery API
-
-### Roadmap
-
-#### Future Features (Not Yet Implemented)
-
-The following features are planned but not yet available:
-
-- [ ] Support Frappe Format Field Templates in Typst output
--  Native rendering with safe fallback for unsupported legacy templates
-- [ ] Batch printing from list view
-- [ ] Progress indicator for multi-document compilation
-- [ ] Configurable batch size limits
-- [x] Custom page break controls
-- [ ] Multi-language format support
-- [x] Format import/export
-- [x] Advanced table styling options
-- [ ] Client-side PDF rendering
-- [ ] Format version history
-- [ ] ~~Template variable/expression support~~
-
-## Troubleshooting
-
-### Typst Not Found
-
-```
-Error running typst fonts: [Errno 2] No such file or directory: 'typst'
-```
-
-**Solution:** Install Typst CLI (see Requirements section)
-
-### Fonts Not Showing
-
-**Check available fonts:**
-``# Format Not Appearing in Document
-
-If Typst button doesn't show or format isn't available:
-
-1. **Verify installation:**
-   ```bash
-   bench --site your-site list-apps | grep crispy_print
-   ```
-
-2. **Check format has layout_json:**
-   - Open Crispy Format document
-   - Ensure it was saved via builder (not manually created)
-
-3. **Verify permissions:**
-   - User needs read access to Crispy Format doctype
-   - Check Role Permission Manager
-
-4. **Check browser console** for API errors
-
-### Compilation Errors
-
-**"Typst compiler not found"**
-
-Solution: Install Typst CLI (see [Requirements](#requirements))
-
-**"Compilation timed out"**
-
-Causes:
-- Server under heavy load
-- Infinite loop in raw Typst code
-
-Solutions:
-- Simplify layout
-- Check raw Typst syntax
-
-**"Letterhead image not found"**
-
-Causes:
-- Letter Head document doesn't have image field
-- Image file deleted from /files/
-
-Solution:
-- Re-upload letterhead image
-- Verify file path in Letter Head document
-
-### Debug Mode
-
-Enable debug logging:
-
-```python
-# In site_config.json
-{
-    "developer_mode": 1,
-    "logging": 2
-}
-```
-
-Check logs:
-```bash
-tail -f sites/your-site/logs/frappe.log
-```
-
-## FAQ
-
-**Q: Can I use Crispy Print with ERPNext?**  
-A: Yes! It's designed for ERPNext and supports Sales Invoice, Purchase Invoice, Quotation, etc.
-
-**Q: Does it work offline?**  
-A: PDF compilation requires server access (runs Typst CLI server-side). Preview requires internet for fonts.
-
-**Q: Can I export formats between sites?**  
-A: Not yet. Planned for future release. Currently, you need to recreate formats on each site.
-
-**Q: How do I customize fonts?**  
-A: Add fonts to system, set `TYPST_FONT_PATHS` environment variable, then restart bench. See [Font Configuration](#font-configuration).
-
-**Q: Can I use custom Typst functions?**  
-A: Yes, in Raw Typst mode. But be careful - syntax errors will break compilation.
-
-**Q: What's the difference from Print Designer?**  
-A: Print Designer uses HTML/CSS/Jinja. Crispy Print uses Typst for better PDF quality. They're completely separate systems.
-
-**Q: Can I mix Jinja and Typst?**  
-A: No. Crispy Print uses JSON layouts, not Jinja templates.
-
-**Q: Is it production-ready?**  
-A: It's in alpha. Use for non-critical documents. Test thoroughly before production use.
-
-**Q: How do I report bugs?**  
-A: Open an issue on GitHub with Frappe version, Typst version, and error logs.
-
-**Q: Does it support multi-language?**  
-A: Not yet. Single language per format. Multi-language support is planned.
-
-## Testing
-
-This app includes comprehensive test coverage:
-
-- **96 total tests** (67 frontend + 29 backend)
-- **100% pass rate**
-- **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
-
-See [TEST_COVERAGE.md](TEST_COVERAGE.md) for detailed coverage report.
-
-## Code Quality
-
-This app uses pre-commit hooks for code quality:
-
-```bash
-cd apps/crispy_print
-pre-commit install
-```
-
-**Linters configured:**
-- **ruff** - Python linting and formatting
-- **eslint** - JavaScript linting
-- **prettier** - Code formatting
-- **pyupgrade** - Python syntax modernization
-
-## CI/CD
-
-This project has pre-configured GitHub Actions workflows (currently disabled):
-- **CI** - Would run 90 unit tests on `develop` branch
-- **Linters** - Would run [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on PRs
-
-**Currently:** Tests are run manually by developers using `yarn test:unit` (frontend) and `bench run-tests` (backend).
-
-If PDF generation takes more than 5 seconds:
-
-1. **Reduce document complexity**: Simplify layouts with fewer nested elements
-2. **Limit table rows**: Consider pagination for large tables (100+ rows)
-3. **Optimize images**: Use compressed letterhead images (< 1MB)
-4. **Check server resources**: Ensure adequate CPU/memory on server
-
-### Preview Not Updating
-
-If changes don't appear in preview:
-
-1. Clear browser cache: `Ctrl+Shift+R` (or `Cmd+Shift+R` on macOS)
-2. Clear Frappe cache: `bench clear-cache && bench clear-website-cache`
-3. Rebuild app: `bench build --app crispy_print`
-4. Check browser console for JavaScript errors
 
 ## Contributing
 
-This app uses `pre-commit` for code quality:
+Before submitting changes, install and run the local quality checks:
 
 ```bash
 cd apps/crispy_print
 pre-commit install
+pre-commit run --all-files
+cd crispy_print/public/js
+yarn test:unit
+cd ~/frappe-bench
+bench --site your-site run-tests --app crispy_print
 ```
 
-**Linters configured:**
+Configured quality tools:
+
 - **ruff** - Python linting and formatting
-- **eslint** - JavaScript linting
+- **eslint** - JavaScript/TypeScript linting
 - **prettier** - Code formatting
 - **pyupgrade** - Python syntax modernization
 
-## CI/CD
+GitHub Actions workflows are present in the repository but are not used for release gating yet. Tests are currently run manually using `yarn test:unit`, `bench run-tests`, and `pre-commit run --all-files`.
 
-GitHub Actions workflows:
-- **CI** - Runs unit tests on `develop` branch
-- **Linters** - Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on PRs
+Keep feature changes small during the alpha 3 freeze unless they directly fix release-blocking bugs.
 
 ## License
 
@@ -922,7 +952,3 @@ Built with the assistance of various AI tools. Special thanks to:
 [![Typst](https://img.shields.io/badge/Typst-239DAD?style=for-the-badge&logo=typst&logoColor=white)](https://typst.app/)
 [![Frappe](https://img.shields.io/badge/Frappe-0089FF?style=for-the-badge&logo=frappe&logoColor=white)](https://frappeframework.com/)
 [![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
-
----
-
-**Star this repo if you find it useful!** ⭐

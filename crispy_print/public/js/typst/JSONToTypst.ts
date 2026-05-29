@@ -3,12 +3,13 @@
 
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
 import { buildForegroundPlacements, getLetterheadFilename, resolveBrandingMode } from "./branding"
+import { typstColor, typstLength, typstQuoted } from "./typstEscaping"
 import {
-	defaultPageSettings,
-	ensureTableSettings,
-	mergePageSettings,
-	type PageSettings,
-} from "../utils/pageSettings"
+	default_presentation_settings,
+	ensure_table_settings,
+	merge_presentation_settings,
+	type PresentationSettings,
+} from "../utils/presentation_settings"
 import { deepClone } from "../utils/json"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
@@ -99,7 +100,7 @@ class JSONTypstTranslator {
 	realDocData: RealDocData
 	sections: LayoutWithOptionalSections["sections"]
 	options: Record<string, any>
-	private _pageSettings: PageSettings | null = null
+	private _presentation_settings: PresentationSettings | null = null
 
 	constructor(
 		layoutData: LayoutWithOptionalSections,
@@ -113,7 +114,14 @@ class JSONTypstTranslator {
 		this.doctype = doctype
 		this.realDocData = realDocData
 		this.sections = this.layout.sections || []
-		this.options = options || {}
+		const presentation_settings = merge_presentation_settings(
+			default_presentation_settings,
+			options || {}
+		)
+		this.options = {
+			...(options || {}),
+			...presentation_settings,
+		}
 	}
 
 	translate() {
@@ -125,12 +133,12 @@ class JSONTypstTranslator {
 		return parts.join("\n\n")
 	}
 
-	private getPageSettings(): PageSettings {
-		if (!this._pageSettings) {
-			const overrides = (this.options ? deepClone(this.options) : {}) as Partial<PageSettings>
-			this._pageSettings = mergePageSettings(defaultPageSettings, overrides)
+	private get_presentation_settings(): PresentationSettings {
+		if (!this._presentation_settings) {
+			const overrides = (this.options ? deepClone(this.options) : {}) as Partial<PresentationSettings>
+			this._presentation_settings = merge_presentation_settings(default_presentation_settings, overrides)
 		}
-		return this._pageSettings
+		return this._presentation_settings
 	}
 
 	escapeTypstText(value: string) {
@@ -161,20 +169,15 @@ class JSONTypstTranslator {
 	}
 
 	formatColor(color: string, fallback = "none") {
-		const raw = String(color || "").trim()
-		if (!raw) return fallback
-		if (raw.startsWith("#")) {
-			return `rgb("${raw.substring(1)}")`
-		}
-		return raw
+		return typstColor(color, fallback)
 	}
 
 	formatPtValue(value: any, fallback: number) {
 		const num = Number(value)
 		if (Number.isFinite(num)) {
-			return `${num}pt`
+			return typstLength(num, fallback)
 		}
-		return `${fallback}pt`
+		return typstLength(fallback, fallback)
 	}
 
 	generateUserSection() {
@@ -212,31 +215,31 @@ class JSONTypstTranslator {
 
 		lines.push("// Typography styles")
 		lines.push("#let fieldLabelStyle = (")
-		lines.push(`  font: "${fieldLabel.fontFamily}",`)
-		lines.push(`  size: ${fieldLabel.fontSize},`)
-		lines.push(`  style: "${fieldLabel.fontStyle}",`)
+		lines.push(`  font: ${typstQuoted(fieldLabel.fontFamily)},`)
+		lines.push(`  size: ${typstLength(fieldLabel.fontSize, 8)},`)
+		lines.push(`  style: ${typstQuoted(fieldLabel.fontStyle)},`)
 		lines.push(`  weight: ${this.fontWeightToNumber(fieldLabel.fontWeight)},`)
-		lines.push(`  fill: rgb("${fieldLabel.color}")`)
+		lines.push(`  fill: ${this.formatColor(fieldLabel.color, "black")}`)
 		lines.push(")")
 		lines.push("")
 		lines.push("#let fieldValueStyle = (")
-		lines.push(`  font: "${fieldValue.fontFamily}",`)
-		lines.push(`  size: ${fieldValue.fontSize},`)
-		lines.push(`  style: "${fieldValue.fontStyle}",`)
+		lines.push(`  font: ${typstQuoted(fieldValue.fontFamily)},`)
+		lines.push(`  size: ${typstLength(fieldValue.fontSize, 10)},`)
+		lines.push(`  style: ${typstQuoted(fieldValue.fontStyle)},`)
 		lines.push(`  weight: ${this.fontWeightToNumber(fieldValue.fontWeight)},`)
-		lines.push(`  fill: rgb("${fieldValue.color}")`)
+		lines.push(`  fill: ${this.formatColor(fieldValue.color, "black")}`)
 		lines.push(")")
 		lines.push("")
 		lines.push("#let sectionLabelStyle = (")
-		lines.push(`  font: "${sectionLabel.fontFamily}",`)
-		lines.push(`  size: ${sectionLabel.fontSize},`)
-		lines.push(`  style: "${sectionLabel.fontStyle}",`)
+		lines.push(`  font: ${typstQuoted(sectionLabel.fontFamily)},`)
+		lines.push(`  size: ${typstLength(sectionLabel.fontSize, 14)},`)
+		lines.push(`  style: ${typstQuoted(sectionLabel.fontStyle)},`)
 		lines.push(`  weight: ${this.fontWeightToNumber(sectionLabel.fontWeight)},`)
-		lines.push(`  fill: rgb("${sectionLabel.color}")`)
+		lines.push(`  fill: ${this.formatColor(sectionLabel.color, "black")}`)
 		lines.push(")")
 		lines.push("")
 
-		const tableSettings = ensureTableSettings(this.getPageSettings())
+		const tableSettings = ensure_table_settings(this.get_presentation_settings())
 		const tableHeader = tableSettings.typography.header
 		const tableBody = tableSettings.typography.body
 		const tableInset = tableSettings.inset
@@ -250,19 +253,19 @@ class JSONTypstTranslator {
 
 		lines.push("// Table styles")
 		lines.push("#let tableHeaderStyle = (")
-		lines.push(`  font: "${tableHeader.fontFamily}",`)
-		lines.push(`  size: ${tableHeader.fontSize},`)
-		lines.push(`  style: "${tableHeader.fontStyle}",`)
+		lines.push(`  font: ${typstQuoted(tableHeader.fontFamily)},`)
+		lines.push(`  size: ${typstLength(tableHeader.fontSize, 9)},`)
+		lines.push(`  style: ${typstQuoted(tableHeader.fontStyle)},`)
 		lines.push(`  weight: ${this.fontWeightToNumber(tableHeader.fontWeight)},`)
-		lines.push(`  fill: rgb("${tableHeader.color}")`)
+		lines.push(`  fill: ${this.formatColor(tableHeader.color, "black")}`)
 		lines.push(")")
 		lines.push("")
 		lines.push("#let tableBodyStyle = (")
-		lines.push(`  font: "${tableBody.fontFamily}",`)
-		lines.push(`  size: ${tableBody.fontSize},`)
-		lines.push(`  style: "${tableBody.fontStyle}",`)
+		lines.push(`  font: ${typstQuoted(tableBody.fontFamily)},`)
+		lines.push(`  size: ${typstLength(tableBody.fontSize, 9)},`)
+		lines.push(`  style: ${typstQuoted(tableBody.fontStyle)},`)
 		lines.push(`  weight: ${this.fontWeightToNumber(tableBody.fontWeight)},`)
-		lines.push(`  fill: rgb("${tableBody.color}")`)
+		lines.push(`  fill: ${this.formatColor(tableBody.color, "black")}`)
 		lines.push(")")
 		lines.push("")
 		lines.push(
@@ -324,20 +327,19 @@ class JSONTypstTranslator {
 
 	buildPageSetupBlock() {
 		const lines: string[] = []
-		const pageSize = this.options.pageSize || "A4"
-		const orientation = this.options.orientation || "portrait"
-		const margins = this.options.margins
-			? this.resolveMargins(this.options.margins)
-			: this.resolveMargins(this.options.pageMargins)
+		const presentation_settings = this.get_presentation_settings()
+		const page_size = presentation_settings.page.size || "A4"
+		const orientation = presentation_settings.page.orientation || "portrait"
+		const margins = this.resolveMargins(presentation_settings.page.margins)
 
-		const brandingMode = resolveBrandingMode(this.options, this.letterhead)
-		const letterheadFilename = getLetterheadFilename(this.options, this.letterhead)
+		const branding_mode = resolveBrandingMode(presentation_settings, this.letterhead)
+		const letterheadFilename = getLetterheadFilename(presentation_settings, this.letterhead)
 		const qrEnabled = Boolean(this.options.qrEnabled)
 		const qrFilename = (this.options.qrFilename as string | undefined) || ""
-		const qrSettings = (this.options.qrSettings as Record<string, any> | undefined) || {}
+		const qrSettings = presentation_settings.qr || {}
 		const foregroundLines = buildForegroundPlacements({
-			pageSettings: this.options,
-			brandingMode,
+			presentation_settings,
+			branding_mode,
 			qrEnabled,
 			qrFilename,
 			qrSettings,
@@ -345,7 +347,7 @@ class JSONTypstTranslator {
 
 		lines.push("// Page setup")
 		lines.push("#set page(")
-		lines.push(`  paper: "${pageSize.toLowerCase()}",`)
+		lines.push(`  paper: ${typstQuoted(page_size.toLowerCase())},`)
 		if (orientation === "landscape") {
 			lines.push("  flipped: true,")
 		}
@@ -354,7 +356,7 @@ class JSONTypstTranslator {
 		)
 		lines.push("  header: header_block,")
 		lines.push("  footer: footer_block,")
-		if (brandingMode === "letterhead" && letterheadFilename) {
+		if (branding_mode === "letterhead" && letterheadFilename) {
 			if ((this.letterhead as any).letter_head_name) {
 				lines.push(`  // Letterhead: ${(this.letterhead as any).letter_head_name}`)
 			}
@@ -625,7 +627,12 @@ class JSONTypstTranslator {
 				return `[] // Column Break`
 			case "Typst": {
 				const code = String(field.raw_typst_field || "").trim()
-				return code ? `[${code}]` : `[] // Custom Typst (empty)`
+				return code ? this.formatContentCell(code) : `[] // Custom Typst (empty)`
+			}
+			case "Crispy Typst Block": {
+				const code = String(field.crispy_typst_block_code || "").trim()
+				const blockKey = field.crispy_typst_block || fieldname
+				return code ? this.formatContentCell(code) : `[] // Missing Crispy Typst Block: ${blockKey}`
 			}
 			case "Spacer": {
 				const value = field.spacer_value || "1em"
@@ -670,14 +677,27 @@ class JSONTypstTranslator {
 	}
 
 	private formatGridCellLine(cellContent: string): string {
-		const commentIndex = cellContent.indexOf("//")
-		if (commentIndex === -1) {
-			return `  ${cellContent},`
+		if (cellContent.includes("\n")) {
+			const indented = cellContent
+				.split("\n")
+				.map((line) => `  ${line}`)
+				.join("\n")
+			return `${indented},`
 		}
 
-		const beforeComment = cellContent.slice(0, commentIndex).trimEnd()
-		const comment = cellContent.slice(commentIndex)
-		return `  ${beforeComment}, ${comment}`
+		const placeholderComment = cellContent.match(/^(\[\])\s*(\/\/.*)$/)
+		if (placeholderComment) {
+			return `  ${placeholderComment[1]}, ${placeholderComment[2]}`
+		}
+
+		return `  ${cellContent},`
+	}
+
+	private formatContentCell(code: string): string {
+		if (code.includes("\n")) {
+			return `[\n${code}\n]`
+		}
+		return `[${code}]`
 	}
 
 	translateField(field?: LayoutField) {
@@ -695,6 +715,11 @@ class JSONTypstTranslator {
 			case "Typst": {
 				const code = String(field.raw_typst_field || "").trim()
 				return code ? code : `// Custom Typst (empty)`
+			}
+			case "Crispy Typst Block": {
+				const code = String(field.crispy_typst_block_code || "").trim()
+				const blockKey = field.crispy_typst_block || fieldname
+				return code ? code : `// Missing Crispy Typst Block: ${blockKey}`
 			}
 			case "Spacer": {
 				const value = field.spacer_value || "1em"
@@ -755,7 +780,7 @@ class JSONTypstTranslator {
 		const fieldname = field.fieldname || "items"
 		const label = field.label || "Table"
 		const includeComment = options.includeComment !== false
-		ensureTableSettings(this.getPageSettings())
+		ensure_table_settings(this.get_presentation_settings())
 
 		if (includeComment) {
 			lines.push(`// Table: ${label}`)

@@ -1,0 +1,656 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:profile_name",
+ "creation": "2026-05-16 09:15:40.517449",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "general_profile_settings_section",
+  "profile_name",
+  "company",
+  "is_default",
+  "code_only",
+  "custom_typst_code_section",
+  "custom_typst_code",
+  "presentation_settings_section",
+  "page_size",
+  "margin_top_mm",
+  "margin_bottom_mm",
+  "column_break_jdgn",
+  "orientation",
+  "margin_right_mm",
+  "margin_left_mm",
+  "typography_section",
+  "section_label_font",
+  "section_label_font_family",
+  "section_label_font_size_pt",
+  "section_label_font_style",
+  "section_label_font_weight",
+  "section_label_font_color",
+  "field_label_font",
+  "field_label_font_family",
+  "field_label_font_size_pt",
+  "field_label_font_style",
+  "field_label_font_weight",
+  "field_label_font_color",
+  "field_value_font",
+  "field_value_font_family",
+  "field_value_font_size_pt",
+  "field_value_font_style",
+  "field_value_font_weight",
+  "field_value_font_color",
+  "table_settings_section",
+  "cell_inset_pt",
+  "table_cell_inset_top_pt",
+  "table_cell_inset_right_pt",
+  "table_cell_inset_bottom_pt",
+  "table_cell_inset_left_pt",
+  "border_header_stripe",
+  "table_border_stroke_width_pt",
+  "table_border_color",
+  "table_header_background_color",
+  "table_row_striping",
+  "table_stripe_color",
+  "header_typography",
+  "table_header_font_family",
+  "table_header_font_size_pt",
+  "table_header_font_style",
+  "table_header_font_weight",
+  "table_header_font_color",
+  "body_typography",
+  "table_body_font_family",
+  "table_body_font_size_pt",
+  "table_body_font_style",
+  "table_body_font_weight",
+  "table_body_font_color",
+  "branding_section",
+  "branding_mode_choices",
+  "branding_mode",
+  "branding_logo",
+  "branding_logo_source",
+  "branding_logo_upload",
+  "branding_uploaded_image_preview",
+  "branding_logo_width_mm",
+  "branding_logo_offset_x_mm",
+  "branding_logo_offset_y_mm",
+  "branding_letterhead",
+  "branding_letterhead_source",
+  "frappe_company_letterhead",
+  "branding_letterhead_upload",
+  "uploaded_letterhead_preview",
+  "qr_code",
+  "enable_qr_code",
+  "qr_source_mode",
+  "qr_code_size_mm",
+  "qr_dx_mm",
+  "qr_dy_mm"
+ ],
+ "fields": [
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "label": "Profile Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Is default"
+  },
+  {
+   "default": "0",
+   "fieldname": "code_only",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Code Only"
+  },
+  {
+   "fieldname": "general_profile_settings_section",
+   "fieldtype": "Section Break",
+   "label": "General Profile Settings"
+  },
+  {
+   "depends_on": "eval:doc.code_only == 1",
+   "fieldname": "custom_typst_code_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Custom Typst Code"
+  },
+  {
+   "depends_on": "eval:doc.code_only == 1",
+   "fieldname": "custom_typst_code",
+   "fieldtype": "Code",
+   "label": "Typst Code",
+   "mandatory_depends_on": "eval:doc.code_only == 1",
+   "options": "Typst"
+  },
+  {
+   "depends_on": "eval:doc.code_only != 1",
+   "fieldname": "presentation_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Presentation Settings"
+  },
+  {
+   "fieldname": "column_break_jdgn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "A4",
+   "fieldname": "page_size",
+   "fieldtype": "Select",
+   "label": "Page size",
+   "options": "A3\nA4\nA5\nLetter\nLegal\nTabloid\nExecutive"
+  },
+  {
+   "default": "portrait",
+   "fieldname": "orientation",
+   "fieldtype": "Select",
+   "label": "Page orientation",
+   "options": "portrait\nlandscape"
+  },
+  {
+   "depends_on": "eval:doc.code_only != 1",
+   "fieldname": "typography_section",
+   "fieldtype": "Section Break",
+   "label": "Typography"
+  },
+  {
+   "fieldname": "section_label_font",
+   "fieldtype": "Column Break",
+   "label": "Section label font"
+  },
+  {
+   "fieldname": "field_label_font",
+   "fieldtype": "Column Break",
+   "label": "Field label font"
+  },
+  {
+   "fieldname": "field_value_font",
+   "fieldtype": "Column Break",
+   "label": "Field value font"
+  },
+  {
+   "default": "Arial",
+   "fieldname": "section_label_font_family",
+   "fieldtype": "Data",
+   "label": "Family"
+  },
+  {
+   "default": "Bold",
+   "fieldname": "section_label_font_weight",
+   "fieldtype": "Select",
+   "label": "Weight",
+   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+  },
+  {
+   "default": "Normal",
+   "fieldname": "section_label_font_style",
+   "fieldtype": "Select",
+   "label": "Style",
+   "options": "Normal\nItalic\nOblique"
+  },
+  {
+   "default": "#000000",
+   "fieldname": "section_label_font_color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "default": "Arial",
+   "fieldname": "field_label_font_family",
+   "fieldtype": "Data",
+   "label": "Family"
+  },
+  {
+   "default": "Semibold",
+   "fieldname": "field_label_font_weight",
+   "fieldtype": "Select",
+   "label": "Weight",
+   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+  },
+  {
+   "default": "Normal",
+   "fieldname": "field_label_font_style",
+   "fieldtype": "Select",
+   "label": "Style",
+   "options": "Normal\nItalic\nOblique"
+  },
+  {
+   "default": "#64748B",
+   "fieldname": "field_label_font_color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "default": "Arial",
+   "fieldname": "field_value_font_family",
+   "fieldtype": "Data",
+   "label": "Family"
+  },
+  {
+   "default": "Regular",
+   "fieldname": "field_value_font_weight",
+   "fieldtype": "Select",
+   "label": "Weight",
+   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+  },
+  {
+   "default": "Normal",
+   "fieldname": "field_value_font_style",
+   "fieldtype": "Select",
+   "label": "Style",
+   "options": "Normal\nItalic\nOblique"
+  },
+  {
+   "default": "#000000",
+   "fieldname": "field_value_font_color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "default": "20",
+   "fieldname": "margin_top_mm",
+   "fieldtype": "Float",
+   "label": "Top margin (mm)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "20",
+   "fieldname": "margin_bottom_mm",
+   "fieldtype": "Float",
+   "label": "Bottom margin (mm)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "20",
+   "fieldname": "margin_right_mm",
+   "fieldtype": "Float",
+   "label": "Right margin (mm)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "20",
+   "fieldname": "margin_left_mm",
+   "fieldtype": "Float",
+   "label": "Left margin (mm)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "depends_on": "eval:doc.code_only != 1",
+   "fieldname": "table_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Table Settings"
+  },
+  {
+   "fieldname": "cell_inset_pt",
+   "fieldtype": "Column Break",
+   "label": "Cell inset (pt)"
+  },
+  {
+   "default": "5",
+   "fieldname": "table_cell_inset_top_pt",
+   "fieldtype": "Float",
+   "label": "Top",
+   "non_negative": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "table_cell_inset_right_pt",
+   "fieldtype": "Float",
+   "label": "Right",
+   "non_negative": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "table_cell_inset_bottom_pt",
+   "fieldtype": "Float",
+   "label": "Bottom",
+   "non_negative": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "table_cell_inset_left_pt",
+   "fieldtype": "Float",
+   "label": "Left",
+   "non_negative": 1
+  },
+  {
+   "default": "0.50",
+   "fieldname": "table_border_stroke_width_pt",
+   "fieldtype": "Float",
+   "label": "Border stroke thickness (pt)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "#E2E8F0",
+   "fieldname": "table_border_color",
+   "fieldtype": "Color",
+   "label": "Border color"
+  },
+  {
+   "default": "#F1F5F9",
+   "fieldname": "table_header_background_color",
+   "fieldtype": "Color",
+   "label": "Header background color"
+  },
+  {
+   "default": "0",
+   "fieldname": "table_row_striping",
+   "fieldtype": "Check",
+   "label": "Stripe"
+  },
+  {
+   "default": "#F8FAFC",
+   "depends_on": "eval:doc.table_row_striping === 1",
+   "fieldname": "table_stripe_color",
+   "fieldtype": "Color",
+   "label": "Stripe color"
+  },
+  {
+   "default": "Arial",
+   "fieldname": "table_header_font_family",
+   "fieldtype": "Data",
+   "label": "Family"
+  },
+  {
+   "default": "9",
+   "fieldname": "table_header_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Size (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "Semibold",
+   "fieldname": "table_header_font_weight",
+   "fieldtype": "Select",
+   "label": "Weight",
+   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+  },
+  {
+   "default": "Normal",
+   "fieldname": "table_header_font_style",
+   "fieldtype": "Select",
+   "label": "Style",
+   "options": "Normal\nItalic\nOblique"
+  },
+  {
+   "default": "#000000",
+   "fieldname": "table_header_font_color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "fieldname": "body_typography",
+   "fieldtype": "Column Break",
+   "label": "Body Typography"
+  },
+  {
+   "default": "Arial",
+   "fieldname": "table_body_font_family",
+   "fieldtype": "Data",
+   "label": "Family"
+  },
+  {
+   "default": "9",
+   "fieldname": "table_body_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Size (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "Regular",
+   "fieldname": "table_body_font_weight",
+   "fieldtype": "Select",
+   "label": "Weight",
+   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+  },
+  {
+   "default": "Normal",
+   "fieldname": "table_body_font_style",
+   "fieldtype": "Select",
+   "label": "Style",
+   "options": "Normal\nItalic\nOblique"
+  },
+  {
+   "default": "#000000",
+   "fieldname": "table_body_font_color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "depends_on": "eval:doc.code_only != 1",
+   "fieldname": "branding_section",
+   "fieldtype": "Section Break",
+   "label": "Branding"
+  },
+  {
+   "default": "None",
+   "fieldname": "branding_mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "None\nLogo Only\nLetterhead Only\nLogo + Letterhead"
+  },
+  {
+   "default": "Company logo",
+   "depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "fieldname": "branding_logo_source",
+   "fieldtype": "Select",
+   "label": "Logo source",
+   "options": "Company logo\nUpload image"
+  },
+  {
+   "fieldname": "border_header_stripe",
+   "fieldtype": "Column Break",
+   "label": "Border, header & stripe"
+  },
+  {
+   "fieldname": "header_typography",
+   "fieldtype": "Column Break",
+   "label": "Header Typography"
+  },
+  {
+   "depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "fieldname": "branding_logo",
+   "fieldtype": "Column Break",
+   "label": "Logo"
+  },
+  {
+   "fieldname": "branding_mode_choices",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "fieldname": "branding_letterhead",
+   "fieldtype": "Column Break",
+   "label": "Letterhead"
+  },
+  {
+   "default": "20",
+   "depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "fieldname": "branding_logo_width_mm",
+   "fieldtype": "Float",
+   "label": "Width (mm)",
+   "mandatory_depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "precision": "2"
+  },
+  {
+   "depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_logo_source == \"Upload image\"",
+   "fieldname": "branding_uploaded_image_preview",
+   "fieldtype": "Image",
+   "label": "Uploaded image preview",
+   "max_height": "10em",
+   "options": "branding_logo_upload"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "fieldname": "branding_logo_offset_x_mm",
+   "fieldtype": "Float",
+   "label": "X from left (mm)",
+   "mandatory_depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "fieldname": "branding_logo_offset_y_mm",
+   "fieldtype": "Float",
+   "label": "Y from top (mm)",
+   "mandatory_depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_logo_source == \"Upload image\"",
+   "fieldname": "branding_logo_upload",
+   "fieldtype": "Attach Image",
+   "label": "Upload logo",
+   "mandatory_depends_on": "eval:[\"Logo Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_logo_source == \"Upload image\""
+  },
+  {
+   "depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_letterhead_source == \"Upload Letterhead\"",
+   "fieldname": "branding_letterhead_upload",
+   "fieldtype": "Attach Image",
+   "label": "Upload letterhead",
+   "mandatory_depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_letterhead_source == \"Upload Letterhead\""
+  },
+  {
+   "depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_letterhead_source == \"Upload Letterhead\"",
+   "fieldname": "uploaded_letterhead_preview",
+   "fieldtype": "Image",
+   "label": "Uploaded letterhead preview",
+   "max_height": "10em",
+   "options": "branding_letterhead_upload"
+  },
+  {
+   "default": "Use System Letterhead",
+   "depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "fieldname": "branding_letterhead_source",
+   "fieldtype": "Select",
+   "label": "Letterhead source",
+   "mandatory_depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode)",
+   "options": "Use System Letterhead\nUpload Letterhead"
+  },
+  {
+   "depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_letterhead_source == \"Use System Letterhead\"",
+   "fieldname": "frappe_company_letterhead",
+   "fieldtype": "Link",
+   "label": "Company letterhead",
+   "mandatory_depends_on": "eval:[\"Letterhead Only\", \"Logo + Letterhead\"].includes(doc.branding_mode) && doc.branding_letterhead_source == \"Use System Letterhead\"",
+   "options": "Letter Head"
+  },
+  {
+   "default": "14",
+   "fieldname": "section_label_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Size (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "8",
+   "fieldname": "field_label_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Size (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "10",
+   "fieldname": "field_value_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Size (pt)",
+   "non_negative": 1
+  },
+  {
+   "depends_on": "eval:doc.code_only != 1",
+   "fieldname": "qr_code",
+   "fieldtype": "Section Break",
+   "label": "QR Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_qr_code",
+   "fieldtype": "Check",
+   "label": "Enable QR Code"
+  },
+  {
+   "default": "Basic QR",
+   "depends_on": "eval:doc.enable_qr_code == 1",
+   "fieldname": "qr_source_mode",
+   "fieldtype": "Select",
+   "label": "QR Source Mode",
+   "options": "Basic QR\nDocument Code Profile"
+  },
+  {
+   "default": "20.00",
+   "depends_on": "eval:doc.enable_qr_code == 1",
+   "fieldname": "qr_code_size_mm",
+   "fieldtype": "Float",
+   "label": "Size (mm)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "0.00",
+   "depends_on": "eval:doc.enable_qr_code == 1",
+   "fieldname": "qr_dx_mm",
+   "fieldtype": "Float",
+   "label": "X from left (mm)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "0.00",
+   "depends_on": "eval:doc.enable_qr_code == 1",
+   "fieldname": "qr_dy_mm",
+   "fieldtype": "Float",
+   "label": "Y from bottom (mm)",
+   "precision": "2"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-19 07:11:49.408972",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Branding Profile",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

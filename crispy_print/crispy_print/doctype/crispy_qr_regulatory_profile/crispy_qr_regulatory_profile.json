@@ -1,0 +1,173 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:profile_name",
+ "creation": "2026-05-10 09:44:41.131736",
+ "description": "Reusable QR payload standard/profile for country-specific or authority-specific QR codes.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "general",
+  "profile_name",
+  "enabled",
+  "country",
+  "authority_code",
+  "standard",
+  "version",
+  "encoding_section",
+  "payload_format",
+  "output_encoding",
+  "error_correction",
+  "include_signature",
+  "include_hash",
+  "requires_online_verification",
+  "verification_url_template",
+  "implementation_section",
+  "encoder_key",
+  "encoder_settings_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "general",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Profile name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "label": "Version"
+  },
+  {
+   "fieldname": "encoding_section",
+   "fieldtype": "Section Break",
+   "label": "Encoding"
+  },
+  {
+   "default": "TLV",
+   "fieldname": "payload_format",
+   "fieldtype": "Select",
+   "label": "Payload format",
+   "options": "Custom\nJSON\nURL\nText\nTLV\nXML"
+  },
+  {
+   "default": "Base64",
+   "fieldname": "output_encoding",
+   "fieldtype": "Select",
+   "label": "Output encoding",
+   "options": "Base64\nPlain Text\nURL Encoded"
+  },
+  {
+   "default": "Medium",
+   "fieldname": "error_correction",
+   "fieldtype": "Select",
+   "label": "Error correction",
+   "options": "Low\nMedium\nQuartile\nHigh"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_signature",
+   "fieldtype": "Check",
+   "label": "Include signature"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_hash",
+   "fieldtype": "Check",
+   "label": "Include hash"
+  },
+  {
+   "fieldname": "implementation_section",
+   "fieldtype": "Section Break",
+   "label": "Implementation"
+  },
+  {
+   "default": "custom",
+   "fieldname": "encoder_key",
+   "fieldtype": "Data",
+   "label": "Encoder key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authority_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Authority Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_online_verification",
+   "fieldtype": "Check",
+   "label": "Requires online verification"
+  },
+  {
+   "depends_on": "eval:doc.requires_online_verification == 1",
+   "fieldname": "verification_url_template",
+   "fieldtype": "Small Text",
+   "label": "Verification URL Template",
+   "max_height": "4em"
+  },
+  {
+   "fieldname": "encoder_settings_json",
+   "fieldtype": "JSON",
+   "label": "Settings JSON"
+  },
+  {
+   "default": "Custom",
+   "fieldname": "standard",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Standard",
+   "options": "Custom\nAFIP WSFE\nBIR eFPS\nDIAN UBL\nDGT eFaktur\nEgypt ETA\nFACe\nGSTN eInvoice\nIRAS InvoiceNow\nKSeF\nLHDN eInvoice\nmyDATA\nNAV Online Sz\u00e1mla\nNTA Qualified Invoice\nNTS eTax\nPeppol BIS\nPlain Metadata\nSAT CFDI\nSEFAZ NF-e\nSII DTE\nSTA Golden Tax\nSUNAT CPE\nURL Verification\nVietnam eInvoice\nXRechnung\nZATCA TLV"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-11 08:08:36.717736",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy QR Regulatory Profile",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

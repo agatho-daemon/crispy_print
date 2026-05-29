@@ -5,99 +5,35 @@ import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import { extractUsedFieldsFromTypstSource } from "../utils/typstFieldExtractor"
 import { type CrispyLayout } from "../utils/layout"
-import { ensureTableSettings, ensureTypography } from "../utils/pageSettings"
-import { deepClone } from "../utils/json"
-import {
-	buildForegroundPlacements,
-	getLetterheadFilename,
-	resolveBrandingImage,
-	resolveBrandingMode,
-} from "./branding"
+import { resolveBrandingImage, resolveBrandingMode } from "./branding"
 import {
 	CrispyPreviewEvents,
 	dispatchCrispyPreviewSource,
 	dispatchCrispyPreviewStatus,
 } from "../utils/events"
 import { getLogger } from "../logger"
+import { sanitizeSvg } from "../utils/safeSvg"
+import { createSampleDocAutocomplete } from "./workerAutocomplete"
+import {
+	buildDefaultStyleDefs,
+	buildHeaderFooterBlock,
+	buildPresentationSettingsBlock,
+	normalizeDocImageAssets,
+	parseTypstError,
+} from "./workerCompilation"
+import { createDocumentLoader, sanitizeFilename } from "./workerDocuments"
+import {
+	DOWNLOAD_REQUEST_ID,
+	PREVIEW_REQUEST_ID,
+	VIEW_PDF_REQUEST_ID,
+	downloadPdfBlob,
+	openPdfBlob,
+	postPdfCompile,
+	type PdfAction,
+} from "./workerPdf"
 
 const logger = getLogger({ module: "TypstPreview" })
-const IMAGE_EXTENSIONS = new Set([
-	"png",
-	"jpg",
-	"jpeg",
-	"svg",
-	"gif",
-	"webp",
-	"bmp",
-	"tif",
-	"tiff",
-	"avif",
-])
-
-/**
- * Parse and format Typst error messages from server responses
- * Handles nested JSON, escaped strings, and Unicode box drawing characters
- */
-export function parseTypstError(error: any): string {
-	try {
-		let errorStr = String(error?.message || error || "Typst compilation failed")
-
-		// Unescape the string - may be double or triple escaped from JSON
-		// Replace escaped newlines with actual newlines
-		errorStr = errorStr.replace(/\\n/g, "\n")
-
-		// Replace escaped quotes
-		errorStr = errorStr.replace(/\\"/g, '"')
-
-		// Replace escaped backslashes (but do this after other replacements)
-		errorStr = errorStr.replace(/\\\\/g, "\\")
-
-		// Replace Unicode box drawing characters
-		errorStr = errorStr.replace(/\\u250c/g, "┌")
-		errorStr = errorStr.replace(/\\u2500/g, "─")
-		errorStr = errorStr.replace(/\\u2502/g, "│")
-
-		// Try to extract just the Typst error part, ignoring Python tracebacks
-		const typstErrorMatch = errorStr.match(
-			/Typst compilation failed:\s*(.+?)(?=\n\nDuring handling|$)/s
-		)
-		if (typstErrorMatch) {
-			errorStr = typstErrorMatch[1].trim()
-		}
-
-		// Look for the actual error message
-		const errorMatch = errorStr.match(/error:\s*(.+?)(?=\n|$)/)
-		const errorMessage = errorMatch ? errorMatch[1].trim() : "Compilation error"
-
-		// Extract file location and line number
-		const locationMatch = errorStr.match(/document\.typ:(\d+):(\d+)/)
-		const location = locationMatch ? `Line ${locationMatch[1]}, Column ${locationMatch[2]}` : ""
-
-		// Try to extract the code snippet
-		const snippetMatch = errorStr.match(/(\d+)\s*│\s*(.+?)(?=\n|$)/m)
-		const snippet = snippetMatch ? snippetMatch[2].trim() : ""
-
-		// Build formatted error message
-		const parts: string[] = []
-
-		parts.push(`Error: ${errorMessage}`)
-
-		if (location) {
-			parts.push(`Location: ${location}`)
-		}
-
-		if (snippet) {
-			parts.push("")
-			parts.push("Code:")
-			parts.push(`  ${snippet}`)
-		}
-
-		return parts.join("\n")
-	} catch (e) {
-		// Fallback: return original error as string
-		return String(error?.message || error || "Compilation failed")
-	}
-}
+export { parseTypstError } from "./workerCompilation"
 
 export interface TypstAdapter {
 	getLayout: () => CrispyLayout | null | undefined
@@ -110,7 +46,7 @@ export interface TypstAdapter {
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
 	getDocname?: () => string | null | undefined
-	getPageSettings?: () => any
+	get_presentation_settings?: () => any
 	hookDataChanges?: (callback: () => void) => () => void
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
 }
@@ -119,235 +55,101 @@ export function setupWorker(
 	printFormatName: string,
 	previewPane: HTMLElement,
 	adapter: TypstAdapter,
-	opts?: { createWorker?: typeof createTypstWorker }
+	opts?: { createWorker?: typeof createTypstWorker; instanceId?: string }
 ) {
 	const createWorker = opts?.createWorker || createTypstWorker
 	const { worker, cleanup } = createWorker()
+	const instanceId =
+		opts?.instanceId ||
+		previewPane.dataset.typstPreviewInstanceId ||
+		`typst-preview-${Math.random().toString(36).slice(2)}`
+	previewPane.dataset.typstPreviewInstanceId = instanceId
 
-	worker.addEventListener("error", (err) => {
+	let disposed = false
+	const handleWorkerError = (err: Event) => {
 		logger.error("Worker error", err)
-	})
-	worker.addEventListener("messageerror", (err) => {
+		if (statusEl) {
+			statusEl.textContent = __("worker error")
+			statusEl.style.color = "#e74c3c"
+		}
+		dispatchStatus("error", "worker error")
+	}
+	const handleWorkerMessageError = (err: MessageEvent) => {
 		logger.error("Worker messageerror", err)
-	})
+		if (statusEl) {
+			statusEl.textContent = __("worker message error")
+			statusEl.style.color = "#e74c3c"
+		}
+		dispatchStatus("error", "worker message error")
+	}
+	worker.addEventListener("error", handleWorkerError)
+	worker.addEventListener("messageerror", handleWorkerMessageError)
 
 	const statusEl = previewPane.querySelector<HTMLElement>("#typst-status")
 	const svgContainer = previewPane.querySelector<HTMLElement>("#typst-svg-container")
+	svgContainer?.setAttribute("data-typst-svg-container", "true")
 	const downloadBtn = previewPane.querySelector<HTMLButtonElement>("#typst-download")
 	const viewPdfBtn = previewPane.querySelector<HTMLButtonElement>("#typst-view-pdf")
 	const refreshBtn = previewPane.querySelector<HTMLButtonElement>("#typst-refresh")
 	const viewCodeBtn = previewPane.querySelector<HTMLButtonElement>("#typst-view-code")
-	const sampleDocInput = previewPane.querySelector<HTMLInputElement>("#typst-sample-doc-input")
 
-	let awesomplete: any = null
 	let sampleDocData: Record<string, any> | null = null
 	let currentDoctype: string | null = null
 	let currentDocname: string | null = null
 	let sampleDocSelected = false
-	const docCache = new Map<string, Record<string, any>>()
 	let qrEnabled = false
 	let docNameForQr = ""
 	let qrFilename = ""
-	let skipNextInput = false
-	let autocompleteInitialized = false
 	let stylesNoticeShown = false
+	const documentLoader = createDocumentLoader()
+	let documentLoadGeneration = 0
 
-	// Cleanup function exported for external use (e.g., component unmount)
-	function cleanupAutocomplete() {
-		if (awesomplete) {
-			awesomplete.destroy()
-			awesomplete = null
-		}
-
-		currentDoctype = null
-		autocompleteInitialized = false
-		skipNextInput = false
+	function clearSelectedDocument() {
 		sampleDocSelected = false
 		sampleDocData = null
-		currentDocname = null
-	}
-
-	function cacheKey(doctype: string, docname: string) {
-		return `${doctype}::${docname}`
-	}
-
-	function sanitizeFilename(value: string) {
-		return String(value || "")
-			.trim()
-			.replace(/[\/\\?%*:|"<>]/g, "-")
-			.replace(/\s+/g, "-")
-	}
-
-	function fetchDoc(
-		doctype: string,
-		docname: string,
-		opts: { force?: boolean } = {}
-	): Promise<Record<string, any> | null> {
-		const key = cacheKey(doctype, docname)
-		const cached = docCache.get(key)
-		if (!opts.force && cached) return Promise.resolve(cached)
-
-		return new Promise((resolve) => {
-			if (typeof frappe === "undefined" || typeof frappe.call !== "function") {
-				resolve(null)
-				return
-			}
-
-			frappe.call({
-				method: "crispy_print.api.v1.get_formatted_doc",
-				args: { doctype, name: docname },
-				callback: (r: any) => {
-					if (r?.message && typeof r.message === "object") {
-						docCache.set(key, r.message)
-						resolve(r.message)
-					} else {
-						resolve(null)
-					}
-				},
-				error: () => resolve(null),
-			})
-		})
 	}
 
 	function dispatchStatus(status: "fetching" | "compiling" | "ready" | "error", message?: string) {
-		dispatchCrispyPreviewStatus({ status, message })
+		dispatchCrispyPreviewStatus({ status, message, instanceId })
 	}
 
-	function fontWeightToNumber(weight: string) {
-		const normalized = String(weight || "").toLowerCase()
-		if (normalized === "bold") return 700
-		if (normalized === "semibold" || normalized === "semi-bold") return 600
-		if (normalized === "medium") return 500
-		if (normalized === "light") return 300
-		return 400
+	function shouldHandleEvent(event: any) {
+		const targetInstanceId = event?.detail?.instanceId
+		return !targetInstanceId || targetInstanceId === instanceId
 	}
 
-	function buildDefaultStyleDefs(pageSettings: any) {
-		const safePageSettings = pageSettings ? deepClone(pageSettings) : {}
-		const typography = ensureTypography(safePageSettings)
-		const fieldLabel = typography.fieldLabel
-		const fieldValue = typography.fieldValue
-		const sectionLabel = typography.sectionLabel
-		const tableSettings = ensureTableSettings(safePageSettings)
-		const tableHeader = tableSettings.typography.header
-		const tableBody = tableSettings.typography.body
-		const tableInset = tableSettings.inset
-		const tableStrokeWidth = Number.isFinite(tableSettings.stroke.width)
-			? tableSettings.stroke.width
-			: 0
-		const formatColor = (color: string, fallback = "none") => {
-			const raw = String(color || "").trim()
-			if (!raw) return fallback
-			if (raw.startsWith("#")) {
-				return `rgb("${raw.substring(1)}")`
-			}
-			return raw
+	function invalidatePendingResponses() {
+		for (const requestId of [PREVIEW_REQUEST_ID, DOWNLOAD_REQUEST_ID, VIEW_PDF_REQUEST_ID]) {
+			latestSeqByRequest[requestId] = ++seqCounter
 		}
-		const tableStrokeColor = formatColor(tableSettings.stroke.color, "black")
-		const tableHeaderFill = formatColor(tableSettings.header.backgroundColor, "none")
-		const tableStripeFill = formatColor(tableSettings.stripe.color, "none")
-		const tableStripeEnabled = Boolean(tableSettings.stripe.enabled)
-
-		const lines: string[] = []
-		lines.push("// Typography styles (auto-injected for raw Typst)")
-		lines.push("#let fieldLabelStyle = (")
-		lines.push(`  font: "${fieldLabel.fontFamily}",`)
-		lines.push(`  size: ${fieldLabel.fontSize},`)
-		lines.push(`  style: "${fieldLabel.fontStyle}",`)
-		lines.push(`  weight: ${fontWeightToNumber(fieldLabel.fontWeight)},`)
-		lines.push(`  fill: rgb("${fieldLabel.color}")`)
-		lines.push(")")
-		lines.push("")
-		lines.push("#let fieldValueStyle = (")
-		lines.push(`  font: "${fieldValue.fontFamily}",`)
-		lines.push(`  size: ${fieldValue.fontSize},`)
-		lines.push(`  style: "${fieldValue.fontStyle}",`)
-		lines.push(`  weight: ${fontWeightToNumber(fieldValue.fontWeight)},`)
-		lines.push(`  fill: rgb("${fieldValue.color}")`)
-		lines.push(")")
-		lines.push("")
-		lines.push("#let sectionLabelStyle = (")
-		lines.push(`  font: "${sectionLabel.fontFamily}",`)
-		lines.push(`  size: ${sectionLabel.fontSize},`)
-		lines.push(`  style: "${sectionLabel.fontStyle}",`)
-		lines.push(`  weight: ${fontWeightToNumber(sectionLabel.fontWeight)},`)
-		lines.push(`  fill: rgb("${sectionLabel.color}")`)
-		lines.push(")")
-		lines.push("")
-		lines.push("// Table styles (auto-injected for raw Typst)")
-		lines.push("#let tableHeaderStyle = (")
-		lines.push(`  font: "${tableHeader.fontFamily}",`)
-		lines.push(`  size: ${tableHeader.fontSize},`)
-		lines.push(`  style: "${tableHeader.fontStyle}",`)
-		lines.push(`  weight: ${fontWeightToNumber(tableHeader.fontWeight)},`)
-		lines.push(`  fill: rgb("${tableHeader.color}")`)
-		lines.push(")")
-		lines.push("")
-		lines.push("#let tableBodyStyle = (")
-		lines.push(`  font: "${tableBody.fontFamily}",`)
-		lines.push(`  size: ${tableBody.fontSize},`)
-		lines.push(`  style: "${tableBody.fontStyle}",`)
-		lines.push(`  weight: ${fontWeightToNumber(tableBody.fontWeight)},`)
-		lines.push(`  fill: rgb("${tableBody.color}")`)
-		lines.push(")")
-		lines.push("")
-		lines.push(
-			`#let tableCellInset = (top: ${tableInset.top}pt, right: ${tableInset.right}pt, bottom: ${tableInset.bottom}pt, left: ${tableInset.left}pt)`
-		)
-		lines.push(
-			`#let tableStroke = ${
-				tableStrokeWidth > 0
-					? `${tableStrokeWidth}pt + ${tableStrokeColor}`
-					: "none"
-			}`
-		)
-		lines.push(`#let tableHeaderFill = ${tableHeaderFill}`)
-		lines.push(`#let tableStripeFill = ${tableStripeFill}`)
-		lines.push(`#let tableStripeEnabled = ${tableStripeEnabled ? "true" : "false"}`)
-		lines.push("")
-		return lines.join("\n")
 	}
 
-	function typstReferencesDefaultStyles(source: string) {
-		if (!source) return false
-		return (
-			source.includes("fieldLabelStyle") ||
-			source.includes("fieldValueStyle") ||
-			source.includes("sectionLabelStyle") ||
-			source.includes("tableHeaderStyle") ||
-			source.includes("tableBodyStyle") ||
-			source.includes("tableCellInset") ||
-			source.includes("tableStroke") ||
-			source.includes("tableHeaderFill") ||
-			source.includes("tableStripeFill") ||
-			source.includes("tableStripeEnabled")
-		)
+	function resetCompilationLatch() {
+		missingLayoutRetries = 0
+		compilationDisabled = false
 	}
 
-	function typstDefinesDefaultStyles(source: string) {
-		if (!source) return false
-		return (
-			/#let\s+fieldLabelStyle\b/.test(source) ||
-			/#let\s+fieldValueStyle\b/.test(source) ||
-			/#let\s+sectionLabelStyle\b/.test(source) ||
-			/#let\s+tableHeaderStyle\b/.test(source) ||
-			/#let\s+tableBodyStyle\b/.test(source) ||
-			/#let\s+tableCellInset\b/.test(source) ||
-			/#let\s+tableStroke\b/.test(source) ||
-			/#let\s+tableHeaderFill\b/.test(source) ||
-			/#let\s+tableStripeFill\b/.test(source) ||
-			/#let\s+tableStripeEnabled\b/.test(source)
-		)
+	function clearPdfBlob() {
+		currentPdfBlob = null
+	}
+
+	function resetCompiledArtifacts(clearTypstCode = true) {
+		clearPdfBlob()
+		invalidatePendingResponses()
+		if (clearTypstCode) {
+			lastTypstCode = ""
+		}
 	}
 
 	function setCurrentDoc(doctype: string, docname: string, opts: { force?: boolean } = {}) {
+		const capturedGeneration = ++documentLoadGeneration
 		currentDoctype = doctype
 		currentDocname = docname
-		sampleDocSelected = false
-		sampleDocData = null
+		clearSelectedDocument()
+		resetCompilationLatch()
+		resetCompiledArtifacts(true)
 
 		clearPreview()
-		lastTypstCode = ""
 
 		if (statusEl) {
 			statusEl.textContent = __("fetching document…")
@@ -355,7 +157,15 @@ export function setupWorker(
 		}
 		dispatchStatus("fetching", docname)
 
-		fetchDoc(doctype, docname, { force: Boolean(opts.force) }).then((doc) => {
+		documentLoader
+			.fetchDoc(doctype, docname, {
+				force: Boolean(opts.force),
+				qrSourceMode: getEffectiveQrSourceMode(),
+			})
+			.then((doc) => {
+			if (disposed || capturedGeneration !== documentLoadGeneration) {
+				return
+			}
 			if (!doc) {
 				logger.warn("Failed to fetch document", { doctype, docname })
 				if (statusEl) {
@@ -374,7 +184,7 @@ export function setupWorker(
 				message: __("Preview loaded: {0}", [docname]),
 				indicator: "green",
 			})
-		})
+			})
 	}
 
 	const clearPreview = () => {
@@ -387,17 +197,32 @@ export function setupWorker(
 			svgContainer.classList.add("has-pages")
 		}
 	}
+	let lastRenderedSvgPageHashes: string[] = []
+	const hashSvgPage = (value: string) => {
+		let hash = 5381
+		for (let i = 0; i < value.length; i += 1) {
+			hash = (hash * 33) ^ value.charCodeAt(i)
+		}
+		return (hash >>> 0).toString(16)
+	}
 	const renderTypstPages = (_rootEl: HTMLElement, svgPages: string[]) => {
-		const container = document.getElementById("typst-svg-container")
-		const placeholder = document.getElementById("typst-preview-placeholder")
+		const container = svgContainer || _rootEl.querySelector<HTMLElement>("[data-typst-svg-container]")
+		const placeholder = _rootEl.querySelector<HTMLElement>("#typst-preview-placeholder")
 
 		if (!container) return
+		const nextHashes = svgPages.map(hashSvgPage)
+		if (
+			nextHashes.length === lastRenderedSvgPageHashes.length &&
+			nextHashes.every((hash, index) => hash === lastRenderedSvgPageHashes[index])
+		) {
+			return
+		}
 
 		if (placeholder) {
 			placeholder.remove()
 		}
 
-		container.innerHTML = ""
+		const fragment = document.createDocumentFragment()
 
 		svgPages.forEach((svg) => {
 			const page = document.createElement("div")
@@ -406,7 +231,7 @@ export function setupWorker(
 			page.style.boxShadow =
 				"0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2)"
 
-			page.innerHTML = svg
+			page.innerHTML = sanitizeSvg(svg)
 			const svgEl = page.querySelector("svg")
 			if (svgEl) {
 				svgEl.style.width = "100%"
@@ -415,12 +240,15 @@ export function setupWorker(
 				svgEl.removeAttribute("height")
 			}
 
-			container.appendChild(page)
+			fragment.appendChild(page)
 		})
+		container.replaceChildren(fragment)
+		lastRenderedSvgPageHashes = nextHashes
 	}
 
 	// Unified preview events (single source of truth)
 	const handleSetDoc = (event: any) => {
+		if (!shouldHandleEvent(event)) return
 		const { doctype, docname } = event?.detail || {}
 		if (!doctype || !docname) {
 			logger.warn("Invalid set-doc event", event?.detail)
@@ -430,7 +258,8 @@ export function setupWorker(
 	}
 	window.addEventListener(CrispyPreviewEvents.SetDoc, handleSetDoc)
 
-	const handleRefresh = () => {
+	const handleRefresh = (event: any) => {
+		if (!shouldHandleEvent(event)) return
 		if (!currentDoctype || !currentDocname) {
 			// crispy-print mode: a specific document is provided by the page
 			const doctype = adapter.getDoctype?.()
@@ -447,13 +276,16 @@ export function setupWorker(
 	}
 	window.addEventListener(CrispyPreviewEvents.Refresh, handleRefresh)
 
-	const handleSourceRequest = () => {
-		dispatchCrispyPreviewSource({ source: lastTypstCode || null })
+	const handleSourceRequest = (event: any) => {
+		if (!shouldHandleEvent(event)) return
+		dispatchCrispyPreviewSource({ source: lastTypstCode || null, instanceId })
 	}
 	window.addEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
 	const handleSourceUpdate = (event: any) => {
+		if (!shouldHandleEvent(event)) return
 		const source = event?.detail?.source
 		if (typeof source === "string") {
+			resetCompiledArtifacts(false)
 			lastTypstCode = source
 		}
 	}
@@ -461,7 +293,8 @@ export function setupWorker(
 
 	// PDF generation request (used by crispy-print toolbar and any other UI)
 	const handlePdfRequest = (event: any) => {
-		const action = (event?.detail?.action || "view") as "view" | "download"
+		if (!shouldHandleEvent(event)) return
+		const action = (event?.detail?.action || "view") as PdfAction
 		logger.info("PDF request received", {
 			action,
 			hasPdf: Boolean(currentPdfBlob),
@@ -476,9 +309,7 @@ export function setupWorker(
 				return
 			}
 
-			const url = URL.createObjectURL(currentPdfBlob)
-			window.open(url, "_blank")
-			setTimeout(() => URL.revokeObjectURL(url), 1000)
+			openPdfBlob(currentPdfBlob)
 			return
 		}
 
@@ -493,246 +324,60 @@ export function setupWorker(
 			statusEl.style.color = "#3498db"
 		}
 
-		pendingPdfDownload = action === "download"
-
-		const pageSettings =
-			adapter && typeof adapter.getPageSettings === "function"
-				? adapter.getPageSettings() || {}
+		const presentation_settings =
+			adapter && typeof adapter.get_presentation_settings === "function"
+				? adapter.get_presentation_settings() || {}
 				: {}
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
-		const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
+		const brandingImage = resolveBrandingImage(presentation_settings, letterheadData)
 		logger.info("PDF request context", {
-			requestId: pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID,
-			pageSettings,
+			requestId: action === "download" ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID,
+			presentation_settings,
 			brandingImage,
 		})
 
-		const requestId = pendingPdfDownload ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
+		const requestId = action === "download" ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
 		logger.info("Posting PDF compile to worker", { requestId })
-		worker.postMessage({
-			typstSrc: lastTypstCode,
-			csrfToken: frappe?.csrf_token,
-			outputFormat: "pdf",
-			requestId,
-			seq: nextSeq(requestId),
-			assetFiles: lastCompileAssetFiles,
-			qrData: qrEnabled ? docNameForQr : null,
-			qrFilename: qrEnabled ? qrFilename : null,
-		})
+		try {
+			postPdfCompile({
+				worker,
+				typstSrc: lastTypstCode,
+				requestId,
+				seq: nextSeq(requestId),
+				assetFiles: lastCompileAssetFiles,
+				qrData: qrEnabled ? docNameForQr : null,
+				qrFilename: qrEnabled ? qrFilename : null,
+			})
+		} catch (err) {
+			logger.error("Failed to post PDF compile", err)
+			if (statusEl) {
+				statusEl.textContent = __("pdf error")
+				statusEl.style.color = "#e74c3c"
+			}
+			dispatchStatus("error", "failed to start pdf compile")
+		}
 	}
 	window.addEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
 
-	function setupSampleDocAutocomplete(doctype: string) {
-		if (!doctype) {
-			logger.warn("Cannot setup autocomplete - missing doctype")
-			return
-		}
-
-		if (!sampleDocInput) {
-			// In PP, the search input isn't rendered; silently skip autocomplete
-			return
-		}
-
-		if (typeof Awesomplete === "undefined") {
-			// Builder-only enhancement; skip quietly when not available
-			return
-		}
-
-		// Guard: prevent duplicate initialization for same doctype
-		if (currentDoctype === doctype && autocompleteInitialized) {
-			return
-		}
-
-		// Clean up previous Awesomplete instance
-		if (awesomplete) {
-			awesomplete.destroy()
-			awesomplete = null
-		}
-
-		// Remove old event listeners by cloning the input element
-		if (autocompleteInitialized && sampleDocInput.parentNode) {
-			const newInput = sampleDocInput.cloneNode(true) as HTMLInputElement
-			sampleDocInput.parentNode.replaceChild(newInput, sampleDocInput)
-			// Update reference to the new input
-			const refreshedInput = previewPane.querySelector<HTMLInputElement>("#typst-sample-doc-input")
-			if (!refreshedInput) {
-				logger.error("Autocomplete failed to get refreshed input element")
-				return
-			}
-			// Update the closure reference (this is a bit tricky, but we're in the same scope)
-			// The parent function has sampleDocInput - we can't reassign it from here
-			// So we'll work with refreshedInput for the rest of this function
-			const workingInput = refreshedInput
-
+	const autocomplete = createSampleDocAutocomplete({
+		previewPane,
+		getInput: () => previewPane.querySelector<HTMLInputElement>("#typst-sample-doc-input"),
+		getCurrentDoctype: () => currentDoctype,
+		setCurrentDoctype: (doctype) => {
 			currentDoctype = doctype
-			currentDocname = null
-			autocompleteInitialized = true
-			skipNextInput = false
+		},
+		setCurrentDocname: (docname) => {
+			currentDocname = docname
+		},
+		clearSelectedDocument,
+		onSelect: (doctype, docname) => setCurrentDoc(doctype, docname, { force: true }),
+		setFetchingStatus: () => {
+			statusEl && (statusEl.textContent = __("fetching document..."))
+			if (statusEl) statusEl.style.color = "#3498db"
+		},
+	})
 
-			workingInput.placeholder = `Search ${doctype}...`
-			workingInput.setAttribute("data-doctype", doctype)
-			workingInput.value = ""
-			sampleDocData = null
-			sampleDocSelected = false
-
-			awesomplete = new Awesomplete(workingInput, {
-				minChars: 0,
-				maxItems: 20,
-				autoFirst: true,
-				filter: () => true,
-			})
-
-			function searchDocs(txt: string) {
-				frappe.call({
-					method: "frappe.desk.search.search_link",
-					args: {
-						doctype,
-						txt: txt || "",
-						page_length: 20,
-					},
-					callback: (r: any) => {
-						if (!awesomplete || !workingInput?.isConnected) {
-							return
-						}
-						if (r.message && r.message.length) {
-							awesomplete.list = r.message.map((d: any) => ({
-								label: d.value + (d.description ? " - " + __(d.description) : ""),
-								value: d.value,
-							}))
-						} else {
-							awesomplete.list = []
-						}
-					},
-				})
-			}
-
-			workingInput.addEventListener("focus", () => {
-				searchDocs(workingInput.value)
-			})
-
-			workingInput.addEventListener(
-				"input",
-				frappe.utils.debounce(() => {
-					if (skipNextInput) {
-						skipNextInput = false
-						return
-					}
-					sampleDocSelected = false
-					sampleDocData = null
-					searchDocs(workingInput.value)
-				}, 300)
-			)
-
-			workingInput.addEventListener("awesomplete-selectcomplete", () => {
-				skipNextInput = true // Prevent input handler from re-triggering
-				const selectedDoc = workingInput.value
-				sampleDocSelected = false
-				currentDocname = selectedDoc
-
-				if (!selectedDoc || !currentDoctype) {
-					logger.debug("No document or doctype selected")
-					return
-				}
-
-				statusEl && (statusEl.textContent = __("fetching document..."))
-				if (statusEl) statusEl.style.color = "#3498db"
-
-				setCurrentDoc(currentDoctype, selectedDoc, { force: true })
-			})
-		} else {
-			// First initialization
-			currentDoctype = doctype
-			currentDocname = null
-			autocompleteInitialized = true
-			skipNextInput = false
-
-			if (!sampleDocInput) {
-				logger.warn("Sample doc input not found")
-				return
-			}
-
-			sampleDocInput.placeholder = `Search ${doctype}...`
-			sampleDocInput.setAttribute("data-doctype", doctype)
-			sampleDocInput.value = ""
-			sampleDocData = null
-			sampleDocSelected = false
-
-			awesomplete = new Awesomplete(sampleDocInput, {
-				minChars: 0,
-				maxItems: 20,
-				autoFirst: true,
-				filter: () => true,
-			})
-			const awesompleteInstance = awesomplete
-
-			function searchDocs(txt: string) {
-				frappe.call({
-					method: "frappe.desk.search.search_link",
-					args: {
-						doctype,
-						txt: txt || "",
-						page_length: 20,
-					},
-					callback: (r: any) => {
-						if (
-							!awesomplete ||
-							awesomplete !== awesompleteInstance ||
-							!sampleDocInput?.isConnected
-						) {
-							return
-						}
-						if (r.message && r.message.length) {
-							awesomplete.list = r.message.slice(0, 20).map((d: any) => ({
-								label: d.value + (d.description ? " - " + __(d.description) : ""),
-								value: d.value,
-							}))
-						} else {
-							awesomplete.list = []
-						}
-					},
-				})
-			}
-
-			sampleDocInput.addEventListener("focus", () => {
-				searchDocs(sampleDocInput.value)
-			})
-
-			sampleDocInput.addEventListener(
-				"input",
-				frappe.utils.debounce(() => {
-					if (skipNextInput) {
-						skipNextInput = false
-						return
-					}
-					sampleDocSelected = false
-					sampleDocData = null
-					searchDocs(sampleDocInput.value)
-				}, 300)
-			)
-
-			sampleDocInput.addEventListener("awesomplete-selectcomplete", () => {
-				skipNextInput = true // Prevent input handler from re-triggering
-				const selectedDoc = sampleDocInput.value
-				sampleDocSelected = false
-				currentDocname = selectedDoc
-
-				if (!selectedDoc || !currentDoctype) {
-					logger.debug("No document or doctype selected")
-					return
-				}
-
-				statusEl && (statusEl.textContent = __("fetching document..."))
-				if (statusEl) statusEl.style.color = "#3498db"
-
-				setCurrentDoc(currentDoctype, selectedDoc, { force: true })
-			})
-		}
-	}
-
-	const PREVIEW_REQUEST_ID = "preview"
-	const DOWNLOAD_REQUEST_ID = "download"
-	const VIEW_PDF_REQUEST_ID = "view-pdf"
 	const previewOutputFormat = "svg"
 	svgContainer?.classList.remove("preview-hidden")
 
@@ -741,8 +386,8 @@ export function setupWorker(
 	let lastCompileAssetFiles: string[] = []
 	let lastQrPayload = ""
 	let currentPdfBlob: Blob | null = null
-	let pendingPdfDownload = false
 	let compileTriggerTimeout: number | undefined
+	let compilationFrame: number | undefined
 	let missingLayoutRetries = 0
 	let unsubscribeAdapter: (() => void) | null = null
 	let unsubscribeDoctype: (() => void) | null = null
@@ -758,6 +403,16 @@ export function setupWorker(
 
 	function scheduleCompile(delay = 200) {
 		if (compilationDisabled) {
+			const layout = adapter?.getLayout?.()
+			const rawTypst = adapter?.getRawTypst?.()
+			if (layout || rawTypst) {
+				resetCompilationLatch()
+			} else {
+				return
+			}
+		}
+
+		if (disposed) {
 			return
 		}
 
@@ -778,12 +433,7 @@ export function setupWorker(
 		if (!currentPdfBlob) {
 			return
 		}
-		const url = URL.createObjectURL(currentPdfBlob)
-		const link = document.createElement("a")
-		link.href = url
-		link.download = `${printFormatName.replace(/\s+/g, "_")}_preview.pdf`
-		link.click()
-		URL.revokeObjectURL(url)
+		downloadPdfBlob(currentPdfBlob, `${printFormatName.replace(/\s+/g, "_")}_preview.pdf`)
 	}
 
 	function initializeAdapter() {
@@ -798,18 +448,18 @@ export function setupWorker(
 			// crispy-print mode: render a specific document without requiring sample selection
 			setCurrentDoc(doctype, docname, { force: true })
 		}
-		// Note: Don't call setupSampleDocAutocomplete here - let the watcher handle it
+		// Note: autocomplete is initialized by the doctype watcher.
 
 		if (adapter.hookDoctypeChanges) {
 			unsubscribeDoctype = adapter.hookDoctypeChanges((nextDoctype) => {
 				if (nextDoctype) {
 					if (nextDoctype !== currentDoctype) {
 						// Reset and reinitialize for new doctype
-						autocompleteInitialized = false
-						setupSampleDocAutocomplete(nextDoctype)
+						autocomplete.reset()
+						autocomplete.setup(nextDoctype)
 					} else {
 						// Same doctype, ensure it's initialized (handles page navigation back)
-						setupSampleDocAutocomplete(nextDoctype)
+						autocomplete.setup(nextDoctype)
 					}
 				}
 			})
@@ -817,6 +467,7 @@ export function setupWorker(
 
 		if (adapter.hookDataChanges) {
 			unsubscribeAdapter = adapter.hookDataChanges(() => {
+				resetCompiledArtifacts(false)
 				scheduleCompile(200)
 			})
 		}
@@ -839,26 +490,50 @@ export function setupWorker(
 	}
 
 	function compile() {
+		if (disposed) {
+			return
+		}
 		if (compilationTimeout) {
 			clearTimeout(compilationTimeout)
+		}
+		if (compilationFrame) {
+			cancelAnimationFrame(compilationFrame)
 		}
 		// Use shorter debounce and defer heavy work to next frame
 		compilationTimeout = window.setTimeout(() => {
 			// Split work across frames to avoid blocking
-			requestAnimationFrame(() => {
+			compilationFrame = requestAnimationFrame(() => {
+				compilationFrame = undefined
 				performCompilation()
 			})
 		}, 150)
 	}
 
 	function getQrSettings() {
-		if (!adapter || typeof adapter.getPageSettings !== "function") return {}
-		const pageSettings = adapter.getPageSettings() || {}
-		return pageSettings.qr || {}
+		if (!adapter || typeof adapter.get_presentation_settings !== "function") return {}
+		const presentation_settings = adapter.get_presentation_settings() || {}
+		return presentation_settings.qr || {}
+	}
+
+	function getEffectiveQrSourceMode() {
+		const qrSettings = getQrSettings()
+		return String(qrSettings.sourceMode || "").trim() === "document_code_profile"
+			? "document_code_profile"
+			: "basic"
 	}
 
 	function buildQrPayload(doc: Record<string, any> | null, fields: string[]) {
 		if (!doc) return ""
+		const generatedCode = doc.__crispy_document_code
+		if (
+			getEffectiveQrSourceMode() === "document_code_profile" &&
+			generatedCode &&
+			typeof generatedCode === "object" &&
+			typeof generatedCode.encoded_value === "string" &&
+			generatedCode.encoded_value.trim()
+		) {
+			return generatedCode.encoded_value.trim()
+		}
 		if (!fields.length) return String(doc.name || "")
 		const wantsTimestamp = fields.includes("timestamp")
 		const lines: string[] = []
@@ -880,38 +555,6 @@ export function setupWorker(
 		return lines.join("\n")
 	}
 
-	function isImageAssetValue(value: string): boolean {
-		const raw = String(value || "").trim()
-		if (!raw) return false
-		const match = raw.match(/\.([a-zA-Z0-9]+)(?:[#?].*)?$/)
-		if (!match) return false
-		return IMAGE_EXTENSIONS.has(String(match[1] || "").toLowerCase())
-	}
-
-	function normalizeDocImageAssets(value: any, collector: Set<string>): any {
-		if (Array.isArray(value)) {
-			return value.map((item) => normalizeDocImageAssets(item, collector))
-		}
-		if (value && typeof value === "object") {
-			const out: Record<string, any> = {}
-			Object.entries(value as Record<string, any>).forEach(([key, item]) => {
-				out[key] = normalizeDocImageAssets(item, collector)
-			})
-			return out
-		}
-		if (typeof value !== "string") {
-			return value
-		}
-
-		const raw = value.trim()
-		if (!isImageAssetValue(raw)) {
-			return value
-		}
-		collector.add(raw)
-		const filename = raw.split("/").pop()
-		return filename || value
-	}
-
 	function resolveQrPayload() {
 		const enabled =
 			adapter && typeof adapter.getQrEnabled === "function"
@@ -931,84 +574,10 @@ export function setupWorker(
 		}
 	}
 
-	function buildPageSettingsBlock(options: {
-		pageSettings?: Record<string, any> | null
-		letterheadData?: Record<string, any> | null
-		qrEnabled?: boolean
-		qrFilename?: string | null
-		qrSettings?: Record<string, any> | null
-	}) {
-		const lines: string[] = []
-		const pageSettings = options.pageSettings || {}
-		const margins = pageSettings.margins || {}
-		const pageSize = String(pageSettings.pageSize || "A4").toLowerCase()
-		const orientation = String(pageSettings.orientation || "portrait")
-		const marginValue = (value: any, fallback: number) => {
-			const num = Number(value)
-			return Number.isFinite(num) ? num : fallback
-		}
-		const marginTop = marginValue(margins.top, 25)
-		const marginBottom = marginValue(margins.bottom, 20)
-		const marginLeft = marginValue(margins.left, 20)
-		const marginRight = marginValue(margins.right, 20)
-		const brandingMode = resolveBrandingMode(pageSettings, options.letterheadData)
-		const letterheadFilename = getLetterheadFilename(pageSettings, options.letterheadData)
-		const foregroundLines = buildForegroundPlacements({
-			pageSettings,
-			brandingMode,
-			qrEnabled: options.qrEnabled,
-			qrFilename: options.qrFilename,
-			qrSettings: options.qrSettings,
-		})
-
-		lines.push("// Page settings (from Settings pane)")
-		lines.push("#set page(")
-		lines.push(`  paper: "${pageSize}",`)
-		if (orientation === "landscape") {
-			lines.push("  flipped: true,")
-		}
-		lines.push(
-			`  margin: (top: ${marginTop}mm, bottom: ${marginBottom}mm, left: ${marginLeft}mm, right: ${marginRight}mm),`
-		)
-		lines.push("  header: header_block,")
-		lines.push("  footer: footer_block,")
-		if (letterheadFilename) {
-			lines.push(`  background: image("${letterheadFilename}", width: 100%)`)
-		}
-		if (foregroundLines.length) {
-			lines.push("  foreground: [")
-			foregroundLines.forEach((line) => {
-				lines.push(`    ${line}`)
-			})
-			lines.push("  ]")
-		}
-		lines.push(")")
-		lines.push("")
-
-		return lines.join("\n").trim()
-	}
-
-	function buildHeaderFooterBlock(options: { docHeader?: string; docFooter?: string }) {
-		const lines: string[] = []
-
-		lines.push("#let header_block = []")
-		lines.push("#let footer_block = []")
-		lines.push("")
-
-		if (options.docHeader && options.docHeader.trim()) {
-			lines.push("// Document Header")
-			lines.push(options.docHeader.trim())
-			lines.push("")
-		}
-		if (options.docFooter && options.docFooter.trim()) {
-			lines.push("// Document Footer")
-			lines.push(options.docFooter.trim())
-			lines.push("")
-		}
-		return lines.join("\n").trim()
-	}
-
 	function performCompilation() {
+		if (disposed) {
+			return
+		}
 		clearPreview()
 
 		// Allow compile if we already have document data, even if sampleDocSelected wasn't toggled
@@ -1042,7 +611,7 @@ export function setupWorker(
 				logger.error("Max retries (5) reached. Disabling compilation.")
 				compilationDisabled = true
 				if (statusEl) {
-					statusEl.textContent = __("no layout data")
+					statusEl.textContent = __("no layout data. Click Refresh to retry")
 					statusEl.style.color = "#e74c3c"
 				}
 			}
@@ -1060,12 +629,12 @@ export function setupWorker(
 				adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
 
 			// Get page settings to pass to translator
-			let pageSettings: any = {}
-			if (adapter && adapter.getPageSettings) {
-				pageSettings = adapter.getPageSettings() || {}
+			let presentation_settings: any = {}
+			if (adapter && adapter.get_presentation_settings) {
+				presentation_settings = adapter.get_presentation_settings() || {}
 			}
-			const brandingMode = resolveBrandingMode(pageSettings, letterheadCandidate)
-			const letterheadData = brandingMode === "letterhead" ? letterheadCandidate : null
+			const branding_mode = resolveBrandingMode(presentation_settings, letterheadCandidate)
+			const letterheadData = branding_mode === "letterhead" ? letterheadCandidate : null
 
 			const docHeader =
 				adapter && typeof adapter.getDocHeader === "function" ? adapter.getDocHeader() || "" : ""
@@ -1105,20 +674,20 @@ export function setupWorker(
 			if (rawTypst) {
 				const parts: string[] = []
 				parts.push(buildDocDictionary(normalizedDoc, printFormatName))
-				parts.push(buildDefaultStyleDefs(pageSettings))
+				parts.push(buildDefaultStyleDefs(presentation_settings))
 				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
 				if (headerFooterBlock) {
 					parts.push(headerFooterBlock)
 				}
-				const pageSettingsBlock = buildPageSettingsBlock({
-					pageSettings,
+				const presentation_settingsBlock = buildPresentationSettingsBlock({
+					presentation_settings,
 					letterheadData,
 					qrEnabled,
 					qrFilename,
 					qrSettings: qrPayload.qrSettings,
 				})
-				if (pageSettingsBlock) {
-					parts.push(pageSettingsBlock)
+				if (presentation_settingsBlock) {
+					parts.push(presentation_settingsBlock)
 				}
 				if (typstPreamble && typstPreamble.trim()) {
 					parts.push(typstPreamble.trim())
@@ -1129,7 +698,7 @@ export function setupWorker(
 				typst = parts.join("\n\n")
 			} else {
 				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, normalizedDoc, {
-					...pageSettings,
+					...presentation_settings,
 					docHeader,
 					docFooter,
 					typstPreamble,
@@ -1157,43 +726,63 @@ export function setupWorker(
 				}
 			return
 		}
-		lastTypstCode = typst
-
 		if (statusEl) {
 			statusEl.textContent = __("compiling…")
 			statusEl.style.color = "#f39c12"
 		}
 		dispatchStatus("compiling")
 		if (downloadBtn) downloadBtn.disabled = true
-		currentPdfBlob = null
+		clearPdfBlob()
 
-		const pageSettings =
-			adapter && typeof adapter.getPageSettings === "function"
-				? adapter.getPageSettings() || {}
+		const presentation_settings =
+			adapter && typeof adapter.get_presentation_settings === "function"
+				? adapter.get_presentation_settings() || {}
 				: {}
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
-		const brandingImage = resolveBrandingImage(pageSettings, letterheadData)
+		const brandingImage = resolveBrandingImage(presentation_settings, letterheadData)
 		if (brandingImage) {
 			assetFiles.push(brandingImage)
 		}
 		assetFiles = Array.from(new Set(assetFiles))
 		lastCompileAssetFiles = assetFiles
 
-		worker.postMessage({
-			typstSrc: typst,
-			csrfToken: frappe?.csrf_token,
-			outputFormat: previewOutputFormat,
-			requestId: PREVIEW_REQUEST_ID,
-			seq: nextSeq(PREVIEW_REQUEST_ID),
-			assetFiles,
-			qrData: qrEnabled ? docNameForQr : null,
-			qrFilename: qrEnabled ? qrFilename : null,
-		})
+		try {
+			worker.postMessage({
+				typstSrc: typst,
+				csrfToken: frappe?.csrf_token,
+				outputFormat: previewOutputFormat,
+				requestId: PREVIEW_REQUEST_ID,
+				seq: nextSeq(PREVIEW_REQUEST_ID),
+				assetFiles,
+				qrData: qrEnabled ? docNameForQr : null,
+				qrFilename: qrEnabled ? qrFilename : null,
+			})
+			lastTypstCode = typst
+		} catch (err) {
+			logger.error("Failed to post preview compile", err)
+			if (statusEl) {
+				statusEl.textContent = __("worker error")
+				statusEl.style.color = "#e74c3c"
+			}
+			dispatchStatus("error", "failed to start preview compile")
+		}
 	}
 
-	worker.addEventListener("message", (e) => {
-		const { type, ok, format, svgPages, pdfBytes, error, requestId, seq } = e.data || {}
+	const handleWorkerMessage = (e: MessageEvent) => {
+		if (disposed) {
+			return
+		}
+		const { type, ok, format, svgPages, pdfBytes, error, requestId, seq, tokenRequestId } =
+			e.data || {}
+		if (type === "csrf-token-request") {
+			worker.postMessage({
+				type: "csrf-token-response",
+				tokenRequestId,
+				csrfToken: frappe?.csrf_token || "",
+			})
+			return
+		}
 		if (requestId && typeof seq === "number") {
 			const expected = latestSeqByRequest[requestId]
 			if (typeof expected === "number" && seq !== expected) {
@@ -1227,7 +816,6 @@ export function setupWorker(
 				// Don't show frappe alert - error will be displayed in preview pane
 				if (isDownload && downloadBtn) {
 					downloadBtn.disabled = false
-					pendingPdfDownload = false
 				}
 				if (isViewPdf) {
 					if (viewPdfBtn) viewPdfBtn.disabled = false
@@ -1263,7 +851,6 @@ export function setupWorker(
 					dispatchStatus("ready")
 				} else {
 					logger.warn("SVG response received for download request")
-					pendingPdfDownload = false
 				}
 
 				if (downloadBtn) downloadBtn.disabled = false
@@ -1282,19 +869,15 @@ export function setupWorker(
 					message: __("Typst compilation returned an empty PDF"),
 					indicator: "orange",
 				})
-				pendingPdfDownload = false
 				if (downloadBtn) downloadBtn.disabled = false
 				return
 			}
 
+			clearPdfBlob()
 			currentPdfBlob = new Blob([pdfArray], { type: "application/pdf" })
-			const shouldAutoDownload = isDownload && pendingPdfDownload
-			pendingPdfDownload = false
 
 			if (isViewPdf) {
-				const url = URL.createObjectURL(currentPdfBlob)
-				window.open(url, "_blank")
-				setTimeout(() => URL.revokeObjectURL(url), 1000)
+				openPdfBlob(currentPdfBlob)
 
 				if (statusEl) {
 					statusEl.textContent = __("pdf opened ✓")
@@ -1311,9 +894,7 @@ export function setupWorker(
 					statusEl.style.color = "#27ae60"
 				}
 				if (downloadBtn) downloadBtn.disabled = false
-				if (shouldAutoDownload) {
-					triggerPdfDownload()
-				}
+				triggerPdfDownload()
 				return
 			} else {
 				logger.warn("PDF response received for preview request")
@@ -1326,14 +907,13 @@ export function setupWorker(
 			if (viewPdfBtn) viewPdfBtn.disabled = false
 			return
 		}
-	})
+	}
+	worker.addEventListener("message", handleWorkerMessage)
 
 	viewPdfBtn &&
 		(viewPdfBtn.onclick = () => {
 			if (currentPdfBlob) {
-				const url = URL.createObjectURL(currentPdfBlob)
-				window.open(url, "_blank")
-				setTimeout(() => URL.revokeObjectURL(url), 1000)
+				openPdfBlob(currentPdfBlob)
 				return
 			}
 
@@ -1349,21 +929,32 @@ export function setupWorker(
 			viewPdfBtn.disabled = true
 			if (downloadBtn) downloadBtn.disabled = true
 
-			worker.postMessage({
-				typstSrc: lastTypstCode,
-				csrfToken: frappe?.csrf_token,
-				outputFormat: "pdf",
-				requestId: VIEW_PDF_REQUEST_ID,
-				seq: nextSeq(VIEW_PDF_REQUEST_ID),
-				assetFiles: lastCompileAssetFiles,
-				...resolveQrPayload(),
-			})
+			const qrPayload = resolveQrPayload()
+			try {
+				postPdfCompile({
+					worker,
+					typstSrc: lastTypstCode,
+					requestId: VIEW_PDF_REQUEST_ID,
+					seq: nextSeq(VIEW_PDF_REQUEST_ID),
+					assetFiles: lastCompileAssetFiles,
+					qrData: qrPayload.qrData,
+					qrFilename: qrPayload.qrFilename,
+				})
+			} catch (err) {
+				logger.error("Failed to post PDF view compile", err)
+				if (statusEl) {
+					statusEl.textContent = __("pdf error")
+					statusEl.style.color = "#e74c3c"
+				}
+				dispatchStatus("error", "failed to start pdf compile")
+				viewPdfBtn.disabled = false
+				if (downloadBtn) downloadBtn.disabled = false
+			}
 		})
 
 	downloadBtn &&
 		(downloadBtn.onclick = () => {
 			if (currentPdfBlob) {
-				pendingPdfDownload = false
 				triggerPdfDownload()
 				return
 			}
@@ -1378,17 +969,27 @@ export function setupWorker(
 				statusEl.style.color = "#3498db"
 			}
 			downloadBtn.disabled = true
-			pendingPdfDownload = true
 
-			worker.postMessage({
-				typstSrc: lastTypstCode,
-				csrfToken: frappe?.csrf_token,
-				outputFormat: "pdf",
-				requestId: DOWNLOAD_REQUEST_ID,
-				seq: nextSeq(DOWNLOAD_REQUEST_ID),
-				assetFiles: lastCompileAssetFiles,
-				...resolveQrPayload(),
-			})
+			const qrPayload = resolveQrPayload()
+			try {
+				postPdfCompile({
+					worker,
+					typstSrc: lastTypstCode,
+					requestId: DOWNLOAD_REQUEST_ID,
+					seq: nextSeq(DOWNLOAD_REQUEST_ID),
+					assetFiles: lastCompileAssetFiles,
+					qrData: qrPayload.qrData,
+					qrFilename: qrPayload.qrFilename,
+				})
+			} catch (err) {
+				logger.error("Failed to post PDF download compile", err)
+				if (statusEl) {
+					statusEl.textContent = __("pdf error")
+					statusEl.style.color = "#e74c3c"
+				}
+				dispatchStatus("error", "failed to start pdf compile")
+				downloadBtn.disabled = false
+			}
 		})
 
 	refreshBtn &&
@@ -1408,8 +1009,8 @@ export function setupWorker(
 				statusEl.style.color = "#3498db"
 			}
 			lastTypstCode = "" // Force recompilation by clearing cached code
-			missingLayoutRetries = 0
-			compilationDisabled = false
+			resetCompilationLatch()
+			resetCompiledArtifacts(false)
 			scheduleCompile(0)
 		})
 
@@ -1426,14 +1027,28 @@ export function setupWorker(
 						default: lastTypstCode,
 					},
 				],
-				primary_action_label: __("Save to Print Format"),
+				primary_action_label: __("Save to Crispy Format"),
 				primary_action: (values: any) => {
 					const typstCode = values.typst_code || d.get_value("typst_code")
+					if (String(typstCode || "").length > 512 * 1024) {
+						frappe.show_alert({
+							message: __("Typst code is too large to save"),
+							indicator: "red",
+						})
+						return
+					}
+					const confirmed =
+						typeof window.confirm === "function"
+							? window.confirm(__("Save this Typst code to the Crispy Format?"))
+							: true
+					if (!confirmed) {
+						return
+					}
 
 					frappe.call({
 						method: "frappe.client.set_value",
 						args: {
-							doctype: "Print Format",
+							doctype: "Crispy Format",
 							name: printFormatName,
 							fieldname: "typst_code",
 							value: typstCode,
@@ -1441,7 +1056,7 @@ export function setupWorker(
 						callback: (r: any) => {
 							if (!r.exc) {
 								frappe.show_alert({
-									message: __("Typst code saved to Print Format"),
+									message: __("Typst code saved to Crispy Format"),
 									indicator: "green",
 								})
 								d.hide()
@@ -1450,10 +1065,21 @@ export function setupWorker(
 					})
 				},
 				secondary_action_label: __("Copy to Clipboard"),
-				secondary_action: () => {
+				secondary_action: async () => {
 					const typstCode = d.get_value("typst_code")
-					navigator.clipboard.writeText(typstCode)
-					frappe.show_alert({ message: __("Typst code copied to clipboard"), indicator: "green" })
+					try {
+						await navigator.clipboard.writeText(typstCode)
+						frappe.show_alert({
+							message: __("Typst code copied to clipboard"),
+							indicator: "green",
+						})
+					} catch (err) {
+						logger.warn("Failed to copy Typst code", err)
+						frappe.show_alert({
+							message: __("Could not copy Typst code"),
+							indicator: "red",
+						})
+					}
 				},
 			})
 			d.show()
@@ -1462,6 +1088,18 @@ export function setupWorker(
 	initializeAdapter()
 
 	return () => {
+		disposed = true
+		if (compilationTimeout) {
+			clearTimeout(compilationTimeout)
+		}
+		if (compileTriggerTimeout) {
+			clearTimeout(compileTriggerTimeout)
+		}
+		if (compilationFrame) {
+			cancelAnimationFrame(compilationFrame)
+		}
+		documentLoadGeneration += 1
+		resetCompiledArtifacts(true)
 		if (unsubscribeAdapter) {
 			unsubscribeAdapter()
 		}
@@ -1473,9 +1111,11 @@ export function setupWorker(
 		window.removeEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
 		window.removeEventListener(CrispyPreviewEvents.Source, handleSourceUpdate)
 		window.removeEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
+		worker.removeEventListener("error", handleWorkerError)
+		worker.removeEventListener("messageerror", handleWorkerMessageError)
+		worker.removeEventListener("message", handleWorkerMessage)
 
-		// Cleanup autocomplete
-		cleanupAutocomplete()
+		autocomplete.cleanup()
 
 		if (worker) {
 			cleanup()

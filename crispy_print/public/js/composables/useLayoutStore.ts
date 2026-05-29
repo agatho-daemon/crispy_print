@@ -1,7 +1,7 @@
 import type { Ref } from "vue";
 import { createDefaultLayout, createLayoutId } from "../utils/layout";
 import type { CrispyLayout, TableColumn } from "../utils/layout";
-import type { PageSettings } from "../utils/pageSettings";
+import type { PresentationSettings } from "../utils/presentation_settings";
 import type { ReportBuilderConfig } from "../utils/reportBuilder";
 
 const REPORT_TABLE_FIELDNAME = "data.table";
@@ -11,7 +11,7 @@ interface CreateLayoutStoreOptions {
   meta: Ref<any>;
   crispyFormat: Ref<any>;
   isReportMode: Ref<boolean>;
-  pageSettings: Ref<PageSettings>;
+  presentation_settings: Ref<PresentationSettings>;
   reportBuilderConfig: Ref<ReportBuilderConfig>;
   buildReportTableColumns: () => TableColumn[];
   getReportBlockColumns: (fieldname: string) => TableColumn[];
@@ -25,7 +25,7 @@ export function createLayoutStore(options: CreateLayoutStoreOptions) {
     meta,
     crispyFormat,
     isReportMode,
-    pageSettings,
+    presentation_settings,
     reportBuilderConfig,
     buildReportTableColumns,
     getReportBlockColumns,
@@ -82,7 +82,7 @@ export function createLayoutStore(options: CreateLayoutStoreOptions) {
 
     tableField.table_columns = newColumns;
     reportBuilderConfig.value.report_table_sync_signature = newSignature;
-    pageSettings.value.report_builder = reportBuilderConfig.value;
+    presentation_settings.value.report = reportBuilderConfig.value;
     return true;
   }
 

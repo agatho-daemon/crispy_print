@@ -73,7 +73,10 @@ class TestFormattedDocAPI(FrappeTestCase):
 
 		from crispy_print.api.v1.docs import get_formatted_doc
 
-		mock_doc = SimpleNamespace(as_dict=lambda: {"name": "DOC-1", "notes": "<p>Hello</p>"})
+		mock_doc = SimpleNamespace(
+			check_permission=mock.Mock(),
+			as_dict=lambda: {"name": "DOC-1", "notes": "<p>Hello</p>"},
+		)
 		mock_meta = SimpleNamespace(
 			fields=[SimpleNamespace(fieldname="notes", fieldtype="HTML", options=None)]
 		)
@@ -84,9 +87,10 @@ class TestFormattedDocAPI(FrappeTestCase):
 			mock.patch("crispy_print.api.v1.docs.frappe.format", return_value="<p>Hello</p>"),
 			mock.patch("crispy_print.api.v1.docs.frappe.utils.strip_html", return_value="Hello"),
 		):
-			out = get_formatted_doc("Any", "DOC-1")
+			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
 
 		self.assertEqual(out["notes"], "Hello")
+		mock_doc.check_permission.assert_called_once_with("read")
 
 	def test_get_formatted_doc_keeps_raw_value_when_child_format_fails(self):
 		"""Child-table formatter errors should not break payload generation."""
@@ -95,10 +99,11 @@ class TestFormattedDocAPI(FrappeTestCase):
 		from crispy_print.api.v1.docs import get_formatted_doc
 
 		mock_doc = SimpleNamespace(
+			check_permission=mock.Mock(),
 			as_dict=lambda: {
 				"name": "DOC-1",
 				"items": [{"description": "raw value", "qty": 2}],
-			}
+			},
 		)
 		parent_meta = SimpleNamespace(
 			fields=[SimpleNamespace(fieldname="items", fieldtype="Table", options="Child")]
@@ -123,7 +128,40 @@ class TestFormattedDocAPI(FrappeTestCase):
 			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", side_effect=mock_get_meta),
 			mock.patch("crispy_print.api.v1.docs.frappe.format", side_effect=mock_format),
 		):
-			out = get_formatted_doc("Any", "DOC-1")
+			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
 
 		self.assertEqual(out["items"][0]["description"], "raw value")
 		self.assertEqual(out["items"][0]["qty"], "formatted:2")
+		mock_doc.check_permission.assert_called_once_with("read")
+
+	def test_get_formatted_doc_attaches_document_code_preview_when_available(self):
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		mock_doc = SimpleNamespace(
+			check_permission=mock.Mock(),
+			as_dict=lambda: {"name": "DOC-1"},
+		)
+		mock_meta = SimpleNamespace(fields=[])
+
+		with (
+			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
+			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
+			mock.patch(
+				"crispy_print.api.v1.docs.get_preferred_document_code_for_doc",
+				return_value={
+					"code_purpose": "Regulatory",
+					"environment": "Production",
+					"profile_name": "Profile-1",
+					"code_format": "QR Code",
+					"code_symbology": "QR Code",
+					"payload": {"name": "DOC-1"},
+					"encoded_value": "ENCODED-QR",
+				},
+			),
+		):
+			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
+
+		self.assertEqual(out["__crispy_document_code"]["encoded_value"], "ENCODED-QR")
+		self.assertEqual(out["__crispy_document_code"]["profile_name"], "Profile-1")

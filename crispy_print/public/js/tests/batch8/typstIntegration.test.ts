@@ -21,9 +21,17 @@ describe("Typst integration", () => {
 			"Invoice",
 			{ name: "INV-0001", title: "Test" },
 			{
-				brandingMode: "letterhead",
-				pageSize: "A4",
-				margins: { top: 10, bottom: 10, left: 10, right: 10 },
+				page: {
+					size: "A4",
+					orientation: "portrait",
+					margins: { top: 10, bottom: 10, left: 10, right: 10 },
+				},
+				branding: {
+					mode: "letterhead",
+					letterhead: "Default LH",
+					letterhead_image: "",
+					logo: { company: "", image: "", size: 25, dx: 0, dy: 0 },
+				},
 				qrEnabled: true,
 				qrFilename: "INV-0001-qr.svg",
 			}
@@ -54,8 +62,12 @@ describe("Typst integration", () => {
 			"Document",
 			{ name: "DOC-1" },
 			{
-				brandingMode: "logo",
-				logo: { image: "/files/logo.png", size: 30, dx: 2, dy: 3 },
+				branding: {
+					mode: "logo",
+					letterhead: "",
+					letterhead_image: "",
+					logo: { company: "", image: "/files/logo.png", size: 30, dx: 2, dy: 3 },
+				},
 				qrEnabled: true,
 				qrFilename: "DOC-1-qr.svg",
 			}
@@ -65,5 +77,108 @@ describe("Typst integration", () => {
 		expect(typst).toContain('image("logo.png"')
 		expect(typst).toContain('image("DOC-1-qr.svg"')
 		expect(typst).not.toContain("background: image(")
+	})
+
+	it("renders Crispy Typst Block code when resolved", () => {
+		const typst = translateJSONToTypst(
+			{
+				sections: [
+					{
+						label: "",
+						columns: [
+							{
+								label: "",
+								fields: [
+									{
+										fieldname: "_crispy_typst_block",
+										fieldtype: "Crispy Typst Block",
+										label: "Crispy Typst Block",
+										crispy_typst_block: "invoice_header",
+										crispy_typst_block_code: "#text(weight: 700)[#doc.customer_name]",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			null,
+			"Sales Invoice",
+			{ name: "INV-1", customer_name: "Alice" },
+			{}
+		)
+
+		expect(typst).toContain("#text(weight: 700)[#doc.customer_name]")
+		expect(typst).not.toContain("Missing Crispy Typst Block")
+	})
+
+	it("keeps leading comments inside multiline Crispy Typst Block cells", () => {
+		const typst = translateJSONToTypst(
+			{
+				sections: [
+					{
+						label: "",
+						columns: [
+							{
+								label: "",
+								fields: [
+									{
+										fieldname: "_crispy_typst_block",
+										fieldtype: "Crispy Typst Block",
+										label: "Crispy Typst Block",
+										crispy_typst_block: "invoice_heading",
+										crispy_typst_block_code: `// DocType Heading
+#grid(
+  columns: (1fr, 1fr),
+  [#doc.doctype],
+  [#doc.name]
+)`,
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			null,
+			"Sales Invoice",
+			{ name: "INV-1" },
+			{}
+		)
+
+		expect(typst).toMatch(/\[\n\s*\/\/ DocType Heading\n\s*#grid\(/)
+		expect(typst).toMatch(/\)\n\s*\],/)
+		expect(typst).not.toContain("[, // DocType Heading")
+	})
+
+	it("renders a placeholder for unresolved Crispy Typst Blocks", () => {
+		const typst = translateJSONToTypst(
+			{
+				sections: [
+					{
+						label: "",
+						columns: [
+							{
+								label: "",
+								fields: [
+									{
+										fieldname: "_crispy_typst_block",
+										fieldtype: "Crispy Typst Block",
+										label: "Crispy Typst Block",
+										crispy_typst_block: "missing_block",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			null,
+			"Sales Invoice",
+			{ name: "INV-1" },
+			{}
+		)
+
+		expect(typst).toContain("Missing Crispy Typst Block: missing_block")
 	})
 })

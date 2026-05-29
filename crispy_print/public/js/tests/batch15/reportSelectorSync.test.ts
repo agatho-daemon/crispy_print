@@ -23,7 +23,7 @@ vi.mock("../../composables/useStore", () => ({
 		qrEnabled: ref(false),
 		letterhead: ref(null),
 		docType: ref(null),
-		pageSettings: ref({}),
+		presentation_settings: ref({}),
 		changeKey,
 		crispyFormat: ref({ crispy_format_type: "Report", is_generic: 1 }),
 		reportBuilderConfig: ref({

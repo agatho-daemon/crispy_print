@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "creation": "2026-05-29 09:57:06.134725",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "regulatory_profile",
+  "authority_code",
+  "environment",
+  "submission_type",
+  "submission_status",
+  "submitted_at",
+  "authority_submission_id",
+  "authority_reference",
+  "request_payload",
+  "response_payload",
+  "response_code",
+  "response_message",
+  "related_artifact"
+ ],
+ "fields": [
+  {
+   "fieldname": "regulatory_profile",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Regulatory Profile",
+   "options": "Crispy QR Regulatory Profile"
+  },
+  {
+   "description": "Authority identifier, e.g. tax authority code",
+   "fieldname": "authority_code",
+   "fieldtype": "Data",
+   "label": "Authority Code"
+  },
+  {
+   "default": "Sandbox",
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Environment",
+   "options": "Sandbox\nProduction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "submission_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Submission Type",
+   "options": "Initial\nAmendment\nCancellation\nCredit Note\nDebit Note\nValidation\nSandbox Validation\nOther",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "submission_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Submission Status",
+   "options": "Draft\nPending\nSubmitted\nAccepted\nRejected\nFailed\nCancelled\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "description": "Time submitted to authority",
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Submitted At"
+  },
+  {
+   "description": "ID returned by authority",
+   "fieldname": "authority_submission_id",
+   "fieldtype": "Data",
+   "label": "Authority Submission ID"
+  },
+  {
+   "fieldname": "authority_reference",
+   "fieldtype": "Data",
+   "label": "Authority Reference"
+  },
+  {
+   "description": "XML, JSON, etc.",
+   "fieldname": "request_payload",
+   "fieldtype": "Code",
+   "label": "Request Payload"
+  },
+  {
+   "description": "JSON, XML, etc.",
+   "fieldname": "response_payload",
+   "fieldtype": "Code",
+   "label": "Response Payload"
+  },
+  {
+   "description": "Authority response/status code",
+   "fieldname": "response_code",
+   "fieldtype": "Data",
+   "label": "Response Code"
+  },
+  {
+   "description": "Human-readable authority response",
+   "fieldname": "response_message",
+   "fieldtype": "Small Text",
+   "label": "Response Message",
+   "max_height": "4em"
+  },
+  {
+   "description": "Artifact row name/reference, e.g. XML payload or PDF artifact",
+   "fieldname": "related_artifact",
+   "fieldtype": "Data",
+   "label": "Related Artifact"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-29 10:06:52.141878",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Issued Document Regulatory Submission",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

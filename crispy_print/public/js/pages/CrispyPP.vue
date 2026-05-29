@@ -261,7 +261,7 @@
 							<div class="form-group">
 								<label class="control-label">{{ __("Language") }}</label>
 								<select
-									v-model="pageSettings.language"
+									v-model="presentation_settings.language"
 									class="form-control"
 									disabled
 								>
@@ -277,7 +277,18 @@
 							</div>
 						</div>
 					</div>
-					<div class="settings-pane__section-card card">
+					<div v-if="isBrandingProfileDriven" class="settings-pane__section-card card">
+						<div class="settings-pane__section-content card-body">
+							<p class="help-block text-muted small">
+								{{
+									__("Presentation is controlled by Branding Profile: {0}", [
+										activeBrandingProfile,
+									])
+								}}
+							</p>
+						</div>
+					</div>
+					<div v-if="!isBrandingProfileDriven" class="settings-pane__section-card card">
 						<button
 							type="button"
 							class="btn btn-link card-header settings-pane__section-header"
@@ -307,16 +318,19 @@
 						>
 							<div class="form-group">
 								<label class="control-label">{{ __("Branding") }}</label>
-								<select v-model="brandingMode" class="form-control">
+								<select v-model="branding_mode" class="form-control">
 									<option value="none">{{ __("None") }}</option>
 									<option value="letterhead">{{ __("Letterhead") }}</option>
 									<option value="logo">{{ __("Logo") }}</option>
 								</select>
 							</div>
 
-							<div v-if="brandingMode === 'letterhead'" class="form-group">
+							<div v-if="branding_mode === 'letterhead'" class="form-group">
 								<label class="control-label">{{ __("Letter Head") }}</label>
-								<select v-model="pageSettings.letterhead" class="form-control">
+								<select
+									v-model="presentation_settings.branding.letterhead"
+									class="form-control"
+								>
 									<option value="">{{ __("None") }}</option>
 									<option v-if="loadingLetterheads" disabled>
 										{{ __("Loading letterheads...") }}
@@ -331,13 +345,13 @@
 								</select>
 							</div>
 
-							<div v-if="brandingMode === 'logo'">
+							<div v-if="branding_mode === 'logo'">
 								<p class="help-block text-muted small">
 									{{ __("Logo is anchored to top-left using #place().") }}
 								</p>
 								<div class="form-group">
 									<label class="control-label">{{ __("Company") }}</label>
-									<select v-model="logoSettings.company" class="form-control">
+									<select v-model="logo_settings.company" class="form-control">
 										<option value="">{{ __("Select company") }}</option>
 										<option v-if="loadingCompanies" disabled>
 											{{ __("Loading companies...") }}
@@ -356,7 +370,7 @@
 									</select>
 								</div>
 								<p
-									v-if="logoSettings.company && !logoSettings.image"
+									v-if="logo_settings.company && !logo_settings.image"
 									class="help-block text-muted small"
 								>
 									{{ __("Selected company has no logo set.") }}
@@ -367,7 +381,7 @@
 											__("Size (mm)")
 										}}</label>
 										<input
-											v-model.number="logoSettings.size"
+											v-model.number="logo_settings.size"
 											type="number"
 											class="form-control input-sm"
 										/>
@@ -379,7 +393,7 @@
 											__("dx (mm)")
 										}}</label>
 										<input
-											v-model.number="logoSettings.dx"
+											v-model.number="logo_settings.dx"
 											type="number"
 											class="form-control input-sm"
 										/>
@@ -389,7 +403,7 @@
 											__("dy (mm)")
 										}}</label>
 										<input
-											v-model.number="logoSettings.dy"
+											v-model.number="logo_settings.dy"
 											type="number"
 											class="form-control input-sm"
 										/>
@@ -405,18 +419,23 @@
 							</div>
 						</div>
 					</div>
-					<div class="settings-pane__section-card card">
+					<div v-if="!isBrandingProfileDriven" class="settings-pane__section-card card">
 						<button
 							type="button"
 							class="btn btn-link card-header settings-pane__section-header"
-							:class="{ 'is-expanded': isPageSettingsExpanded }"
-							@click="isPageSettingsExpanded = !isPageSettingsExpanded"
+							:class="{ 'is-expanded': isPresentationSettingsExpanded }"
+							@click="
+								isPresentationSettingsExpanded = !isPresentationSettingsExpanded
+							"
 						>
-							<span>{{ __("Page Settings") }}</span>
+							<span>{{ __("Presentation Settings") }}</span>
 							<svg
 								:class="[
 									'settings-pane__chevron',
-									{ 'settings-pane__chevron--expanded': isPageSettingsExpanded },
+									{
+										'settings-pane__chevron--expanded':
+											isPresentationSettingsExpanded,
+									},
 								]"
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 20 20"
@@ -430,12 +449,15 @@
 							</svg>
 						</button>
 						<div
-							v-if="isPageSettingsExpanded"
+							v-if="isPresentationSettingsExpanded"
 							class="settings-pane__section-content card-body"
 						>
 							<div class="form-group">
 								<label class="control-label">{{ __("Page Size") }}</label>
-								<select v-model="pageSettings.pageSize" class="form-control">
+								<select
+									v-model="presentation_settings.page.size"
+									class="form-control"
+								>
 									<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
 									<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
 									<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
@@ -448,7 +470,10 @@
 
 							<div class="form-group">
 								<label class="control-label">{{ __("Orientation") }}</label>
-								<select v-model="pageSettings.orientation" class="form-control">
+								<select
+									v-model="presentation_settings.page.orientation"
+									class="form-control"
+								>
 									<option value="portrait">{{ __("Portrait") }}</option>
 									<option value="landscape">{{ __("Landscape") }}</option>
 								</select>
@@ -460,7 +485,7 @@
 									<div class="col-xs-6 form-group">
 										<span class="text-muted small">{{ __("T") }}</span>
 										<input
-											v-model.number="pageSettings.margins.top"
+											v-model.number="presentation_settings.page.margins.top"
 											type="number"
 											:placeholder="__('Top')"
 											class="form-control input-sm"
@@ -469,7 +494,9 @@
 									<div class="col-xs-6 form-group">
 										<span class="text-muted small">{{ __("B") }}</span>
 										<input
-											v-model.number="pageSettings.margins.bottom"
+											v-model.number="
+												presentation_settings.page.margins.bottom
+											"
 											type="number"
 											:placeholder="__('Bottom')"
 											class="form-control input-sm"
@@ -478,7 +505,9 @@
 									<div class="col-xs-6 form-group">
 										<span class="text-muted small">{{ __("L") }}</span>
 										<input
-											v-model.number="pageSettings.margins.left"
+											v-model.number="
+												presentation_settings.page.margins.left
+											"
 											type="number"
 											:placeholder="__('Left')"
 											class="form-control input-sm"
@@ -487,7 +516,9 @@
 									<div class="col-xs-6 form-group">
 										<span class="text-muted small">{{ __("R") }}</span>
 										<input
-											v-model.number="pageSettings.margins.right"
+											v-model.number="
+												presentation_settings.page.margins.right
+											"
 											type="number"
 											:placeholder="__('Right')"
 											class="form-control input-sm"
@@ -514,7 +545,7 @@
 			:letterhead="letterheadDoc"
 			:doc-type="props.doctype || null"
 			:doc-name="props.docname || null"
-			:page-settings="pageSettingsComputed"
+			:presentation_settings="presentation_settings_computed"
 			:change-key="changeKey"
 			:watch-data-changes="true"
 		/>
@@ -530,11 +561,13 @@ import {
 	type FormatInfo,
 } from "../utils/formatLoader";
 import {
-	defaultPageSettings,
+	default_presentation_settings,
 	defaultTypography,
-	ensureLogoSettings,
-	type PageSettings,
-} from "../utils/pageSettings";
+	ensure_logo_settings,
+	merge_presentation_settings,
+	type PresentationSettings,
+} from "../utils/presentation_settings";
+import { resolve_effective_presentation_settings } from "../utils/effectivePresentationSettings";
 import PreviewRenderer from "../components/PreviewRenderer.vue";
 import { pickFormatName } from "../utils/formatSelection";
 import { useBrandingData } from "../composables/useBrandingData";
@@ -549,6 +582,7 @@ import {
 import { getLogger } from "../logger";
 import { fetchTypstFonts, formatPt, parseSize } from "../utils/typstTypography";
 import { __ } from "../utils/i18n";
+import { compileReportPreview, compileTypst } from "../api/crispy";
 
 interface Props {
 	doctype?: string;
@@ -613,7 +647,20 @@ const reportFontFamily = ref("Inter 18pt");
 const reportFontSizePt = ref(10);
 
 // Settings state (single in-memory copy; PP does not persist)
-const pageSettings = ref<PageSettings>({ ...defaultPageSettings });
+const presentation_settings = ref<PresentationSettings>(
+	merge_presentation_settings(default_presentation_settings, {})
+);
+const effective_presentation_settings = ref<PresentationSettings>(
+	merge_presentation_settings(default_presentation_settings, {})
+);
+const isBrandingProfileDriven = computed(
+	() =>
+		presentation_settings.value.source === "branding_profile" &&
+		Boolean(presentation_settings.value.branding?.profile)
+);
+const activeBrandingProfile = computed(
+	() => presentation_settings.value.branding?.profile || __("selected profile")
+);
 
 const layout = ref<any>(null);
 const loading = ref(true);
@@ -629,32 +676,35 @@ const OVERRIDES_STORAGE_KEY = "crispy-print:pp:preview-overrides-expanded";
 const isOverridesExpanded = ref(false);
 const isReportTemplateExpanded = ref(true);
 const isBrandingExpanded = ref(false);
-const isPageSettingsExpanded = ref(false);
+const isPresentationSettingsExpanded = ref(false);
 const qrEnabledEffective = computed(() => {
-	const pageQrEnabled = pageSettings.value.qr?.enabled;
-	if (typeof pageQrEnabled === "boolean") {
-		return pageQrEnabled && !removeQr.value;
+	const page_qr_enabled = effective_presentation_settings.value.qr?.enabled;
+	if (typeof page_qr_enabled === "boolean") {
+		return page_qr_enabled && !removeQr.value;
 	}
 	return false;
 });
-const logoSettings = computed(() => ensureLogoSettings(pageSettings.value));
+const logo_settings = computed(() => ensure_logo_settings(effective_presentation_settings.value));
 
-const brandingMode = computed<string>({
+const branding_mode = computed<string>({
 	get: () => {
-		const mode = pageSettings.value.brandingMode;
+		const mode = effective_presentation_settings.value.branding.mode;
 		if (mode === "letterhead" || mode === "logo" || mode === "none") {
 			return mode;
 		}
-		if (pageSettings.value.logo?.company || pageSettings.value.logo?.image) {
+		if (
+			effective_presentation_settings.value.branding.logo?.company ||
+			effective_presentation_settings.value.branding.logo?.image
+		) {
 			return "logo";
 		}
-		if (pageSettings.value.letterhead) {
+		if (effective_presentation_settings.value.branding.letterhead) {
 			return "letterhead";
 		}
 		return "none";
 	},
 	set: (value) => {
-		pageSettings.value.brandingMode = value as "letterhead" | "logo" | "none";
+		presentation_settings.value.branding.mode = value as "letterhead" | "logo" | "none";
 	},
 });
 
@@ -676,6 +726,15 @@ const reportFontPreamble = computed(() => {
 	const font = escapeTypstString(reportFontFamily.value);
 	return `#set text(font: "${font}", size: ${formatPt(reportFontSizePt.value)})`;
 });
+
+let effectiveSettingsRequestSeq = 0;
+
+async function refreshEffectivePresentationSettings() {
+	const requestSeq = ++effectiveSettingsRequestSeq;
+	const resolved = await resolve_effective_presentation_settings(presentation_settings.value);
+	if (requestSeq !== effectiveSettingsRequestSeq) return;
+	effective_presentation_settings.value = resolved;
+}
 
 const typstPreambleEffective = computed(() => {
 	if (!isReportMode.value) return typstPreamble.value;
@@ -736,17 +795,17 @@ async function initializeReportSettings() {
 		}
 
 		if (!reportBrandingInitialized.value) {
-			pageSettings.value.brandingMode = "none";
+			presentation_settings.value.branding.mode = "none";
 			reportBrandingInitialized.value = true;
 		}
 
 		if (!reportOrientationInitialized.value) {
-			pageSettings.value.orientation = "landscape";
+			presentation_settings.value.page.orientation = "landscape";
 			reportOrientationInitialized.value = true;
 		}
 
 		if (!reportMarginsInitialized.value) {
-			pageSettings.value.margins = { top: 20, bottom: 10, left: 7, right: 7 };
+			presentation_settings.value.page.margins = { top: 20, bottom: 10, left: 7, right: 7 };
 			reportMarginsInitialized.value = true;
 		}
 
@@ -874,52 +933,46 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		const chartSvgPayload = reportShowChart.value
 			? normalizeReportChartSvg(reportChartSvg.value || "")
 			: "";
-		const letterheadImage = letterheadDoc.value?.image || null;
-		const logoImage = logoSettings.value.image || null;
-		const brandingAssetFiles = [letterheadImage, logoImage].filter((value): value is string =>
+		const active_branding_mode = branding_mode.value;
+		const letterhead_image =
+			active_branding_mode === "letterhead" ? letterheadDoc.value?.image || null : null;
+		const logoImage =
+			active_branding_mode === "logo" ? logo_settings.value.image || null : null;
+		const brandingAssetFiles = [letterhead_image, logoImage].filter((value): value is string =>
 			Boolean(value)
 		);
 		logger.info("Report preview compile requested with letterhead", letterheadDoc.value);
-		logger.info("Report preview compile requested with letterhead image", letterheadImage);
+		logger.info("Report preview compile requested with letterhead image", letterhead_image);
 		logger.info(
-			"Report preview compile requested with page settings",
-			pageSettingsComputed.value
+			"Report preview compile requested with presentation settings",
+			presentation_settings_computed.value
 		);
-		const sourceResponse = await frappe.call({
-			method: "crispy_print.api.v1.get_report_typst_source",
-			args: {
-				report: reportName.value,
-				format_name: selectedReportFormat.value,
-				filters: reportFilters.value || {},
-				column_config: reportColumnConfig.value,
-				include_filters: reportIncludeFilters.value ? 1 : 0,
-				include_summary: reportShowSummary.value ? 1 : 0,
-				include_total_row: reportShowTotalRow.value ? 1 : 0,
-				include_chart: reportShowChart.value ? 1 : 0,
-				orientation: pageSettings.value.orientation,
-				page_settings: {
-					...pageSettingsComputed.value,
-					letterhead_image: letterheadImage || "",
-				},
-				chart_svg: chartSvgPayload || null,
-				typst_preamble_override: reportFontPreamble.value,
-				typst_code_override: buildReportTypstCodeOverride(),
-				limit: 50,
-			},
+		const result = await compileReportPreview({
+			report: reportName.value,
+			format_name: selectedReportFormat.value,
+			filters: reportFilters.value || {},
+			column_config: reportColumnConfig.value,
+			include_filters: reportIncludeFilters.value ? 1 : 0,
+			include_summary: reportShowSummary.value ? 1 : 0,
+			include_total_row: reportShowTotalRow.value ? 1 : 0,
+			include_chart: reportShowChart.value ? 1 : 0,
+			orientation: effective_presentation_settings.value.page.orientation,
+			presentation_settings: presentation_settings_computed.value,
+			chart_svg: chartSvgPayload || null,
+			typst_preamble_override: reportFontPreamble.value,
+			typst_code_override: buildReportTypstCodeOverride(),
+			limit: 50,
+			asset_files: brandingAssetFiles,
 		});
 
 		// Ignore stale response if a newer compile intent exists.
 		if (intentSeq !== reportPreviewIntentSeq.value) return;
 
-		const sourcePayload = sourceResponse?.message;
-		const typstSource =
-			typeof sourcePayload === "string" ? sourcePayload : sourcePayload?.typst_source;
-		const truncation = typeof sourcePayload === "object" ? sourcePayload?.truncation : null;
-		const assetFiles =
-			typeof sourcePayload === "object" && Array.isArray(sourcePayload?.asset_files)
-				? sourcePayload.asset_files
-				: [];
-		const compileAssetFiles = Array.from(new Set([...brandingAssetFiles, ...assetFiles]));
+		const typstSource = result?.typst_source || "";
+		const truncation = result?.truncation || null;
+		const compileAssetFiles = Array.isArray(result?.asset_files)
+			? result.asset_files
+			: brandingAssetFiles;
 		if (!typstSource) {
 			throw new Error("No Typst source returned");
 		}
@@ -936,20 +989,6 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		lastReportChartSvg.value = chartSvgPayload || "";
 		lastReportAssetFiles.value = compileAssetFiles;
 
-		const compileResponse = await frappe.call({
-			method: "crispy_print.api.v1.compile_typst",
-			args: {
-				typst_source: typstSource,
-				output_format: "svg",
-				asset_files: compileAssetFiles,
-				chart_svg: chartSvgPayload || null,
-			},
-		});
-
-		// Ignore stale compile response if a newer compile intent exists.
-		if (intentSeq !== reportPreviewIntentSeq.value) return;
-
-		const result = compileResponse?.message;
 		if (result?.success) {
 			window.dispatchEvent(
 				new CustomEvent("crispy-report-preview", {
@@ -979,7 +1018,7 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 watch(
 	() => [
 		layout.value,
-		pageSettings.value,
+		presentation_settings.value,
 		letterheadDoc.value,
 		docHeader.value,
 		docFooter.value,
@@ -1062,14 +1101,23 @@ async function loadFormatSettings(formatName: string) {
 			throw new Error("Failed to load format data");
 		}
 
-		// Overwrite in-memory page settings (ephemeral)
-		pageSettings.value = data.pageSettings || { ...defaultPageSettings };
-		if (data.pageSettings?.qr?.enabled === undefined && pageSettings.value.qr) {
-			delete (pageSettings.value.qr as any).enabled;
+		// Overwrite in-memory presentation settings (ephemeral)
+		presentation_settings.value = merge_presentation_settings(
+			default_presentation_settings,
+			data.presentation_settings || {}
+		);
+		await refreshEffectivePresentationSettings();
+		if (
+			data.presentation_settings?.qr?.enabled === undefined &&
+			presentation_settings.value.qr
+		) {
+			delete (presentation_settings.value.qr as any).enabled;
 		}
 
 		// Preload letterhead data if the format has one set
-		letterheadDoc.value = await resolveLetterheadDoc(pageSettings.value.letterhead);
+		letterheadDoc.value = await resolveLetterheadDoc(
+			effective_presentation_settings.value.branding.letterhead
+		);
 
 		// Store layout
 		layout.value = data.layout;
@@ -1101,17 +1149,21 @@ async function resetFormat() {
 }
 
 // Expose settings getters for external access
-const getPageSettings = () => ({
-	...pageSettings.value,
-	letterheadImage: letterheadDoc.value?.image || null, // Include image path for change detection
+const get_presentation_settings = () => ({
+	...effective_presentation_settings.value,
+	branding: {
+		...effective_presentation_settings.value.branding,
+		letterhead_image:
+			branding_mode.value === "letterhead" ? letterheadDoc.value?.image || "" : "",
+	},
 });
 
-const pageSettingsComputed = computed(() => getPageSettings());
+const presentation_settings_computed = computed(() => get_presentation_settings());
 
 const getReportSettings = () => ({
 	report: reportName.value,
 	format: selectedReportFormat.value,
-	orientation: pageSettings.value.orientation,
+	orientation: effective_presentation_settings.value.page.orientation,
 	includeFilters: reportIncludeFilters.value ? 1 : 0,
 	includeSummary: reportShowSummary.value ? 1 : 0,
 	includeTotalRow: reportShowTotalRow.value ? 1 : 0,
@@ -1134,7 +1186,15 @@ const getLetterhead = () => {
 
 // Fetch letterhead data when letterhead selection changes
 watch(
-	() => pageSettings.value.letterhead,
+	presentation_settings,
+	() => {
+		refreshEffectivePresentationSettings();
+	},
+	{ deep: true, immediate: true }
+);
+
+watch(
+	() => effective_presentation_settings.value.branding.letterhead,
 	async (newLetterhead) => {
 		logger.info("Letterhead selection changed", newLetterhead);
 		letterheadDoc.value = await resolveLetterheadDoc(newLetterhead);
@@ -1199,7 +1259,7 @@ watch(
 );
 
 watch(
-	() => pageSettings.value,
+	() => presentation_settings.value,
 	() => {
 		if (isReportMode.value) {
 			requestReportPreviewCompile();
@@ -1215,16 +1275,16 @@ watch([reportFontFamily, reportFontSizePt], () => {
 });
 
 watch(
-	() => logoSettings.value.company,
+	() => logo_settings.value.company,
 	(newCompany) => {
 		logger.info("Logo company changed", newCompany);
-		logoSettings.value.image = resolveCompanyLogo(newCompany);
-		logger.info("Logo image resolved", logoSettings.value.image);
+		logo_settings.value.image = resolveCompanyLogo(newCompany);
+		logger.info("Logo image resolved", logo_settings.value.image);
 	}
 );
 
 watch(
-	() => logoSettings.value.image,
+	() => logo_settings.value.image,
 	() => {
 		logger.info("Logo image updated, recompiling preview");
 		if (isReportMode.value) {
@@ -1234,8 +1294,8 @@ watch(
 );
 
 watch(availableCompanies, () => {
-	if (!logoSettings.value.company) return;
-	logoSettings.value.image = resolveCompanyLogo(logoSettings.value.company);
+	if (!logo_settings.value.company) return;
+	logo_settings.value.image = resolveCompanyLogo(logo_settings.value.company);
 });
 
 // No explicit preview events needed: PreviewRenderer/setupWorker reacts to prop changes directly.
@@ -1304,17 +1364,13 @@ async function generateReportPdf(action: "view" | "download") {
 	}
 
 	try {
-		const compileResponse = await frappe.call({
-			method: "crispy_print.api.v1.compile_typst",
-			args: {
-				typst_source: lastReportTypstSource.value,
-				output_format: "pdf",
-				asset_files: lastReportAssetFiles.value || [],
-				chart_svg: lastReportChartSvg.value || null,
-			},
+		const result = await compileTypst({
+			typst_source: lastReportTypstSource.value,
+			output_format: "pdf",
+			asset_files: lastReportAssetFiles.value || [],
+			chart_svg: lastReportChartSvg.value || null,
 		});
 
-		const result = compileResponse?.message;
 		if (!result?.pdf_url && !result?.pdf_data) {
 			throw new Error("No PDF data returned");
 		}
@@ -1370,7 +1426,7 @@ function lastTypstReady() {
 
 // Expose methods for parent access
 defineExpose({
-	getPageSettings,
+	get_presentation_settings,
 	getReportSettings,
 	getLayout,
 	getLetterhead,

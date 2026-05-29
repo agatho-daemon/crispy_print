@@ -46,12 +46,13 @@ repos:
             )$
 
 
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.44.0
+  - repo: local
     hooks:
       - id: eslint
-        types_or: [javascript]
-        args: ['--quiet']
+        name: eslint
+        entry: yarn eslint --quiet
+        language: system
+        files: "\\.(js|ts|vue)$"
         # Ignore any files that might contain jinja / bundles
         exclude: |
             (?x)^(

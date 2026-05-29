@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "creation": "2026-05-29 09:07:34.518573",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "artifact_type",
+  "file",
+  "media_type",
+  "file_hash",
+  "hash_algorithm",
+  "page_number",
+  "is_primary",
+  "generated_at",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "artifact_type",
+   "fieldtype": "Select",
+   "label": "Artifact Type",
+   "options": "Archival PDF\nPDF/A\nRendered SVG\nXML Payload\nJSON Payload\nSignature\nCertificate\nAuthority Receipt\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Attach",
+   "label": "File",
+   "reqd": 1
+  },
+  {
+   "description": "application/pdf, image/svg+xml, application/xml, etc.",
+   "fieldname": "media_type",
+   "fieldtype": "Data",
+   "label": "Media Type"
+  },
+  {
+   "description": "SHA-256",
+   "fieldname": "file_hash",
+   "fieldtype": "Data",
+   "label": "File Hash"
+  },
+  {
+   "default": "SHA-256",
+   "fieldname": "hash_algorithm",
+   "fieldtype": "Data",
+   "label": "Hash Algorithm"
+  },
+  {
+   "description": "For multipage artifacts, e.g. SVG, JPEG, PNG etc.",
+   "fieldname": "page_number",
+   "fieldtype": "Int",
+   "label": "Page Number"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_primary",
+   "fieldtype": "Check",
+   "label": "Is Primary"
+  },
+  {
+   "fieldname": "generated_at",
+   "fieldtype": "Datetime",
+   "label": "Generated At"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-29 09:23:13.410890",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Issued Document Artifact",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -260,11 +260,41 @@
 													<input
 														v-model="field.label"
 														type="text"
-														class="form-control field-card__label field-card__label-input"
+														:class="[
+															'form-control field-card__label field-card__label-input',
+															{
+																'field-card__label-input--with-status':
+																	field.fieldtype ===
+																	'Crispy Typst Block',
+															},
+														]"
 														:placeholder="field.fieldname"
 														@change="markDirty()"
 														@keydown.enter.prevent="onLabelEnter"
 													/>
+													<span
+														v-if="
+															field.fieldtype ===
+															'Crispy Typst Block'
+														"
+														class="field-card__inline-status"
+														:class="{
+															'field-card__inline-status--empty':
+																!field.crispy_typst_block,
+														}"
+														:title="getTypstBlockStatus(field)"
+													>
+														<span
+															class="field-card__inline-separator"
+															aria-hidden="true"
+															>·</span
+														>
+														<span
+															class="field-card__inline-status-text"
+														>
+															{{ getTypstBlockStatus(field) }}
+														</span>
+													</span>
 												</div>
 												<div class="field-card__actions">
 													<button
@@ -474,6 +504,19 @@
 
 															<button
 																v-if="
+																	field.fieldtype ===
+																	'Crispy Typst Block'
+																"
+																type="button"
+																class="field-card__menu-item"
+																@click="onChooseTypstBlock(field)"
+																role="menuitem"
+															>
+																{{ __("Choose block") }}
+															</button>
+
+															<button
+																v-if="
 																	(
 																		field.fieldtype || ''
 																	).toLowerCase() === 'spacer'
@@ -566,6 +609,14 @@
 			@update:modelValue="onColumnsUpdate"
 			@close="closeColumnEditor"
 		/>
+		<CrispyTypstBlockDialog
+			v-if="blockEditor"
+			:blocks="blockOptions"
+			:loading="blockOptionsLoading"
+			:selected-block-key="blockEditor.crispy_typst_block"
+			@select="onTypstBlockSelected"
+			@close="closeBlockEditor"
+		/>
 	</div>
 </template>
 
@@ -574,7 +625,9 @@ import draggable from "vuedraggable";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useStore } from "../composables/useStore";
 import TableColumnsDialog from "../components/TableColumnsDialog.vue";
+import CrispyTypstBlockDialog from "../components/CrispyTypstBlockDialog.vue";
 import { getLogger } from "../logger";
+import type { CrispyTypstBlockOption } from "../api/crispy";
 import type {
 	LayoutSection,
 	LayoutColumn,
@@ -602,6 +655,9 @@ const store = useStore();
 const layout = store.layout;
 const columnEditor = ref<TableEditorContext | null>(null);
 const editingColumns = ref<TableColumn[]>([]);
+const blockEditor = ref<Field | null>(null);
+const blockOptions = ref<CrispyTypstBlockOption[]>([]);
+const blockOptionsLoading = ref(false);
 const logger = getLogger({ component: "LayoutPane" });
 const layoutPaneRef = ref<HTMLElement | null>(null);
 const menuPortalRef = ref<HTMLElement | null>(null);
@@ -1321,6 +1377,11 @@ async function onDropField(event: DragEvent, column: Column) {
 			await ensureTableColumns(field);
 		}
 
+		if (parsed.fieldtype === "Crispy Typst Block") {
+			field.crispy_typst_block = "";
+			field.crispy_typst_block_name = "";
+		}
+
 		column.fields.push(field);
 		store.markDirty();
 	} catch (e) {
@@ -1392,6 +1453,47 @@ function onColumnsUpdate(columns: TableColumn[]) {
 
 function closeColumnEditor() {
 	columnEditor.value = null;
+}
+
+function getTypstBlockStatus(field: Field): string {
+	return field.crispy_typst_block_name || field.crispy_typst_block || __("No block selected");
+}
+
+async function chooseTypstBlock(field: Field) {
+	blockEditor.value = field;
+	blockOptionsLoading.value = true;
+	try {
+		blockOptions.value = await store.loadApplicableTypstBlocks();
+	} catch (error) {
+		logger.warn("Failed to load Crispy Typst Blocks", error);
+		blockOptions.value = [];
+		if (typeof frappe !== "undefined") {
+			frappe.show_alert({
+				message: __("Failed to load Crispy Typst Blocks"),
+				indicator: "red",
+			});
+		}
+	} finally {
+		blockOptionsLoading.value = false;
+	}
+}
+
+function onChooseTypstBlock(field: Field) {
+	chooseTypstBlock(field);
+	closeFieldMenu();
+}
+
+function onTypstBlockSelected(block: CrispyTypstBlockOption) {
+	if (!blockEditor.value) return;
+	blockEditor.value.crispy_typst_block = block.block_key;
+	blockEditor.value.crispy_typst_block_name = block.block_name;
+	blockEditor.value.crispy_typst_block_code = block.typst_code || "";
+	store.markDirty();
+	closeBlockEditor();
+}
+
+function closeBlockEditor() {
+	blockEditor.value = null;
 }
 
 function markDirty() {
@@ -1986,6 +2088,38 @@ function onEditDivider(field: Field) {
 	background: transparent;
 	padding: 0;
 	min-width: 0;
+}
+
+.field-card__label-input--with-status {
+	flex: 0 1 auto;
+	min-width: 9rem;
+	width: auto;
+}
+
+.field-card__inline-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	max-width: 45%;
+	color: #64748b;
+	font-size: 13px;
+	white-space: nowrap;
+}
+
+.field-card__inline-status-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.field-card__inline-status--empty {
+	color: #94a3b8;
+}
+
+.field-card__inline-separator {
+	color: #cbd5e1;
+	flex: 0 0 auto;
 }
 
 .field-card__actions {

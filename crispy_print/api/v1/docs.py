@@ -1,8 +1,14 @@
 import frappe
 from frappe import _
 
+from .document_codes import get_preferred_document_code_for_doc
 
-def get_formatted_doc(doctype: str, name: str) -> dict:
+
+def get_formatted_doc(
+	doctype: str,
+	name: str,
+	qr_source_mode: str | None = None,
+) -> dict:
 	"""
 	Return a document with server-side formatted values (currency/date/percent/etc.).
 
@@ -12,6 +18,7 @@ def get_formatted_doc(doctype: str, name: str) -> dict:
 		frappe.throw(_("doctype and name are required"))
 
 	doc = frappe.get_doc(doctype, name)
+	doc.check_permission("read")
 	meta = frappe.get_meta(doctype)
 	data = doc.as_dict()
 
@@ -58,4 +65,28 @@ def get_formatted_doc(doctype: str, name: str) -> dict:
 		except Exception:
 			pass
 
+	document_code = _build_document_code_preview(doc, qr_source_mode=qr_source_mode)
+	if document_code:
+		data["__crispy_document_code"] = document_code
+
 	return data
+
+
+def _build_document_code_preview(doc, qr_source_mode: str | None = None) -> dict | None:
+	if (qr_source_mode or "").strip() != "document_code_profile":
+		return None
+	try:
+		result = get_preferred_document_code_for_doc(doc)
+	except Exception:
+		return None
+	if not result:
+		return None
+	return {
+		"code_purpose": result.get("code_purpose"),
+		"environment": result.get("environment"),
+		"profile_name": result.get("profile_name"),
+		"code_format": result.get("code_format"),
+		"code_symbology": result.get("code_symbology"),
+		"payload": result.get("payload"),
+		"encoded_value": result.get("encoded_value"),
+	}

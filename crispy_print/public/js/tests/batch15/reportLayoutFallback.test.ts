@@ -17,7 +17,7 @@ vi.mock("../../api/crispy", () => ({
         },
       ],
     }),
-    page_settings: JSON.stringify({}),
+    presentation_settings: JSON.stringify({}),
     typst_code: "",
     raw_typst: 0,
   })),
@@ -61,7 +61,7 @@ vi.mock("../../utils/formatLoader", async (orig) => {
     ...actual,
     parseCrispyFormatDoc: () => ({
       layout: { sections: [] as unknown[] },
-      pageSettings: {},
+      presentation_settings: {},
       docHeader: "",
       formatDoc: {},
     }),

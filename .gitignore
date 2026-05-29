@@ -1,10 +1,15 @@
 .DS_Store
+.pytest_cache/
+.ruff_cache/
+.venv/
+.vscode/
+.yarn-cache/
 *.pyc
 *.egg-info
 *.swp
 tags
 node_modules
-__pycache__
+__pycache__/
 *.bundle.*.js
 *.bundle.*.css
-dist
+dist/

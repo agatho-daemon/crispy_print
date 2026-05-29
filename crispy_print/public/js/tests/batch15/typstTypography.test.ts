@@ -9,12 +9,12 @@ describe("typstTypography utils", async () => {
 	const { getTypstLocalFonts } = await import("../../api/crispy")
 
 	it("parseSize handles valid inputs", () => {
-		expect(parseSize("10pt")).toEqual({ value: 10, unit: "pt", decimals: 0 })
-		expect(parseSize(" 12.50 px ")).toEqual({ value: 12.5, unit: "px", decimals: 2 })
+		expect(parseSize("10pt")).toEqual({ value: 10, unit: "pt", decimals: 0, valid: true })
+		expect(parseSize(" 12.50 px ")).toEqual({ value: 12.5, unit: "px", decimals: 2, valid: true })
 	})
 
 	it("parseSize returns defaults on invalid input", () => {
-		expect(parseSize("bad")).toEqual({ value: 0, unit: "pt", decimals: 0 })
+		expect(parseSize("bad")).toEqual({ value: 0, unit: "pt", decimals: 0, valid: false })
 	})
 
 	it("formatPt clamps to at least 1pt and strips zeros", () => {

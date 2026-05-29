@@ -1,0 +1,326 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:profile_name",
+ "creation": "2026-05-13 10:13:32.923475",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "general_section",
+  "profile_name",
+  "enabled",
+  "company",
+  "environment",
+  "purpose_section",
+  "code_purpose",
+  "regulatory_profile",
+  "fiscal_credential",
+  "code_output",
+  "code_format",
+  "code_symbology",
+  "payload_format",
+  "output_encoding",
+  "error_correction",
+  "payload_section",
+  "content_source",
+  "payload_template",
+  "selected_fields_json",
+  "field_mapping_json",
+  "encoder_key",
+  "encoder_settings_json",
+  "signature_verification_section",
+  "requires_signature",
+  "signature_method",
+  "include_hash",
+  "hash_method",
+  "requires_verification_url",
+  "verification_url_template",
+  "presentation_section",
+  "use_branding_profile_presentation",
+  "code_label",
+  "width_mm",
+  "height_mm",
+  "rules_section",
+  "document_rules",
+  "metadata_section",
+  "priority",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "general_section",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Profile Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Sandbox",
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Environment",
+   "options": "Sandbox\nProduction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "purpose_section",
+   "fieldtype": "Section Break",
+   "label": "Purpose"
+  },
+  {
+   "fieldname": "code_purpose",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Code Purpose",
+   "options": "Regulatory\nPayment\nVerification\nPortal Link\nLogistics\nInternal Tracking\nCompliance Certificate\nOther",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.code_purpose == \"Regulatory\"",
+   "fieldname": "regulatory_profile",
+   "fieldtype": "Link",
+   "label": "Regulatory Profile",
+   "options": "Crispy QR Regulatory Profile"
+  },
+  {
+   "depends_on": "eval:doc.code_purpose == \"Regulatory\" || doc.requires_signature == 1",
+   "fieldname": "fiscal_credential",
+   "fieldtype": "Link",
+   "label": "Fiscal Credential",
+   "options": "Crispy Fiscal Credential"
+  },
+  {
+   "fieldname": "code_output",
+   "fieldtype": "Section Break",
+   "label": "Code Output"
+  },
+  {
+   "default": "QR Code",
+   "fieldname": "code_format",
+   "fieldtype": "Select",
+   "label": "Code Format",
+   "options": "QR Code\nDataMatrix\nBarcode\nText\nURL",
+   "reqd": 1
+  },
+  {
+   "default": "QR Code",
+   "depends_on": "eval:[\"QR Code\", \"DataMatrix\", \"Barcode\"].includes(doc.code_format)",
+   "fieldname": "code_symbology",
+   "fieldtype": "Select",
+   "label": "Code Symbology",
+   "options": "QR Code\nDataMatrix\nCode 128\nGS1-128\nEAN-13\nUPC-A\nPDF417\nAztec\nCustom"
+  },
+  {
+   "fieldname": "payload_format",
+   "fieldtype": "Select",
+   "label": "Payload Format",
+   "options": "TLV\nJSON\nXML\nURL\nPlain Text\nGS1\nCustom",
+   "reqd": 1
+  },
+  {
+   "default": "Plain Text",
+   "fieldname": "output_encoding",
+   "fieldtype": "Select",
+   "label": "Output Encoding",
+   "options": "Plain Text\nBase64\nURL Encoded\nHex"
+  },
+  {
+   "default": "Medium",
+   "depends_on": "eval:doc.code_format == \"QR Code\"",
+   "fieldname": "error_correction",
+   "fieldtype": "Select",
+   "label": "Error Correction",
+   "options": "Low\nMedium\nQuartile\nHigh"
+  },
+  {
+   "fieldname": "payload_section",
+   "fieldtype": "Section Break",
+   "label": "Payload"
+  },
+  {
+   "default": "Encoder",
+   "fieldname": "content_source",
+   "fieldtype": "Select",
+   "label": "Content Source",
+   "options": "Payload Template\nSelected Fields\nEncoder\nVerification URL\nStatic Text",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.content_source == \"Payload Template\"",
+   "fieldname": "payload_template",
+   "fieldtype": "Code",
+   "label": "Payload Template"
+  },
+  {
+   "depends_on": "eval:doc.content_source == \"Selected Fields\"",
+   "fieldname": "selected_fields_json",
+   "fieldtype": "JSON",
+   "label": "Selected Fields JSON"
+  },
+  {
+   "fieldname": "field_mapping_json",
+   "fieldtype": "JSON",
+   "label": "Field Mapping JSON"
+  },
+  {
+   "fieldname": "encoder_key",
+   "fieldtype": "Data",
+   "label": "Encoder Key",
+   "placeholder": "e.g. zatca_tlv, url, gs1"
+  },
+  {
+   "fieldname": "encoder_settings_json",
+   "fieldtype": "JSON",
+   "label": "Encoder Settings JSON"
+  },
+  {
+   "fieldname": "signature_verification_section",
+   "fieldtype": "Section Break",
+   "label": "Signature & Verification"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_signature",
+   "fieldtype": "Check",
+   "label": "Requires Signature"
+  },
+  {
+   "depends_on": "eval:doc.requires_signature == 1",
+   "fieldname": "signature_method",
+   "fieldtype": "Select",
+   "label": "Signature Method",
+   "mandatory_depends_on": "eval:doc.requires_signature == 1",
+   "options": "Hash Only\nRSA\nECDSA\nHMAC\nExternal API\nCustom"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_hash",
+   "fieldtype": "Check",
+   "label": "Include Hash"
+  },
+  {
+   "depends_on": "eval:doc.include_hash == 1",
+   "fieldname": "hash_method",
+   "fieldtype": "Select",
+   "label": "Hash Method",
+   "mandatory_depends_on": "eval:doc.include_hash == 1",
+   "options": "SHA-256\nSHA-384\nSHA-512\nCustom"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_verification_url",
+   "fieldtype": "Check",
+   "label": "Requires Verification URL"
+  },
+  {
+   "depends_on": "eval:doc.requires_verification_url == 1 || doc.content_source == \"Verification URL\"",
+   "fieldname": "verification_url_template",
+   "fieldtype": "Small Text",
+   "label": "Verification URL Template",
+   "max_height": "3em"
+  },
+  {
+   "fieldname": "presentation_section",
+   "fieldtype": "Section Break",
+   "label": "Presentation"
+  },
+  {
+   "fieldname": "code_label",
+   "fieldtype": "Data",
+   "label": "Code Label"
+  },
+  {
+   "fieldname": "width_mm",
+   "fieldtype": "Float",
+   "label": "Width (mm)"
+  },
+  {
+   "fieldname": "height_mm",
+   "fieldtype": "Float",
+   "label": "Height (mm)"
+  },
+  {
+   "fieldname": "rules_section",
+   "fieldtype": "Section Break",
+   "label": "Rules"
+  },
+  {
+   "fieldname": "document_rules",
+   "fieldtype": "Table",
+   "label": "Document Rules",
+   "options": "Crispy Document Code Rule"
+  },
+  {
+   "fieldname": "metadata_section",
+   "fieldtype": "Section Break",
+   "label": "Metadata"
+  },
+  {
+   "default": "100",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "label": "Priority"
+  },
+  {
+   "default": "1",
+   "fieldname": "use_branding_profile_presentation",
+   "fieldtype": "Check",
+   "label": "Use Branding Profile Presentation"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-13 11:10:48.278686",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Document Code Profile",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

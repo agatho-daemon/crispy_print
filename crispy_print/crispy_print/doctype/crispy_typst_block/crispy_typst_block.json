@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "autoname": "field:block_key",
+ "creation": "2026-05-13 07:46:54.276532",
+ "description": "Crispy Typst Block Library",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "identity_section",
+  "block_name",
+  "block_key",
+  "enabled",
+  "category",
+  "applicability_section",
+  "applicable_documents",
+  "content_section",
+  "description",
+  "typst_code",
+  "metadata_section",
+  "version",
+  "notes"
+ ],
+ "fields": [
+  {
+   "description": "Human-readable name shown in the block library.",
+   "fieldname": "block_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Block Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Stable identifier used to reference this block from templates or code. Use lowercase words separated by underscores, for example invoice_header.",
+   "fieldname": "block_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Reference Key",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "description": "A label used to organize and filter blocks in the library. It does not affect where or how the block is rendered.",
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "\nLayout\nHeader\nFooter\nBranding\nParty\nItems\nTotals\nTax\nPayment\nQR Code\nSignature\nTerms\nWatermark\nUtility\nOther"
+  },
+  {
+   "description": "Leave <span style=\"color: #B45309; font-weight: 600;\">EMPTY</span> to apply this block to all DocTypes.",
+   "fieldname": "applicable_documents",
+   "fieldtype": "Table",
+   "label": "Applicable Documents",
+   "options": "Crispy Typst Block Applicable Document"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "default": "1.0.0",
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "label": "Version"
+  },
+  {
+   "fieldname": "typst_code",
+   "fieldtype": "Code",
+   "label": "Typst Code",
+   "options": "Typst",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "content_section",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "fieldname": "metadata_section",
+   "fieldtype": "Section Break",
+   "label": "Metadata"
+  },
+  {
+   "fieldname": "applicability_section",
+   "fieldtype": "Section Break",
+   "label": "Applicability"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-14 09:42:14.948805",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Typst Block",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

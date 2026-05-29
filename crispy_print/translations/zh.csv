@@ -316,7 +316,7 @@ No Formats Available,没有可用格式
 No print format found for report '{0}',未找到报表 '{0}' 的打印格式
 Not Saved,未保存
 "Optional: add `// fields: customer, items.item_code` to narrow payload fields.","可选：添加 `// fields: customer, items.item_code` 来缩小载荷字段范围。"
-page_settings could not be parsed for reference checks,无法解析 page_settings 以进行引用检查
+presentation_settings could not be parsed for reference checks,无法解析 presentation_settings 以进行引用检查
 Payload must be a JSON object,载荷必须是 JSON 对象
 Payload must be a JSON object or JSON string,载荷必须是 JSON 对象或 JSON 字符串
 Payload must include a 'format' object,载荷必须包含 'format' 对象

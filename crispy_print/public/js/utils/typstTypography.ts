@@ -4,6 +4,7 @@ export type SizeParseResult = {
 	value: number;
 	unit: string;
 	decimals: number;
+	valid: boolean;
 };
 
 export type FontFetchOptions = {
@@ -15,11 +16,17 @@ export type FontFetchOptions = {
 export function parseSize(input: string | null | undefined): SizeParseResult {
 	const raw = String(input || "").trim();
 	const match = raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-z%]+)?$/i);
-	if (!match) return { value: 0, unit: "pt", decimals: 0 };
+	if (!match) return { value: 0, unit: "pt", decimals: 0, valid: false };
 	const value = Number(match[1]);
 	const unit = (match[2] || "pt").toLowerCase();
 	const decimals = (match[1].split(".")[1] || "").length;
-	return { value: Number.isFinite(value) ? value : 0, unit, decimals };
+	const finite = Number.isFinite(value);
+	return {
+		value: finite ? value : 0,
+		unit,
+		decimals,
+		valid: finite,
+	};
 }
 
 export function formatPt(value: number): string {

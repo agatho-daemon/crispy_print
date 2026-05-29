@@ -1,6 +1,10 @@
 import { ref, type Ref } from "vue";
 import { getLogger } from "../logger";
-import type { PageSettings } from "../utils/pageSettings";
+import {
+  default_presentation_settings,
+  merge_presentation_settings,
+  type PresentationSettings,
+} from "../utils/presentation_settings";
 import type {
   ReportBuilderConfig,
   ReportBuilderMode,
@@ -12,6 +16,8 @@ import {
   renderDummyReportChartSvg,
 } from "../utils/reportPreviewDummy";
 import { dispatchCrispyPreviewSource } from "../utils/events";
+import { escapeTypstString } from "../utils/typstEscape";
+import { compileReportPreview as compileReportPreviewApi, type TypstCompileResult } from "../api/crispy";
 
 const DEFAULT_REPORT_PREVIEW_LIMIT = 50;
 const logger = getLogger({ module: "ReportStore" });
@@ -20,7 +26,7 @@ type ColumnConfig = Array<{ fieldname: string; width: string }>;
 
 interface CreateReportStoreOptions {
   formatName: Ref<string | null>;
-  pageSettings: Ref<PageSettings>;
+  presentation_settings: Ref<PresentationSettings>;
   letterhead: Ref<any>;
   typstCode: Ref<string>;
   reportBuilderConfig: Ref<ReportBuilderConfig>;
@@ -34,14 +40,10 @@ interface CreateReportStoreOptions {
   getReportTableColumnsForPreview: () => any[];
 }
 
-function escapeTypstString(value: string): string {
-  return String(value || "").replace(/"/g, '\\"');
-}
-
 export function createReportStore(options: CreateReportStoreOptions) {
   const {
     formatName,
-    pageSettings,
+    presentation_settings,
     letterhead,
     typstCode,
     reportBuilderConfig,
@@ -129,7 +131,11 @@ export function createReportStore(options: CreateReportStoreOptions) {
   async function compileReportPreview(
     reportName: string,
     columnConfig: any[] = [],
-  ) {
+  ): Promise<(TypstCompileResult & {
+    typst_source?: string;
+    truncation?: Record<string, any>;
+    asset_files?: string[];
+  }) | null> {
     try {
       logger.info("Building report source", reportName);
 
@@ -138,42 +144,46 @@ export function createReportStore(options: CreateReportStoreOptions) {
           ? columnConfig
           : getReportColumnConfigFromLayout();
       const includeFilters = Boolean(reportBuilderConfig.value.show_filters);
-      const orientation = pageSettings.value?.orientation || "landscape";
-      const pageSettingsPayload = {
-        ...pageSettings.value,
-        report_builder: { ...reportBuilderConfig.value },
-      };
-      const configuredBrandingMode = String(
-        pageSettings.value?.brandingMode || "",
+      const orientation =
+        presentation_settings.value?.page?.orientation || "landscape";
+      const presentation_settings_payload = merge_presentation_settings(
+        default_presentation_settings,
+        presentation_settings.value || {},
+      );
+      presentation_settings_payload.report = { ...reportBuilderConfig.value };
+      const configured_branding_mode = String(
+        presentation_settings_payload.branding?.mode || "",
       ).toLowerCase();
-      const brandingMode =
-        configuredBrandingMode === "letterhead" ||
-        configuredBrandingMode === "logo"
-          ? configuredBrandingMode
-          : pageSettings.value?.letterhead
+      const branding_mode =
+        configured_branding_mode === "letterhead" ||
+        configured_branding_mode === "logo"
+          ? configured_branding_mode
+          : presentation_settings_payload.branding?.letterhead
             ? "letterhead"
-            : pageSettings.value?.logo?.image
+            : presentation_settings_payload.branding?.logo?.image
               ? "logo"
               : "none";
-      const letterheadImage =
-        brandingMode === "letterhead" ? letterhead.value?.image || null : null;
-      const logoImage =
-        brandingMode === "logo" ? pageSettings.value?.logo?.image || null : null;
-      const brandingAssetFiles = [letterheadImage, logoImage].filter(
+      const letterhead_image =
+        branding_mode === "letterhead" ? letterhead.value?.image || null : null;
+      const logo_image =
+        branding_mode === "logo"
+          ? presentation_settings_payload.branding?.logo?.image || null
+          : null;
+      const branding_asset_files = [letterhead_image, logo_image].filter(
         (value): value is string => Boolean(value),
       );
-      const typstPreambleOverride = buildReportFontPreambleOverride();
-      const tableColumns = getReportTableColumnsForPreview();
-      const previewData = buildDummyReportPreviewData({
+      const typst_preamble_override = buildReportFontPreambleOverride();
+      const table_columns = getReportTableColumnsForPreview();
+      const preview_data = buildDummyReportPreviewData({
         title: reportName || selectedReportName.value || "Style Preview",
         includeFilters,
         includeSummary: Boolean(reportBuilderConfig.value.show_summary),
         includeTotalRow: Boolean(reportBuilderConfig.value.include_total_row),
-        tableColumns,
+        tableColumns: table_columns,
         columnConfig: effectiveColumnConfig,
       });
-      const chartEnabled = Boolean(reportBuilderConfig.value.chart_enabled);
-      const previewChartSvg = chartEnabled
+      const chart_enabled = Boolean(reportBuilderConfig.value.chart_enabled);
+      const preview_chart_svg = chart_enabled
         ? await renderDummyReportChartSvg({
             height: Math.max(
               140,
@@ -189,64 +199,43 @@ export function createReportStore(options: CreateReportStoreOptions) {
             },
           })
         : null;
-      const previewDataPayload = {
-        ...previewData,
-        chart_svg: previewChartSvg ? "report_chart.svg" : "",
+      const preview_data_payload = {
+        ...preview_data,
+        chart_svg: preview_chart_svg ? "report_chart.svg" : "",
       };
 
-      const sourceResponse = await frappe.call({
-        method: "crispy_print.api.v1.get_report_typst_source",
-        args: {
-          report: reportName || "Style Preview",
-          format_name: formatName.value,
-          filters: reportFilters.value || {},
-          column_config: effectiveColumnConfig,
-          include_filters: includeFilters ? 1 : 0,
-          orientation,
-          chart_svg: null,
-          typst_preamble_override: typstPreambleOverride,
-          typst_code_override: buildReportTypstOverrideForPreview(
-            typstCode.value || "",
-          ),
-          preview_data: previewDataPayload,
-          page_settings: {
-            ...pageSettingsPayload,
-            letterhead_image: letterheadImage || "",
+      const result = await compileReportPreviewApi({
+        report: reportName || "Style Preview",
+        format_name: formatName.value,
+        filters: reportFilters.value || {},
+        column_config: effectiveColumnConfig,
+        include_filters: includeFilters ? 1 : 0,
+        orientation,
+        chart_svg: preview_chart_svg,
+        typst_preamble_override: typst_preamble_override,
+        typst_code_override: buildReportTypstOverrideForPreview(
+          typstCode.value || "",
+        ),
+        preview_data: preview_data_payload,
+        presentation_settings: {
+          ...presentation_settings_payload,
+          branding: {
+            ...presentation_settings_payload.branding,
+            letterhead_image: letterhead_image || "",
           },
-          limit: DEFAULT_REPORT_PREVIEW_LIMIT,
         },
+        limit: DEFAULT_REPORT_PREVIEW_LIMIT,
+        asset_files: branding_asset_files,
       });
 
-      const sourcePayload = sourceResponse?.message;
-      const typstSource =
-        typeof sourcePayload === "string"
-          ? sourcePayload
-          : sourcePayload?.typst_source;
-      const assetFiles = Array.isArray(sourcePayload?.asset_files)
-        ? sourcePayload.asset_files
-        : [];
-      const compileAssetFiles = Array.from(
-        new Set([...brandingAssetFiles, ...assetFiles]),
-      );
-      if (!typstSource) {
+      const typst_source = result?.typst_source || "";
+      if (!typst_source) {
         throw new Error("No Typst source returned");
       }
-      dispatchCrispyPreviewSource({ source: typstSource });
+      dispatchCrispyPreviewSource({ source: typst_source });
 
-      logger.info("Compiling to SVG");
-
-      const compileResponse = await frappe.call({
-        method: "crispy_print.api.v1.compile_typst",
-        args: {
-          typst_source: typstSource,
-          output_format: "svg",
-          asset_files: compileAssetFiles,
-          chart_svg: previewChartSvg,
-        },
-      });
-
-      logger.info("Compilation result", compileResponse?.message);
-      return compileResponse?.message || null;
+      logger.info("Compilation result", result);
+      return result || null;
     } catch (error) {
       logger.error("Failed to compile report preview", error);
       throw error;

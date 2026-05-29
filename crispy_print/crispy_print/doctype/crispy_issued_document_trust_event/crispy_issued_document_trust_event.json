@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "creation": "2026-05-29 09:40:18.431435",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "event_type",
+  "signature_format",
+  "signature_algorithm",
+  "digest_algorithm",
+  "signer_name",
+  "signer_certificate",
+  "certificate_fingerprint",
+  "certificate_subject",
+  "certificate_issuer",
+  "certificate_serial_number",
+  "signed_at",
+  "timestamp_token",
+  "timestamp_authority",
+  "validation_status",
+  "validation_message",
+  "related_artifact"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Event Type",
+   "options": "Hash\nSignature\nTimestamp\nCertificate\nValidation\nRevocation Check\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "signature_format",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Signature Format",
+   "options": "\nPAdES\nXAdES\nCAdES/CMS\nDetached\nEmbedded PDF\nOther"
+  },
+  {
+   "description": "e.g. RSA-PSS, ECDSA, Ed25519, etc.",
+   "fieldname": "signature_algorithm",
+   "fieldtype": "Data",
+   "label": "Signature Algorithm"
+  },
+  {
+   "default": "SHA-256",
+   "fieldname": "digest_algorithm",
+   "fieldtype": "Data",
+   "label": "Digest Algorithm"
+  },
+  {
+   "description": "Human/business signer name",
+   "fieldname": "signer_name",
+   "fieldtype": "Data",
+   "label": "Signer Name"
+  },
+  {
+   "description": "Certificate file, usually .cer, .pem, .crt",
+   "fieldname": "signer_certificate",
+   "fieldtype": "Attach",
+   "label": "Signer Certificate"
+  },
+  {
+   "fieldname": "certificate_fingerprint",
+   "fieldtype": "Data",
+   "label": "Certificate Fingerprint"
+  },
+  {
+   "description": "X.509 subject DN",
+   "fieldname": "certificate_subject",
+   "fieldtype": "Small Text",
+   "label": "Certificate Subject",
+   "max_height": "4em"
+  },
+  {
+   "description": "X.509 issuer DN",
+   "fieldname": "certificate_issuer",
+   "fieldtype": "Small Text",
+   "label": "Certificate Issuer",
+   "max_height": "4em"
+  },
+  {
+   "fieldname": "certificate_serial_number",
+   "fieldtype": "Data",
+   "label": "Certificate Serial Number"
+  },
+  {
+   "fieldname": "signed_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Signed At"
+  },
+  {
+   "description": "RFC 3161 token or timestamp proof file",
+   "fieldname": "timestamp_token",
+   "fieldtype": "Attach",
+   "label": "Timestamp Token"
+  },
+  {
+   "fieldname": "timestamp_authority",
+   "fieldtype": "Data",
+   "label": "Timestamp Authority"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "validation_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Validation Status",
+   "options": "\nPending\nValid\nInvalid\nExpired\nRevoked\nUnknown\nFailed"
+  },
+  {
+   "fieldname": "validation_message",
+   "fieldtype": "Small Text",
+   "label": "Validation Message",
+   "max_height": "4em"
+  },
+  {
+   "description": "Artifact row name/reference, e.g. PDF artifact row",
+   "fieldname": "related_artifact",
+   "fieldtype": "Data",
+   "label": "Related Artifact"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-29 09:55:44.425801",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Issued Document Trust Event",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

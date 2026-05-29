@@ -13,9 +13,10 @@ vi.mock("../../api/crispy", () => ({
 vi.mock("../../utils/formatLoader", () => ({
 	parseCrispyFormatDoc: vi.fn(),
 	resolveLetterheadDoc: vi.fn(async (): Promise<null> => null),
+	clearLetterheadCache: vi.fn(),
 }));
 
-describe("useStore report builder table migration", () => {
+describe("useStore report builder table style sync", () => {
 	beforeEach(() => {
 		vi.resetModules();
 		(globalThis as any).__ = (msg: string): string => msg;
@@ -26,7 +27,7 @@ describe("useStore report builder table migration", () => {
 			};
 	});
 
-	it("migrates legacy report_builder table styles when table settings are unset/default", async () => {
+	it("applies report table styles when table settings are unset/default", async () => {
 		const { getCrispyFormat } = await import("../../api/crispy");
 		const { parseCrispyFormatDoc } = await import("../../utils/formatLoader");
 		(getCrispyFormat as any).mockResolvedValue({
@@ -39,12 +40,11 @@ describe("useStore report builder table migration", () => {
 		});
 		(parseCrispyFormatDoc as any).mockReturnValue({
 			layout: { sections: [] as unknown[] },
-			pageSettings: {
-				pageSize: "A4",
-				orientation: "portrait",
-				margins: { top: 25, bottom: 20, left: 20, right: 20 },
+			presentation_settings: {
+				page: { size: "A4", orientation: "portrait", margins: { top: 25, bottom: 20, left: 20, right: 20 } },
+				branding: { mode: "none", letterhead: "", letterhead_image: "", logo: { company: "", image: "", size: 25, dx: 0, dy: 0 } },
 				language: "en",
-				report_builder: {
+				report: {
 					header_fill: "#112233",
 					row_striping: true,
 					row_stripe_fill: "#445566",
@@ -58,13 +58,13 @@ describe("useStore report builder table migration", () => {
 		const store = useStore();
 		await store.fetch("FMT-1");
 
-		expect(store.pageSettings.value.table?.header.backgroundColor).toBe(
+		expect(store.presentation_settings.value.table?.header.backgroundColor).toBe(
 			store.reportBuilderConfig.value.header_fill,
 		);
-		expect(store.pageSettings.value.table?.stripe.enabled).toBe(
+		expect(store.presentation_settings.value.table?.stripe.enabled).toBe(
 			Boolean(store.reportBuilderConfig.value.row_striping),
 		);
-		expect(store.pageSettings.value.table?.stripe.color).toBe(
+		expect(store.presentation_settings.value.table?.stripe.color).toBe(
 			store.reportBuilderConfig.value.row_stripe_fill,
 		);
 	});
@@ -82,10 +82,9 @@ describe("useStore report builder table migration", () => {
 		});
 		(parseCrispyFormatDoc as any).mockReturnValue({
 			layout: { sections: [] as unknown[] },
-			pageSettings: {
-				pageSize: "A4",
-				orientation: "portrait",
-				margins: { top: 25, bottom: 20, left: 20, right: 20 },
+			presentation_settings: {
+				page: { size: "A4", orientation: "portrait", margins: { top: 25, bottom: 20, left: 20, right: 20 } },
+				branding: { mode: "none", letterhead: "", letterhead_image: "", logo: { company: "", image: "", size: 25, dx: 0, dy: 0 } },
 				language: "en",
 				table: {
 					inset: { top: 2, right: 2, bottom: 2, left: 2 },
@@ -109,7 +108,7 @@ describe("useStore report builder table migration", () => {
 						},
 					},
 				},
-				report_builder: {
+				report: {
 					header_fill: "#112233",
 					row_striping: true,
 					row_stripe_fill: "#445566",
@@ -123,8 +122,8 @@ describe("useStore report builder table migration", () => {
 		const store = useStore();
 		await store.fetch("FMT-2");
 
-		expect(store.pageSettings.value.table?.header.backgroundColor).toBe("#aa0000");
-		expect(store.pageSettings.value.table?.stripe.enabled).toBe(false);
-		expect(store.pageSettings.value.table?.stripe.color).toBe("#00bb00");
+		expect(store.presentation_settings.value.table?.header.backgroundColor).toBe("#aa0000");
+		expect(store.presentation_settings.value.table?.stripe.enabled).toBe(false);
+		expect(store.presentation_settings.value.table?.stripe.color).toBe("#00bb00");
 	});
 });

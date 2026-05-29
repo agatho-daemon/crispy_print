@@ -5,7 +5,7 @@ const interpolate: TranslateFn = (text, replacements) => {
 		return text;
 	}
 
-	return replacements.reduce((output, value, index) => {
+	return replacements.reduce<string>((output, value, index) => {
 		const token = new RegExp(`\\{${index}\\}`, "g");
 		return output.replace(token, String(value ?? ""));
 	}, text);
@@ -14,12 +14,12 @@ const interpolate: TranslateFn = (text, replacements) => {
 export const __: TranslateFn = (text, replacements) => {
 	const globalTranslate = (globalThis as any).__;
 	if (typeof globalTranslate === "function") {
-		return globalTranslate(text, replacements);
+		return String(globalTranslate(text, replacements));
 	}
 
 	const frappeTranslate = (globalThis as any).frappe?.__;
 	if (typeof frappeTranslate === "function") {
-		return frappeTranslate(text, replacements);
+		return String(frappeTranslate(text, replacements));
 	}
 
 	return interpolate(text, replacements);

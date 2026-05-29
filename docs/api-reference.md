@@ -11,11 +11,12 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Returns: `list[str]`
 - Shape: `['Inter', 'Noto Sans', ...]`
 
-### `compile_typst(typst_source, output_format='svg', letterhead_image=None, logo_image=None, chart_svg=None, qr_data=None, qr_filename=None, output_filename=None, return_url=0)`
+### `compile_typst(typst_source, output_format='svg', asset_files=None, chart_svg=None, qr_data=None, qr_filename=None, output_filename=None, return_url=0)`
 - Args:
   - `typst_source: str`
   - `output_format: 'svg' | 'pdf'`
-  - optional image/qr/output args
+  - optional `asset_files` list for approved site/app assets used by Typst image calls
+  - optional chart/qr/output args
 - Returns (svg):
   - `{ success, format: 'svg', svg_pages: string[], page_count: number }`
 - Returns (pdf):
@@ -24,7 +25,7 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 ## Doc & Formats
 
 ### `get_formatted_doc(doctype, name)`
-- Args: `doctype: str`, `name: str`
+- Args: `doctype: str`, `name: str`, optional `qr_source_mode: str`
 - Returns: formatted document dict
 
 ### `get_crispy_formats_for_doctype(doctype)`
@@ -78,6 +79,10 @@ Use method path: `crispy_print.api.v1.<endpoint>`
   - `limit: int` (preview row cap)
 - Returns: Typst source + payload metadata used for preview/printing
 
+### `compile_report_preview(report, format_name, ..., limit=50, asset_files=None)`
+- Args: same core arguments as `get_report_typst_source`, plus optional approved `asset_files`
+- Returns: compiled SVG preview payload and report metadata
+
 ### `generate_report_pdf(report, filters=None, format_name=None, orientation='landscape', include_filters=0, column_config=None)`
 - Args: report + filter/format options
 - Returns: generated PDF response payload
@@ -86,6 +91,62 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Args: report + format + optional template path/filters
 - Returns: parity result dict
 
+## Branding, Blocks & Compliance
+
+### `get_branding_profiles(company=None)`
+- Args: optional `company: str`
+- Returns: available Branding Profile metadata
+
+### `get_branding_profile_presentation_settings(name)`
+- Args: `name: str`
+- Returns: normalized presentation settings for the profile
+
+### `get_applicable_typst_blocks(doctype, query=None, category=None)`
+- Args: `doctype: str`, optional search/category filters
+- Returns: enabled Typst blocks applicable to the document type
+
+### `resolve_document_code(doctype, name, code_purpose='Regulatory', environment='Production', document_role=None, company=None, profile_name=None)`
+- Args: document identity plus optional profile selectors
+- Returns: resolved document-code payload without necessarily issuing a new code
+
+### `generate_document_code(doctype, name, code_purpose='Regulatory', environment='Production', document_role=None, company=None, profile_name=None)`
+- Args: document identity plus optional profile selectors
+- Returns: generated document-code payload
+
+### `get_qr_regulatory_profiles(country=None, authority_code=None, enabled_only=1)`
+- Args: optional country/authority filters
+- Returns: available QR Regulatory Profiles
+
+### `get_qr_regulatory_profile(name)`
+- Args: `name: str`
+- Returns: QR Regulatory Profile detail
+
+### `get_fiscal_credential_status(company, regulatory_profile, environment='Production', authority_code=None)`
+- Args: company, regulatory profile, environment, optional authority code
+- Returns: fiscal credential availability/status payload
+
+## Issued Documents
+
+These endpoints are scaffolding for the future Crispy Issued Document registry.
+They are not public guest verification endpoints yet.
+
+### `get_issued_document(name)`
+- Args: `name: str`
+- Returns: full Crispy Issued Document payload for users with read permission
+
+### `get_issued_document_by_token(verification_token)`
+- Args: `verification_token: str`
+- Returns: full Crispy Issued Document payload for users with read permission
+
+### `verify_issued_document_token(verification_token)`
+- Args: `verification_token: str`
+- Returns: minimal verification summary (`exists`, `verification_status`, status fields)
+
+### `create_issued_document_snapshot(source_doctype, source_docname, crispy_format)`
+- Args: source document identity and Crispy Format
+- Returns: not implemented yet; reserved API shape for future immutable issuance
+
 ## Notes
 - API errors are returned as Frappe exceptions (`ValidationError`, etc.).
 - Large report previews are intentionally truncated by `limit`.
+- Deprecated direct image params such as `letterhead_image` and `logo_image` are rejected by `compile_typst`; use `asset_files`.

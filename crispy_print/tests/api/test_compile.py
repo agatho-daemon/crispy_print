@@ -2,6 +2,7 @@
 # See license.txt
 
 import base64
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import ANY, MagicMock, Mock, patch
@@ -230,6 +231,39 @@ This is a test.
 		with self.assertRaises(Exception):
 			compile_typst("= Test", asset_files=["http://example.com/a.png"])
 
+		with self.assertRaises(Exception):
+			compile_typst("= Test", asset_files=["logo.svg"])
+
+	@patch("crispy_print.api.v1.compile._copy_asset_files_to_temp")
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_compile_typst_accepts_rpc_json_asset_files(self, mock_run, mock_copy):
+		from crispy_print.api.v1 import compile_typst
+
+		mock_result = MagicMock(returncode=0, stderr="", stdout="")
+
+		def mock_run_side_effect(*args, **kwargs):
+			cmd_args = args[0]
+			output_template = Path(cmd_args[-1])
+			output_dir = output_template.parent
+			base_name = output_template.stem.replace("-{p}", "")
+			svg_path = output_dir / f"{base_name}-1.svg"
+			svg_path.parent.mkdir(parents=True, exist_ok=True)
+			svg_path.write_text("<svg></svg>", encoding="utf-8")
+			return mock_result
+
+		mock_run.side_effect = mock_run_side_effect
+
+		with patch("crispy_print.api.v1.compile.Path.exists") as mock_exists:
+			mock_exists.return_value = True
+			result = compile_typst(
+				'#image("ManagerLogo.svg")',
+				output_format="svg",
+				asset_files='["/private/files/ManagerLogo.svg"]',
+			)
+
+		self.assertTrue(result["success"])
+		mock_copy.assert_called_once()
+
 	@patch("crispy_print.api.v1.compile._write_qr_svg")
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_compile_with_qr_code(self, mock_run, mock_qr):
@@ -274,8 +308,7 @@ This is a test.
 class TestAssetCopy(FrappeTestCase):
 	"""Test image asset handling"""
 
-	@patch("crispy_print.api.v1.compile.shutil.copy2")
-	def test_copy_asset_file_to_temp(self, mock_copy):
+	def test_copy_asset_file_to_temp(self):
 		"""Test copying image file to temp directory"""
 		from crispy_print.api.v1.compile import _copy_file_to_temp
 
@@ -284,12 +317,13 @@ class TestAssetCopy(FrappeTestCase):
 			letterhead_path = site / "public" / "files" / "letterhead.png"
 			letterhead_path.parent.mkdir(parents=True, exist_ok=True)
 			letterhead_path.write_text("fake", encoding="utf-8")
-			result = None
+			out_dir = Path(tmpdir) / "out"
 			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
-				result = _copy_file_to_temp("/files/letterhead.png", str(Path(tmpdir) / "out"), "Asset file")
+				result = _copy_file_to_temp("/files/letterhead.png", str(out_dir), "Asset file")
 
-		self.assertEqual(result, "letterhead.png")
-		mock_copy.assert_called_once()
+			self.assertEqual(result, "letterhead.png")
+			self.assertTrue((out_dir / "letterhead.png").exists())
+			self.assertEqual((out_dir / "letterhead.png").read_text(encoding="utf-8"), "fake")
 
 	def test_copy_asset_none(self):
 		"""Test handling of None asset"""
@@ -305,23 +339,15 @@ class TestAssetCopy(FrappeTestCase):
 		result = _copy_file_to_temp("", "/tmp/test", "Asset file")
 		self.assertIsNone(result)
 
-	@patch("crispy_print.api.v1.compile.shutil.copy2")
-	def test_copy_file_prefers_private_recursive_match(self, mock_copy):
+	def test_copy_file_rejects_bare_filename_lookup(self):
 		from crispy_print.api.v1.compile import _copy_file_to_temp
 
 		with TemporaryDirectory() as tmpdir:
 			site = Path(tmpdir) / "site"
-			private_path = site / "private" / "files" / "nested" / "logo.svg"
-			public_path = site / "public" / "files" / "logo.svg"
-			private_path.parent.mkdir(parents=True, exist_ok=True)
-			public_path.parent.mkdir(parents=True, exist_ok=True)
-			private_path.write_text("private", encoding="utf-8")
-			public_path.write_text("public", encoding="utf-8")
+			(site / "private" / "files").mkdir(parents=True, exist_ok=True)
 			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
-				result = _copy_file_to_temp("logo.svg", str(Path(tmpdir) / "out"), "Asset file")
-
-		self.assertEqual(result, "logo.svg")
-		mock_copy.assert_called_once()
+				with self.assertRaises(Exception):
+					_copy_file_to_temp("logo.svg", str(Path(tmpdir) / "out"), "Asset file")
 
 	def test_copy_file_raises_when_missing_filename(self):
 		from crispy_print.api.v1.compile import _copy_file_to_temp
@@ -332,40 +358,9 @@ class TestAssetCopy(FrappeTestCase):
 			(site / "public" / "files").mkdir(parents=True, exist_ok=True)
 			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
 				with self.assertRaises(Exception):
-					_copy_file_to_temp("missing.png", str(Path(tmpdir) / "out"), "Asset file")
+					_copy_file_to_temp("/files/missing.png", str(Path(tmpdir) / "out"), "Asset file")
 
-	def test_copy_file_raises_when_ambiguous_in_private(self):
-		from crispy_print.api.v1.compile import _copy_file_to_temp
-
-		with TemporaryDirectory() as tmpdir:
-			site = Path(tmpdir) / "site"
-			(site / "private" / "files" / "a").mkdir(parents=True, exist_ok=True)
-			(site / "private" / "files" / "b").mkdir(parents=True, exist_ok=True)
-			(site / "private" / "files" / "a" / "logo.png").write_text("a", encoding="utf-8")
-			(site / "private" / "files" / "b" / "logo.png").write_text("b", encoding="utf-8")
-			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
-				with self.assertRaises(Exception):
-					_copy_file_to_temp("logo.png", str(Path(tmpdir) / "out"), "Asset file")
-
-	@patch("crispy_print.api.v1.compile.shutil.copy2")
-	def test_copy_file_supports_private_files_path(self, mock_copy):
-		from crispy_print.api.v1.compile import _copy_file_to_temp
-
-		with TemporaryDirectory() as tmpdir:
-			site = Path(tmpdir) / "site"
-			logo_path = site / "private" / "files" / "logo.svg"
-			logo_path.parent.mkdir(parents=True, exist_ok=True)
-			logo_path.write_text("private", encoding="utf-8")
-			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
-				result = _copy_file_to_temp(
-					"/private/files/logo.svg", str(Path(tmpdir) / "out"), "Asset file"
-				)
-
-		self.assertEqual(result, "logo.svg")
-		mock_copy.assert_called_once()
-
-	@patch("crispy_print.api.v1.compile.shutil.copy2")
-	def test_copy_file_falls_back_to_filename_search_when_explicit_path_missing(self, mock_copy):
+	def test_copy_file_does_not_fallback_when_explicit_path_missing(self):
 		from crispy_print.api.v1.compile import _copy_file_to_temp
 
 		with TemporaryDirectory() as tmpdir:
@@ -374,14 +369,53 @@ class TestAssetCopy(FrappeTestCase):
 			private_file.parent.mkdir(parents=True, exist_ok=True)
 			private_file.write_text("private", encoding="utf-8")
 			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
-				result = _copy_file_to_temp(
-					"/private/files/missing/ManagerLogo.svg",
-					str(Path(tmpdir) / "out"),
-					"Letterhead image",
-				)
+				with self.assertRaises(Exception):
+					_copy_file_to_temp(
+						"/private/files/missing/ManagerLogo.svg",
+						str(Path(tmpdir) / "out"),
+						"Letterhead image",
+					)
 
-		self.assertEqual(result, "ManagerLogo.svg")
-		mock_copy.assert_called_once()
+	def test_copy_file_supports_private_files_path(self):
+		from crispy_print.api.v1.compile import _copy_file_to_temp, _resolve_source_path
+
+		with TemporaryDirectory() as tmpdir:
+			site = Path(tmpdir) / "site"
+			logo_path = site / "private" / "files" / "logo.svg"
+			logo_path.parent.mkdir(parents=True, exist_ok=True)
+			logo_path.write_text("private", encoding="utf-8")
+			out_dir = Path(tmpdir) / "out"
+			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
+				resolved = _resolve_source_path("/private/files/logo.svg", "Asset file")
+				result = _copy_file_to_temp("/private/files/logo.svg", str(out_dir), "Asset file")
+
+			self.assertEqual(resolved, logo_path.resolve())
+			self.assertEqual(result, "logo.svg")
+			self.assertEqual((out_dir / "logo.svg").read_text(encoding="utf-8"), "private")
+
+	def test_copy_file_rejects_path_traversal(self):
+		from crispy_print.api.v1.compile import _copy_file_to_temp
+
+		with TemporaryDirectory() as tmpdir:
+			site = Path(tmpdir) / "site"
+			(site / "private" / "files").mkdir(parents=True, exist_ok=True)
+			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
+				with self.assertRaises(Exception):
+					_copy_file_to_temp("../outside/logo.png", str(Path(tmpdir) / "out"), "Asset file")
+
+	def test_copy_file_rejects_symlink_sources(self):
+		from crispy_print.api.v1.compile import _copy_file_to_temp
+
+		with TemporaryDirectory() as tmpdir:
+			site = Path(tmpdir) / "site"
+			target_file = site / "public" / "files" / "actual.svg"
+			target_file.parent.mkdir(parents=True, exist_ok=True)
+			target_file.write_text("<svg/>", encoding="utf-8")
+			symlink_path = site / "public" / "files" / "linked.svg"
+			os.symlink(target_file, symlink_path)
+			with patch("crispy_print.api.v1.compile.frappe.get_site_path", return_value=str(site)):
+				with self.assertRaises(Exception):
+					_copy_file_to_temp("/files/linked.svg", str(Path(tmpdir) / "out"), "Asset file")
 
 	@patch("crispy_print.api.v1.compile._copy_asset_files_to_temp")
 	@patch("crispy_print.api.v1.compile.subprocess.run")
@@ -406,41 +440,25 @@ class TestAssetCopy(FrappeTestCase):
 		result = compile_typst(
 			"= Test",
 			output_format="svg",
-			asset_files=["logo.svg", "/files/image.png"],
+			asset_files=["/files/logo.svg", "/files/image.png"],
 		)
 
 		self.assertTrue(result["success"])
 		mock_copy_assets.assert_called_once()
 
-	@patch("crispy_print.api.v1.compile._copy_asset_files_to_temp")
-	@patch("crispy_print.api.v1.compile.subprocess.run")
-	def test_compile_rewrites_typst_image_literal_paths(self, mock_run, mock_copy_assets):
+	def test_compile_rejects_traversal_in_typst_image_literal_paths(self):
 		from crispy_print.api.v1 import compile_typst
 
-		mock_result = Mock()
-		mock_result.returncode = 0
-
-		def mock_run_side_effect(*args, **kwargs):
-			cmd_args = args[0]
-			src_path = Path(cmd_args[-2])
-			output_template = Path(cmd_args[-1])
-			source = src_path.read_text(encoding="utf-8")
-			self.assertIn('image("wsqg_address.svg"', source)
-			self.assertNotIn("/private/var/folders", source)
-			output_dir = output_template.parent
-			base_name = output_template.stem.replace("-{p}", "")
-			svg_path = output_dir / f"{base_name}-1.svg"
-			svg_path.parent.mkdir(parents=True, exist_ok=True)
-			svg_path.write_text("<svg/>", encoding="utf-8")
-			return mock_result
-
-		mock_run.side_effect = mock_run_side_effect
-
 		typst_source = '#image("../../../../../private/var/folders/tmp/wsqg_address.svg", width: 50%)'
-		result = compile_typst(typst_source, output_format="svg")
+		with self.assertRaises(Exception):
+			compile_typst(typst_source, output_format="svg")
 
-		self.assertTrue(result["success"])
-		mock_copy_assets.assert_called_once()
+	def test_compile_rejects_oversized_source(self):
+		from crispy_print.api.v1 import compile_typst
+		from crispy_print.api.v1.compile import MAX_TYPST_SOURCE_BYTES
+
+		with self.assertRaises(Exception):
+			compile_typst("=" + ("x" * MAX_TYPST_SOURCE_BYTES), output_format="svg")
 
 	@patch("crispy_print.api.v1.compile._copy_file_to_temp")
 	@patch("crispy_print.api.v1.compile.subprocess.run")
@@ -473,11 +491,11 @@ class TestAssetCopy(FrappeTestCase):
 		mock_run.side_effect = mock_run_side_effect
 		mock_copy_file.return_value = "wsqg_address.svg"
 
-		result = compile_typst("= Test", output_format="svg")
+		result = compile_typst("= Test", output_format="svg", asset_files=["/files/wsqg_address.svg"])
 
 		self.assertTrue(result["success"])
 		self.assertEqual(mock_run.call_count, 2)
-		mock_copy_file.assert_called_with("wsqg_address.svg", ANY, "Asset file")
+		mock_copy_file.assert_called_with("/files/wsqg_address.svg", ANY, "Asset file")
 
 
 class TestQRCodeGeneration(FrappeTestCase):

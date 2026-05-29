@@ -32,6 +32,9 @@ export interface LayoutField {
 	table_columns?: TableColumn[]
 	field_template?: string
 	raw_typst_field?: string
+	crispy_typst_block?: string
+	crispy_typst_block_name?: string
+	crispy_typst_block_code?: string
 	// Spacer configuration
 	spacer_value?: string // e.g., "1em", "2cm", "10pt"
 	// Divider configuration
@@ -66,12 +69,28 @@ export function createLayoutId(): string {
 	return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
 
+// Defensive caps for `normalizeLayout`. A well-formed layout sits comfortably
+// below these limits; values beyond them strongly suggest a corrupt or
+// adversarial `layout_json`. Excess entries are dropped (with a warning) so the
+// builder cannot be DoS'd by a single huge payload.
+const MAX_LAYOUT_SECTIONS = 200
+const MAX_LAYOUT_COLUMNS_PER_SECTION = 50
+const MAX_LAYOUT_FIELDS_PER_COLUMN = 500
+const MAX_LAYOUT_TABLE_COLUMNS = 200
+
+function capArray<T>(arr: T[], limit: number, label: string): T[] {
+	if (arr.length <= limit) return arr
+	logger.warn(`normalizeLayout: truncating ${label} from ${arr.length} to ${limit}`)
+	return arr.slice(0, limit)
+}
+
 /**
  * Normalize layout structure for consistent UI + serialization.
  * - Ensures arrays exist (`sections`, `columns`, `fields`)
  * - Ensures every section/column/field has a stable `id`
  * - Strips legacy/derived keys (e.g. `has_fields`)
  * - Leaves layout empty if it's empty (no auto-seeding)
+ * - Enforces defensive caps on section/column/field counts
  */
 export function normalizeLayout(layout: CrispyLayout | null | undefined): CrispyLayout {
 	const base: CrispyLayout = {
@@ -79,11 +98,13 @@ export function normalizeLayout(layout: CrispyLayout | null | undefined): Crispy
 		sections: Array.isArray(layout?.sections) ? layout!.sections : [],
 	}
 
-	const normalizedSections: LayoutSection[] = base.sections.map((rawSection) => {
+	const cappedSections = capArray(base.sections, MAX_LAYOUT_SECTIONS, "sections")
+	const normalizedSections: LayoutSection[] = cappedSections.map((rawSection) => {
 		const { has_fields: _ignoredHasFields, ...section } = (rawSection || {}) as any
 
 		const columns = Array.isArray(section.columns) ? section.columns : []
-		const normalizedColumns: LayoutColumn[] = columns.map((rawColumn: any) => {
+		const cappedColumns = capArray(columns, MAX_LAYOUT_COLUMNS_PER_SECTION, "columns")
+		const normalizedColumns: LayoutColumn[] = cappedColumns.map((rawColumn: any) => {
 			const column: LayoutColumn = {
 				id:
 					typeof rawColumn?.id === "string" || typeof rawColumn?.id === "number"
@@ -91,14 +112,16 @@ export function normalizeLayout(layout: CrispyLayout | null | undefined): Crispy
 						: createLayoutId(),
 				label: typeof rawColumn?.label === "string" ? rawColumn.label : "",
 				width: typeof rawColumn?.width === "string" ? rawColumn.width : undefined,
-				fields: Array.isArray(rawColumn?.fields) ? rawColumn.fields : [],
+				fields: Array.isArray(rawColumn?.fields)
+					? capArray(rawColumn.fields, MAX_LAYOUT_FIELDS_PER_COLUMN, "fields")
+					: [],
 			}
 
 			column.fields = column.fields
 				.filter(Boolean)
 				.map((rawField: any) => {
 					const fieldtype = rawField?.fieldtype || "Data"
-					return {
+					const normalizedField: LayoutField = {
 						...rawField,
 						id:
 							typeof rawField?.id === "string" || typeof rawField?.id === "number"
@@ -108,7 +131,15 @@ export function normalizeLayout(layout: CrispyLayout | null | undefined): Crispy
 						label: typeof rawField?.label === "string" ? rawField.label : "",
 						fieldname: typeof rawField?.fieldname === "string" ? rawField.fieldname : "",
 						align: rawField?.align || getDefaultFieldAlignment(fieldtype),
-					} as LayoutField
+					}
+					if (Array.isArray(normalizedField.table_columns)) {
+						normalizedField.table_columns = capArray(
+							normalizedField.table_columns,
+							MAX_LAYOUT_TABLE_COLUMNS,
+							"table_columns"
+						)
+					}
+					return normalizedField
 				})
 				.filter((f) => Boolean(f.fieldname))
 
@@ -308,7 +339,13 @@ export function serializeLayout(layout: CrispyLayout): string {
 		const { has_fields: _ignored, ...restSection } = section as any
 		return {
 			...restSection,
-			columns: (restSection.columns || []).map((column: any) => ({ ...column })),
+			columns: (restSection.columns || []).map((column: any) => ({
+				...column,
+				fields: (column.fields || []).map((field: any) => {
+					const { crispy_typst_block_code: _transientBlockCode, ...cleanField } = field
+					return cleanField
+				}),
+			})),
 		}
 	})
 

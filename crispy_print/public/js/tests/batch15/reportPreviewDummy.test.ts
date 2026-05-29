@@ -23,6 +23,8 @@ describe("report preview dummy data", () => {
 			"Column 3",
 		]);
 		expect(out.columns[0].width).toBe("1fr");
+		expect(out.columns[0].width_kind).toBe("fr");
+		expect(out.columns[0].width_value).toBe(1);
 		expect(out.rows[0].cells[0].value).toBe("Value 1-1");
 		expect(out.rows[0].cells[1].value).toBe("Value 1-2");
 

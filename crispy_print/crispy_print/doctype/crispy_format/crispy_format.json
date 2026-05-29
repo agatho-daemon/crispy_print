@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "prompt",
- "creation": "2026-01-02 09:27:21.834714",
+ "creation": "2026-05-21 10:30:43.337960",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -25,7 +25,7 @@
   "doc_footer",
   "typst_code",
   "typst_help",
-  "page_settings",
+  "presentation_settings",
   "layout_json"
  ],
  "fields": [
@@ -96,16 +96,18 @@
    "label": "Layout JSON"
   },
   {
-   "fieldname": "page_settings",
+   "fieldname": "presentation_settings",
    "fieldtype": "Code",
    "hidden": 1,
-   "label": "Page Settings"
+   "label": "Presentation Settings"
   },
   {
    "default": "0",
    "fieldname": "is_default",
    "fieldtype": "Check",
-   "label": "Default"
+   "in_list_view": 1,
+   "label": "Default",
+   "no_copy": 1
   },
   {
    "description": "See Typst Help below for examples and usage.",
@@ -177,7 +179,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-31 07:01:00.580746",
+ "modified": "2026-05-22 07:30:02.289863",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",

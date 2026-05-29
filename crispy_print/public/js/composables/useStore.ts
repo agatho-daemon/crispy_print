@@ -6,18 +6,23 @@ import { serializeLayout } from "../utils/layout";
 import type { CrispyLayout, DocField, TableColumn } from "../utils/layout";
 import {
   defaultTableSettings,
-  defaultPageSettings,
-  ensureQrSettings,
-  ensureTableSettings,
-  type PageSettings,
-} from "../utils/pageSettings";
+  default_presentation_settings,
+  merge_presentation_settings,
+  ensure_qr_settings,
+  ensure_table_settings,
+  type PresentationSettings,
+} from "../utils/presentation_settings";
 import {
   parseCrispyFormatDoc,
+  clearLetterheadCache,
 } from "../utils/formatLoader";
+import { resolve_effective_presentation_settings } from "../utils/effectivePresentationSettings";
 import {
   getCrispyFormat,
+  getApplicableTypstBlocks,
   getDefaultReportBuilderConfig as getServerReportBuilderConfig,
   saveCrispyFormat,
+  type CrispyTypstBlockOption,
 } from "../api/crispy";
 import { withDoctype } from "../api/frappe";
 import { getLogger } from "../logger";
@@ -39,13 +44,15 @@ import { createSettingsStore } from "./useSettingsStore";
 
 let storeInstance: ReturnType<typeof buildStore> | null = null;
 const MAX_HISTORY_ENTRIES = 100;
+const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
+const HISTORY_DEBOUNCE_MS = 250;
 
 const logger = getLogger({ module: "Store" });
 
 interface CrispyFormat {
   name: string;
   doc_type?: string;
-  // TODO: invistigate teh possibility of having a dynamic crispy_format_type for future.
+  // TODO: investigate the possibility of having a dynamic crispy_format_type for future.
   crispy_format_type?: string;
   report?: string;
   contract?: string;
@@ -59,8 +66,8 @@ interface CrispyFormat {
   typst_preamble?: string;
   typst_code?: string;
   layout_json?: string;
-  page_settings?: string;
-  __onload?: any;
+  presentation_settings?: string;
+    __onload?: any;
 }
 
 function buildStore() {
@@ -70,6 +77,7 @@ function buildStore() {
   const layout = ref<CrispyLayout | null>(null);
   const meta = ref<any>(null);
   const fields = ref<DocField[]>([]);
+  const typstBlocks = ref<CrispyTypstBlockOption[]>([]);
   const reportColumns = ref<any[]>(getDummyReportTableColumns());
   const reportFilterFields = ref<any[]>(
     getDummyReportFilterColumns().map((col) => ({
@@ -94,10 +102,19 @@ function buildStore() {
   );
   const reportBasicReadOnly = ref(false);
   const reportModeNotice = ref("");
-  const pageSettings = ref<PageSettings>({ ...defaultPageSettings });
+  const presentation_settings = ref<PresentationSettings>(merge_presentation_settings(default_presentation_settings, {}));
+  const effective_presentation_settings = ref<PresentationSettings>(
+    merge_presentation_settings(default_presentation_settings, {}),
+  );
   const historyPast = ref<string[]>([]);
   const historyFuture = ref<string[]>([]);
+  // True while a debounced history checkpoint is pending; canUndo consults this
+  // so callers (and existing tests) see the change immediately after markDirty.
+  const pendingHistoryCheckpoint = ref(false);
   const savedSnapshot = ref("");
+  let savedSnapshotHash = "";
+  const historyPastHashes = ref<string[]>([]);
+  const historyFutureHashes = ref<string[]>([]);
   const applyingHistory = ref(false);
   const settingsStore = createSettingsStore({
     loading,
@@ -160,7 +177,7 @@ function buildStore() {
   const docHeader = computed(() => crispyFormat.value?.doc_header || "");
   const docFooter = computed(() => crispyFormat.value?.doc_footer || "");
   const qrEnabled = computed(() => {
-    const qr = pageSettings.value?.qr;
+    const qr = effective_presentation_settings.value?.qr;
     if (qr && typeof qr.enabled === "boolean") {
       return qr.enabled;
     }
@@ -169,13 +186,27 @@ function buildStore() {
   const typstPreamble = computed(
     () => crispyFormat.value?.typst_preamble || "",
   );
-  const canUndo = computed(() => historyPast.value.length > 1);
+  const canUndo = computed(
+    () => historyPast.value.length > 1 || pendingHistoryCheckpoint.value,
+  );
   const canRedo = computed(() => historyFuture.value.length > 0);
+
+  function hashSnapshot(snapshot: string): string {
+    let hash = 5381;
+    for (let i = 0; i < snapshot.length; i += 1) {
+      hash = (hash * 33) ^ snapshot.charCodeAt(i);
+    }
+    return (hash >>> 0).toString(16);
+  }
+
+  function assignReportBuilderConfigToPresentationSettings() {
+    presentation_settings.value.report = { ...reportBuilderConfig.value };
+  }
 
   function buildHistorySnapshot(): string {
     return JSON.stringify({
       layout: layout.value || null,
-      pageSettings: pageSettings.value || null,
+      presentation_settings: presentation_settings.value || null,
       typstCode: typstCode.value || "",
       rawTypst: Boolean(rawTypst.value),
       reportBuilderConfig: reportBuilderConfig.value || null,
@@ -184,17 +215,18 @@ function buildStore() {
 
   function applyHistorySnapshot(snapshot: string) {
     const parsed = JSON.parse(snapshot || "{}");
+    const snapshotHash = hashSnapshot(snapshot);
     applyingHistory.value = true;
     try {
       layout.value = parsed.layout || null;
-      pageSettings.value = parsed.pageSettings || { ...defaultPageSettings };
+      presentation_settings.value = merge_presentation_settings(default_presentation_settings, parsed.presentation_settings || {});
       typstCode.value = String(parsed.typstCode || "");
       rawTypst.value = Boolean(parsed.rawTypst);
       if (parsed.reportBuilderConfig) {
         reportBuilderConfig.value = parsed.reportBuilderConfig;
       }
-      pageSettings.value.report_builder = reportBuilderConfig.value;
-      dirty.value = snapshot !== savedSnapshot.value;
+      assignReportBuilderConfigToPresentationSettings();
+      dirty.value = snapshotHash !== savedSnapshotHash;
       changeKey.value++;
     } finally {
       applyingHistory.value = false;
@@ -204,51 +236,192 @@ function buildStore() {
   function captureHistoryCheckpoint(resetFuture = true) {
     if (loading.value || initializing.value || applyingHistory.value) return;
     const snapshot = buildHistorySnapshot();
-    const last = historyPast.value[historyPast.value.length - 1];
-    if (snapshot === last) return;
+    const snapshotHash = hashSnapshot(snapshot);
+    const lastHash = historyPastHashes.value[historyPastHashes.value.length - 1];
+    if (snapshotHash === lastHash) return;
 
     historyPast.value.push(snapshot);
+    historyPastHashes.value.push(snapshotHash);
     if (historyPast.value.length > MAX_HISTORY_ENTRIES) {
       historyPast.value.shift();
+      historyPastHashes.value.shift();
+    }
+    while (historyPast.value.length > 1 && historyPast.value.reduce((total, item) => total + item.length, 0) > MAX_HISTORY_BYTES) {
+      historyPast.value.shift();
+      historyPastHashes.value.shift();
     }
     if (resetFuture) {
       historyFuture.value = [];
+      historyFutureHashes.value = [];
     }
   }
 
+  // Throttled wrapper around `captureHistoryCheckpoint` with leading + trailing
+  // semantics: the first markDirty in a burst captures synchronously (so the
+  // pre-burst state is recorded), and a single trailing capture (the post-burst
+  // state) is scheduled `HISTORY_DEBOUNCE_MS` later. Repeated markDirty calls
+  // during the cooldown coalesce into that one trailing capture.
+  let historyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let historyDebounceResetFuture = true;
+  let historyDebouncePendingTrailing = false;
+  function scheduleHistoryCheckpoint(resetFuture = true) {
+    if (loading.value || initializing.value || applyingHistory.value) return;
+    if (resetFuture) historyDebounceResetFuture = true;
+
+    if (historyDebounceTimer === null) {
+      // Leading edge: capture immediately so undo can return to this point.
+      captureHistoryCheckpoint(historyDebounceResetFuture);
+      historyDebounceResetFuture = true;
+      historyDebounceTimer = setTimeout(() => {
+        historyDebounceTimer = null;
+        if (historyDebouncePendingTrailing) {
+          historyDebouncePendingTrailing = false;
+          captureHistoryCheckpoint(historyDebounceResetFuture);
+          historyDebounceResetFuture = true;
+        }
+        pendingHistoryCheckpoint.value = false;
+      }, HISTORY_DEBOUNCE_MS);
+      return;
+    }
+    // Within cooldown: remember that a trailing capture is needed.
+    historyDebouncePendingTrailing = true;
+    pendingHistoryCheckpoint.value = true;
+  }
+  function flushPendingHistoryCheckpoint() {
+    if (historyDebounceTimer === null) return;
+    clearTimeout(historyDebounceTimer);
+    historyDebounceTimer = null;
+    if (historyDebouncePendingTrailing) {
+      historyDebouncePendingTrailing = false;
+      captureHistoryCheckpoint(historyDebounceResetFuture);
+      historyDebounceResetFuture = true;
+    }
+    pendingHistoryCheckpoint.value = false;
+  }
+
   function resetHistory(saved = false) {
+    if (historyDebounceTimer !== null) {
+      clearTimeout(historyDebounceTimer);
+      historyDebounceTimer = null;
+    }
+    historyDebouncePendingTrailing = false;
+    pendingHistoryCheckpoint.value = false;
     const snapshot = buildHistorySnapshot();
+    const snapshotHash = hashSnapshot(snapshot);
     historyPast.value = [snapshot];
+    historyPastHashes.value = [snapshotHash];
     historyFuture.value = [];
+    historyFutureHashes.value = [];
     if (saved) {
       savedSnapshot.value = snapshot;
+      savedSnapshotHash = snapshotHash;
       dirty.value = false;
     }
   }
 
+  /**
+   * Reset all per-format state so the singleton store can be reused across
+   * navigations without leaking the previous format's layout/history/letterhead.
+   * Safe to call repeatedly; always called at the top of `fetch()`.
+   */
+  function reset() {
+    // Cancel any in-flight async work whose late responses might overwrite
+    // freshly-loaded state.
+    effectiveSettingsRequestSeq++;
+    if (historyDebounceTimer !== null) {
+      clearTimeout(historyDebounceTimer);
+      historyDebounceTimer = null;
+    }
+    historyDebounceResetFuture = true;
+    historyDebouncePendingTrailing = false;
+    pendingHistoryCheckpoint.value = false;
+    settingsStore.reset();
+    clearLetterheadCache();
+
+    applyingHistory.value = false;
+    crispyFormat.value = null;
+    layout.value = null;
+    meta.value = null;
+    fields.value = [];
+    typstBlocks.value = [];
+    reportColumns.value = getDummyReportTableColumns();
+    reportFilterFields.value = getDummyReportFilterColumns().map((col) => ({
+      fieldname: col.fieldname,
+      label: col.label,
+      fieldtype: col.fieldtype || "Data",
+      reqd: false,
+    }));
+    reportFilters.value = {};
+    selectedReportName.value = "Style Preview";
+    letterhead.value = null;
+    typstCode.value = "";
+    rawTypst.value = false;
+    reportBuilderConfig.value = getDefaultReportBuilderConfig();
+    reportBasicReadOnly.value = false;
+    reportModeNotice.value = "";
+    presentation_settings.value = merge_presentation_settings(
+      default_presentation_settings,
+      {},
+    );
+    effective_presentation_settings.value = merge_presentation_settings(
+      default_presentation_settings,
+      {},
+    );
+    historyPast.value = [];
+    historyPastHashes.value = [];
+    historyFuture.value = [];
+    historyFutureHashes.value = [];
+    savedSnapshot.value = "";
+    savedSnapshotHash = "";
+    dirty.value = false;
+    changeKey.value = 0;
+  }
+
   function markDirty() {
     settingsStore.markDirty();
-    captureHistoryCheckpoint(true);
+    scheduleHistoryCheckpoint(true);
     if (!applyingHistory.value) {
-      dirty.value = buildHistorySnapshot() !== savedSnapshot.value;
+      dirty.value = true;
     }
   }
 
+  let effectiveSettingsRequestSeq = 0;
+
+  async function refreshEffectivePresentationSettings() {
+    const requestSeq = ++effectiveSettingsRequestSeq;
+    const resolved = await resolve_effective_presentation_settings(presentation_settings.value);
+    if (requestSeq !== effectiveSettingsRequestSeq) return;
+    effective_presentation_settings.value = resolved;
+  }
+
+  async function compileReportPreview(reportName: string, columnConfig: any[] = []) {
+    await refreshEffectivePresentationSettings();
+    return reportStore.compileReportPreview(reportName, columnConfig);
+  }
+
   function undo() {
-    if (!canUndo.value || applyingHistory.value) return;
+    if (applyingHistory.value) return;
+    flushPendingHistoryCheckpoint();
+    if (!canUndo.value) return;
     const current = historyPast.value.pop();
+    historyPastHashes.value.pop();
     if (!current) return;
     historyFuture.value.unshift(current);
+    historyFutureHashes.value.unshift(hashSnapshot(current));
     const previous = historyPast.value[historyPast.value.length - 1];
     if (!previous) return;
     applyHistorySnapshot(previous);
   }
 
   function redo() {
-    if (!canRedo.value || applyingHistory.value) return;
+    if (applyingHistory.value) return;
+    flushPendingHistoryCheckpoint();
+    if (!canRedo.value) return;
     const next = historyFuture.value.shift();
+    historyFutureHashes.value.shift();
     if (!next) return;
     historyPast.value.push(next);
+    historyPastHashes.value.push(hashSnapshot(next));
     applyHistorySnapshot(next);
   }
 
@@ -373,59 +546,59 @@ function buildStore() {
     return JSON.stringify(normalized);
   }
 
-  function migrateLegacyReportBuilderTableStyles(
-    persistedReportBuilder: Record<string, any>,
+  function sync_report_table_styles(
+    report_settings: Record<string, any>,
   ) {
     if (!isReportMode.value) return;
-    const tableSettings = ensureTableSettings(pageSettings.value);
-    const hasLegacyHeader = Object.prototype.hasOwnProperty.call(
-      persistedReportBuilder,
+    const tableSettings = ensure_table_settings(presentation_settings.value);
+    const has_report_header = Object.prototype.hasOwnProperty.call(
+      report_settings,
       "header_fill",
     );
-    const hasLegacyStripeColor = Object.prototype.hasOwnProperty.call(
-      persistedReportBuilder,
+    const has_report_stripe_color = Object.prototype.hasOwnProperty.call(
+      report_settings,
       "row_stripe_fill",
     );
-    const hasLegacyStriping = Object.prototype.hasOwnProperty.call(
-      persistedReportBuilder,
+    const has_report_striping = Object.prototype.hasOwnProperty.call(
+      report_settings,
       "row_striping",
     );
 
-    if (hasLegacyHeader) {
-      const legacyHeader = String(persistedReportBuilder.header_fill || "").trim();
+    if (has_report_header) {
+      const report_header = String(report_settings.header_fill || "").trim();
       if (
-        legacyHeader &&
+        report_header &&
         (!tableSettings.header.backgroundColor ||
           tableSettings.header.backgroundColor ===
             defaultTableSettings.header.backgroundColor)
       ) {
-        tableSettings.header.backgroundColor = legacyHeader;
+        tableSettings.header.backgroundColor = report_header;
       }
     }
 
-    if (hasLegacyStripeColor) {
-      const legacyStripeColor = String(
-        persistedReportBuilder.row_stripe_fill || "",
+    if (has_report_stripe_color) {
+      const report_stripe_color = String(
+        report_settings.row_stripe_fill || "",
       ).trim();
       if (
-        legacyStripeColor &&
+        report_stripe_color &&
         (!tableSettings.stripe.color ||
           tableSettings.stripe.color === defaultTableSettings.stripe.color)
       ) {
-        tableSettings.stripe.color = legacyStripeColor;
+        tableSettings.stripe.color = report_stripe_color;
       }
     }
 
-    if (hasLegacyStriping) {
-      const legacyStriping = Boolean(persistedReportBuilder.row_striping);
+    if (has_report_striping) {
+      const report_striping = Boolean(report_settings.row_striping);
       if (tableSettings.stripe.enabled === defaultTableSettings.stripe.enabled) {
-        tableSettings.stripe.enabled = legacyStriping;
+        tableSettings.stripe.enabled = report_striping;
       }
     }
   }
 
   function getReportTableSettingsSnapshot() {
-    const rawTable = pageSettings.value?.table || {};
+    const rawTable = presentation_settings.value?.table || {};
     return {
       ...defaultTableSettings,
       ...rawTable,
@@ -761,7 +934,7 @@ function buildStore() {
     meta,
     crispyFormat,
     isReportMode,
-    pageSettings,
+    presentation_settings,
     reportBuilderConfig,
     buildReportTableColumns,
     getReportBlockColumns,
@@ -769,9 +942,57 @@ function buildStore() {
     markDirty,
   });
 
+  function getLayoutTypstBlockFields() {
+    const found: any[] = [];
+    const sections = layout.value?.sections || [];
+    sections.forEach((section) => {
+      (section.columns || []).forEach((column) => {
+        (column.fields || []).forEach((field: any) => {
+          if (field?.fieldtype === "Crispy Typst Block") {
+            found.push(field);
+          }
+        });
+      });
+    });
+    return found;
+  }
+
+  async function loadApplicableTypstBlocks(query = "", category: string | null = null) {
+    if (!docType.value) {
+      typstBlocks.value = [];
+      return [];
+    }
+    const rows = await getApplicableTypstBlocks({
+      doctype: docType.value,
+      query,
+      category,
+    });
+    typstBlocks.value = rows;
+    resolveLayoutTypstBlocks(rows);
+    return rows;
+  }
+
+  function resolveLayoutTypstBlocks(rows: CrispyTypstBlockOption[] = typstBlocks.value) {
+    const byKey = new Map(rows.map((block) => [block.block_key, block]));
+    getLayoutTypstBlockFields().forEach((field: any) => {
+      const key = String(field.crispy_typst_block || "").trim();
+      if (!key) {
+        delete field.crispy_typst_block_code;
+        return;
+      }
+      const block = byKey.get(key);
+      if (!block) {
+        delete field.crispy_typst_block_code;
+        return;
+      }
+      field.crispy_typst_block_name = block.block_name;
+      field.crispy_typst_block_code = block.typst_code || "";
+    });
+  }
+
   const reportStore = createReportStore({
     formatName,
-    pageSettings,
+    presentation_settings: effective_presentation_settings,
     letterhead,
     typstCode,
     reportBuilderConfig,
@@ -789,6 +1010,7 @@ function buildStore() {
    * Fetch Crispy Format document and load DocType metadata
    */
   async function fetch(formatName: string) {
+    reset();
     loading.value = true;
     initializing.value = true;
     changeKey.value = 0;
@@ -858,6 +1080,11 @@ function buildStore() {
             fieldname: "_typst_snippet",
             fieldtype: "Typst",
           },
+          {
+            label: __("Crispy Typst Block"),
+            fieldname: "_crispy_typst_block",
+            fieldtype: "Crispy Typst Block",
+          },
           { label: __("Empty Field"), fieldname: "empty", fieldtype: "Empty" },
           { label: __("Spacer"), fieldname: "spacer", fieldtype: "Spacer" },
           { label: __("Divider"), fieldname: "divider", fieldtype: "Divider" },
@@ -910,8 +1137,13 @@ function buildStore() {
           ? layoutStore.getDefaultLayout()
           : persistedLayout || layoutStore.getDefaultLayout();
 
+      if (doc.doc_type) {
+        await loadApplicableTypstBlocks();
+      }
+
       // Load page settings (already merged with defaults by parser)
-      pageSettings.value = parsed.pageSettings || { ...defaultPageSettings };
+      presentation_settings.value = merge_presentation_settings(default_presentation_settings, parsed.presentation_settings || {});
+      await refreshEffectivePresentationSettings();
       let serverDefaults: Record<string, any> = {};
       if (formatType === "Report") {
         try {
@@ -927,12 +1159,12 @@ function buildStore() {
       }
 
       const reportAdvancedMode = Boolean(doc.is_advanced || doc.raw_typst);
-      const persistedReportBuilder =
-        (pageSettings.value as any)?.report_builder || {};
+      const report_settings =
+        (presentation_settings.value as any)?.report || {};
       const normalizedReportBuilder = normalizeReportBuilderConfig(
         {
           ...serverDefaults,
-          ...persistedReportBuilder,
+          ...report_settings,
         },
         doc.generic_report_type,
       );
@@ -942,8 +1174,8 @@ function buildStore() {
         normalizedReportBuilder.mode = reportAdvancedMode ? "advanced" : "basic";
       }
       reportBuilderConfig.value = normalizedReportBuilder;
-      pageSettings.value.report_builder = reportBuilderConfig.value;
-      migrateLegacyReportBuilderTableStyles(persistedReportBuilder);
+      assignReportBuilderConfigToPresentationSettings();
+      sync_report_table_styles(report_settings);
 
       if (formatType === "Report") {
         initializeReportBuilderMode(doc);
@@ -951,16 +1183,16 @@ function buildStore() {
           layoutStore.rebuildReportTableColumns(true);
         }
       }
-      const qrSettings = ensureQrSettings(pageSettings.value);
-      const parsedQrEnabled = (parsed.pageSettings as PageSettings | undefined)
+      const qrSettings = ensure_qr_settings(presentation_settings.value);
+      const parsedQrEnabled = (parsed.presentation_settings as PresentationSettings | undefined)
         ?.qr?.enabled;
       if (typeof parsedQrEnabled !== "boolean") {
         qrSettings.enabled = false;
       }
 
       // Load letterhead if specified
-      if (pageSettings.value.letterhead) {
-        await settingsStore.fetchLetterhead(pageSettings.value.letterhead);
+      if (effective_presentation_settings.value.branding.letterhead) {
+        await settingsStore.fetchLetterhead(effective_presentation_settings.value.branding.letterhead);
       }
 
       // Auto-save if this was the first time (no layout_json in DB)
@@ -987,6 +1219,7 @@ function buildStore() {
       return;
     }
 
+    flushPendingHistoryCheckpoint();
     loading.value = true;
 
     try {
@@ -997,7 +1230,7 @@ function buildStore() {
       const updateData = {
         layout_json: layoutJson,
         typst_code: typstCode.value,
-        page_settings: JSON.stringify(pageSettings.value),
+        presentation_settings: JSON.stringify(presentation_settings.value),
         raw_typst: isReportMode.value
           ? reportBuilderMode.value === "advanced"
             ? 1
@@ -1021,6 +1254,7 @@ function buildStore() {
 
       dirty.value = false;
       savedSnapshot.value = buildHistorySnapshot();
+      savedSnapshotHash = hashSnapshot(savedSnapshot.value);
     } catch (error) {
       logger.error("Failed to save changes", error);
       frappe.show_alert({
@@ -1057,7 +1291,7 @@ function buildStore() {
     });
     const signature = computeReportBasicSignature(generated);
     reportBuilderConfig.value.raw_signature = signature;
-    pageSettings.value.report_builder = reportBuilderConfig.value;
+    assignReportBuilderConfigToPresentationSettings();
     typstCode.value = generated;
   }
 
@@ -1070,16 +1304,24 @@ function buildStore() {
     markDirty();
   }
 
-  // Watch for letterhead changes in pageSettings
+  // Watch for letterhead changes in presentation_settings
   watch(
-    () => pageSettings.value.letterhead,
+    () => effective_presentation_settings.value.branding.letterhead,
     (newLetterhead) => {
       settingsStore.fetchLetterhead(newLetterhead ?? "");
     },
   );
 
   watch(
-    () => pageSettings.value.table,
+    presentation_settings,
+    () => {
+      refreshEffectivePresentationSettings();
+    },
+    { deep: true, immediate: true },
+  );
+
+  watch(
+    () => presentation_settings.value.table,
     () => {
       if (
         isReportMode.value &&
@@ -1102,7 +1344,7 @@ function buildStore() {
         reportBuilderConfig.value.show_footer_total =
           reportBuilderConfig.value.include_total_row;
       }
-      pageSettings.value.report_builder = reportBuilderConfig.value;
+      assignReportBuilderConfigToPresentationSettings();
       if (
         isReportMode.value &&
         reportBuilderConfig.value.mode === "basic" &&
@@ -1124,6 +1366,7 @@ function buildStore() {
     layout,
     meta,
     fields,
+    typstBlocks,
     reportColumns,
     reportFilterFields,
     reportBaseFields,
@@ -1133,11 +1376,16 @@ function buildStore() {
     reportCandidates,
     selectedReportName,
     letterhead,
-    pageSettings,
+    presentation_settings,
+    effective_presentation_settings,
     dirty,
     loading,
     initializing,
     changeKey,
+
+    // History (exposed for diagnostics & tests)
+    historyPast,
+    historyFuture,
 
     // Computed
     formatName,
@@ -1158,11 +1406,15 @@ function buildStore() {
     // Methods
     fetch,
     saveChanges,
+    loadApplicableTypstBlocks,
+    resolveLayoutTypstBlocks,
     markDirty,
     undo,
     redo,
     canUndo,
     canRedo,
+    reset,
+    resetHistory,
     resetLayout: layoutStore.resetLayout,
     getDefaultLayout: layoutStore.getDefaultLayout,
     setBuilderContext: settingsStore.setBuilderContext,
@@ -1170,7 +1422,7 @@ function buildStore() {
     loadReportFilterFields: reportStore.loadReportFilterFields,
     loadSampleReports: reportStore.loadSampleReports,
     setSelectedReport: reportStore.setSelectedReport,
-    compileReportPreview: reportStore.compileReportPreview,
+    compileReportPreview,
     syncReportBasicTypst,
     resetReportBasicTemplate,
     rebuildReportTableColumns: layoutStore.rebuildReportTableColumns,

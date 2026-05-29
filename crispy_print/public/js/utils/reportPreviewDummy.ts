@@ -359,6 +359,26 @@ export function getDummyReportTableColumns(): TableColumn[] {
   return DUMMY_TABLE_COLUMN_CATALOG.map((col) => ({ ...col }));
 }
 
+function normalizeTypstColumnWidth(width: string | number | null | undefined) {
+  if (width === null || width === undefined || width === "") {
+    return { width: "auto", width_kind: "auto", width_value: null };
+  }
+  const token = String(width).trim().toLowerCase();
+  if (!token || token === "auto") {
+    return { width: "auto", width_kind: "auto", width_value: null };
+  }
+  const match = token.match(/^(\d+(?:\.\d+)?)(fr|pt|em|rem|%|cm|mm|in)$/);
+  if (!match) {
+    const numeric = Number(token);
+    if (Number.isFinite(numeric) && numeric > 0) {
+      const pt = Math.round(numeric);
+      return { width: `${pt}pt`, width_kind: "pt", width_value: pt };
+    }
+    return { width: "auto", width_kind: "auto", width_value: null };
+  }
+  return { width: token, width_kind: match[2], width_value: Number(match[1]) };
+}
+
 export function buildDummyReportPreviewData(options: {
   title?: string;
   subtitle?: string;
@@ -376,13 +396,16 @@ export function buildDummyReportPreviewData(options: {
   );
   const columns = requestedColumns
     .filter((col) => Boolean(col?.fieldname))
-    .map((col) => ({
-      label: col.label || col.fieldname,
-      fieldname: col.fieldname,
-      fieldtype: col.fieldtype || "Data",
-      is_numeric: isNumericFieldtype(col.fieldtype),
-      width: widthMap.get(col.fieldname) || col.width || "auto",
-    }));
+    .map((col) => {
+      const width = normalizeTypstColumnWidth(widthMap.get(col.fieldname) || col.width || "auto");
+      return {
+        label: col.label || col.fieldname,
+        fieldname: col.fieldname,
+        fieldtype: col.fieldtype || "Data",
+        is_numeric: isNumericFieldtype(col.fieldtype),
+        ...width,
+      };
+    });
 
   const rows: DummyRow[] = DUMMY_TABLE_ROWS.map((row, index) => {
     const cells: DummyCell[] = columns.map((col) => ({

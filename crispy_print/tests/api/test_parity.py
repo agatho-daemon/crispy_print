@@ -10,6 +10,9 @@ from frappe.tests.utils import FrappeTestCase
 
 
 class TestTemplateParityHarness(FrappeTestCase):
+	def setUp(self):
+		frappe.set_user("Administrator")
+
 	def test_compare_template_signals_reports_missing_filter_keys(self):
 		from crispy_print.api.v1.parity import compare_template_signals
 
@@ -47,6 +50,10 @@ class TestTemplateParityHarness(FrappeTestCase):
 					"crispy_print.api.v1.reports.get_report_typst_source",
 					return_value="#if data.show_sales_person [#text[ok]]",
 				),
+				mock.patch(
+					"crispy_print.api.v1.parity._report_template_allowed_roots",
+					return_value=[Path(tmpdir).resolve()],
+				),
 			):
 				out = run_report_template_parity_check("Accounts Receivable", "Accounts Report")
 
@@ -63,10 +70,22 @@ class TestTemplateParityHarness(FrappeTestCase):
 			shared = Path(tmpdir) / "shared.html"
 			shared.write_text("{% if (filters.party) { %}Party{% } %}", encoding="utf-8")
 			base.write_text('{% include "shared.html" %}', encoding="utf-8")
-
 			source = _read_legacy_template_source(base)
 
 		self.assertIn("filters.party", source)
+
+	def test_explicit_legacy_template_path_must_stay_inside_allowed_roots(self):
+		from crispy_print.api.v1.parity import _resolve_report_html_path
+
+		with TemporaryDirectory() as tmpdir:
+			rogue = Path(tmpdir) / "rogue.html"
+			rogue.write_text("x", encoding="utf-8")
+			with mock.patch(
+				"crispy_print.api.v1.parity._report_template_allowed_roots",
+				return_value=[Path(tmpdir).resolve() / "allowed"],
+			):
+				with self.assertRaises(frappe.ValidationError):
+					_resolve_report_html_path("Accounts Receivable", str(rogue))
 
 	def test_extracts_expected_accounts_receivable_signals_from_legacy_template(self):
 		from crispy_print.api.v1.parity import extract_legacy_template_signals

@@ -11,7 +11,9 @@
 		:letterhead="store.letterhead.value"
 		:doc-type="store.docType.value"
 		:doc-name="null"
-		:page-settings="store.pageSettings.value"
+		:presentation_settings="
+			store.effective_presentation_settings?.value || store.presentation_settings.value
+		"
 		:change-key="store.changeKey.value"
 		:watch-data-changes="!isReportMode"
 		:zoom-mode="zoomMode"

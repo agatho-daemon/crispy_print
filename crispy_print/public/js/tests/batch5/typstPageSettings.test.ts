@@ -3,14 +3,14 @@ import { buildForegroundPlacements, resolveBrandingMode } from "../../typst/bran
 
 describe("typst page helpers", () => {
 	it("uses explicit branding mode when provided", () => {
-		const mode = resolveBrandingMode({ brandingMode: "logo" }, { image: "/files/lh.png" })
+		const mode = resolveBrandingMode({ branding: { mode: "logo" } }, { image: "/files/lh.png" })
 		expect(mode).toBe("logo")
 	})
 
 	it("builds QR placement without logo", () => {
 		const lines = buildForegroundPlacements({
-			pageSettings: {},
-			brandingMode: "none",
+			presentation_settings: {},
+			branding_mode: "none",
 			qrEnabled: true,
 			qrFilename: "qr.svg",
 			qrSettings: { size: 10, dx: 0, dy: 0 },
@@ -21,8 +21,10 @@ describe("typst page helpers", () => {
 
 	it("builds logo placement without QR", () => {
 		const lines = buildForegroundPlacements({
-			pageSettings: { logo: { image: "/files/logo.png", size: 20, dx: 1, dy: 2 } },
-			brandingMode: "logo",
+			presentation_settings: {
+				branding: { logo: { image: "/files/logo.png", size: 20, dx: 1, dy: 2 } },
+			},
+			branding_mode: "logo",
 			qrEnabled: false,
 			qrFilename: null,
 			qrSettings: null,

@@ -68,7 +68,7 @@ class TestCrispyFormat(FrappeTestCase):
 				"doc_type": "Sales Invoice",
 				"module": "Crispy Print",
 				"layout_json": json.dumps({"sections": []}),
-				"page_settings": json.dumps({"pageSize": "A4"}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
 			}
 		)
 		doc.insert()
@@ -77,6 +77,45 @@ class TestCrispyFormat(FrappeTestCase):
 		self.assertFalse(doc.is_default)
 
 		# Clean up
+		doc.delete()
+
+	def test_insert_can_preserve_default_when_not_duplicate(self):
+		"""Test inserting a default format does not clear is_default unless it is a copy."""
+		doc = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test Format Insert Default",
+				"crispy_format_type": "DocType",
+				"doc_type": "Language",
+				"module": "Crispy Print",
+				"layout_json": json.dumps({"sections": []}),
+				"is_default": 1,
+			}
+		)
+		doc.insert()
+
+		self.assertTrue(doc.is_default)
+
+		doc.delete()
+
+	def test_duplicate_insert_clears_default(self):
+		"""Test copied formats do not inherit default status."""
+		doc = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test Format Duplicate Default",
+				"crispy_format_type": "DocType",
+				"doc_type": "Language",
+				"module": "Crispy Print",
+				"layout_json": json.dumps({"sections": []}),
+				"is_default": 1,
+			}
+		)
+		doc.flags.from_copy = True
+		doc.insert()
+
+		self.assertFalse(doc.is_default)
+
 		doc.delete()
 
 	def test_set_default_format(self):

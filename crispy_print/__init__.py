@@ -1,6 +1,6 @@
 """Crispy Print - Typst-based print format builder for Frappe"""
 
-__version__ = "0.1.0-alpha.2"
+__version__ = "0.1.0-alpha.3"
 
 # API methods for bench console convenience
 from crispy_print.api.v1 import (

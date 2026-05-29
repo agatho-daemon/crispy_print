@@ -2,6 +2,53 @@ import re
 from pathlib import Path
 
 import frappe
+from frappe import _
+
+from .security import ensure_crispy_print_manager_permission
+
+MAX_LEGACY_TEMPLATE_BYTES = 512 * 1024
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+	try:
+		path.relative_to(root)
+		return True
+	except ValueError:
+		return False
+
+
+def _report_template_allowed_roots(report: str) -> list[Path]:
+	roots: list[Path] = []
+
+	report_doc = frappe.get_doc("Report", report)
+	module = report_doc.get("module")
+	if module:
+		try:
+			module_path = Path(frappe.get_module_path(module)).resolve()
+			roots.append((module_path / "report").resolve())
+		except Exception:
+			pass
+
+	try:
+		erpnext_root = Path(frappe.get_app_path("erpnext")).resolve()
+		roots.append(erpnext_root.resolve())
+	except Exception:
+		pass
+
+	return roots
+
+
+def _assert_allowed_template_path(path: Path, allowed_roots: list[Path]) -> Path:
+	resolved = path.resolve()
+	if not resolved.exists() or not resolved.is_file():
+		frappe.throw(_("Legacy template file not found: {0}").format(resolved))
+	if resolved.suffix.lower() not in {".html", ".js"}:
+		frappe.throw(_("Legacy template file type is not allowed: {0}").format(resolved))
+	if not any(_is_relative_to(resolved, root) for root in allowed_roots):
+		frappe.throw(_("Legacy template path is outside allowed report template directories"))
+	if resolved.stat().st_size > MAX_LEGACY_TEMPLATE_BYTES:
+		frappe.throw(_("Legacy template file is too large"))
+	return resolved
 
 
 def _normalize_condition(value: str) -> str:
@@ -94,11 +141,9 @@ def compare_template_signals(legacy_source: str, typst_source: str) -> dict:
 
 
 def _resolve_report_html_path(report: str, explicit_path: str | None = None) -> Path:
+	allowed_roots = _report_template_allowed_roots(report)
 	if explicit_path:
-		path = Path(explicit_path)
-		if not path.exists():
-			frappe.throw(f"Legacy template file not found: {path}")
-		return path
+		return _assert_allowed_template_path(Path(explicit_path), allowed_roots)
 
 	report_doc = frappe.get_doc("Report", report)
 	module = report_doc.get("module")
@@ -114,11 +159,17 @@ def _resolve_report_html_path(report: str, explicit_path: str | None = None) -> 
 	path = module_path / "report" / report_folder / f"{report_folder}.html"
 	if not path.exists():
 		frappe.throw(f"Legacy report template not found: {path}")
-	return path
+	return _assert_allowed_template_path(path, allowed_roots)
 
 
-def _read_legacy_template_source(path: Path, depth: int = 0) -> str:
+def _read_legacy_template_source(
+	path: Path,
+	depth: int = 0,
+	allowed_roots: list[Path] | None = None,
+) -> str:
 	"""Read legacy template and inline top-level {% include %} directives."""
+	allowed_roots = allowed_roots or [path.resolve().parent]
+	path = _assert_allowed_template_path(path, allowed_roots)
 	if depth > 5:
 		return path.read_text(encoding="utf-8")
 
@@ -138,7 +189,7 @@ def _read_legacy_template_source(path: Path, depth: int = 0) -> str:
 				erpnext_root = Path(frappe.get_app_path("erpnext"))
 				candidate = erpnext_root / include_ref
 				if candidate.exists():
-					include_path = candidate
+					include_path = _assert_allowed_template_path(candidate, allowed_roots)
 			except Exception:
 				include_path = None
 
@@ -146,13 +197,16 @@ def _read_legacy_template_source(path: Path, depth: int = 0) -> str:
 		if not include_path:
 			candidate = (path.parent / include_ref).resolve()
 			if candidate.exists():
-				include_path = candidate
+				include_path = _assert_allowed_template_path(candidate, allowed_roots)
 
 		if not include_path:
 			continue
 
 		include_tag = '{% include "' + include_ref + '" %}'
-		inlined = inlined.replace(include_tag, _read_legacy_template_source(include_path, depth + 1))
+		inlined = inlined.replace(
+			include_tag,
+			_read_legacy_template_source(include_path, depth + 1, allowed_roots),
+		)
 
 	return inlined
 
@@ -164,8 +218,12 @@ def run_report_template_parity_check(
 	filters: dict | str | None = None,
 ) -> dict:
 	"""Build Typst source and compare it with a legacy report HTML template."""
+	ensure_crispy_print_manager_permission()
 	legacy_path = _resolve_report_html_path(report, legacy_template_path)
-	legacy_source = _read_legacy_template_source(legacy_path)
+	legacy_source = _read_legacy_template_source(
+		legacy_path,
+		allowed_roots=_report_template_allowed_roots(report),
+	)
 
 	from .reports import get_report_typst_source
 

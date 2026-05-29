@@ -3,26 +3,38 @@ import { describe, expect, it, vi } from "vitest"
 vi.mock("../../api/crispy", () => ({
 	getCrispyFormat: vi.fn(),
 	saveCrispyFormat: vi.fn(),
+	compileReportPreview: vi.fn(async (args) => {
+		const response = await (globalThis as any).frappe.call({
+			method: "crispy_print.api.v1.compile_report_preview",
+			args,
+		})
+		return response.message
+	}),
+	compileTypst: vi.fn(),
+	compileTypstSvg: vi.fn(),
 }))
 
 describe("useStore report preview", () => {
-	it("compileReportPreview builds source then compiles", async () => {
+	it("compileReportPreview builds and compiles source in one request", async () => {
 		vi.resetModules()
 		;(globalThis as any).__ = (msg: string) => msg
 		;(globalThis as any).frappe = {
 			call: vi
 				.fn()
-				.mockResolvedValueOnce({ message: "#typst" })
-				.mockResolvedValueOnce({ message: { success: true } }),
+				.mockResolvedValueOnce({ message: { success: true, typst_source: "#typst" } }),
 		}
 
 		const { useStore } = await import("../../composables/useStore")
 		const store = useStore()
 		store.crispyFormat.value = { name: "Format-1" } as any
-		store.pageSettings.value = {
-			orientation: "landscape",
-			letterhead: "LH-1",
-			logo: { image: "/files/logo.png" },
+		store.presentation_settings.value = {
+			page: { size: "A4", orientation: "landscape", margins: { top: 25, bottom: 20, left: 20, right: 20 } },
+			branding: {
+				mode: "letterhead",
+				letterhead: "LH-1",
+				letterhead_image: "",
+				logo: { company: "", image: "/files/logo.png", size: 25, dx: 0, dy: 0 },
+			},
 		} as any
 		store.letterhead.value = { image: "/files/letterhead.png" } as any
 		store.reportBuilderConfig.value = {
@@ -54,10 +66,10 @@ describe("useStore report preview", () => {
 
 		const result = await store.compileReportPreview("Sales Order")
 
-		expect(result).toEqual({ success: true })
-		expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(2)
+		expect(result).toEqual({ success: true, typst_source: "#typst" })
+		expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(1)
 		const first = (globalThis as any).frappe.call.mock.calls[0][0]
-		expect(first.method).toBe("crispy_print.api.v1.get_report_typst_source")
+		expect(first.method).toBe("crispy_print.api.v1.compile_report_preview")
 		expect(first.args.report).toBe("Sales Order")
 		expect(first.args.format_name).toBe("Format-1")
 		expect(first.args.filters).toEqual({})
@@ -67,26 +79,28 @@ describe("useStore report preview", () => {
 		])
 		expect(first.args.include_filters).toBe(1)
 		expect(first.args.orientation).toBe("landscape")
-		expect(first.args.page_settings).toMatchObject({ orientation: "landscape" })
+		expect(first.args.presentation_settings).toMatchObject({
+			page: { orientation: "landscape" },
+		})
 		expect(first.args.typst_preamble_override).toContain('#set text(font: "Inter 18pt"')
 		expect(first.args.typst_code_override).toBe("#show heading: it => it")
 		expect(first.args.preview_data?.title).toBe("Sales Order")
 		expect(Array.isArray(first.args.preview_data?.columns)).toBe(true)
 		expect(Array.isArray(first.args.preview_data?.rows)).toBe(true)
 		expect(first.args.preview_data?.chart_svg).toBe("report_chart.svg")
-		expect(first.args.page_settings?.letterhead_image).toBe("/files/letterhead.png")
+		expect(first.args.presentation_settings?.branding?.letterhead_image).toBe(
+			"/files/letterhead.png"
+		)
 		expect(first.args.limit).toBe(50)
-		const second = (globalThis as any).frappe.call.mock.calls[1][0]
-		expect(second.method).toBe("crispy_print.api.v1.compile_typst")
-		expect(second.args.asset_files).toContain("/files/letterhead.png")
-		expect(second.args.chart_svg).toContain("Placeholder Chart")
+		expect(first.args.asset_files).toContain("/files/letterhead.png")
+		expect(first.args.chart_svg).toContain("Placeholder Chart")
 	})
 
 	it("compileReportPreview throws when source is missing", async () => {
 		vi.resetModules()
 		;(globalThis as any).__ = (msg: string) => msg
 		;(globalThis as any).frappe = {
-			call: vi.fn().mockResolvedValueOnce({ message: "" }),
+			call: vi.fn().mockResolvedValueOnce({ message: { success: true } }),
 		}
 
 		const { useStore } = await import("../../composables/useStore")
@@ -105,8 +119,7 @@ describe("useStore report preview", () => {
 		;(globalThis as any).frappe = {
 			call: vi
 				.fn()
-				.mockResolvedValueOnce({ message: "#typst" })
-				.mockResolvedValueOnce({ message: { success: true } }),
+				.mockResolvedValueOnce({ message: { success: true, typst_source: "#typst" } }),
 		}
 
 		const { useStore } = await import("../../composables/useStore")
@@ -147,12 +160,12 @@ describe("useStore report preview", () => {
 				.fn()
 				.mockResolvedValueOnce({
 					message: {
+						success: true,
 						typst_source: "#typst",
 						asset_files: ["/private/files/logo.svg"],
 						truncation: { is_truncated: true, returned_rows: 50, original_rows: 120 },
 					},
 				})
-				.mockResolvedValueOnce({ message: { success: true } }),
 		}
 
 		const { useStore } = await import("../../composables/useStore")
@@ -161,10 +174,8 @@ describe("useStore report preview", () => {
 
 		const result = await store.compileReportPreview("Sales Order")
 
-		expect(result).toEqual({ success: true })
-		expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(2)
-		const compileCall = (globalThis as any).frappe.call.mock.calls[1][0]
-		expect(compileCall.args.asset_files).toEqual(["/private/files/logo.svg"])
+		expect(result).toMatchObject({ success: true, typst_source: "#typst" })
+		expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(1)
 	})
 
 	it("compileReportPreview normalizes unitless widths to pt", async () => {
@@ -173,8 +184,7 @@ describe("useStore report preview", () => {
 		;(globalThis as any).frappe = {
 			call: vi
 				.fn()
-				.mockResolvedValueOnce({ message: "#typst" })
-				.mockResolvedValueOnce({ message: { success: true } }),
+				.mockResolvedValueOnce({ message: { success: true, typst_source: "#typst" } }),
 		}
 
 		const { useStore } = await import("../../composables/useStore")
@@ -217,42 +227,47 @@ describe("useStore report preview", () => {
 		;(globalThis as any).frappe = {
 			call: vi
 				.fn()
-				.mockResolvedValueOnce({ message: "#typst" })
-				.mockResolvedValueOnce({ message: { success: true } })
-				.mockResolvedValueOnce({ message: "#typst" })
-				.mockResolvedValueOnce({ message: { success: true } }),
+				.mockResolvedValueOnce({ message: { success: true, typst_source: "#typst" } })
+				.mockResolvedValueOnce({ message: { success: true, typst_source: "#typst" } }),
 		}
 
 		const { useStore } = await import("../../composables/useStore")
 		const store = useStore()
 		store.crispyFormat.value = { name: "Format-1" } as any
 		store.letterhead.value = { image: "/files/lh.png" } as any
-		store.pageSettings.value = {
-			orientation: "landscape",
-			brandingMode: "logo",
-			logo: { image: "/files/logo.png" },
+		store.presentation_settings.value = {
+			page: { size: "A4", orientation: "landscape", margins: { top: 25, bottom: 20, left: 20, right: 20 } },
+			branding: {
+				mode: "logo",
+				letterhead: "",
+				letterhead_image: "",
+				logo: { company: "", image: "/files/logo.png", size: 25, dx: 0, dy: 0 },
+			},
 		} as any
 
 		await store.compileReportPreview("Sales Order")
 
 		const firstSource = (globalThis as any).frappe.call.mock.calls[0][0]
-		const firstCompile = (globalThis as any).frappe.call.mock.calls[1][0]
-		expect(firstSource.args.page_settings?.letterhead_image).toBe("")
-		expect(firstCompile.args.asset_files).toContain("/files/logo.png")
+		expect(firstSource.args.presentation_settings?.branding?.letterhead_image).toBe("")
+		expect(firstSource.args.asset_files).toContain("/files/logo.png")
 
-		store.pageSettings.value = {
-			orientation: "landscape",
-			brandingMode: "letterhead",
-			letterhead: "LH-1",
-			logo: { image: "/files/logo.png" },
+		store.presentation_settings.value = {
+			page: { size: "A4", orientation: "landscape", margins: { top: 25, bottom: 20, left: 20, right: 20 } },
+			branding: {
+				mode: "letterhead",
+				letterhead: "LH-1",
+				letterhead_image: "",
+				logo: { company: "", image: "/files/logo.png", size: 25, dx: 0, dy: 0 },
+			},
 		} as any
 		store.letterhead.value = { image: "/files/lh.png" } as any
 
 		await store.compileReportPreview("Sales Order")
 
-		const secondSource = (globalThis as any).frappe.call.mock.calls[2][0]
-		const secondCompile = (globalThis as any).frappe.call.mock.calls[3][0]
-		expect(secondSource.args.page_settings?.letterhead_image).toBe("/files/lh.png")
-		expect(secondCompile.args.asset_files).toContain("/files/lh.png")
+		const secondSource = (globalThis as any).frappe.call.mock.calls[1][0]
+		expect(secondSource.args.presentation_settings?.branding?.letterhead_image).toBe(
+			"/files/lh.png"
+		)
+		expect(secondSource.args.asset_files).toContain("/files/lh.png")
 	})
 })

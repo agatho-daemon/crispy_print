@@ -100,6 +100,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { setupWorker } from "../typst/setupWorker";
 import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
+import { sanitizeSvg } from "../utils/safeSvg";
 import { getLogger } from "../logger";
 import { __ } from "../utils/i18n";
 
@@ -112,7 +113,7 @@ interface Props {
 	typstCode?: string;
 	rawTypst?: boolean;
 	qrEnabled: boolean;
-	pageSettings: any;
+	presentation_settings: any;
 	letterhead: any;
 	docType: string | null;
 	docName?: string | null;
@@ -148,10 +149,12 @@ let teardown: (() => void) | null = null;
 let panCleanup: (() => void) | null = null;
 let contentObserver: MutationObserver | null = null;
 let stageResizeObserver: ResizeObserver | null = null;
+let stageMetricsFrame: number | null = null;
+let stageMetricsReadFrame: number | null = null;
 
 const zoomPercent = computed(() => clamp(Number(props.zoomPercent) || 100, 25, 200));
 const zoomMode = computed(() => props.zoomMode);
-const pageWidthPx = computed(() => getPageWidthPx(props.pageSettings));
+const pageWidthPx = computed(() => getPageWidthPx(props.presentation_settings));
 const fitScale = computed(() => {
 	if (!viewportWidth.value || !pageWidthPx.value) return 1;
 	return viewportWidth.value / pageWidthPx.value;
@@ -187,13 +190,18 @@ function createAdapter() {
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
 		getDocname: () => props.docName,
-		getPageSettings: () => props.pageSettings,
+		get_presentation_settings: () => props.presentation_settings,
 		hookDataChanges: enableDataWatch
 			? (callback: () => void) => {
 					// Prefer explicit invalidation via changeKey to avoid expensive deep watches.
 					if (props.changeKey !== undefined) {
 						const stop = watch(
-							() => props.changeKey,
+							() => [
+								props.changeKey,
+								props.presentation_settings,
+								props.letterhead,
+								props.qrEnabled,
+							],
 							(_newVal, oldVal) => {
 								if (oldVal !== undefined) {
 									callback();
@@ -207,7 +215,7 @@ function createAdapter() {
 					const stop = watch(
 						() => [
 							props.layout,
-							props.pageSettings,
+							props.presentation_settings,
 							props.letterhead,
 							props.docHeader,
 							props.docFooter,
@@ -244,7 +252,11 @@ watch(
 );
 
 watch(
-	() => [props.pageSettings?.pageSize, props.pageSettings?.orientation] as const,
+	() =>
+		[
+			props.presentation_settings?.page?.size,
+			props.presentation_settings?.page?.orientation,
+		] as const,
 	() => scheduleStageMetricsUpdate()
 );
 
@@ -262,9 +274,11 @@ function clamp(value: number, min: number, max: number) {
 	return Math.min(max, Math.max(min, value));
 }
 
-function getPageWidthPx(pageSettings: any): number {
-	const pageSize = String(pageSettings?.pageSize || "A4").toLowerCase();
-	const orientation = String(pageSettings?.orientation || "portrait").toLowerCase();
+function getPageWidthPx(presentation_settings: any): number {
+	const page_size = String(presentation_settings?.page?.size || "A4").toLowerCase();
+	const orientation = String(
+		presentation_settings?.page?.orientation || "portrait"
+	).toLowerCase();
 	const sizes: Record<string, { width: number; height: number; unit: "mm" | "in" }> = {
 		a3: { width: 297, height: 420, unit: "mm" },
 		a4: { width: 210, height: 297, unit: "mm" },
@@ -274,7 +288,7 @@ function getPageWidthPx(pageSettings: any): number {
 		tabloid: { width: 11, height: 17, unit: "in" },
 		executive: { width: 7.25, height: 10.5, unit: "in" },
 	};
-	const size = sizes[pageSize] || sizes.a4;
+	const size = sizes[page_size] || sizes.a4;
 	const width = orientation === "landscape" ? size.height : size.width;
 	return size.unit === "mm" ? (width / 25.4) * 96 : width * 96;
 }
@@ -288,17 +302,36 @@ function resetPan() {
 	}
 }
 
-function updateStageMetrics() {
+function applyStageMetrics(nextViewportWidth?: number, nextStageHeight?: number) {
+	if (Number.isFinite(nextViewportWidth) && nextViewportWidth! > 0) {
+		viewportWidth.value = Math.round(nextViewportWidth!);
+	}
+	if (Number.isFinite(nextStageHeight) && nextStageHeight! > 0) {
+		stageHeight.value = Math.round(nextStageHeight!);
+	}
+}
+
+function updateStageMetricsFromDom() {
 	const stage = stageEl.value;
 	const viewport = viewportEl.value;
 	if (!stage) return;
-	viewportWidth.value = viewport?.clientWidth || stage.offsetWidth;
-	stageHeight.value = Math.max(stage.scrollHeight, stage.offsetHeight);
+	applyStageMetrics(
+		viewport?.clientWidth || stage.offsetWidth,
+		stage.scrollHeight || stage.offsetHeight
+	);
 }
 
 function scheduleStageMetricsUpdate() {
+	if (stageMetricsFrame !== null) cancelAnimationFrame(stageMetricsFrame);
+	if (stageMetricsReadFrame !== null) cancelAnimationFrame(stageMetricsReadFrame);
 	void nextTick(() => {
-		requestAnimationFrame(updateStageMetrics);
+		stageMetricsFrame = requestAnimationFrame(() => {
+			stageMetricsFrame = null;
+			stageMetricsReadFrame = requestAnimationFrame(() => {
+				stageMetricsReadFrame = null;
+				updateStageMetricsFromDom();
+			});
+		});
 	});
 }
 
@@ -410,7 +443,7 @@ function onReportPreview(event: Event) {
 		const pageDiv = document.createElement("div");
 		pageDiv.className = "typst-page";
 		pageDiv.setAttribute("data-page-number", String(index + 1));
-		pageDiv.innerHTML = svgContent;
+		pageDiv.innerHTML = sanitizeSvg(svgContent);
 		container.appendChild(pageDiv);
 	});
 	resetPan();
@@ -440,12 +473,24 @@ onMounted(() => {
 	if (container) {
 		contentObserver = new MutationObserver(() => {
 			resetPan();
-			scheduleStageMetricsUpdate();
+			if (!stageResizeObserver) scheduleStageMetricsUpdate();
 		});
 		contentObserver.observe(container, { childList: true });
 	}
 	if (typeof ResizeObserver !== "undefined" && stageEl.value) {
-		stageResizeObserver = new ResizeObserver(() => scheduleStageMetricsUpdate());
+		stageResizeObserver = new ResizeObserver((entries) => {
+			let nextViewportWidth: number | undefined;
+			let nextStageHeight: number | undefined;
+			for (const entry of entries) {
+				if (entry.target === viewportEl.value) {
+					nextViewportWidth = entry.contentRect.width;
+				}
+				if (entry.target === stageEl.value) {
+					nextStageHeight = entry.contentRect.height;
+				}
+			}
+			applyStageMetrics(nextViewportWidth, nextStageHeight);
+		});
 		stageResizeObserver.observe(stageEl.value);
 		if (viewportEl.value) stageResizeObserver.observe(viewportEl.value);
 	}
@@ -457,6 +502,8 @@ onBeforeUnmount(() => {
 	panCleanup?.();
 	contentObserver?.disconnect();
 	stageResizeObserver?.disconnect();
+	if (stageMetricsFrame !== null) cancelAnimationFrame(stageMetricsFrame);
+	if (stageMetricsReadFrame !== null) cancelAnimationFrame(stageMetricsReadFrame);
 	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
 	window.removeEventListener("crispy-report-preview", onReportPreview);
 });
