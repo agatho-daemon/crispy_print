@@ -68,6 +68,10 @@ describe("report_button", () => {
 		expect((globalThis as any).window.frappe.route_options).toBeDefined()
 		expect((globalThis as any).window.frappe.route_options.source).toBe("report")
 		expect((globalThis as any).window.frappe.route_options.columns).toBeTruthy()
-		expect((globalThis as any).frappe.set_route).toHaveBeenCalled()
+		expect((globalThis as any).frappe.set_route).toHaveBeenCalledWith(
+			"crispy-print-preview",
+			"report",
+			"Sales Register"
+		)
 	})
 })

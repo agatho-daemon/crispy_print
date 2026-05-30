@@ -1173,7 +1173,7 @@ const getReportSettings = () => ({
 });
 
 function triggerRefresh() {
-	// Manual refresh (refetch + recompile) for crispy-print page.
+	// Manual refresh (refetch + recompile) for the Crispy Print preview page.
 	window.dispatchEvent(new CustomEvent("crispy-preview:refresh"));
 }
 

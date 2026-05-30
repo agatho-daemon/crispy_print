@@ -85,7 +85,7 @@ frappe.provide("crispy_print");
 				columns: safeColumns,
 				chartSvg,
 			};
-			frappe.set_route("crispy-print", "report", qr.report_name);
+			frappe.set_route("crispy-print-preview", "report", qr.report_name);
 		});
 
 		const btnEl = qr.page.btn_typst_print && qr.page.btn_typst_print[0];

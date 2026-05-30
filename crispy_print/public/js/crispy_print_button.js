@@ -50,7 +50,7 @@
                              alt="${__("Crispy Print")}"
                              title="${__("Open Crispy Print Preview")}"/>`,
 						() => {
-							frappe.set_route("crispy-print", frm.doctype, frm.docname);
+							frappe.set_route("crispy-print-preview", frm.doctype, frm.docname);
 						}
 					);
 				},

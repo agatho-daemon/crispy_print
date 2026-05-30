@@ -5,6 +5,20 @@ All notable changes to Crispy Print will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Added a public **Crispy Print** Desk workspace with grouped shortcuts and cards for builders, core records, reusable library records, issued-document tracking, reports, and regulatory setup.
+- Added the Crispy Print workspace icon to the Desk icon sprite hook.
+
+### Changed
+- Renamed the print preview Desk Page route from `/app/crispy-print` to `/app/crispy-print-preview` so `/app/crispy-print` can cleanly belong to the Crispy Print workspace.
+- Updated document and report preview buttons to route to `crispy-print-preview`.
+- Updated README route references and component documentation for the new workspace and preview page route.
+
+### Tests
+- Tightened the report button unit test to assert the exact `crispy-print-preview` route.
+
 ## [0.1.0-alpha.3] - 2026-05-28
 
 ### Alpha Release Warning

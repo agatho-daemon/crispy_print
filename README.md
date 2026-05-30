@@ -131,6 +131,7 @@ Crispy Print is not intended to be just another print designer. The long-term go
 - **Live SVG Preview** - Server-rendered preview flow for format design, document previews, and report previews without relying on browser print layout.
 - **Reusable Branding Profiles** - Centralized page, typography, table, logo, letterhead, QR, and spacing settings for consistent company-wide document output.
 - **Branding Profile Builder** - Dedicated visual builder for reusable presentation systems with generated Typst preview and controlled profile publication.
+- **Crispy Print Workspace** - Desk workspace with grouped shortcuts and cards for builders, core format records, reusable libraries, issued documents, reports, and regulatory setup.
 - **Reusable Typst Blocks** - Governed snippets for repeatable custom document fragments, scoped by category and linked DocType usage.
 - **DocType-Aware Format Registry** - Crispy Format records link formats to target DocTypes, format types, branding profiles, custom builders, and generated Typst.
 - **Report Format Infrastructure (WIP)** - Report-linked formats with Basic/Advanced modes, column selection, filters, chart assets, and guarded raw Typst overrides.
@@ -219,6 +220,16 @@ bench build --app crispy_print
 
 ## Quick Start
 
+### Workspace
+
+After installation, open the **Crispy Print** workspace from Desk or visit:
+
+```text
+/app/crispy-print
+```
+
+The workspace groups the main builder pages, format records, branding profiles, reusable Typst blocks, issued-document tracking, report templates, and regulatory setup records. The print preview page is intentionally not shown as a standalone workspace link because it expects document or report route context.
+
 ### Creating Your First Print Format
 
 > ⚠️ **CRITICAL:** You must set at least one format as **Default** for a DocType. The Typst print button appears on document forms **only when a default format exists** for that DocType.
@@ -233,7 +244,7 @@ Recommended setup order:
 **Step-by-step:**
 
 1. **Create a new format**
-   - Navigate to: **Desk** → **Crispy Print** → **Crispy Format**
+   - Navigate to: **Desk** → **Crispy Print** → **Crispy Formats**
    - Click **New**
    - Enter **Name** (e.g., "Sales Invoice Modern")
    - Select **DocType** (e.g., "Sales Invoice")
@@ -278,7 +289,7 @@ Once a default format exists, the **Typst** button appears automatically on all 
 
 **Direct URL:**
 ```
-/app/crispy-print/{doctype}/{docname}/{format_name}
+/app/crispy-print-preview/{doctype}/{docname}/{format_name}
 ```
 
 ## Usage
@@ -351,7 +362,7 @@ Use this layer only when documents need deterministic identifiers or machine-ver
 
 You can create multiple formats for the same DocType without setting them as default:
 
-- Access via direct URL: `/app/crispy-print/{doctype}/{docname}/{format_name}`
+- Access via direct URL: `/app/crispy-print-preview/{doctype}/{docname}/{format_name}`
 - Or programmatically via API (see [API Reference](#api-reference))
 
 ### Common Layout Recipes
@@ -836,10 +847,12 @@ crispy_print/
 │   │   ├── crispy_document_code_profile/ # Document-code strategy
 │   │   ├── crispy_document_code_rule/    # Document-code rule rows
 │   │   └── crispy_format_reports/        # Report links for formats
-│   └── page/
-│       ├── crispy_format_builder/        # Format Builder Desk page
-│       ├── crispy_print/                 # Print Preview Desk page
-│       └── cbp_builder/                  # Branding Profile Builder page
+│   ├── page/
+│   │   ├── crispy_format_builder/        # Format Builder Desk page
+│   │   ├── crispy_print_preview/         # Print Preview Desk page
+│   │   └── cbp_builder/                  # Branding Profile Builder page
+│   └── workspace/
+│       └── crispy_print/                 # Crispy Print Desk workspace
 ├── fixtures/
 │   └── crispy_format.json                # Demo/seed formats
 ├── patches/                             # Schema/data backfill patches
@@ -853,8 +866,11 @@ crispy_print/
 
 **Pages:**
 - **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType, Report (WIP), and Contract (WIP) formats.
-- **Crispy Print Preview** (`/app/crispy-print/{doctype}/{docname}/{format}`) - Server-rendered document preview and PDF workflow.
+- **Crispy Print Preview** (`/app/crispy-print-preview/{doctype}/{docname}/{format}`) - Server-rendered document preview and PDF workflow.
 - **Crispy Branding Profile Builder** (`/app/cbp-builder`) - Dedicated builder for reusable page, typography, branding, table, and QR presentation profiles.
+
+**Workspace:**
+- **Crispy Print** (`/app/crispy-print`) - Desk workspace for builder shortcuts, core records, reusable libraries, issued-document tracking, reports, and regulatory setup.
 
 **Core Files:**
 

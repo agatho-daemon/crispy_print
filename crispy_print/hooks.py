@@ -27,3 +27,7 @@ doc_events = {
 		"after_insert": "crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile.on_company_after_insert"
 	}
 }
+
+app_include_icons = [
+	"crispy_print/icons/crispy-print-logo.svg",
+]

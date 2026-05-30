@@ -1,9 +1,9 @@
-frappe.pages["crispy-print"].on_page_load = function (wrapper) {
+frappe.pages["crispy-print-preview"].on_page_load = function (wrapper) {
 	frappe.ui.make_app_page({ parent: wrapper });
-	frappe.pages["crispy-print"].print_view = new frappe.ui.CrispyPrintView(wrapper);
+	frappe.pages["crispy-print-preview"].print_view = new frappe.ui.CrispyPrintView(wrapper);
 };
 
-frappe.pages["crispy-print"].on_page_show = function () {
+frappe.pages["crispy-print-preview"].on_page_show = function () {
 	const route = frappe.get_route();
 	const doctype = route[1];
 	const docname = route.slice(2, 3).join(""); // keep simple join for performance
@@ -12,7 +12,7 @@ frappe.pages["crispy-print"].on_page_show = function () {
 	const isReportRoute = route[1] === "report";
 	const routeReportName = isReportRoute ? route.slice(2).join("/") : null;
 
-	const print_view = frappe.pages["crispy-print"].print_view;
+	const print_view = frappe.pages["crispy-print-preview"].print_view;
 	if (!print_view) return;
 
 	if (isReportRoute || routeOptions.source === "report") {
