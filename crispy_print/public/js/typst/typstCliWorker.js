@@ -51,6 +51,7 @@ async function compileWithCLI(
 	typstSrc,
 	csrfToken,
 	outputFormat = "svg",
+	pdfStandard = null,
 	assetFiles = null,
 	qrData = null,
 	qrFilename = null
@@ -63,6 +64,9 @@ async function compileWithCLI(
 		typst_source: typstSrc,
 		output_format: outputFormat,
 	};
+	if (pdfStandard) {
+		body.pdf_standard = pdfStandard;
+	}
 
 	if (Array.isArray(assetFiles) && assetFiles.length) {
 		body.asset_files = assetFiles;
@@ -133,8 +137,17 @@ self.addEventListener("message", async (event) => {
 		return;
 	}
 
-	const { typstSrc, csrfToken, outputFormat, requestId, assetFiles, qrData, qrFilename, seq } =
-		event.data || {};
+	const {
+		typstSrc,
+		csrfToken,
+		outputFormat,
+		pdfStandard,
+		requestId,
+		assetFiles,
+		qrData,
+		qrFilename,
+		seq,
+	} = event.data || {};
 	const desiredFormat = (outputFormat || "svg").toLowerCase();
 
 	if (!typstSrc || !typstSrc.trim()) {
@@ -157,6 +170,7 @@ self.addEventListener("message", async (event) => {
 			typstSrc,
 			csrfToken,
 			desiredFormat,
+			pdfStandard,
 			assetFiles,
 			qrData,
 			qrFilename

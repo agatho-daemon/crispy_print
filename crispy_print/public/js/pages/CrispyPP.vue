@@ -540,6 +540,7 @@
 			:doc-footer="docFooter"
 			:typst-preamble="typstPreambleEffective"
 			:typst-code="typstCode"
+			:pdf-standard="pdfStandard"
 			:raw-typst="rawTypst"
 			:qr-enabled="qrEnabledEffective"
 			:letterhead="letterheadDoc"
@@ -668,6 +669,7 @@ const docHeader = ref("");
 const docFooter = ref("");
 const typstPreamble = ref("");
 const typstCode = ref("");
+const pdfStandard = ref("PDF/A-2u");
 const rawTypst = ref(false);
 const removeQr = ref(false);
 const letterheadDoc = ref<any | null>(null);
@@ -1125,6 +1127,7 @@ async function loadFormatSettings(formatName: string) {
 		docFooter.value = data.formatDoc.doc_footer || "";
 		typstPreamble.value = data.formatDoc.typst_preamble || "";
 		typstCode.value = data.formatDoc.typst_code || "";
+		pdfStandard.value = data.formatDoc.pdf_standard || "PDF/A-2u";
 		rawTypst.value = Boolean(data.formatDoc.raw_typst);
 
 		loading.value = false;
@@ -1367,6 +1370,7 @@ async function generateReportPdf(action: "view" | "download") {
 		const result = await compileTypst({
 			typst_source: lastReportTypstSource.value,
 			output_format: "pdf",
+			pdf_standard: pdfStandard.value,
 			asset_files: lastReportAssetFiles.value || [],
 			chart_svg: lastReportChartSvg.value || null,
 		});

@@ -20,6 +20,32 @@ MAX_CHART_SVG_BYTES = 512 * 1024
 MAX_QR_DATA_BYTES = 16 * 1024
 MAX_INLINE_DATA_URI_BYTES = 256 * 1024
 COMPILE_CACHE_TTL_SECONDS = 5 * 60
+PDF_STANDARD_LABELS = {
+	"PDF 1.7": "1.7",
+	"PDF 2.0": "2.0",
+	"PDF/A-2u": "a-2u",
+	"PDF/A-3u": "a-3u",
+	"PDF/A-4": "a-4",
+}
+TYPST_PDF_STANDARDS = {
+	"1.4",
+	"1.5",
+	"1.6",
+	"1.7",
+	"2.0",
+	"a-1b",
+	"a-1a",
+	"a-2b",
+	"a-2u",
+	"a-2a",
+	"a-3b",
+	"a-3u",
+	"a-3a",
+	"a-4",
+	"a-4f",
+	"a-4e",
+	"ua-1",
+}
 IMAGE_EXTENSIONS = {
 	".png",
 	".jpg",
@@ -104,6 +130,23 @@ def _safe_output_filename(output_filename: str | None) -> str:
 	if not filename or filename in {".pdf", "..pdf"}:
 		filename = f"crispy_{frappe.generate_hash()}.pdf"
 	return filename
+
+
+def _resolve_pdf_standard_cli(pdf_standard: str | None) -> str:
+	standard = str(pdf_standard or "PDF/A-2u").strip() or "PDF/A-2u"
+	if standard in PDF_STANDARD_LABELS:
+		return PDF_STANDARD_LABELS[standard]
+
+	parts = [part.strip().lower() for part in standard.split(",") if part.strip()]
+	if parts and all(part in TYPST_PDF_STANDARDS for part in parts):
+		return ",".join(parts)
+
+	allowed = [*PDF_STANDARD_LABELS, *sorted(TYPST_PDF_STANDARDS)]
+	if standard not in allowed:
+		frappe.throw(
+			_("Unsupported PDF standard: {0}. Allowed values: {1}").format(standard, ", ".join(allowed))
+		)
+	return standard
 
 
 def _strip_url_suffix(value: str) -> str:
@@ -442,6 +485,7 @@ def _compile_cache_key(
 	*,
 	typst_source: str,
 	output_format: str,
+	pdf_standard: str,
 	asset_files: list[str],
 	chart_svg: str | None,
 	qr_data: str | None,
@@ -451,6 +495,7 @@ def _compile_cache_key(
 	payload = {
 		"typst_source": typst_source,
 		"output_format": output_format,
+		"pdf_standard": pdf_standard,
 		"assets": _asset_signature(asset_files),
 		"chart_svg": chart_svg or "",
 		"qr_data": qr_data or "",
@@ -544,6 +589,7 @@ def _write_chart_svg(chart_svg: str, temp_dir: str, filename: str = "report_char
 def compile_typst(
 	typst_source,
 	output_format="svg",
+	pdf_standard: str | None = None,
 	asset_files=None,
 	chart_svg=None,
 	qr_data=None,
@@ -558,6 +604,7 @@ def compile_typst(
 	Args:
 	    typst_source (str): The Typst source code to compile.
 	    output_format (str): Desired output format ("pdf" or "svg").
+	    pdf_standard (str): PDF output standard label or Typst standard value.
 	    asset_files (list[str]): Optional image asset paths/filenames to resolve.
 	    output_filename (str): Optional output filename for PDF when return_url is enabled.
 	    return_url (bool): When true and output_format="pdf", write to public files and return URL.
@@ -601,6 +648,7 @@ def compile_typst(
 	output_format = (output_format or "svg").lower()
 	if output_format not in allowed_formats:
 		frappe.throw(_("Unsupported Typst output format: {0}").format(output_format))
+	pdf_standard_cli = _resolve_pdf_standard_cli(pdf_standard) if output_format == "pdf" else ""
 
 	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
 	cache_ttl = int(frappe.conf.get("CRISPY_PRINT_COMPILE_CACHE_TTL_SECONDS", COMPILE_CACHE_TTL_SECONDS) or 0)
@@ -610,6 +658,7 @@ def compile_typst(
 			cache_key = _compile_cache_key(
 				typst_source=typst_source,
 				output_format=output_format,
+				pdf_standard=pdf_standard_cli,
 				asset_files=combined_assets,
 				chart_svg=chart_svg,
 				qr_data=qr_data,
@@ -656,6 +705,11 @@ def compile_typst(
 					str(TYPST_FONT_DIR),
 					"--format",
 					output_format,
+					*(
+						["--pdf-standard", pdf_standard_cli]
+						if output_format == "pdf" and pdf_standard_cli
+						else []
+					),
 					src_path,
 					str(output_template),
 				],
@@ -690,6 +744,11 @@ def compile_typst(
 							str(TYPST_FONT_DIR),
 							"--format",
 							output_format,
+							*(
+								["--pdf-standard", pdf_standard_cli]
+								if output_format == "pdf" and pdf_standard_cli
+								else []
+							),
 							src_path,
 							str(output_template),
 						],

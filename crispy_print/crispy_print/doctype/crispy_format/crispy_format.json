@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "prompt",
- "creation": "2026-05-21 10:30:43.337960",
+ "creation": "2026-05-31 07:22:26.137646",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -19,6 +19,7 @@
   "is_default",
   "section_break_bjol",
   "default_print_language",
+  "pdf_standard",
   "typst_code_section",
   "typst_preamble",
   "doc_header",
@@ -76,6 +77,14 @@
    "fieldtype": "Link",
    "label": "Default Print Language",
    "options": "Language"
+  },
+  {
+   "default": "PDF/A-2u",
+   "description": "PDF output standard:\n<ul>\n  <li>PDF/A-2u for normal business archives</li>\n  <li>PDF/A-3u when embedding machine-readable payloads such as XML or JSON</li>\n  <li>PDF 1.7 for non-archival output (Typst default)</li>\n  <li>PDF 2.0 for modern non-archival output where supported</li>\n  <li>PDF/A-4 where accepted by the relevant authority</li>\n</ul>\n<span style=\"color: var(--orange-600);\">\n  Note: PDF/A output embeds fonts, so selected fonts must permit PDF embedding/subsetting.\n</span>",
+   "fieldname": "pdf_standard",
+   "fieldtype": "Select",
+   "label": "PDF Standard",
+   "options": "PDF 1.7\nPDF 2.0\nPDF/A-2u\nPDF/A-3u\nPDF/A-4"
   },
   {
    "default": "#set text(font: \"Inter 18pt\", size: 11pt)\n#set table(\n  stroke: 0.25pt,\n  inset: 8pt,\n)\n#set grid(\n  inset: 8pt,\n)",
@@ -179,7 +188,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-22 07:30:02.289863",
+ "modified": "2026-05-31 10:23:24.530040",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",

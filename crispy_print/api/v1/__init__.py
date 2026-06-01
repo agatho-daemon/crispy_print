@@ -92,6 +92,7 @@ def get_applicable_typst_blocks(
 def compile_typst(
 	typst_source: str,
 	output_format: str = "svg",
+	pdf_standard: str | None = None,
 	asset_files: Any = None,
 	chart_svg: str | None = None,
 	qr_data: str | None = None,
@@ -113,6 +114,7 @@ def compile_typst(
 	return _compile_typst(
 		typst_source,
 		output_format=output_format,
+		pdf_standard=pdf_standard,
 		asset_files=_normalize_rpc_list(asset_files),
 		chart_svg=chart_svg,
 		qr_data=qr_data,

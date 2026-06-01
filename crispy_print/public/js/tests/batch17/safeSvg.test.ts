@@ -69,4 +69,21 @@ describe("sanitizeSvg", () => {
 		expect(out).toContain("<image");
 		expect(out).not.toContain("href=");
 	});
+
+	it("preserves overflow on Typst glyph symbols so descenders are not clipped", () => {
+		const out = sanitizeSvg(`
+			<svg viewBox="0 0 20 20">
+				<g class="typst-text">
+					<use href="#glyph-g" x="0" y="0" fill="#000" />
+				</g>
+				<defs>
+					<symbol id="glyph-g" overflow="visible">
+						<path d="M 0 0m 1 -1 l 2 -3 v 7 h -2 z" />
+					</symbol>
+				</defs>
+			</svg>
+		`);
+
+		expect(out).toContain('<symbol id="glyph-g" overflow="visible">');
+	});
 });

@@ -38,6 +38,7 @@ export interface FormatData {
   doc_header?: string;
   doc_footer?: string;
   typst_preamble?: string;
+  pdf_standard?: string;
   typst_code?: string;
   raw_typst?: number;
   is_default?: number;

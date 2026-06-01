@@ -104,6 +104,63 @@ This is a test.
 		pdf_bytes = base64.b64decode(result["pdf_data"])
 		self.assertTrue(pdf_bytes.startswith(b"%PDF"))
 
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--pdf-standard", cmd_args)
+		self.assertEqual(cmd_args[cmd_args.index("--pdf-standard") + 1], "a-2u")
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_compile_typst_pdf_standard_mapping(self, mock_run):
+		"""Test PDF standard options are mapped to Typst CLI flags."""
+		from crispy_print.api.v1 import compile_typst
+
+		mock_result = Mock()
+		mock_result.returncode = 0
+		mock_result.stderr = ""
+		mock_result.stdout = ""
+
+		def mock_run_side_effect(*args, **kwargs):
+			cmd_args = args[0]
+			output_path = Path(cmd_args[-1])
+			output_path.parent.mkdir(parents=True, exist_ok=True)
+			output_path.write_bytes(b"%PDF-1.7\nFake PDF")
+			return mock_result
+
+		mock_run.side_effect = mock_run_side_effect
+
+		compile_typst("= PDF/A-3u", output_format="pdf", pdf_standard="PDF/A-3u")
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--pdf-standard", cmd_args)
+		self.assertEqual(cmd_args[cmd_args.index("--pdf-standard") + 1], "a-3u")
+
+		compile_typst("= PDF/A-4", output_format="pdf", pdf_standard="PDF/A-4")
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--pdf-standard", cmd_args)
+		self.assertEqual(cmd_args[cmd_args.index("--pdf-standard") + 1], "a-4")
+
+		compile_typst("= Plain PDF", output_format="pdf", pdf_standard="PDF 1.7")
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--pdf-standard", cmd_args)
+		self.assertEqual(cmd_args[cmd_args.index("--pdf-standard") + 1], "1.7")
+
+		compile_typst("= PDF 2.0", output_format="pdf", pdf_standard="PDF 2.0")
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--pdf-standard", cmd_args)
+		self.assertEqual(cmd_args[cmd_args.index("--pdf-standard") + 1], "2.0")
+
+		compile_typst("= PDF/A + UA", output_format="pdf", pdf_standard="a-2u,ua-1")
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--pdf-standard", cmd_args)
+		self.assertEqual(cmd_args[cmd_args.index("--pdf-standard") + 1], "a-2u,ua-1")
+
+	def test_compile_typst_rejects_invalid_pdf_standard(self):
+		from crispy_print.api.v1 import compile_typst
+
+		with self.assertRaises(Exception):
+			compile_typst("= Test", output_format="pdf", pdf_standard="PDF/X")
+
+		with self.assertRaises(Exception):
+			compile_typst("= Test", output_format="pdf", pdf_standard="PDF")
+
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_compile_typst_to_svg(self, mock_run):
 		"""Test Typst compilation to SVG format"""

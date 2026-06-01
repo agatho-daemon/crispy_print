@@ -111,6 +111,7 @@ interface Props {
 	docFooter: string;
 	typstPreamble: string;
 	typstCode?: string;
+	pdfStandard?: string | null;
 	rawTypst?: boolean;
 	qrEnabled: boolean;
 	presentation_settings: any;
@@ -185,6 +186,7 @@ function createAdapter() {
 		getDocFooter: () => props.docFooter,
 		getTypstPreamble: () => props.typstPreamble,
 		getTypstCode: () => props.typstCode || "",
+		getPdfStandard: () => props.pdfStandard || "PDF/A-2u",
 		getRawTypst: () => Boolean(props.rawTypst),
 		getQrEnabled: () => props.qrEnabled,
 		getLetterhead: () => props.letterhead,

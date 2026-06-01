@@ -76,6 +76,7 @@ const ALLOWED_SVG_ATTRIBUTES = new Set([
 	"stroke-dashoffset",
 	"stroke-opacity",
 	"opacity",
+	"overflow",
 	"font-family",
 	"font-size",
 	"font-weight",

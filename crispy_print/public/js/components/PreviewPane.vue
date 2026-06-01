@@ -6,6 +6,7 @@
 		:doc-footer="store.docFooter.value"
 		:typst-preamble="store.typstPreamble.value"
 		:typst-code="store.typstCode.value"
+		:pdf-standard="store.crispyFormat.value?.pdf_standard || 'PDF/A-2u'"
 		:raw-typst="store.rawTypst.value"
 		:qr-enabled="qrEnabled"
 		:letterhead="store.letterhead.value"

@@ -41,6 +41,7 @@ export interface TypstAdapter {
 	getDocFooter?: () => string | null | undefined
 	getTypstPreamble?: () => string | null | undefined
 	getTypstCode?: () => string | null | undefined
+	getPdfStandard?: () => string | null | undefined
 	getRawTypst?: () => boolean
 	getQrEnabled?: () => boolean
 	getLetterhead?: () => any
@@ -338,11 +339,16 @@ export function setupWorker(
 		})
 
 		const requestId = action === "download" ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
+		const pdfStandard =
+			adapter && typeof adapter.getPdfStandard === "function"
+				? adapter.getPdfStandard() || "PDF/A-2u"
+				: "PDF/A-2u"
 		logger.info("Posting PDF compile to worker", { requestId })
 		try {
 			postPdfCompile({
 				worker,
 				typstSrc: lastTypstCode,
+				pdfStandard,
 				requestId,
 				seq: nextSeq(requestId),
 				assetFiles: lastCompileAssetFiles,

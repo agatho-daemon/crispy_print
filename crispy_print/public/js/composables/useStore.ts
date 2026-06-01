@@ -65,6 +65,7 @@ interface CrispyFormat {
   raw_typst?: number;
   typst_preamble?: string;
   typst_code?: string;
+  pdf_standard?: string;
   layout_json?: string;
   presentation_settings?: string;
     __onload?: any;

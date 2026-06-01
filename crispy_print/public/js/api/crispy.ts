@@ -21,6 +21,7 @@ export interface CrispyFormatDoc {
 	presentation_settings?: string
 	typst_code?: string
 	typst_preamble?: string
+	pdf_standard?: string
 	__onload?: any
 }
 
@@ -364,6 +365,7 @@ export interface TypstCompileResult {
 export async function compileTypst(args: {
 	typst_source: string
 	output_format: "svg" | "pdf"
+	pdf_standard?: string | null
 	asset_files?: string[]
 	chart_svg?: string | null
 }): Promise<TypstCompileResult> {
@@ -372,6 +374,7 @@ export async function compileTypst(args: {
 		args: {
 			typst_source: args.typst_source,
 			output_format: args.output_format,
+			pdf_standard: args.pdf_standard || null,
 			asset_files: args.asset_files || [],
 			chart_svg: args.chart_svg || null,
 		},

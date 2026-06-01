@@ -27,6 +27,7 @@ export function downloadPdfBlob(blob: Blob, filename: string) {
 export function postPdfCompile(options: {
 	worker: Worker
 	typstSrc: string
+	pdfStandard?: string | null
 	requestId: string
 	seq: number
 	assetFiles: string[]
@@ -37,6 +38,7 @@ export function postPdfCompile(options: {
 		typstSrc: options.typstSrc,
 		csrfToken: frappe?.csrf_token,
 		outputFormat: "pdf",
+		pdfStandard: options.pdfStandard || null,
 		requestId: options.requestId,
 		seq: options.seq,
 		assetFiles: options.assetFiles,

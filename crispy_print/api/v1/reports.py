@@ -234,7 +234,13 @@ def generate_report_pdf(
 	)
 
 	# Compile to PDF (write to public files and return URL)
-	result = compile_typst(typst_source, output_format="pdf", asset_files=asset_files, return_url=1)
+	result = compile_typst(
+		typst_source,
+		output_format="pdf",
+		pdf_standard=format_doc.get("pdf_standard") or "PDF/A-2u",
+		asset_files=asset_files,
+		return_url=1,
+	)
 
 	report_truncation = normalized_typst_data.get("truncation") or {}
 	return {

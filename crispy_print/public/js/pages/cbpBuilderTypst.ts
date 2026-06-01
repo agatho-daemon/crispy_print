@@ -65,7 +65,7 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 #let section(title) = [
   #v(1.75em)
   #text(..specimenSectionStyle)[#title]
-  #v(-1.00em)
+  #v(-0.50em)
   #line(length: 100%, stroke: 0.45pt + rgb("#E5E7EB"))
   #v(0.20em)
 ]
