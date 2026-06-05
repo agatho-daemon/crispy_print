@@ -58,8 +58,30 @@ EXPORT_FIELDS = [
 FORMAT_LIST_CACHE_TTL_SECONDS = 5 * 60
 
 
-def _get_crispy_formats_cache_key(doctype: str) -> str:
-	return f"crispy_print:formats_for_doctype:{doctype}"
+def _clean_company(company: str | None) -> str | None:
+	clean = (company or "").strip()
+	return clean or None
+
+
+def _get_crispy_formats_cache_key(doctype: str, company: str | None = None) -> str:
+	if not company:
+		return f"crispy_print:formats_for_doctype:{doctype}"
+	return f"crispy_print:formats_for_doctype:{doctype}:company:{company}"
+
+
+def _get_crispy_formats_cache_index_key(doctype: str) -> str:
+	return f"crispy_print:formats_for_doctype:{doctype}:cache_keys"
+
+
+def _remember_crispy_formats_cache_key(doctype: str, cache_key: str) -> None:
+	index_key = _get_crispy_formats_cache_index_key(doctype)
+	cache = frappe.cache()
+	keys = cache.get_value(index_key, expires=True)
+	if not isinstance(keys, list):
+		keys = []
+	if cache_key not in keys:
+		keys.append(cache_key)
+	cache.set_value(index_key, keys, expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS)
 
 
 def invalidate_crispy_formats_cache_for_doctype(doctype: str | None) -> None:
@@ -67,11 +89,18 @@ def invalidate_crispy_formats_cache_for_doctype(doctype: str | None) -> None:
 	if not doctype:
 		return
 
-	cache_key = _get_crispy_formats_cache_key(doctype)
-	frappe.cache().delete_value(cache_key)
+	cache = frappe.cache()
+	index_key = _get_crispy_formats_cache_index_key(doctype)
+	cache_keys = cache.get_value(index_key, expires=True)
+	if not isinstance(cache_keys, list):
+		cache_keys = []
+	cache_keys.append(_get_crispy_formats_cache_key(doctype))
+	for cache_key in set(cache_keys):
+		cache.delete_value(cache_key)
+	cache.delete_value(index_key)
 
 
-def get_crispy_formats_for_doctype(doctype):
+def get_crispy_formats_for_doctype(doctype, company: str | None = None):
 	"""Get all enabled Crispy Formats for a given DocType.
 
 	Returns formats that have both:
@@ -82,13 +111,15 @@ def get_crispy_formats_for_doctype(doctype):
 		return []
 	ensure_doctype_read_permission("Crispy Format")
 
-	cache_key = _get_crispy_formats_cache_key(doctype)
+	company = _clean_company(company)
+	cache_key = _get_crispy_formats_cache_key(doctype, company=company)
 	cached_formats = frappe.cache().get_value(cache_key, expires=True)
 	if isinstance(cached_formats, list):
 		return cached_formats
 
-	formats = _compute_crispy_formats_for_doctype(doctype)
+	formats = _compute_crispy_formats_for_doctype(doctype, company=company)
 	frappe.cache().set_value(cache_key, formats, expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS)
+	_remember_crispy_formats_cache_key(doctype, cache_key)
 	return formats
 
 
@@ -132,10 +163,10 @@ def get_crispy_format(
 	return data
 
 
-def _compute_crispy_formats_for_doctype(doctype: str) -> list[dict]:
+def _compute_crispy_formats_for_doctype(doctype: str, company: str | None = None) -> list[dict]:
 	formats = frappe.get_list(
 		"Crispy Format",
-		fields=["name", "doc_type", "layout_json"],
+		fields=["name", "doc_type", "company", "is_default", "layout_json"],
 		filters={"doc_type": doctype},
 		order_by="name asc",
 	)
@@ -143,17 +174,30 @@ def _compute_crispy_formats_for_doctype(doctype: str) -> list[dict]:
 	# Filter formats that have valid layout_json
 	valid_formats = []
 	for fmt in formats:
+		row_company = _clean_company(fmt.get("company"))
+		if company and row_company not in (company, None):
+			continue
 		try:
 			# Check if layout_json is parseable
 			if fmt.get("layout_json"):
 				json.loads(fmt["layout_json"])  # Validate JSON
-				valid_formats.append({"name": fmt.get("name"), "doc_type": fmt.get("doc_type")})
+				valid_formats.append(
+					{
+						"name": fmt.get("name"),
+						"doc_type": fmt.get("doc_type"),
+						"company": fmt.get("company"),
+						"is_default": fmt.get("is_default"),
+					}
+				)
 		except (json.JSONDecodeError, Exception) as e:
 			frappe.log_error(
-				f"Invalid layout_json for Crispy Format {fmt.name}: {e!s}",
-				"Crispy Print Format Validation",
+				title="Crispy Print Format Validation",
+				message=f"Invalid layout_json for Crispy Format {fmt.name}: {e!s}",
 			)
 			continue
+
+	if company:
+		valid_formats.sort(key=lambda row: 0 if _clean_company(row.get("company")) == company else 1)
 
 	return valid_formats
 
@@ -170,7 +214,7 @@ def get_default_doctypes():
 	return [res.doc_type for res in results]
 
 
-def get_available_formats(report: str) -> dict:
+def get_available_formats(report: str, company: str | None = None) -> dict:
 	"""
 	Get all available formats for a report (custom + generic).
 
@@ -182,18 +226,31 @@ def get_available_formats(report: str) -> dict:
 		}
 	"""
 	ensure_doctype_read_permission("Crispy Format")
+	company = _clean_company(company)
 	# Custom formats linked to this report via child table rows.
-	custom_formats = get_custom_report_formats(report)
+	custom_formats = get_custom_report_formats(report, company=company)
 
 	# Generic formats are fallback-only.
 	generic_formats = []
 	if not custom_formats:
-		generic_formats = frappe.get_list(
-			"Crispy Format",
-			filters={"crispy_format_type": "Report", "is_generic": 1},
-			fields=["name", "generic_report_type"],
-			order_by="generic_report_type asc",
-		)
+		generic_formats = [
+			row
+			for row in frappe.get_list(
+				"Crispy Format",
+				filters={"crispy_format_type": "Report", "is_generic": 1},
+				fields=["name", "generic_report_type", "company", "is_default"],
+				order_by="generic_report_type asc",
+			)
+			if not company or _clean_company(row.get("company")) in (company, None)
+		]
+		if company:
+			generic_formats.sort(
+				key=lambda row: (
+					0 if _clean_company(row.get("company")) == company else 1,
+					0 if row.get("is_default") else 1,
+					str(row.get("generic_report_type") or ""),
+				)
+			)
 
 		is_tree = _get_report_is_tree(report)
 		if is_tree is not None:
@@ -216,9 +273,10 @@ def get_available_formats(report: str) -> dict:
 	}
 
 
-def get_custom_report_formats(report: str) -> list[dict]:
+def get_custom_report_formats(report: str, company: str | None = None) -> list[dict]:
 	"""Return custom report formats linked to a report through child table rows."""
 	ensure_doctype_read_permission("Crispy Format")
+	company = _clean_company(company)
 	report_rows = frappe.get_all(
 		"Crispy Format Reports",
 		fields=["parent"],
@@ -232,16 +290,27 @@ def get_custom_report_formats(report: str) -> list[dict]:
 	if not parent_names:
 		return []
 
-	return frappe.get_list(
+	rows = frappe.get_list(
 		"Crispy Format",
-		fields=["name", "modified"],
 		filters={
 			"name": ["in", parent_names],
 			"crispy_format_type": "Report",
 			"is_generic": 0,
 		},
+		fields=["name", "modified", "company", "is_default"],
 		order_by="modified desc",
 	)
+	if not company:
+		return rows
+
+	rows = [row for row in rows if _clean_company(row.get("company")) in (company, None)]
+	rows.sort(
+		key=lambda row: (
+			0 if _clean_company(row.get("company")) == company else 1,
+			0 if row.get("is_default") else 1,
+		),
+	)
+	return rows
 
 
 def get_builder_mode(format_name: str) -> dict:
@@ -477,6 +546,7 @@ def export_crispy_format(name: str) -> dict:
 		"exported_at": now_datetime().isoformat(),
 		"app": "crispy_print",
 		"format": format_data,
+		"metadata": _build_export_metadata(doc),
 	}
 
 
@@ -521,6 +591,7 @@ def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict
 		imported_doc = _insert_new_format(format_data, copy_name=False)
 
 	warnings = _collect_reference_warnings(imported_doc)
+	warnings.extend(_collect_metadata_reference_warnings(parsed))
 
 	return {
 		"success": True,
@@ -614,6 +685,24 @@ def _overwrite_format(target_name: str, format_data: dict) -> "frappe.model.docu
 	return doc
 
 
+def _build_export_metadata(doc) -> dict:
+	company = doc.get("company")
+	return {
+		"company": {
+			"name": company,
+			"abbr": frappe.db.get_value("Company", company, "abbr") if company else None,
+		}
+		if company
+		else None,
+		"templates": frappe.get_all(
+			"Crispy Template",
+			filters={"source_crispy_format": doc.name},
+			fields=["name", "template_name", "version", "company", "status", "is_active"],
+			order_by="template_name asc, version desc",
+		),
+	}
+
+
 def _get_imported_copy_name(base_name: str) -> str:
 	base = (base_name or "Imported Format").strip()
 	candidate = f"{base} (Imported)"
@@ -679,5 +768,31 @@ def _collect_reference_warnings(doc) -> list[str]:
 		file_exists = frappe.db.exists("File", {"file_url": logo_image})
 		if not file_exists:
 			warnings.append(_("File not found for logo image path: {0}").format(logo_image))
+
+	return warnings
+
+
+def _collect_metadata_reference_warnings(payload: dict) -> list[str]:
+	warnings: list[str] = []
+	metadata = payload.get("metadata")
+	if not isinstance(metadata, dict):
+		return warnings
+
+	company = metadata.get("company")
+	if isinstance(company, dict):
+		company_name = company.get("name")
+		if company_name and not frappe.db.exists("Company", company_name):
+			warnings.append(_("Missing reference: Company '{0}' (metadata)").format(company_name))
+
+	templates = metadata.get("templates")
+	if isinstance(templates, list):
+		for template in templates:
+			if not isinstance(template, dict):
+				continue
+			template_name = template.get("name")
+			if template_name and not frappe.db.exists("Crispy Template", template_name):
+				warnings.append(
+					_("Missing reference: Crispy Template '{0}' (metadata)").format(template_name)
+				)
 
 	return warnings

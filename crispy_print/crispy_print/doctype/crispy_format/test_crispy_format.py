@@ -67,6 +67,31 @@ class TestCrispyFormat(FrappeTestCase):
 			or frappe.db.get_single_value("Global Defaults", "default_company")
 		)
 
+	def _ensure_company(self, name="Test Format Company", abbr="TFC"):
+		if not frappe.db.exists("Company", name):
+			frappe.get_doc(
+				{
+					"doctype": "Company",
+					"company_name": name,
+					"abbr": abbr,
+					"default_currency": "USD",
+				}
+			).insert(ignore_permissions=True)
+		return name
+
+	def _new_format(self, name: str, **values):
+		data = {
+			"doctype": "Crispy Format",
+			"name": name,
+			"crispy_format_type": "DocType",
+			"doc_type": "Sales Invoice",
+			"module": "Crispy Print",
+			"layout_json": json.dumps({"sections": []}),
+			"presentation_settings": json.dumps({"page": {"size": "A4"}}),
+		}
+		data.update(values)
+		return frappe.get_doc(data)
+
 	def test_create_crispy_format(self):
 		"""Test creating a new Crispy Format document"""
 		default_company = self._get_default_company()
@@ -206,6 +231,96 @@ class TestCrispyFormat(FrappeTestCase):
 		# Clean up
 		format1.delete()
 		format2.delete()
+
+	def test_default_format_is_scoped_by_company(self):
+		"""Test same target can have separate defaults per company."""
+		company_a = self._ensure_company("Test Format Company A", "TFCA")
+		company_b = self._ensure_company("Test Format Company B", "TFCB")
+		format_a = self._new_format("Test Format Company A Default", company=company_a)
+		format_b = self._new_format("Test Format Company B Default", company=company_b)
+		format_a.insert()
+		format_b.insert()
+
+		self._set_default(format_a.name)
+		self._set_default(format_b.name)
+
+		format_a.reload()
+		format_b.reload()
+		self.assertTrue(format_a.is_default)
+		self.assertTrue(format_b.is_default)
+
+	def test_default_format_is_scoped_by_format_type_and_target(self):
+		"""Test report defaults do not clear DocType defaults for the same company."""
+		generic_report_type = frappe.db.get_value("Crispy Generic Report", {}, "name")
+		if not generic_report_type:
+			self.skipTest("No Crispy Generic Report records available")
+
+		company = self._ensure_company("Test Format Target Company", "TFTC")
+		doctype_format = self._new_format("Test Format Target DocType Default", company=company)
+		report_format = self._new_format(
+			"Test Format Target Report Default",
+			company=company,
+			crispy_format_type="Report",
+			doc_type=None,
+			is_generic=1,
+			generic_report_type=generic_report_type,
+		)
+		doctype_format.insert()
+		report_format.insert()
+
+		self._set_default(doctype_format.name)
+		self._set_default(report_format.name)
+
+		doctype_format.reload()
+		report_format.reload()
+		self.assertTrue(doctype_format.is_default)
+		self.assertTrue(report_format.is_default)
+
+	def test_custom_report_default_only_clears_overlapping_report_target(self):
+		"""Test custom report defaults compete only when linked report rows overlap."""
+		reports = frappe.get_all("Report", pluck="name", limit=2, order_by="name asc")
+		if len(reports) < 2:
+			self.skipTest("At least two Report records are required")
+
+		company = self._ensure_company("Test Format Report Company", "TFRC")
+		first = self._new_format(
+			"Test Format Report Default 1",
+			company=company,
+			crispy_format_type="Report",
+			doc_type=None,
+			is_generic=0,
+		)
+		first.append("report", {"report": reports[0]})
+		second = self._new_format(
+			"Test Format Report Default 2",
+			company=company,
+			crispy_format_type="Report",
+			doc_type=None,
+			is_generic=0,
+		)
+		second.append("report", {"report": reports[0]})
+		third = self._new_format(
+			"Test Format Report Default 3",
+			company=company,
+			crispy_format_type="Report",
+			doc_type=None,
+			is_generic=0,
+		)
+		third.append("report", {"report": reports[1]})
+		first.insert()
+		second.insert()
+		third.insert()
+
+		self._set_default(first.name)
+		self._set_default(second.name)
+		self._set_default(third.name)
+
+		first.reload()
+		second.reload()
+		third.reload()
+		self.assertFalse(first.is_default)
+		self.assertTrue(second.is_default)
+		self.assertTrue(third.is_default)
 
 	def test_get_current_default(self):
 		"""Test getting the current default format for a DocType"""

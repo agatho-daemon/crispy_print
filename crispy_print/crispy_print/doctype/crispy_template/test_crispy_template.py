@@ -104,6 +104,15 @@ class TestCrispyTemplate(FrappeTestCase):
 			f"{source.name} - {self._company_abbr(self.company)} - v1.0",
 		)
 
+	def test_publish_preview_rejects_mismatched_explicit_company(self):
+		other_company = self._get_other_company()
+		if not other_company:
+			self.skipTest("Another Company record is required")
+		source = self._insert_format("CT Test Source Preview Company")
+
+		with self.assertRaises(frappe.ValidationError):
+			get_publish_preview(source.name, version_bump="minor", company=other_company)
+
 	def test_publish_supersedes_previous_active_template(self):
 		source = self._insert_format("CT Test Source Publish")
 
@@ -119,6 +128,114 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(first_doc.is_active, 0)
 		self.assertEqual(second_doc.status, "Approved")
 		self.assertEqual(second_doc.is_active, 1)
+
+	def test_publish_requires_source_format_company(self):
+		source = self._insert_format("CT Test Source No Company")
+		frappe.db.set_value("Crispy Format", source.name, "company", "", update_modified=False)
+
+		with self.assertRaises(frappe.ValidationError):
+			get_publish_preview(source.name, version_bump="minor")
+
+	def test_publish_rejects_mismatched_branding_profile_company(self):
+		other_company = self._get_other_company()
+		if not other_company:
+			self.skipTest("Another Company record is required")
+		profile = frappe.get_doc(
+			{
+				"doctype": "Crispy Branding Profile",
+				"profile_name": "CT Test Other Company Profile",
+				"company": other_company,
+			}
+		)
+		profile.insert(ignore_permissions=True)
+		source = self._insert_format("CT Test Source Branding Mismatch")
+		source.presentation_settings = json.dumps(
+			{
+				"source": "branding_profile",
+				"branding": {
+					"profile": profile.name,
+					"company": self.company,
+					"logo": {"company": self.company},
+				},
+			}
+		)
+		source.save(ignore_permissions=True)
+
+		with self.assertRaises(frappe.ValidationError):
+			publish_crispy_template(source.name, version_bump="minor", make_active=True)
+
+	def test_publish_hydrates_company_scoped_typst_block_snapshot(self):
+		block_key = "ct_test_publish_block"
+		global_block = frappe.get_doc(
+			{
+				"doctype": "Crispy Typst Block",
+				"block_name": "CT Test Publish Global Block",
+				"block_key": block_key,
+				"enabled": 1,
+				"typst_code": "#text[global]",
+			}
+		)
+		global_block.append("applicable_documents", {"document_type": "Sales Invoice"})
+		global_block.insert(ignore_permissions=True)
+		company_block = frappe.get_doc(
+			{
+				"doctype": "Crispy Typst Block",
+				"block_name": "CT Test Publish Company Block",
+				"block_key": block_key,
+				"company": self.company,
+				"enabled": 1,
+				"typst_code": "#text[company]",
+			}
+		)
+		company_block.append("applicable_documents", {"document_type": "Sales Invoice"})
+		company_block.insert(ignore_permissions=True)
+		source = self._insert_format("CT Test Source CTB Snapshot")
+		source.layout_json = json.dumps(
+			{
+				"sections": [
+					{
+						"columns": [
+							{
+								"fields": [
+									{
+										"fieldtype": "Crispy Typst Block",
+										"fieldname": "_ctb",
+										"crispy_typst_block": block_key,
+									}
+								]
+							}
+						]
+					}
+				]
+			}
+		)
+		source.save(ignore_permissions=True)
+
+		result = publish_crispy_template(source.name, version_bump="minor", make_active=True)
+		template = frappe.get_doc("Crispy Template", result["name"])
+		layout = json.loads(template.layout_json)
+		field = layout["sections"][0]["columns"][0]["fields"][0]
+
+		self.assertEqual(field["crispy_typst_block_code"], "#text[company]")
+		self.assertEqual(field["crispy_typst_block_name"], "CT Test Publish Company Block")
+
+	def test_publish_freezes_source_snapshot_fields(self):
+		source = self._insert_format("CT Test Source Frozen Snapshot")
+		result = publish_crispy_template(source.name, version_bump="minor", make_active=True)
+		template = frappe.get_doc("Crispy Template", result["name"])
+		original_layout = template.layout_json
+		original_settings = template.presentation_settings_json
+		original_typst_code = template.typst_code
+
+		source.layout_json = json.dumps({"sections": [{"label": "Changed", "columns": []}]})
+		source.presentation_settings = json.dumps({"page": {"size": "Letter"}})
+		source.typst_code = "#text[changed]"
+		source.save(ignore_permissions=True)
+		template.reload()
+
+		self.assertEqual(template.layout_json, original_layout)
+		self.assertEqual(template.presentation_settings_json, original_settings)
+		self.assertEqual(template.typst_code, original_typst_code)
 
 	def test_rejects_duplicate_active_template_scope(self):
 		source = self._insert_format("CT Test Source Active Unique")
@@ -307,3 +424,5 @@ class TestCrispyTemplate(FrappeTestCase):
 	def _delete_test_records(self):
 		frappe.db.delete("Crispy Template", {"template_name": ["like", "CT Test%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "CT Test Source%"]})
+		frappe.db.delete("Crispy Typst Block", {"block_key": ["like", "ct_test_%"]})
+		frappe.db.delete("Crispy Branding Profile", {"profile_name": ["like", "CT Test%"]})

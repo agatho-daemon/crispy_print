@@ -172,10 +172,14 @@ frappe.provide("crispy_print");
 
 // Format selector dialog
 crispy_print.show_format_selector = function (report_name, report_instance) {
+	const filters =
+		report_instance && typeof report_instance.get_filter_values === "function"
+			? report_instance.get_filter_values() || {}
+			: {};
 	// Check for available formats
 	frappe.call({
 		method: "crispy_print.api.v1.get_available_formats",
-		args: { report: report_name },
+		args: { report: report_name, company: filters.company || null },
 		callback: (r) => {
 			const formats = r.message;
 

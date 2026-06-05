@@ -9,7 +9,10 @@ const getApplicableTypstBlocks = vi.fn(async (_args: any) => [
 		typst_code: "#text[#doc.customer_name]",
 	},
 ])
-const getCrispyFormat = vi.fn(async (_name: string) => ({
+const getCrispyFormatsForDoctype = vi.fn(async (_doctype: string, _args?: any) => [
+	{ name: "Company Format", doc_type: "Sales Invoice", company: "ACME" },
+])
+const getCrispyFormat = vi.fn(async (_name: string, _context?: any) => ({
 	name: "Block Format",
 	doc_type: "Sales Invoice",
 	company: "ACME",
@@ -38,7 +41,9 @@ const getCrispyFormat = vi.fn(async (_name: string) => ({
 
 vi.mock("../../api/crispy", () => ({
 	getApplicableTypstBlocks: (args: any) => getApplicableTypstBlocks(args),
-	getCrispyFormat: (name: string) => getCrispyFormat(name),
+	getCrispyFormat: (name: string, context?: any) => getCrispyFormat(name, context),
+	getCrispyFormatsForDoctype: (doctype: string, args?: any) =>
+		getCrispyFormatsForDoctype(doctype, args),
 	getLetterheadDoc: (name: string) => getLetterheadDoc(name),
 }))
 
@@ -50,6 +55,7 @@ describe("formatLoader letterhead cache", async () => {
 	beforeEach(() => {
 		getLetterheadDoc.mockClear()
 		getApplicableTypstBlocks.mockClear()
+		getCrispyFormatsForDoctype.mockClear()
 		getCrispyFormat.mockClear()
 		clearLetterheadCache()
 	})
@@ -68,11 +74,21 @@ describe("formatLoader letterhead cache", async () => {
 	})
 
 	it("hydrates Crispy Typst Block references while loading format data", async () => {
-		const data = await loadFormatData("Block Format")
+		const data = await loadFormatData("Block Format", { company: "ACME" })
 		const field = data?.layout?.sections?.[0]?.columns?.[0]?.fields?.[0] as any
 
+		expect(getCrispyFormat).toHaveBeenCalledWith("Block Format", { company: "ACME" })
 		expect(getApplicableTypstBlocks).toHaveBeenCalledWith({ doctype: "Sales Invoice", company: "ACME" })
 		expect(field.crispy_typst_block_name).toBe("Invoice Header")
 		expect(field.crispy_typst_block_code).toContain("#doc.customer_name")
+	})
+
+	it("passes company when loading formats for a DocType", async () => {
+		const { getFormatsForDoctype } = await import("../../utils/formatLoader")
+
+		const rows = await getFormatsForDoctype("Sales Invoice", "ACME")
+
+		expect(rows[0].name).toBe("Company Format")
+		expect(getCrispyFormatsForDoctype).toHaveBeenCalledWith("Sales Invoice", { company: "ACME" })
 	})
 })

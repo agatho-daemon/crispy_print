@@ -111,7 +111,46 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(result["verification_status"], "Valid")
 		self.assertEqual(result["document_uuid"], doc.document_uuid)
 		self.assertEqual(result["company"], self.company)
+		self.assertEqual(result["source_crispy_format"], self.format_name)
+		self.assertEqual(
+			result["source_target_identity"],
+			{
+				"crispy_format_type": "DocType",
+				"source_doctype": "DocType",
+				"source_report": None,
+				"source_contract": None,
+			},
+		)
 		self.assertNotIn("canonical_payload_json", result)
+		self.assertNotIn("source_docname", result)
+
+	def test_verify_issued_document_token_returns_template_metadata(self):
+		template = frappe.get_doc(
+			{
+				"doctype": "Crispy Template",
+				"template_name": "CID Test Template",
+				"source_crispy_format": self.format_name,
+				"company": self.company,
+				"status": "Approved",
+				"is_active": 1,
+			}
+		)
+		template.insert(ignore_permissions=True)
+		doc = self._new_issued_document()
+		doc.crispy_template = template.name
+		doc.crispy_template_version = template.version
+		doc.integrity_status = "Valid"
+		doc.insert(ignore_permissions=True)
+
+		result = verify_issued_document_token(doc.verification_token)
+
+		self.assertEqual(result["verification_status"], "Valid")
+		self.assertEqual(result["crispy_template"], template.name)
+		self.assertEqual(result["crispy_template_name"], "CID Test Template")
+		self.assertEqual(result["crispy_template_version"], template.version)
+		self.assertEqual(result["source_crispy_format"], self.format_name)
+		self.assertEqual(result["source_target_identity"]["crispy_format_type"], "DocType")
+		self.assertEqual(result["source_target_identity"]["source_doctype"], "DocType")
 		self.assertNotIn("source_docname", result)
 
 	def test_superseded_business_status_controls_verification_result(self):

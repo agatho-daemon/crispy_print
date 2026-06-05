@@ -31,6 +31,42 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		restore_defaults(self._saved_defaults)
 		frappe.db.commit()
 
+	def _ensure_company(self, name="Test API Format Company", abbr="TAFC"):
+		if not frappe.db.exists("Company", name):
+			frappe.get_doc(
+				{
+					"doctype": "Company",
+					"company_name": name,
+					"abbr": abbr,
+					"default_currency": "USD",
+				}
+			).insert(ignore_permissions=True)
+		return name
+
+	def _insert_doctype_format(
+		self,
+		name: str,
+		doctype: str = "Sales Invoice",
+		company: str | None = None,
+		is_default: int = 0,
+		layout: dict | None = None,
+	):
+		doc = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": name,
+				"crispy_format_type": "DocType",
+				"doc_type": doctype,
+				"company": company,
+				"module": "Crispy Print",
+				"is_default": is_default,
+				"layout_json": json.dumps(layout or {"sections": []}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
+			}
+		)
+		doc.insert()
+		return doc
+
 	def test_get_crispy_formats_for_doctype(self):
 		"""Test retrieving formats for a specific DocType"""
 		from crispy_print.api.v1 import get_crispy_formats_for_doctype
@@ -70,6 +106,45 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		format_names = [f["name"] for f in formats]
 		self.assertIn("Test API Format 1", format_names)
 		self.assertIn("Test API Format 2", format_names)
+		self.assertIn("company", formats[0])
+		self.assertIn("is_default", formats[0])
+
+	def test_get_crispy_formats_for_doctype_filters_and_orders_by_company(self):
+		from crispy_print.api.v1 import get_crispy_formats_for_doctype
+
+		company = self._ensure_company("Test API Format Company A", "TAFCA")
+		other_company = self._ensure_company("Test API Format Company B", "TAFCB")
+		self._insert_doctype_format("Test API Format Company Exact", company=company)
+		self._insert_doctype_format("Test API Format Company Other", company=other_company)
+		global_format = self._insert_doctype_format("Test API Format Company Global", company=company)
+		frappe.db.set_value("Crispy Format", global_format.name, "company", "", update_modified=False)
+		frappe.db.commit()
+
+		formats = get_crispy_formats_for_doctype("Sales Invoice", company=company)
+
+		names = [row["name"] for row in formats]
+		self.assertIn("Test API Format Company Exact", names)
+		self.assertIn("Test API Format Company Global", names)
+		self.assertNotIn("Test API Format Company Other", names)
+		self.assertLess(
+			names.index("Test API Format Company Exact"),
+			names.index("Test API Format Company Global"),
+		)
+
+	def test_get_crispy_formats_for_doctype_company_filter_excludes_invalid_json(self):
+		from crispy_print.api.v1 import get_crispy_formats_for_doctype
+
+		company = self._ensure_company("Test API Format Company Invalid", "TAFCI")
+		valid = self._insert_doctype_format("Test API Format Company Valid JSON", company=company)
+		invalid = self._insert_doctype_format("Test API Format Company Invalid JSON", company=company)
+		frappe.db.set_value("Crispy Format", invalid.name, "layout_json", "{invalid json")
+		frappe.db.commit()
+
+		formats = get_crispy_formats_for_doctype("Sales Invoice", company=company)
+		names = [row["name"] for row in formats]
+
+		self.assertIn(valid.name, names)
+		self.assertNotIn(invalid.name, names)
 
 	def test_get_crispy_format_hydrates_typst_blocks(self):
 		from crispy_print.api.v1 import get_crispy_format
@@ -293,10 +368,56 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 			result = get_crispy_formats_for_doctype("Sales Invoice")
 
 		self.assertEqual(result, computed_result)
-		mock_compute.assert_called_once_with("Sales Invoice")
-		mock_cache.set_value.assert_called_once_with(
+		mock_compute.assert_called_once_with("Sales Invoice", company=None)
+		mock_cache.set_value.assert_any_call(
 			"crispy_print:formats_for_doctype:Sales Invoice",
 			computed_result,
+			expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS,
+		)
+		mock_cache.set_value.assert_any_call(
+			"crispy_print:formats_for_doctype:Sales Invoice:cache_keys",
+			["crispy_print:formats_for_doctype:Sales Invoice"],
+			expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS,
+		)
+
+	def test_get_crispy_formats_for_doctype_uses_company_cache_key(self):
+		from crispy_print.api.v1 import get_crispy_formats_for_doctype
+		from crispy_print.api.v1.formats import FORMAT_LIST_CACHE_TTL_SECONDS
+
+		computed_result = [
+			{
+				"name": "Computed Company Format",
+				"doc_type": "Sales Invoice",
+				"company": "Acme",
+				"is_default": 1,
+			}
+		]
+		mock_cache = mock.Mock()
+		mock_cache.get_value.return_value = None
+
+		with (
+			mock.patch("crispy_print.api.v1.formats.frappe.cache", return_value=mock_cache),
+			mock.patch(
+				"crispy_print.api.v1.formats._compute_crispy_formats_for_doctype",
+				return_value=computed_result,
+			) as mock_compute,
+		):
+			result = get_crispy_formats_for_doctype("Sales Invoice", company="Acme")
+
+		self.assertEqual(result, computed_result)
+		mock_compute.assert_called_once_with("Sales Invoice", company="Acme")
+		mock_cache.get_value.assert_any_call(
+			"crispy_print:formats_for_doctype:Sales Invoice:company:Acme",
+			expires=True,
+		)
+		mock_cache.set_value.assert_any_call(
+			"crispy_print:formats_for_doctype:Sales Invoice:company:Acme",
+			computed_result,
+			expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS,
+		)
+		mock_cache.set_value.assert_any_call(
+			"crispy_print:formats_for_doctype:Sales Invoice:cache_keys",
+			["crispy_print:formats_for_doctype:Sales Invoice:company:Acme"],
 			expires_in_sec=FORMAT_LIST_CACHE_TTL_SECONDS,
 		)
 
@@ -304,10 +425,16 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		from crispy_print.api.v1.formats import invalidate_crispy_formats_cache_for_doctype
 
 		mock_cache = mock.Mock()
+		mock_cache.get_value.return_value = [
+			"crispy_print:formats_for_doctype:Sales Invoice",
+			"crispy_print:formats_for_doctype:Sales Invoice:company:Acme",
+		]
 		with mock.patch("crispy_print.api.v1.formats.frappe.cache", return_value=mock_cache):
 			invalidate_crispy_formats_cache_for_doctype("Sales Invoice")
 
-		mock_cache.delete_value.assert_called_once_with("crispy_print:formats_for_doctype:Sales Invoice")
+		mock_cache.delete_value.assert_any_call("crispy_print:formats_for_doctype:Sales Invoice")
+		mock_cache.delete_value.assert_any_call("crispy_print:formats_for_doctype:Sales Invoice:company:Acme")
+		mock_cache.delete_value.assert_any_call("crispy_print:formats_for_doctype:Sales Invoice:cache_keys")
 
 	def test_get_default_doctypes(self):
 		"""Test retrieving DocTypes with default formats"""
@@ -387,6 +514,70 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertIn("show_filters", grid)
 		self.assertIn("chart_enabled", grid)
 		self.assertIn("font_family", grid)
+
+	def test_get_available_formats_filters_custom_report_formats_by_company(self):
+		from crispy_print.api.v1 import get_available_formats
+
+		reports = frappe.get_all("Report", pluck="name", limit=1, order_by="name asc")
+		if not reports:
+			self.skipTest("No Report records available")
+		report = reports[0]
+		company = self._ensure_company("Test API Format Report Company A", "TAFRCA")
+		other_company = self._ensure_company("Test API Format Report Company B", "TAFRCB")
+
+		exact = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test API Format Report Exact",
+				"crispy_format_type": "Report",
+				"company": company,
+				"module": "Crispy Print",
+				"is_generic": 0,
+				"layout_json": json.dumps({"sections": []}),
+			}
+		)
+		exact.append("report", {"report": report})
+		exact.insert()
+		other = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test API Format Report Other",
+				"crispy_format_type": "Report",
+				"company": other_company,
+				"module": "Crispy Print",
+				"is_generic": 0,
+				"layout_json": json.dumps({"sections": []}),
+			}
+		)
+		other.append("report", {"report": report})
+		other.insert()
+		global_format = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test API Format Report Global",
+				"crispy_format_type": "Report",
+				"company": company,
+				"module": "Crispy Print",
+				"is_generic": 0,
+				"layout_json": json.dumps({"sections": []}),
+			}
+		)
+		global_format.append("report", {"report": report})
+		global_format.insert()
+		frappe.db.set_value("Crispy Format", global_format.name, "company", "", update_modified=False)
+		frappe.db.commit()
+
+		filtered = get_available_formats(report, company=company)
+		filtered_names = [row["name"] for row in filtered["custom_formats"]]
+		unfiltered = get_available_formats(report)
+		unfiltered_names = [row["name"] for row in unfiltered["custom_formats"]]
+
+		self.assertIn(exact.name, filtered_names)
+		self.assertIn(global_format.name, filtered_names)
+		self.assertNotIn(other.name, filtered_names)
+		self.assertLess(filtered_names.index(exact.name), filtered_names.index(global_format.name))
+		self.assertIn(other.name, unfiltered_names)
+		self.assertEqual(filtered["default_format"], exact.name)
 
 	def test_get_reports_without_custom_html_type_filtering(self):
 		from crispy_print.api.v1.formats import get_reports_without_custom_html
@@ -519,10 +710,12 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 
 	def setUp(self):
 		frappe.set_user("Administrator")
+		frappe.db.delete("Crispy Template", {"template_name": ["like", "Test ImportExport%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test ImportExport%"]})
 		frappe.db.commit()
 
 	def tearDown(self):
+		frappe.db.delete("Crispy Template", {"template_name": ["like", "Test ImportExport%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test ImportExport%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Generic Report - Test ImportExport%"]})
 		frappe.db.commit()
@@ -560,6 +753,32 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self.assertIn("format", payload)
 		self.assertEqual(payload["format"]["name"], "Test ImportExport Export")
 		self.assertNotIn("is_default", payload["format"])
+		self.assertIn("metadata", payload)
+		self.assertIn("company", payload["metadata"])
+		self.assertIn("templates", payload["metadata"])
+
+	def test_export_payload_includes_template_metadata(self):
+		from crispy_print.api.v1 import export_crispy_format
+
+		source = self._insert_format("Test ImportExport Export Template")
+		template = frappe.get_doc(
+			{
+				"doctype": "Crispy Template",
+				"template_name": "Test ImportExport Template",
+				"source_crispy_format": source.name,
+				"company": source.company,
+				"status": "Approved",
+				"is_active": 1,
+			}
+		)
+		template.insert(ignore_permissions=True)
+
+		payload = export_crispy_format(source.name)
+		templates = payload["metadata"]["templates"]
+
+		self.assertEqual(templates[0]["name"], template.name)
+		self.assertEqual(templates[0]["template_name"], "Test ImportExport Template")
+		self.assertEqual(templates[0]["company"], source.company)
 
 	def test_import_new_format_success(self):
 		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
@@ -616,6 +835,29 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self.assertEqual(imported.is_advanced, 1)
 		self.assertEqual(imported.raw_typst, 1)
 
+	def test_import_old_payload_without_metadata_is_compatible(self):
+		from crispy_print.api.v1 import import_crispy_format
+
+		payload = {
+			"schema_version": 1,
+			"exported_at": "2026-02-07T00:00:00",
+			"app": "crispy_print",
+			"format": {
+				"name": "Test ImportExport Old Payload",
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"layout_json": json.dumps({"sections": []}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
+			},
+		}
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		imported = frappe.get_doc("Crispy Format", result["name"])
+
+		self.assertTrue(result["success"])
+		self.assertEqual(imported.name, "Test ImportExport Old Payload")
+		self.assertTrue(imported.company)
+
 	def test_import_conflict_copy_creates_suffix(self):
 		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
 
@@ -662,6 +904,24 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			import_crispy_format('{"schema_version": 1, "format": ', on_conflict="copy")
 
+	def test_import_rejects_unsupported_format_fields_even_with_metadata(self):
+		from crispy_print.api.v1 import import_crispy_format
+
+		payload = {
+			"schema_version": 1,
+			"metadata": {"company": {"name": "Ignored Metadata Company"}},
+			"format": {
+				"name": "Test ImportExport Unsupported Field",
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"layout_json": json.dumps({"sections": []}),
+				"unsupported_field": "nope",
+			},
+		}
+
+		with self.assertRaises(frappe.ValidationError):
+			import_crispy_format(payload, on_conflict="copy")
+
 	def test_missing_reference_warnings_non_blocking(self):
 		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
 
@@ -684,6 +944,24 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self.assertTrue(result["success"])
 		self.assertTrue(frappe.db.exists("Crispy Format", result["name"]))
 		self.assertGreaterEqual(len(result["warnings"]), 3)
+
+	def test_import_metadata_reference_warnings_non_blocking(self):
+		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
+
+		self._insert_format("Test ImportExport Metadata Warn Source")
+		payload = export_crispy_format("Test ImportExport Metadata Warn Source")
+		payload["format"]["name"] = "Test ImportExport Metadata Warn Imported"
+		payload["metadata"] = {
+			"company": {"name": "Missing Metadata Company", "abbr": "MMC"},
+			"templates": [{"name": "Missing Metadata Template"}],
+		}
+
+		result = import_crispy_format(payload, on_conflict="copy")
+
+		self.assertTrue(result["success"])
+		self.assertTrue(frappe.db.exists("Crispy Format", result["name"]))
+		self.assertTrue(any("Missing Metadata Company" in warning for warning in result["warnings"]))
+		self.assertTrue(any("Missing Metadata Template" in warning for warning in result["warnings"]))
 
 	def test_is_default_not_transferred_on_import(self):
 		from crispy_print.api.v1 import export_crispy_format, import_crispy_format

@@ -24,6 +24,7 @@ const logger = getLogger({ module: "FormatLoader" });
 export interface FormatInfo {
   name: string;
   doc_type: string;
+  company?: string | null;
   is_default?: number;
 }
 
@@ -99,9 +100,10 @@ export function parseCrispyFormatDoc(doc: FormatData): {
  */
 export async function getFormatsForDoctype(
   doctype: string,
+  company?: string | null,
 ): Promise<FormatInfo[]> {
   try {
-    return await getCrispyFormatsForDoctype(doctype);
+    return await getCrispyFormatsForDoctype(doctype, { company });
   } catch (error) {
     logger.error("Error fetching formats", error);
     return [];
@@ -113,9 +115,10 @@ export async function getFormatsForDoctype(
  */
 export async function getDefaultFormat(
   doctype: string,
+  company?: string | null,
 ): Promise<string | null> {
   try {
-    return await getDefaultCrispyFormatForDoctype(doctype);
+    return await getDefaultCrispyFormatForDoctype(doctype, { company });
   } catch (error) {
     logger.error("Error fetching default format", error);
     return null;

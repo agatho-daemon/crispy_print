@@ -149,10 +149,13 @@ def get_formatted_doc(doctype: str, name: str, qr_source_mode: str | None = None
 
 
 @frappe.whitelist()
-def get_crispy_formats_for_doctype(doctype: str) -> list[dict[str, str]]:
+def get_crispy_formats_for_doctype(
+	doctype: str,
+	company: str | None = None,
+) -> list[dict[str, str]]:
 	ensure_doctype_read_permission("Crispy Format")
 	enforce_rate_limit("get_crispy_formats_for_doctype", limit=120, window_seconds=60)
-	return _get_crispy_formats_for_doctype(doctype)
+	return _get_crispy_formats_for_doctype(doctype, company=company)
 
 
 @frappe.whitelist()
@@ -218,8 +221,8 @@ def generate_report_pdf(
 
 
 @frappe.whitelist()
-def get_available_formats(report: str) -> JSONDict:
-	return _get_available_formats(report)
+def get_available_formats(report: str, company: str | None = None) -> JSONDict:
+	return _get_available_formats(report, company=company)
 
 
 @frappe.whitelist()
@@ -231,10 +234,12 @@ def get_builder_mode(format_name: str) -> JSONDict:
 def get_crispy_template_publish_preview(
 	source_crispy_format: str,
 	version_bump: str = "minor",
+	company: str | None = None,
 ) -> JSONDict:
 	return _get_crispy_template_publish_preview(
 		source_crispy_format=source_crispy_format,
 		version_bump=version_bump,
+		company=company,
 	)
 
 
@@ -245,6 +250,7 @@ def publish_template_from_crispy_format(
 	make_active: int | bool = 1,
 	effective_from: str | None = None,
 	notes: str | None = None,
+	company: str | None = None,
 ) -> JSONDict:
 	return _publish_template_from_crispy_format(
 		source_crispy_format=source_crispy_format,
@@ -252,6 +258,7 @@ def publish_template_from_crispy_format(
 		make_active=make_active,
 		effective_from=effective_from,
 		notes=notes,
+		company=company,
 	)
 
 

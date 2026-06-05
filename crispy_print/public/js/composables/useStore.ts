@@ -397,10 +397,19 @@ function buildStore() {
     const requestSeq = ++effectiveSettingsRequestSeq;
     const resolved = await resolve_effective_presentation_settings(
       presentation_settings.value,
-      presentation_settings.value?.branding?.company || crispyFormat.value?.company || null,
+      getEffectiveCompany(),
     );
     if (requestSeq !== effectiveSettingsRequestSeq) return;
     effective_presentation_settings.value = resolved;
+  }
+
+  function getEffectiveCompany(): string | null {
+    return (
+      presentation_settings.value?.branding?.company ||
+      crispyFormat.value?.company ||
+      builderContext.value?.company ||
+      null
+    );
   }
 
   async function compileReportPreview(reportName: string, columnConfig: any[] = []) {
@@ -975,7 +984,7 @@ function buildStore() {
       doctype: docType.value,
       query,
       category,
-      company: presentation_settings.value.branding.company || crispyFormat.value?.company || null,
+      company: getEffectiveCompany(),
     });
     typstBlocks.value = rows;
     resolveLayoutTypstBlocks(rows);
@@ -1028,7 +1037,9 @@ function buildStore() {
 
     try {
       // Fetch the Crispy Format document
-      const doc = await getCrispyFormat(formatName);
+      const doc = await getCrispyFormat(formatName, {
+        company: getEffectiveCompany(),
+      });
       crispyFormat.value = doc;
 
       // Fetch builder mode from backend
@@ -1290,6 +1301,7 @@ function buildStore() {
     return await getCrispyTemplatePublishPreview({
       source_crispy_format: crispyFormat.value.name,
       version_bump: versionBump,
+      company: getEffectiveCompany(),
     });
   }
 
@@ -1311,6 +1323,7 @@ function buildStore() {
         make_active: args.make_active,
         effective_from: args.effective_from || null,
         notes: args.notes || null,
+        company: getEffectiveCompany(),
       });
       frappe.show_alert({
         message: __("Crispy Template published: {0}", [result.name]),

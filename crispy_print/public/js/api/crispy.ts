@@ -500,6 +500,7 @@ export async function saveCrispyFormat(
 export async function getCrispyTemplatePublishPreview(args: {
 	source_crispy_format: string
 	version_bump: "minor" | "major"
+	company?: string | null
 }): Promise<CrispyTemplatePublishPreview> {
 	const res = await call<CrispyTemplatePublishPreview>({
 		method: "crispy_print.api.v1.get_crispy_template_publish_preview",
@@ -517,6 +518,7 @@ export async function publishTemplateFromCrispyFormat(args: {
 	make_active: boolean
 	effective_from?: string | null
 	notes?: string | null
+	company?: string | null
 }): Promise<CrispyTemplatePublishResult> {
 	const res = await call<CrispyTemplatePublishResult>({
 		method: "crispy_print.api.v1.publish_template_from_crispy_format",
@@ -561,18 +563,28 @@ export async function getResolvedCrispyTemplateForDocument(args: {
 }
 
 export async function getCrispyFormatsForDoctype(
-	doctype: string
-): Promise<Array<{ name: string; doc_type: string; is_default?: number }>> {
-	const res = await call<Array<{ name: string; doc_type: string; is_default?: number }>>({
+	doctype: string,
+	args: { company?: string | null } = {}
+): Promise<Array<{ name: string; doc_type: string; company?: string | null; is_default?: number }>> {
+	const res = await call<
+		Array<{ name: string; doc_type: string; company?: string | null; is_default?: number }>
+	>({
 		method: "crispy_print.api.v1.get_crispy_formats_for_doctype",
-		args: { doctype },
+		args: { doctype, ...args },
 	})
 	return res.message || []
 }
 
-export async function getDefaultCrispyFormatForDoctype(doctype: string): Promise<string | null> {
+export async function getDefaultCrispyFormatForDoctype(
+	doctype: string,
+	args: { company?: string | null } = {}
+): Promise<string | null> {
+	const filters: Record<string, any> = { doc_type: doctype, is_default: 1 }
+	if (args.company) {
+		filters.company = args.company
+	}
 	const rows = await getList<{ name: string }>("Crispy Format", {
-		filters: { doc_type: doctype, is_default: 1 },
+		filters,
 		fields: ["name"],
 		limit: 1,
 	})

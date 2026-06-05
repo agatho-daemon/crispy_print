@@ -719,6 +719,14 @@ const loadingFonts = ref(false);
 const reportFontFamily = ref("Inter 18pt");
 const reportFontSizePt = ref(10);
 
+function getPreviewCompany(): string | null {
+	return (
+		presentation_settings.value?.branding?.company ||
+		(props.reportFilters?.company ? String(props.reportFilters.company) : "") ||
+		null
+	);
+}
+
 // Settings state (single in-memory copy; PP does not persist)
 const presentation_settings = ref<PresentationSettings>(
 	merge_presentation_settings(default_presentation_settings, {})
@@ -885,7 +893,7 @@ async function initializeReportSettings() {
 		reportLoading.value = true;
 		const response = await frappe.call({
 			method: "crispy_print.api.v1.get_available_formats",
-			args: { report: reportName.value },
+			args: { report: reportName.value, company: getPreviewCompany() },
 		});
 		const { options, defaultValue } = buildReportFormatOptions(response?.message);
 		reportFormats.value = options;
@@ -1154,7 +1162,7 @@ async function initializeData() {
 		loading.value = true;
 
 		// Load available formats for this doctype
-		const formats = await getFormatsForDoctype(props.doctype);
+		const formats = await getFormatsForDoctype(props.doctype, getPreviewCompany());
 
 		// Check is_default flag for each format
 		const formatsWithDefault = await Promise.all(
@@ -1201,8 +1209,10 @@ async function loadFormatSettings(formatName: string) {
 		loading.value = true;
 
 		const data = await loadFormatData(formatName, {
+			company: getPreviewCompany(),
 			source_doctype: props.doctype || null,
 			source_docname: props.docname || null,
+			report_filters: props.reportFilters || null,
 		});
 
 		if (!data) {

@@ -4,7 +4,6 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.query_builder import DocType
 
 
 class CrispyFormat(Document):
@@ -181,7 +180,7 @@ class CrispyFormat(Document):
 			self.clear_other_defaults()
 
 			if old_default:
-				message = f"Replaced {frappe.bold(old_default)} as default for {frappe.bold(self.doc_type)}"
+				message = f"Replaced {frappe.bold(old_default)} as default for {frappe.bold(self._get_default_scope_label())}"
 
 				frappe.msgprint(message, indicator="blue")
 
@@ -192,34 +191,86 @@ class CrispyFormat(Document):
 		self._invalidate_doctype_formats_cache()
 
 	def get_current_default(self):
-		"""Get the current default format name for this DocType"""
-		CrispyFormat = DocType("Crispy Format")
-
-		result = (
-			frappe.qb.from_(CrispyFormat)
-			.select(CrispyFormat.name)
-			.where(CrispyFormat.doc_type == self.doc_type)
-			.where(CrispyFormat.name != self.name)
-			.where(CrispyFormat.is_default == 1)
-			.run(as_dict=True)
-		)
-
-		return result[0].name if result else None
+		"""Get the current default format name for this scoped target."""
+		defaults = self._get_scoped_default_names()
+		return defaults[0] if defaults else None
 
 	def clear_other_defaults(self):
-		"""Clear is_default on other formats for this DocType"""
-		# Get all other default formats for this DocType
-		CrispyFormat = DocType("Crispy Format")
+		"""Clear is_default on other formats for this scoped target."""
+		for name in self._get_scoped_default_names():
+			frappe.db.set_value("Crispy Format", name, "is_default", 0, update_modified=False)
 
-		other_defaults = (
-			frappe.qb.from_(CrispyFormat)
-			.select(CrispyFormat.name)
-			.where(CrispyFormat.doc_type == self.doc_type)
-			.where(CrispyFormat.name != self.name)
-			.where(CrispyFormat.is_default == 1)
-			.run(as_dict=True)
+	def _get_scoped_default_names(self) -> list[str]:
+		company = self._clean_scope_value(self.company)
+		rows = frappe.get_all(
+			"Crispy Format",
+			filters={
+				"crispy_format_type": self.crispy_format_type,
+				"name": ["!=", self.name],
+				"is_default": 1,
+			},
+			fields=[
+				"name",
+				"company",
+				"doc_type",
+				"contract",
+				"is_generic",
+				"generic_report_type",
+			],
+			order_by="name asc",
 		)
+		rows = [row for row in rows if self._clean_scope_value(row.get("company")) == company]
 
-		# Clear is_default using frappe.db.set_value for proper transaction handling
-		for record in other_defaults:
-			frappe.db.set_value("Crispy Format", record.name, "is_default", 0, update_modified=False)
+		if self.crispy_format_type == "DocType":
+			return [row.name for row in rows if row.get("doc_type") == self.doc_type]
+		if self.crispy_format_type == "Contract":
+			return [row.name for row in rows if row.get("contract") == self.contract]
+		if self.crispy_format_type == "Report":
+			return self._get_scoped_report_default_names(rows)
+		return []
+
+	def _get_scoped_report_default_names(self, rows: list[dict]) -> list[str]:
+		if self.is_generic:
+			return [
+				row.name
+				for row in rows
+				if row.get("is_generic") and row.get("generic_report_type") == self.generic_report_type
+			]
+
+		report_names = {row.get("report") for row in self._get_linked_reports()}
+		if not report_names:
+			return []
+
+		default_names = []
+		for row in rows:
+			if row.get("is_generic"):
+				continue
+			candidate_reports = set(
+				frappe.get_all(
+					"Crispy Format Reports",
+					filters={
+						"parent": row.name,
+						"parenttype": "Crispy Format",
+						"disabled": 0,
+					},
+					pluck="report",
+				)
+			)
+			if report_names.intersection(candidate_reports):
+				default_names.append(row.name)
+		return default_names
+
+	def _get_default_scope_label(self) -> str:
+		if self.crispy_format_type == "DocType":
+			return self.doc_type or self.crispy_format_type
+		if self.crispy_format_type == "Contract":
+			return self.contract or self.crispy_format_type
+		if self.crispy_format_type == "Report" and self.is_generic:
+			return self.generic_report_type or self.crispy_format_type
+		if self.crispy_format_type == "Report":
+			reports = [row.get("report") for row in self._get_linked_reports()]
+			return ", ".join(reports) or self.crispy_format_type
+		return self.crispy_format_type or _("Crispy Format")
+
+	def _clean_scope_value(self, value) -> str:
+		return (value or "").strip()

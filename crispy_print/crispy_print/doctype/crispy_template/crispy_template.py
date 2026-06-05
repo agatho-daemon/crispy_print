@@ -349,11 +349,14 @@ def publish_crispy_template(
 	make_active: bool = True,
 	effective_from: str | None = None,
 	notes: str | None = None,
+	company: str | None = None,
 ) -> dict:
 	if not source_crispy_format:
 		frappe.throw(_("Source Crispy Format is required."))
 	source = frappe.get_doc("Crispy Format", source_crispy_format)
 	source.check_permission("read")
+	_validate_publish_source_company(source)
+	_validate_expected_source_company(source, company)
 
 	doc = frappe.get_doc(
 		{
@@ -386,11 +389,17 @@ def publish_crispy_template(
 	}
 
 
-def get_publish_preview(source_crispy_format: str, version_bump: str = "minor") -> dict:
+def get_publish_preview(
+	source_crispy_format: str,
+	version_bump: str = "minor",
+	company: str | None = None,
+) -> dict:
 	if not source_crispy_format:
 		frappe.throw(_("Source Crispy Format is required."))
 	source = frappe.get_doc("Crispy Format", source_crispy_format)
 	source.check_permission("read")
+	_validate_publish_source_company(source)
+	_validate_expected_source_company(source, company)
 
 	template = frappe.new_doc("Crispy Template")
 	template.template_name = get_template_key_for_format(source)
@@ -417,6 +426,17 @@ def get_publish_preview(source_crispy_format: str, version_bump: str = "minor") 
 		"next_version": next_version,
 		"version_bump": template.get_version_bump(version_bump),
 	}
+
+
+def _validate_expected_source_company(source, company: str | None = None) -> None:
+	expected_company = _clean(company)
+	if expected_company and _clean(_get_source_company(source)) != expected_company:
+		frappe.throw(_("Source Crispy Format does not belong to company {0}.").format(company))
+
+
+def _validate_publish_source_company(source) -> None:
+	if not _clean(_get_source_company(source)):
+		frappe.throw(_("Source Crispy Format company is required to publish a Crispy Template."))
 
 
 def resolve_active_crispy_template(

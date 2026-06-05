@@ -19,8 +19,9 @@ JSONDict = dict[str, Any]
 def get_crispy_template_publish_preview(
 	source_crispy_format: str,
 	version_bump: str = "minor",
+	company: str | None = None,
 ) -> JSONDict:
-	return get_publish_preview(source_crispy_format, version_bump=version_bump)
+	return get_publish_preview(source_crispy_format, version_bump=version_bump, company=company)
 
 
 def get_active_crispy_templates_for_document(
@@ -114,6 +115,7 @@ def publish_template_from_crispy_format(
 	make_active: int | bool = 1,
 	effective_from: str | None = None,
 	notes: str | None = None,
+	company: str | None = None,
 ) -> JSONDict:
 	if isinstance(make_active, str):
 		make_active_value = make_active.strip().lower() in {"1", "true", "yes"}
@@ -125,6 +127,7 @@ def publish_template_from_crispy_format(
 		make_active=make_active_value,
 		effective_from=effective_from,
 		notes=notes,
+		company=company,
 	)
 
 

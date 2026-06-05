@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("../../api/crispy", () => ({
+	getApplicableTypstBlocks: vi.fn(async () => []),
 	getCrispyFormat: vi.fn(),
+	getCrispyTemplatePublishPreview: vi.fn(async () => ({ template_name: "Template", next_version: "1.0" })),
+	publishTemplateFromCrispyFormat: vi.fn(async () => ({ name: "Template v1" })),
 	saveCrispyFormat: vi.fn(),
 }))
 
@@ -51,5 +54,37 @@ describe("useStore actions", () => {
 
 		expect(store.layout.value?.sections?.length).toBe(0)
 		expect(store.dirty.value).toBe(true)
+	})
+
+	it("passes effective company to template publish APIs", async () => {
+		const { useStore } = await import("../../composables/useStore")
+		const {
+			getCrispyTemplatePublishPreview,
+			publishTemplateFromCrispyFormat,
+		} = await import("../../api/crispy")
+
+		const store = useStore()
+		store.crispyFormat.value = { name: "Format-1", doc_type: "Invoice", company: "ACME" } as any
+		store.presentation_settings.value = {
+			page: { size: "A4", orientation: "portrait", margins: { top: 25, bottom: 20, left: 20, right: 20 } },
+			branding: { mode: "none", company: "ACME", letterhead: "", letterhead_image: "", logo: { company: "ACME", image: "", size: 25, dx: 0, dy: 0 } },
+		} as any
+
+		await store.getTemplatePublishPreview("minor")
+		await store.publishTemplate({ version_bump: "minor", make_active: true })
+
+		expect(getCrispyTemplatePublishPreview).toHaveBeenCalledWith({
+			source_crispy_format: "Format-1",
+			version_bump: "minor",
+			company: "ACME",
+		})
+		expect(publishTemplateFromCrispyFormat).toHaveBeenCalledWith({
+			source_crispy_format: "Format-1",
+			version_bump: "minor",
+			make_active: true,
+			effective_from: null,
+			notes: null,
+			company: "ACME",
+		})
 	})
 })

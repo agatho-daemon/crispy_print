@@ -170,12 +170,16 @@ class CrispyIssuedDocument(Document):
 
 	def as_verification_summary(self) -> dict:
 		"""Return a minimal non-sensitive verification payload."""
+		template_metadata = self._get_template_metadata()
 		return {
 			"name": self.name,
 			"document_uuid": self.document_uuid,
 			"company": self.company,
+			"source_crispy_format": self.crispy_format or template_metadata.get("source_crispy_format"),
 			"crispy_template": self.crispy_template,
+			"crispy_template_name": template_metadata.get("template_name"),
 			"crispy_template_version": self.crispy_template_version,
+			"source_target_identity": self._get_source_target_identity(template_metadata),
 			"issuance_status": self.issuance_status,
 			"business_status": self.business_status,
 			"integrity_status": self.integrity_status,
@@ -184,6 +188,54 @@ class CrispyIssuedDocument(Document):
 			"revoked_at": self.revoked_at,
 			"superseded_by": self.superseded_by,
 			"amended_from": self.amended_from,
+		}
+
+	def _get_template_metadata(self) -> dict:
+		if not self.crispy_template:
+			return {}
+		values = frappe.db.get_value(
+			"Crispy Template",
+			self.crispy_template,
+			[
+				"template_name",
+				"source_crispy_format",
+				"crispy_format_type",
+				"source_doctype",
+				"source_report",
+				"source_contract",
+			],
+			as_dict=True,
+		)
+		return dict(values or {})
+
+	def _get_source_target_identity(self, template_metadata: dict | None = None) -> dict:
+		template_metadata = template_metadata or {}
+		if template_metadata:
+			return {
+				"crispy_format_type": template_metadata.get("crispy_format_type"),
+				"source_doctype": template_metadata.get("source_doctype"),
+				"source_report": template_metadata.get("source_report"),
+				"source_contract": template_metadata.get("source_contract"),
+			}
+		if self.crispy_format:
+			values = frappe.db.get_value(
+				"Crispy Format",
+				self.crispy_format,
+				["crispy_format_type", "doc_type", "contract"],
+				as_dict=True,
+			)
+			if values:
+				return {
+					"crispy_format_type": values.get("crispy_format_type"),
+					"source_doctype": values.get("doc_type"),
+					"source_report": None,
+					"source_contract": values.get("contract"),
+				}
+		return {
+			"crispy_format_type": None,
+			"source_doctype": self.source_doctype,
+			"source_report": None,
+			"source_contract": None,
 		}
 
 	def get_artifacts_by_type(self, artifact_type: str) -> list:
