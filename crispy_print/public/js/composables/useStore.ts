@@ -21,7 +21,11 @@ import {
   getCrispyFormat,
   getApplicableTypstBlocks,
   getDefaultReportBuilderConfig as getServerReportBuilderConfig,
+  getCrispyTemplatePublishPreview,
+  publishTemplateFromCrispyFormat,
   saveCrispyFormat,
+  type CrispyTemplatePublishPreview,
+  type CrispyTemplatePublishResult,
   type CrispyTypstBlockOption,
 } from "../api/crispy";
 import { withDoctype } from "../api/frappe";
@@ -56,6 +60,7 @@ interface CrispyFormat {
   crispy_format_type?: string;
   report?: string;
   contract?: string;
+  company?: string;
   is_default?: number;
   is_generic?: number;
   is_advanced?: number;
@@ -390,7 +395,10 @@ function buildStore() {
 
   async function refreshEffectivePresentationSettings() {
     const requestSeq = ++effectiveSettingsRequestSeq;
-    const resolved = await resolve_effective_presentation_settings(presentation_settings.value);
+    const resolved = await resolve_effective_presentation_settings(
+      presentation_settings.value,
+      presentation_settings.value?.branding?.company || crispyFormat.value?.company || null,
+    );
     if (requestSeq !== effectiveSettingsRequestSeq) return;
     effective_presentation_settings.value = resolved;
   }
@@ -967,6 +975,7 @@ function buildStore() {
       doctype: docType.value,
       query,
       category,
+      company: presentation_settings.value.branding.company || crispyFormat.value?.company || null,
     });
     typstBlocks.value = rows;
     resolveLayoutTypstBlocks(rows);
@@ -1138,12 +1147,18 @@ function buildStore() {
           ? layoutStore.getDefaultLayout()
           : persistedLayout || layoutStore.getDefaultLayout();
 
+      // Load page settings (already merged with defaults by parser)
+      presentation_settings.value = merge_presentation_settings(default_presentation_settings, parsed.presentation_settings || {});
+      if (doc.company && !presentation_settings.value.branding.company) {
+        presentation_settings.value.branding.company = doc.company;
+      }
+      if (presentation_settings.value.branding.company) {
+        presentation_settings.value.branding.logo.company =
+          presentation_settings.value.branding.company;
+      }
       if (doc.doc_type) {
         await loadApplicableTypstBlocks();
       }
-
-      // Load page settings (already merged with defaults by parser)
-      presentation_settings.value = merge_presentation_settings(default_presentation_settings, parsed.presentation_settings || {});
       await refreshEffectivePresentationSettings();
       let serverDefaults: Record<string, any> = {};
       if (formatType === "Report") {
@@ -1231,6 +1246,7 @@ function buildStore() {
       const updateData = {
         layout_json: layoutJson,
         typst_code: typstCode.value,
+        company: presentation_settings.value.branding.company || null,
         presentation_settings: JSON.stringify(presentation_settings.value),
         raw_typst: isReportMode.value
           ? reportBuilderMode.value === "advanced"
@@ -1262,6 +1278,52 @@ function buildStore() {
         message: __("Failed to save changes"),
         indicator: "red",
       });
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function getTemplatePublishPreview(
+    versionBump: "minor" | "major",
+  ): Promise<CrispyTemplatePublishPreview | null> {
+    if (!crispyFormat.value?.name) return null;
+    return await getCrispyTemplatePublishPreview({
+      source_crispy_format: crispyFormat.value.name,
+      version_bump: versionBump,
+    });
+  }
+
+  async function publishTemplate(args: {
+    version_bump: "minor" | "major";
+    make_active: boolean;
+    effective_from?: string | null;
+    notes?: string | null;
+  }): Promise<CrispyTemplatePublishResult | null> {
+    if (!crispyFormat.value?.name) return null;
+    if (dirty.value) {
+      await saveChanges();
+    }
+    loading.value = true;
+    try {
+      const result = await publishTemplateFromCrispyFormat({
+        source_crispy_format: crispyFormat.value.name,
+        version_bump: args.version_bump,
+        make_active: args.make_active,
+        effective_from: args.effective_from || null,
+        notes: args.notes || null,
+      });
+      frappe.show_alert({
+        message: __("Crispy Template published: {0}", [result.name]),
+        indicator: "green",
+      });
+      return result;
+    } catch (error) {
+      logger.error("Failed to publish Crispy Template", error);
+      frappe.show_alert({
+        message: __("Failed to publish Crispy Template"),
+        indicator: "red",
+      });
+      throw error;
     } finally {
       loading.value = false;
     }
@@ -1319,6 +1381,14 @@ function buildStore() {
       refreshEffectivePresentationSettings();
     },
     { deep: true, immediate: true },
+  );
+
+  watch(
+    () => presentation_settings.value.branding.company,
+    async () => {
+      if (loading.value || initializing.value || !docType.value) return;
+      await loadApplicableTypstBlocks();
+    },
   );
 
   watch(
@@ -1407,6 +1477,8 @@ function buildStore() {
     // Methods
     fetch,
     saveChanges,
+    getTemplatePublishPreview,
+    publishTemplate,
     loadApplicableTypstBlocks,
     resolveLayoutTypstBlocks,
     markDirty,

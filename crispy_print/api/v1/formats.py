@@ -12,6 +12,7 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	resolve_layout_json_typst_blocks,
 )
 
+from .company_context import resolve_effective_company
 from .security import ensure_doctype_read_permission
 
 EXPORT_SCHEMA_VERSION = 1
@@ -22,6 +23,7 @@ MAX_IMPORT_FIELD_BYTES = {
 	"doc_type": 140,
 	"report": 140,
 	"contract": 140,
+	"company": 140,
 	"generic_report_type": 140,
 	"raw_typst": 256 * 1024,
 	"layout_json": 512 * 1024,
@@ -31,6 +33,7 @@ MAX_IMPORT_FIELD_BYTES = {
 	"typst_preamble": 256 * 1024,
 	"typst_code": 512 * 1024,
 	"default_print_language": 140,
+	"pdf_standard": 40,
 }
 EXPORT_FIELDS = [
 	"name",
@@ -38,6 +41,7 @@ EXPORT_FIELDS = [
 	"doc_type",
 	"report",
 	"contract",
+	"company",
 	"is_generic",
 	"is_advanced",
 	"generic_report_type",
@@ -49,6 +53,7 @@ EXPORT_FIELDS = [
 	"typst_preamble",
 	"typst_code",
 	"default_print_language",
+	"pdf_standard",
 ]
 FORMAT_LIST_CACHE_TTL_SECONDS = 5 * 60
 
@@ -87,7 +92,13 @@ def get_crispy_formats_for_doctype(doctype):
 	return formats
 
 
-def get_crispy_format(name: str) -> dict:
+def get_crispy_format(
+	name: str,
+	company: str | None = None,
+	source_doctype: str | None = None,
+	source_docname: str | None = None,
+	report_filters: dict | str | None = None,
+) -> dict:
 	"""Return a Crispy Format payload with server-side transient render hydration."""
 	if not name:
 		frappe.throw(_("Format name is required"))
@@ -96,12 +107,23 @@ def get_crispy_format(name: str) -> dict:
 	doc.check_permission("read")
 	data = {field: doc.get(field) for field in EXPORT_FIELDS}
 	data["is_default"] = doc.get("is_default")
+	source_doc = None
+	if source_doctype and source_docname:
+		source_doc = frappe.get_doc(source_doctype, source_docname)
+		source_doc.check_permission("read")
+	effective_company = resolve_effective_company(
+		source_doc=source_doc,
+		report_filters=report_filters,
+		explicit_company=company or data.get("company"),
+	)
+	data["effective_company"] = effective_company
 
 	if data.get("layout_json"):
 		try:
 			data["layout_json"] = resolve_layout_json_typst_blocks(
 				data.get("layout_json"),
 				data.get("doc_type") or "",
+				company=effective_company,
 			)
 		except json.JSONDecodeError:
 			# Let the existing frontend parser surface invalid layout_json consistently.
@@ -616,6 +638,7 @@ def _collect_reference_warnings(doc) -> list[str]:
 
 	link_checks = [
 		("doc_type", "DocType"),
+		("company", "Company"),
 		("report", "Report"),
 		("generic_report_type", "Crispy Generic Report"),
 		("default_print_language", "Language"),

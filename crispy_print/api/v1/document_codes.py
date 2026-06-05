@@ -8,6 +8,7 @@ from typing import Any
 import frappe
 from frappe import _
 
+from .company_context import resolve_effective_company
 from .fiscal_credentials import get_fiscal_credential_doc
 
 PROFILE_DOCTYPE = "Crispy Document Code Profile"
@@ -67,8 +68,7 @@ def resolve_document_code_for_doc(
 	company: str | None = None,
 	profile_name: str | None = None,
 ) -> JSONDict:
-	doc_dict = doc.as_dict()
-	company = company or _infer_company(doc_dict)
+	company = resolve_effective_company(source_doc=doc, explicit_company=company)
 	if not company:
 		frappe.throw(_("Unable to resolve company for document code generation."))
 

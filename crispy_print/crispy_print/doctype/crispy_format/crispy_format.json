@@ -2,10 +2,11 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "prompt",
- "creation": "2026-05-31 07:22:26.137646",
+ "creation": "2026-06-03 07:13:11.166951",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "company",
   "crispy_format_type",
   "raw_typst",
   "is_generic",
@@ -17,7 +18,7 @@
   "generic_report_type",
   "module",
   "is_default",
-  "section_break_bjol",
+  "output_settings_section",
   "default_print_language",
   "pdf_standard",
   "typst_code_section",
@@ -30,6 +31,16 @@
   "layout_json"
  ],
  "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
   {
    "default": "DocType",
    "fieldname": "crispy_format_type",
@@ -69,8 +80,9 @@
    "mandatory_depends_on": "eval:doc.crispy_format_type == \"Contract\""
   },
   {
-   "fieldname": "section_break_bjol",
-   "fieldtype": "Section Break"
+   "fieldname": "output_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Output Settings"
   },
   {
    "fieldname": "default_print_language",
@@ -188,7 +200,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-31 10:23:24.530040",
+ "modified": "2026-06-03 07:21:07.147442",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Format",

@@ -10,6 +10,10 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 	resolve_effective_presentation_settings,
 )
 
+from .company_context import (
+	apply_effective_company_to_presentation_settings,
+	resolve_effective_company,
+)
 from .compile import compile_typst
 from .formats import get_custom_report_formats
 from .security import enforce_rate_limit
@@ -219,7 +223,19 @@ def generate_report_pdf(
 			format_presentation_settings = json.loads(format_doc.get("presentation_settings") or "{}")
 		except json.JSONDecodeError:
 			format_presentation_settings = {}
-	format_presentation_settings = resolve_effective_presentation_settings(format_presentation_settings)
+	effective_company = resolve_effective_company(
+		report_filters=filters,
+		explicit_company=_get_presentation_settings_company(format_presentation_settings)
+		or format_doc.get("company"),
+	)
+	format_presentation_settings = resolve_effective_presentation_settings(
+		format_presentation_settings,
+		company=effective_company,
+	)
+	format_presentation_settings = apply_effective_company_to_presentation_settings(
+		format_presentation_settings,
+		effective_company,
+	)
 	format_presentation_settings.setdefault("page", {})
 	format_presentation_settings["page"]["orientation"] = orientation.lower() if orientation else "landscape"
 	report_presentation_settings = _normalize_report_presentation_settings(format_presentation_settings)
@@ -350,14 +366,24 @@ def get_report_typst_source(
 				presentation_settings_dict = None
 		elif isinstance(presentation_settings, dict):
 			presentation_settings_dict = presentation_settings
-	presentation_settings_dict = _normalize_report_presentation_settings(
-		resolve_effective_presentation_settings(presentation_settings_dict),
-		(orientation or "landscape").lower(),
-	)
 
 	# Get format document
 	format_doc = frappe.get_doc("Crispy Format", format_name)
 	format_doc.check_permission("read")
+	effective_company = resolve_effective_company(
+		report_filters=filters,
+		explicit_company=_get_presentation_settings_company(presentation_settings_dict)
+		or getattr(format_doc, "company", None),
+		allow_global_fallback=bool(preview_data_dict),
+	)
+	presentation_settings_dict = _normalize_report_presentation_settings(
+		resolve_effective_presentation_settings(presentation_settings_dict, company=effective_company),
+		(orientation or "landscape").lower(),
+	)
+	presentation_settings_dict = apply_effective_company_to_presentation_settings(
+		presentation_settings_dict,
+		effective_company,
+	)
 	format_doc_for_render = copy(format_doc)
 	if isinstance(typst_code_override, str) and typst_code_override.strip():
 		# Raw Typst overrides are trusted editor input. They are concatenated
@@ -485,6 +511,10 @@ def get_report_typst_source(
 	logo_image_path = (branding_settings.get("logo") or {}).get("image") or ""
 	letterhead_filename = Path(letterhead_image_path).name if letterhead_image_path else None
 	logo_filename = Path(logo_image_path).name if logo_image_path else None
+	for branding_asset in (letterhead_image_path, logo_image_path):
+		if branding_asset:
+			asset_files.append(branding_asset)
+	asset_files = list(dict.fromkeys(asset_files))
 	presentation_settings_block = _build_report_presentation_settings_block(
 		presentation_settings_dict,
 		letterhead_filename,
@@ -735,6 +765,18 @@ def _fill_default_report_filters(report: str, filters: dict) -> dict:
 				filled[fieldname] = default_fy
 
 	return filled
+
+
+def _get_presentation_settings_company(presentation_settings: dict | None) -> str | None:
+	if not isinstance(presentation_settings, dict):
+		return None
+	branding = presentation_settings.get("branding") or {}
+	if not isinstance(branding, dict):
+		return None
+	logo = branding.get("logo") or {}
+	company = branding.get("company") or (logo.get("company") if isinstance(logo, dict) else None)
+	company = str(company or "").strip()
+	return company or None
 
 
 def _prepare_typst_report_data(
@@ -1366,10 +1408,10 @@ def _build_report_presentation_settings_block(
 	lines.append("  header: header_block,")
 	lines.append("  footer: footer_block,")
 
-	if branding_mode == "letterhead" and letterhead_filename:
+	if branding_mode in {"letterhead", "logo_letterhead"} and letterhead_filename:
 		lines.append(f'  background: image("{letterhead_filename}", width: 100%)')
 
-	if branding_mode == "logo" and logo_image:
+	if branding_mode in {"logo", "logo_letterhead"} and logo_image:
 		lines.append("  foreground: [")
 		lines.append(
 			f'    #place(top + left, dx: {logo_dx}mm, dy: {logo_dy}mm, image("{logo_image}", width: {logo_size}mm))'

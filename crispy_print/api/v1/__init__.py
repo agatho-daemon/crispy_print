@@ -28,9 +28,16 @@ from .formats import get_default_doctypes as _get_default_doctypes
 from .formats import get_default_report_builder_config as _get_default_report_builder_config
 from .formats import get_reports_without_custom_html as _get_reports_without_custom_html
 from .formats import import_crispy_format as _import_crispy_format
+from .issued_documents import add_issued_document_trust_event as _add_issued_document_trust_event
+from .issued_documents import cancel_issued_document as _cancel_issued_document
 from .issued_documents import create_issued_document_snapshot as _create_issued_document_snapshot
 from .issued_documents import get_issued_document as _get_issued_document
 from .issued_documents import get_issued_document_by_token as _get_issued_document_by_token
+from .issued_documents import (
+	record_issued_document_integrity_check as _record_issued_document_integrity_check,
+)
+from .issued_documents import revoke_issued_document as _revoke_issued_document
+from .issued_documents import supersede_issued_document as _supersede_issued_document
 from .issued_documents import verify_issued_document_token as _verify_issued_document_token
 from .parity import run_report_template_parity_check as _run_report_template_parity_check
 from .qr_regulatory_profiles import get_qr_regulatory_profile as _get_qr_regulatory_profile
@@ -40,6 +47,12 @@ from .reports import generate_report_pdf as _generate_report_pdf
 from .reports import get_report_typst_source as _get_report_typst_source
 from .reports import get_sample_report_data as _get_sample_report_data
 from .security import enforce_rate_limit, ensure_doctype_read_permission
+from .templates import (
+	get_active_crispy_templates_for_document as _get_active_crispy_templates_for_document,
+)
+from .templates import get_crispy_template_publish_preview as _get_crispy_template_publish_preview
+from .templates import get_resolved_crispy_template_for_document as _get_resolved_crispy_template_for_document
+from .templates import publish_template_from_crispy_format as _publish_template_from_crispy_format
 
 JSONDict = dict[str, Any]
 
@@ -66,11 +79,17 @@ def get_applicable_typst_blocks(
 	doctype: str,
 	query: str | None = None,
 	category: str | None = None,
+	company: str | None = None,
 ) -> list[JSONDict]:
 	if not frappe.has_permission("Crispy Typst Block", "read"):
 		frappe.throw(_("Not permitted to read Crispy Typst Blocks."), frappe.PermissionError)
 
-	rows = _get_applicable_typst_blocks(doctype, enabled_only=True, category=category)
+	rows = _get_applicable_typst_blocks(
+		doctype,
+		enabled_only=True,
+		category=category,
+		company=company,
+	)
 	search = (query or "").strip().lower()
 	if not search:
 		return rows
@@ -137,8 +156,20 @@ def get_crispy_formats_for_doctype(doctype: str) -> list[dict[str, str]]:
 
 
 @frappe.whitelist()
-def get_crispy_format(name: str) -> JSONDict:
-	return _get_crispy_format(name)
+def get_crispy_format(
+	name: str,
+	company: str | None = None,
+	source_doctype: str | None = None,
+	source_docname: str | None = None,
+	report_filters: JSONDict | str | None = None,
+) -> JSONDict:
+	return _get_crispy_format(
+		name,
+		company=company,
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		report_filters=report_filters,
+	)
 
 
 @frappe.whitelist()
@@ -194,6 +225,64 @@ def get_available_formats(report: str) -> JSONDict:
 @frappe.whitelist()
 def get_builder_mode(format_name: str) -> JSONDict:
 	return _get_builder_mode(format_name)
+
+
+@frappe.whitelist()
+def get_crispy_template_publish_preview(
+	source_crispy_format: str,
+	version_bump: str = "minor",
+) -> JSONDict:
+	return _get_crispy_template_publish_preview(
+		source_crispy_format=source_crispy_format,
+		version_bump=version_bump,
+	)
+
+
+@frappe.whitelist()
+def publish_template_from_crispy_format(
+	source_crispy_format: str,
+	version_bump: str = "minor",
+	make_active: int | bool = 1,
+	effective_from: str | None = None,
+	notes: str | None = None,
+) -> JSONDict:
+	return _publish_template_from_crispy_format(
+		source_crispy_format=source_crispy_format,
+		version_bump=version_bump,
+		make_active=make_active,
+		effective_from=effective_from,
+		notes=notes,
+	)
+
+
+@frappe.whitelist()
+def get_active_crispy_templates_for_document(
+	source_doctype: str,
+	source_docname: str | None = None,
+	company: str | None = None,
+) -> list[JSONDict]:
+	return _get_active_crispy_templates_for_document(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		company=company,
+	)
+
+
+@frappe.whitelist()
+def get_resolved_crispy_template_for_document(
+	source_doctype: str,
+	source_docname: str | None = None,
+	company: str | None = None,
+	template: str | None = None,
+	template_name: str | None = None,
+) -> JSONDict:
+	return _get_resolved_crispy_template_for_document(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		company=company,
+		template=template,
+		template_name=template_name,
+	)
 
 
 @frappe.whitelist()
@@ -400,14 +489,58 @@ def verify_issued_document_token(verification_token: str) -> JSONDict:
 def create_issued_document_snapshot(
 	source_doctype: str,
 	source_docname: str,
-	crispy_format: str,
+	crispy_format: str | None = None,
+	crispy_template: str | None = None,
 ) -> JSONDict:
 	enforce_rate_limit("create_issued_document_snapshot", limit=20, window_seconds=60)
 	return _create_issued_document_snapshot(
 		source_doctype=source_doctype,
 		source_docname=source_docname,
 		crispy_format=crispy_format,
+		crispy_template=crispy_template,
 	)
+
+
+@frappe.whitelist()
+def revoke_issued_document(name: str, reason: str | None = None) -> JSONDict:
+	enforce_rate_limit("revoke_issued_document", limit=20, window_seconds=60)
+	return _revoke_issued_document(name, reason=reason)
+
+
+@frappe.whitelist()
+def cancel_issued_document(name: str, reason: str | None = None) -> JSONDict:
+	enforce_rate_limit("cancel_issued_document", limit=20, window_seconds=60)
+	return _cancel_issued_document(name, reason=reason)
+
+
+@frappe.whitelist()
+def supersede_issued_document(
+	name: str,
+	superseded_by: str,
+	reason: str | None = None,
+) -> JSONDict:
+	enforce_rate_limit("supersede_issued_document", limit=20, window_seconds=60)
+	return _supersede_issued_document(name, superseded_by=superseded_by, reason=reason)
+
+
+@frappe.whitelist()
+def record_issued_document_integrity_check(
+	name: str,
+	integrity_status: str,
+	message: str | None = None,
+) -> JSONDict:
+	enforce_rate_limit("record_issued_document_integrity_check", limit=30, window_seconds=60)
+	return _record_issued_document_integrity_check(
+		name,
+		integrity_status=integrity_status,
+		message=message,
+	)
+
+
+@frappe.whitelist()
+def add_issued_document_trust_event(name: str, event: JSONDict | None = None, **values: Any) -> JSONDict:
+	enforce_rate_limit("add_issued_document_trust_event", limit=60, window_seconds=60)
+	return _add_issued_document_trust_event(name, event=event, **values)
 
 
 @frappe.whitelist()
@@ -427,6 +560,8 @@ def run_report_template_parity_check(
 
 
 __all__ = [
+	"add_issued_document_trust_event",
+	"cancel_issued_document",
 	"check_import_conflicts",
 	"compile_report_preview",
 	"compile_typst",
@@ -434,6 +569,7 @@ __all__ = [
 	"export_crispy_format",
 	"generate_document_code",
 	"generate_report_pdf",
+	"get_active_crispy_templates_for_document",
 	"get_applicable_typst_blocks",
 	"get_available_formats",
 	"get_branding_profile_presentation_settings",
@@ -451,10 +587,14 @@ __all__ = [
 	"get_qr_regulatory_profiles",
 	"get_report_typst_source",
 	"get_reports_without_custom_html",
+	"get_resolved_crispy_template_for_document",
 	"get_sample_report_data",
 	"get_typst_local_fonts",
 	"import_crispy_format",
+	"record_issued_document_integrity_check",
 	"resolve_document_code",
+	"revoke_issued_document",
 	"run_report_template_parity_check",
+	"supersede_issued_document",
 	"verify_issued_document_token",
 ]

@@ -156,7 +156,8 @@ export function createReportStore(options: CreateReportStoreOptions) {
       ).toLowerCase();
       const branding_mode =
         configured_branding_mode === "letterhead" ||
-        configured_branding_mode === "logo"
+        configured_branding_mode === "logo" ||
+        configured_branding_mode === "logo_letterhead"
           ? configured_branding_mode
           : presentation_settings_payload.branding?.letterhead
             ? "letterhead"
@@ -164,9 +165,11 @@ export function createReportStore(options: CreateReportStoreOptions) {
               ? "logo"
               : "none";
       const letterhead_image =
-        branding_mode === "letterhead" ? letterhead.value?.image || null : null;
+        branding_mode === "letterhead" || branding_mode === "logo_letterhead"
+          ? letterhead.value?.image || null
+          : null;
       const logo_image =
-        branding_mode === "logo"
+        branding_mode === "logo" || branding_mode === "logo_letterhead"
           ? presentation_settings_payload.branding?.logo?.image || null
           : null;
       const branding_asset_files = [letterhead_image, logo_image].filter(

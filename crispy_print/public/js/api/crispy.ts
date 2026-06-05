@@ -10,6 +10,8 @@ export interface CrispyFormatDoc {
 	crispy_format_type?: string
 	report?: string
 	contract?: string
+	company?: string
+	effective_company?: string | null
 	is_default?: number
 	is_generic?: number
 	is_advanced?: number
@@ -161,11 +163,66 @@ export interface CrispyTypstBlockOption {
 	name: string
 	block_key: string
 	block_name: string
+	company?: string | null
 	enabled?: number
 	category?: string
 	description?: string
 	typst_code: string
 	version?: string
+}
+
+export interface CrispyTemplatePublishPreview {
+	template_name: string
+	template_id: string
+	company?: string | null
+	company_abbr?: string | null
+	source_branding_profile?: string | null
+	current_version?: string | null
+	next_version: string
+	version_bump: "minor" | "major"
+}
+
+export interface CrispyTemplatePublishResult {
+	name: string
+	template_name: string
+	company?: string | null
+	company_abbr?: string | null
+	version: string
+	status: string
+	is_active: boolean
+	source_branding_profile?: string | null
+}
+
+export interface ActiveCrispyTemplateOption {
+	name: string
+	template_name: string
+	company?: string | null
+	company_abbr?: string | null
+	version: string
+	effective_from?: string | null
+	effective_to?: string | null
+	source_branding_profile?: string | null
+	scope: "Company" | "Global"
+}
+
+export interface ResolvedCrispyTemplate extends ActiveCrispyTemplateOption {
+	template_id: string
+	effective_company?: string | null
+	resolution_reason: "explicit" | "company" | "global"
+	source_crispy_format?: string | null
+	crispy_format_type: "DocType" | "Report" | "Contract"
+	source_doctype?: string | null
+	source_report?: string | null
+	source_contract?: string | null
+	pdf_standard?: string | null
+	raw_typst?: boolean
+	layout_json?: string | null
+	presentation_settings?: string | null
+	doc_header?: string | null
+	doc_footer?: string | null
+	typst_preamble?: string | null
+	typst_code?: string | null
+	snapshot_hash?: string | null
 }
 
 export interface CrispyBrandingProfileOption {
@@ -404,10 +461,18 @@ export async function compileReportPreview(args: Record<string, any>): Promise<T
 	return res.message
 }
 
-export async function getCrispyFormat(name: string): Promise<CrispyFormatDoc> {
+export async function getCrispyFormat(
+	name: string,
+	context: {
+		company?: string | null
+		source_doctype?: string | null
+		source_docname?: string | null
+		report_filters?: Record<string, any> | string | null
+	} = {}
+): Promise<CrispyFormatDoc> {
 	const res = await call<CrispyFormatDoc>({
 		method: "crispy_print.api.v1.get_crispy_format",
-		args: { name },
+		args: { name, ...context },
 	})
 	if (!res.message) {
 		throw new Error("Missing Crispy Format")
@@ -426,9 +491,73 @@ export async function saveCrispyFormat(
 		typst_preamble?: string
 		raw_typst?: number
 		is_advanced?: number
+		company?: string | null
 	}
 ): Promise<void> {
 	await setValue("Crispy Format", name, values)
+}
+
+export async function getCrispyTemplatePublishPreview(args: {
+	source_crispy_format: string
+	version_bump: "minor" | "major"
+}): Promise<CrispyTemplatePublishPreview> {
+	const res = await call<CrispyTemplatePublishPreview>({
+		method: "crispy_print.api.v1.get_crispy_template_publish_preview",
+		args,
+	})
+	if (!res.message) {
+		throw new Error("Missing Crispy Template publish preview")
+	}
+	return res.message
+}
+
+export async function publishTemplateFromCrispyFormat(args: {
+	source_crispy_format: string
+	version_bump: "minor" | "major"
+	make_active: boolean
+	effective_from?: string | null
+	notes?: string | null
+}): Promise<CrispyTemplatePublishResult> {
+	const res = await call<CrispyTemplatePublishResult>({
+		method: "crispy_print.api.v1.publish_template_from_crispy_format",
+		args: {
+			...args,
+			make_active: args.make_active ? 1 : 0,
+		},
+	})
+	if (!res.message) {
+		throw new Error("Missing Crispy Template publish result")
+	}
+	return res.message
+}
+
+export async function getActiveCrispyTemplatesForDocument(args: {
+	source_doctype: string
+	source_docname?: string | null
+	company?: string | null
+}): Promise<ActiveCrispyTemplateOption[]> {
+	const res = await call<ActiveCrispyTemplateOption[]>({
+		method: "crispy_print.api.v1.get_active_crispy_templates_for_document",
+		args,
+	})
+	return res.message || []
+}
+
+export async function getResolvedCrispyTemplateForDocument(args: {
+	source_doctype: string
+	source_docname?: string | null
+	company?: string | null
+	template?: string | null
+	template_name?: string | null
+}): Promise<ResolvedCrispyTemplate> {
+	const res = await call<ResolvedCrispyTemplate>({
+		method: "crispy_print.api.v1.get_resolved_crispy_template_for_document",
+		args,
+	})
+	if (!res.message) {
+		throw new Error("Missing resolved Crispy Template")
+	}
+	return res.message
 }
 
 export async function getCrispyFormatsForDoctype(
@@ -480,6 +609,7 @@ export async function getApplicableTypstBlocks(args: {
 	doctype: string
 	query?: string | null
 	category?: string | null
+	company?: string | null
 }): Promise<CrispyTypstBlockOption[]> {
 	const res = await call<CrispyTypstBlockOption[]>({
 		method: "crispy_print.api.v1.get_applicable_typst_blocks",

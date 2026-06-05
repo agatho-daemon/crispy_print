@@ -14,9 +14,13 @@ const inflightBrandingProfileRequests = new Map<
 
 export async function resolve_effective_presentation_settings(
   presentation_settings: PresentationSettings,
+  effective_company?: string | null,
 ): Promise<PresentationSettings> {
   const source = presentation_settings?.source || "";
   const profile = String(presentation_settings?.branding?.profile || "").trim();
+  const expectedCompany = String(
+    effective_company || presentation_settings?.branding?.company || "",
+  ).trim();
 
   if (source !== "branding_profile" || !profile) {
     return merge_presentation_settings(default_presentation_settings, presentation_settings || {});
@@ -31,6 +35,24 @@ export async function resolve_effective_presentation_settings(
     const profile_settings = await profile_settings_request.finally(() => {
       inflightBrandingProfileRequests.delete(profile);
     });
+    const profileCompany = String(
+      profile_settings?.branding?.company ||
+        profile_settings?.branding?.logo?.company ||
+        "",
+    ).trim();
+    if (expectedCompany && profileCompany && profileCompany !== expectedCompany) {
+      logger.warn("Crispy Branding Profile company does not match render company; using format settings", {
+        profile,
+        profileCompany,
+        expectedCompany,
+      });
+      const fallback = merge_presentation_settings(default_presentation_settings, presentation_settings || {});
+      fallback.source = "custom";
+      fallback.branding.profile = "";
+      fallback.branding.company = expectedCompany;
+      fallback.branding.logo.company = expectedCompany;
+      return fallback;
+    }
 
     const effective = merge_presentation_settings(
       default_presentation_settings,
@@ -38,6 +60,10 @@ export async function resolve_effective_presentation_settings(
     );
     effective.source = "branding_profile";
     effective.branding.profile = profile;
+    if (expectedCompany) {
+      effective.branding.company = expectedCompany;
+      effective.branding.logo.company = expectedCompany;
+    }
     effective.language = presentation_settings.language || effective.language;
     if (presentation_settings.report) {
       effective.report = presentation_settings.report;

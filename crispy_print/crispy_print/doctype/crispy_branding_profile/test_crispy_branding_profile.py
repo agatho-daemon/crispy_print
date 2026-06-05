@@ -139,6 +139,19 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(settings["branding"]["letterhead_image"], "/files/cbp-letterhead.png")
 		self.assertEqual(settings["branding"]["logo"]["image"], "/files/cbp-logo.png")
 
+	def test_company_logo_source_exports_company_logo_image(self):
+		frappe.db.set_value("Company", self.company, "company_logo", "/files/company-logo.png")
+		doc = self._insert_profile(
+			profile_name="CBP Test Company Logo",
+			branding_mode="Logo Only",
+			branding_logo_source="Company logo",
+		)
+
+		settings = get_branding_profile_presentation_settings(doc.name)
+
+		self.assertEqual(settings["branding"]["logo"]["company"], self.company)
+		self.assertEqual(settings["branding"]["logo"]["image"], "/files/company-logo.png")
+
 	def test_resolves_effective_presentation_settings_from_selected_profile(self):
 		doc = self._insert_profile(
 			profile_name="CBP Test Effective",

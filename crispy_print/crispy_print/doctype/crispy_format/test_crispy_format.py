@@ -2,6 +2,7 @@
 # See license.txt
 
 import json
+from unittest import mock
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -58,8 +59,20 @@ class TestCrispyFormat(FrappeTestCase):
 		doc.is_default = 1
 		doc.save()
 
+	def _get_default_company(self) -> str | None:
+		return (
+			frappe.defaults.get_user_default("Company")
+			or frappe.defaults.get_user_default("company")
+			or frappe.defaults.get_global_default("company")
+			or frappe.db.get_single_value("Global Defaults", "default_company")
+		)
+
 	def test_create_crispy_format(self):
 		"""Test creating a new Crispy Format document"""
+		default_company = self._get_default_company()
+		if not default_company:
+			self.skipTest("No default Company configured")
+
 		doc = frappe.get_doc(
 			{
 				"doctype": "Crispy Format",
@@ -74,10 +87,44 @@ class TestCrispyFormat(FrappeTestCase):
 		doc.insert()
 
 		self.assertEqual(doc.doc_type, "Sales Invoice")
+		self.assertEqual(doc.company, default_company)
 		self.assertFalse(doc.is_default)
 
 		# Clean up
 		doc.delete()
+
+	def test_company_is_required_when_no_default_can_be_resolved(self):
+		"""Test server validation blocks company-less formats without a configured default."""
+		doc = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test Format No Company",
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"module": "Crispy Print",
+				"layout_json": json.dumps({"sections": []}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
+			}
+		)
+		doc.company = None
+		original_get_single_value = frappe.db.get_single_value
+
+		def get_single_value_without_default_company(doctype, fieldname, *args, **kwargs):
+			if doctype == "Global Defaults" and fieldname == "default_company":
+				return None
+			return original_get_single_value(doctype, fieldname, *args, **kwargs)
+
+		with (
+			mock.patch("frappe.defaults.get_user_default", return_value=None),
+			mock.patch("frappe.defaults.get_global_default", return_value=None),
+			mock.patch.object(
+				frappe.db,
+				"get_single_value",
+				side_effect=get_single_value_without_default_company,
+			),
+			self.assertRaises(frappe.ValidationError),
+		):
+			doc.validate()
 
 	def test_insert_can_preserve_default_when_not_duplicate(self):
 		"""Test inserting a default format does not clear is_default unless it is a copy."""

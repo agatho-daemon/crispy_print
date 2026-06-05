@@ -8,6 +8,20 @@ from frappe.query_builder import DocType
 
 
 class CrispyFormat(Document):
+	def _resolve_default_company(self) -> str | None:
+		return (
+			frappe.defaults.get_user_default("Company")
+			or frappe.defaults.get_user_default("company")
+			or frappe.defaults.get_global_default("company")
+			or frappe.db.get_single_value("Global Defaults", "default_company")
+		)
+
+	def _set_default_company_if_missing(self) -> None:
+		if self.company:
+			return
+
+		self.company = self._resolve_default_company()
+
 	def _invalidate_doctype_formats_cache(self):
 		from crispy_print.api.v1.formats import invalidate_crispy_formats_cache_for_doctype
 
@@ -108,6 +122,10 @@ class CrispyFormat(Document):
 
 	def validate(self):
 		"""Validate field combinations and keep report raw mode aligned with is_advanced."""
+		self._set_default_company_if_missing()
+		if not self.company:
+			frappe.throw(_("Company is required for Crispy Format. Set a Default Company first."))
+
 		# Validate Report mode fields
 		if self.crispy_format_type == "Report":
 			linked_reports = self._get_linked_reports()

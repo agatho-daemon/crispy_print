@@ -4,12 +4,19 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from crispy_print.api.v1.issued_documents import verify_issued_document_token
+from crispy_print.api.v1.issued_documents import (
+	cancel_issued_document,
+	record_issued_document_integrity_check,
+	revoke_issued_document,
+	supersede_issued_document,
+	verify_issued_document_token,
+)
 
 
 class TestCrispyIssuedDocument(FrappeTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
+		self.company = self._ensure_company()
 		self.format_name = self._ensure_format()
 
 	def tearDown(self):
@@ -24,6 +31,74 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(doc.issuance_status, "Draft")
 		self.assertEqual(doc.business_status, "Active")
 		self.assertEqual(doc.integrity_status, "Pending")
+		self.assertEqual(doc.company, self.company)
+
+	def test_derives_company_on_insert(self):
+		other_company = self._ensure_company(name="CID Other Company", abbr="CIDO")
+		doc = self._new_issued_document()
+		doc.company = other_company
+
+		doc.insert(ignore_permissions=True)
+
+		self.assertEqual(doc.company, self.company)
+
+	def test_direct_status_edit_is_blocked_after_insert(self):
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+		doc.business_status = "Cancelled"
+
+		self.assertRaises(frappe.ValidationError, doc.save)
+
+	def test_revoke_action_updates_status_and_trust_event(self):
+		doc = self._new_issued_document()
+		doc.integrity_status = "Valid"
+		doc.insert(ignore_permissions=True)
+
+		result = revoke_issued_document(doc.name, reason="Duplicate issue")
+		doc.reload()
+
+		self.assertEqual(result["business_status"], "Revoked")
+		self.assertEqual(doc.business_status, "Revoked")
+		self.assertEqual(doc.issuance_status, "Revoked")
+		self.assertTrue(doc.revoked)
+		self.assertTrue(doc.revoked_at)
+		self.assertEqual(doc.trust_events[-1].event_type, "Revocation Check")
+
+	def test_cancel_action_updates_status_and_trust_event(self):
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+
+		cancel_issued_document(doc.name, reason="Customer cancelled")
+		doc.reload()
+
+		self.assertEqual(doc.business_status, "Cancelled")
+		self.assertEqual(doc.issuance_status, "Revoked")
+		self.assertTrue(doc.revoked)
+		self.assertEqual(doc.trust_events[-1].event_type, "Other")
+
+	def test_supersede_action_links_replacement(self):
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+		replacement = self._new_issued_document()
+		replacement.insert(ignore_permissions=True)
+
+		supersede_issued_document(doc.name, superseded_by=replacement.name, reason="Reissued")
+		doc.reload()
+
+		self.assertEqual(doc.business_status, "Superseded")
+		self.assertEqual(doc.issuance_status, "Superseded")
+		self.assertEqual(doc.superseded_by, replacement.name)
+
+	def test_integrity_check_action_updates_status_and_trust_event(self):
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+
+		record_issued_document_integrity_check(doc.name, integrity_status="Tampered", message="Hash mismatch")
+		doc.reload()
+
+		self.assertEqual(doc.integrity_status, "Tampered")
+		self.assertEqual(doc.trust_events[-1].event_type, "Validation")
+		self.assertEqual(doc.trust_events[-1].validation_status, "Invalid")
 
 	def test_verify_issued_document_token_returns_minimal_status(self):
 		doc = self._new_issued_document()
@@ -35,6 +110,7 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertTrue(result["exists"])
 		self.assertEqual(result["verification_status"], "Valid")
 		self.assertEqual(result["document_uuid"], doc.document_uuid)
+		self.assertEqual(result["company"], self.company)
 		self.assertNotIn("canonical_payload_json", result)
 		self.assertNotIn("source_docname", result)
 
@@ -123,15 +199,33 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 	def _ensure_format(self):
 		name = "CID Test Format"
 		if frappe.db.exists("Crispy Format", name):
+			frappe.db.set_value("Crispy Format", name, "company", self.company)
 			return name
 		frappe.get_doc(
 			{
 				"doctype": "Crispy Format",
 				"name": name,
+				"company": self.company,
 				"crispy_format_type": "DocType",
 				"doc_type": "DocType",
 				"module": "Crispy Print",
 				"layout_json": '{"sections":[]}',
 			}
 		).insert(ignore_permissions=True)
+		return name
+
+	def _ensure_company(self, name="CID Test Company", abbr="CIDT"):
+		existing = frappe.get_all("Company", filters={"abbr": abbr}, pluck="name", limit=1)
+		if existing:
+			return existing[0]
+
+		if not frappe.db.exists("Company", name):
+			frappe.get_doc(
+				{
+					"doctype": "Company",
+					"company_name": name,
+					"abbr": abbr,
+					"default_currency": "KWD",
+				}
+			).insert(ignore_permissions=True)
 		return name

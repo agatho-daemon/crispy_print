@@ -1,4 +1,4 @@
-export type BrandingMode = "letterhead" | "logo" | "none"
+export type BrandingMode = "letterhead" | "logo" | "logo_letterhead" | "none"
 
 export function resolveBrandingMode(
 	presentation_settings?: Record<string, any> | null,
@@ -6,7 +6,7 @@ export function resolveBrandingMode(
 ): BrandingMode {
 	const branding = presentation_settings?.branding || {}
 	const raw = String(branding.mode || "").toLowerCase()
-	if (raw === "letterhead" || raw === "logo" || raw === "none") {
+	if (raw === "letterhead" || raw === "logo" || raw === "logo_letterhead" || raw === "none") {
 		return raw
 	}
 	if (branding.logo?.image || branding.logo?.company) {
@@ -26,15 +26,32 @@ export function resolveBrandingImage(
 	letterheadData?: Record<string, any> | null
 ): string | null {
 	const mode = resolveBrandingMode(presentation_settings, letterheadData)
-	if (mode === "logo") {
+	if (mode === "logo" || mode === "logo_letterhead") {
 		const image = presentation_settings?.branding?.logo?.image
 		return image ? String(image) : null
 	}
 	if (mode === "letterhead") {
-		const image = (letterheadData as any)?.image
+		const image = (letterheadData as any)?.image || presentation_settings?.branding?.letterhead_image
 		return image ? String(image) : null
 	}
 	return null
+}
+
+export function resolveBrandingImages(
+	presentation_settings?: Record<string, any> | null,
+	letterheadData?: Record<string, any> | null
+): string[] {
+	const mode = resolveBrandingMode(presentation_settings, letterheadData)
+	const images: string[] = []
+	if (mode === "letterhead" || mode === "logo_letterhead") {
+		const image = (letterheadData as any)?.image || presentation_settings?.branding?.letterhead_image
+		if (image) images.push(String(image))
+	}
+	if (mode === "logo" || mode === "logo_letterhead") {
+		const image = presentation_settings?.branding?.logo?.image
+		if (image) images.push(String(image))
+	}
+	return images
 }
 
 export function getLetterheadFilename(
@@ -42,8 +59,8 @@ export function getLetterheadFilename(
 	letterheadData?: Record<string, any> | null
 ): string {
 	const mode = resolveBrandingMode(presentation_settings, letterheadData)
-	if (mode !== "letterhead") return ""
-	const image = (letterheadData as any)?.image
+	if (mode !== "letterhead" && mode !== "logo_letterhead") return ""
+	const image = (letterheadData as any)?.image || presentation_settings?.branding?.letterhead_image
 	if (!image) return ""
 	return String(image).split("/").pop() || ""
 }
@@ -60,7 +77,7 @@ export function buildForegroundPlacements(options: {
 	const presentation_settings = options.presentation_settings || {}
 	const lines: string[] = []
 
-	if (branding_mode === "logo") {
+	if (branding_mode === "logo" || branding_mode === "logo_letterhead") {
 		const logo_settings = presentation_settings.branding?.logo || {}
 		const logoImage = String(logo_settings.image || "")
 		const logoFilename = logoImage ? logoImage.split("/").pop() : ""

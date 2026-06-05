@@ -77,6 +77,7 @@ export interface PagePresentationSettings {
 
 export interface BrandingPresentationSettings {
   profile?: string;
+  company?: string;
   mode: "letterhead" | "logo" | "logo_letterhead" | "none";
   letterhead: string;
   letterhead_image?: string;
@@ -153,6 +154,7 @@ export const default_presentation_settings: PresentationSettings = {
   },
   branding: {
     profile: "",
+    company: "",
     mode: "letterhead",
     letterhead: "",
     letterhead_image: "",

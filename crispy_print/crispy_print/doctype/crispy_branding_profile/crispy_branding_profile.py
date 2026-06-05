@@ -268,7 +268,7 @@ class CrispyBrandingProfile(Document):
 				"letterhead_image": self.get_letterhead_image(),
 				"logo": {
 					"company": self.company if self.branding_logo_source == "Company logo" else "",
-					"image": self.branding_logo_upload if self.branding_logo_source == "Upload image" else "",
+					"image": self.get_logo_image(),
 					"size": flt(self.branding_logo_width_mm),
 					"dx": flt(self.branding_logo_offset_x_mm),
 					"dy": flt(self.branding_logo_offset_y_mm),
@@ -337,6 +337,15 @@ class CrispyBrandingProfile(Document):
 			return self.branding_letterhead_upload or ""
 		return ""
 
+	def get_logo_image(self) -> str:
+		if not self.uses_logo():
+			return ""
+		if self.branding_logo_source == "Upload image":
+			return self.branding_logo_upload or ""
+		if self.branding_logo_source == "Company logo" and self.company:
+			return frappe.db.get_value("Company", self.company, "company_logo") or ""
+		return ""
+
 	def get_typography_style(self, prefix: str) -> dict:
 		return {
 			"fontFamily": self.get(f"{prefix}_font_family") or "Inter 18pt",
@@ -374,7 +383,10 @@ def get_branding_profile_presentation_settings(name: str) -> dict:
 	return get_branding_profile(name).to_presentation_settings()
 
 
-def resolve_effective_presentation_settings(presentation_settings: dict | None) -> dict:
+def resolve_effective_presentation_settings(
+	presentation_settings: dict | None,
+	company: str | None = None,
+) -> dict:
 	"""Resolve selected Crispy Branding Profile into effective presentation settings."""
 	settings = dict(presentation_settings or {})
 	branding = dict(settings.get("branding") or {})
@@ -383,7 +395,16 @@ def resolve_effective_presentation_settings(presentation_settings: dict | None) 
 	if settings.get("source") != "branding_profile" or not profile_name:
 		return settings
 
-	profile_settings = get_branding_profile_presentation_settings(profile_name)
+	profile = get_branding_profile(profile_name)
+	if company and profile.company and profile.company != company:
+		frappe.throw(
+			_("Branding Profile {0} does not belong to company {1}.").format(
+				frappe.bold(profile_name),
+				frappe.bold(company),
+			)
+		)
+
+	profile_settings = profile.to_presentation_settings()
 	profile_branding = dict(profile_settings.get("branding") or {})
 	profile_branding["profile"] = profile_name
 

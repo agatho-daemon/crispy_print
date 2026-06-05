@@ -3,7 +3,7 @@
  "allow_rename": 1,
  "autoname": "field:profile_name",
  "creation": "2026-05-10 09:44:41.131736",
- "description": "Reusable QR payload standard/profile for country-specific or authority-specific QR codes.",
+ "description": "Defines how a regulatory QR code should be generated for a tax authority or country. This includes the required document fields, encoding format, signing/hash rules, and verification settings. Company-specific certificates, keys, and API credentials are stored separately in Fiscal Credentials.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -145,7 +145,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-11 08:08:36.717736",
+ "modified": "2026-06-03 16:01:25.644264",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy QR Regulatory Profile",

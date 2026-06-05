@@ -33,6 +33,7 @@ export interface FormatData {
   crispy_format_type?: string;
   report?: string;
   contract?: string;
+  company?: string;
   layout_json?: string;
   presentation_settings?: string;
   doc_header?: string;
@@ -42,6 +43,14 @@ export interface FormatData {
   typst_code?: string;
   raw_typst?: number;
   is_default?: number;
+  effective_company?: string | null;
+}
+
+export interface FormatLoadContext {
+  company?: string | null;
+  source_doctype?: string | null;
+  source_docname?: string | null;
+  report_filters?: Record<string, any> | string | null;
 }
 
 export function parseCrispyFormatDoc(doc: FormatData): {
@@ -116,15 +125,29 @@ export async function getDefaultFormat(
 /**
  * Load complete format data including layout and page settings
  */
-export async function loadFormatData(formatName: string): Promise<{
+export async function loadFormatData(formatName: string, context: FormatLoadContext = {}): Promise<{
   layout: any;
   presentation_settings: PresentationSettings;
   formatDoc: FormatData;
 } | null> {
   try {
-    const doc = await getCrispyFormat(formatName);
+    const doc = await getCrispyFormat(formatName, context);
     const parsed = parseCrispyFormatDoc(doc);
-    await hydrateLayoutTypstBlocks(parsed.layout, doc.doc_type || "");
+    const effectiveCompany =
+      doc.effective_company ||
+      context.company ||
+      doc.company ||
+      parsed.presentation_settings.branding.company ||
+      "";
+    if (effectiveCompany) {
+      parsed.presentation_settings.branding.company = effectiveCompany;
+      parsed.presentation_settings.branding.logo.company = effectiveCompany;
+    }
+    await hydrateLayoutTypstBlocks(
+      parsed.layout,
+      doc.doc_type || "",
+      effectiveCompany,
+    );
     return {
       layout: parsed.layout,
       presentation_settings: parsed.presentation_settings,
@@ -139,6 +162,7 @@ export async function loadFormatData(formatName: string): Promise<{
 async function hydrateLayoutTypstBlocks(
   layout: CrispyLayout | null,
   doctype: string,
+  company = "",
 ): Promise<void> {
   if (!layout || !doctype) return;
   const fields = getTypstBlockLayoutFields(layout);
@@ -147,7 +171,7 @@ async function hydrateLayoutTypstBlocks(
   try {
     const api = await import("../api/crispy");
     if (typeof api.getApplicableTypstBlocks !== "function") return;
-    const blocks = await api.getApplicableTypstBlocks({ doctype });
+    const blocks = await api.getApplicableTypstBlocks({ doctype, company });
     const byKey = new Map(blocks.map((block) => [block.block_key, block]));
     fields.forEach((field: any) => {
       const key = String(field.crispy_typst_block || "").trim();

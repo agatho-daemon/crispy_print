@@ -208,6 +208,64 @@
 						</div>
 					</div>
 
+					<div v-if="!isReportMode" class="settings-pane__section-card card">
+						<div class="settings-pane__section-content card-body">
+							<div class="form-group">
+								<label class="control-label">{{ __("Active Template") }}</label>
+								<select
+									v-model="selectedTemplate"
+									class="form-control"
+									:disabled="templatesLoading || activeTemplates.length === 0"
+								>
+									<option v-if="templatesLoading" value="" disabled>
+										{{ __("Loading templates...") }}
+									</option>
+									<option
+										v-else-if="activeTemplates.length === 0"
+										value=""
+										disabled
+									>
+										{{ __("No active templates") }}
+									</option>
+									<option
+										v-for="template in activeTemplates"
+										:key="template.name"
+										:value="template.name"
+									>
+										{{ template.template_name }} v{{ template.version }} -
+										{{ __(template.scope) }}
+									</option>
+								</select>
+								<p v-if="selectedTemplateInfo" class="help-block text-muted small">
+									{{
+										selectedTemplateInfo.company
+											? __("Company template for {0}", [
+													selectedTemplateInfo.company_abbr ||
+														selectedTemplateInfo.company,
+											  ])
+											: __("Global fallback template")
+									}}
+								</p>
+								<label class="settings-pane__toggle">
+									<input
+										v-model="useActiveTemplate"
+										type="checkbox"
+										:disabled="
+											activeTemplates.length === 0 || activeTemplateLoading
+										"
+									/>
+									<span>{{ __("Use Active Template") }}</span>
+								</label>
+								<p
+									v-if="activeTemplateLoading"
+									class="help-block text-muted small"
+								>
+									{{ __("Loading template snapshot...") }}
+								</p>
+							</div>
+						</div>
+					</div>
+
 					<div class="settings-pane__section-card card">
 						<button
 							type="button"
@@ -534,7 +592,7 @@
 
 		<!-- Right Pane: Preview -->
 		<PreviewRenderer
-			:format-name="isReportMode ? null : selectedFormat"
+			:format-name="previewFormatName"
 			:layout="layout"
 			:doc-header="docHeader"
 			:doc-footer="docFooter"
@@ -558,6 +616,7 @@ import { ref, onBeforeUnmount, onMounted, watch, computed } from "vue";
 import {
 	getFormatsForDoctype,
 	loadFormatData,
+	parseCrispyFormatDoc,
 	resolveLetterheadDoc,
 	type FormatInfo,
 } from "../utils/formatLoader";
@@ -583,7 +642,14 @@ import {
 import { getLogger } from "../logger";
 import { fetchTypstFonts, formatPt, parseSize } from "../utils/typstTypography";
 import { __ } from "../utils/i18n";
-import { compileReportPreview, compileTypst } from "../api/crispy";
+import {
+	compileReportPreview,
+	compileTypst,
+	getActiveCrispyTemplatesForDocument,
+	getResolvedCrispyTemplateForDocument,
+	type ActiveCrispyTemplateOption,
+	type ResolvedCrispyTemplate,
+} from "../api/crispy";
 
 interface Props {
 	doctype?: string;
@@ -611,6 +677,12 @@ const {
 	fetchCompanies,
 } = useBrandingData();
 const selectedFormat = ref<string>("");
+const activeTemplates = ref<ActiveCrispyTemplateOption[]>([]);
+const selectedTemplate = ref("");
+const templatesLoading = ref(false);
+const useActiveTemplate = ref(false);
+const activeTemplateLoading = ref(false);
+const activeTemplateSnapshot = ref<ResolvedCrispyTemplate | null>(null);
 const isReportMode = computed(() => props.source === "report");
 const reportName = computed(() => props.report || "");
 const reportFormats = ref<ReportFormatOption[]>([]);
@@ -662,6 +734,17 @@ const isBrandingProfileDriven = computed(
 const activeBrandingProfile = computed(
 	() => presentation_settings.value.branding?.profile || __("selected profile")
 );
+const selectedTemplateInfo = computed(
+	() =>
+		activeTemplates.value.find((template) => template.name === selectedTemplate.value) || null
+);
+const previewFormatName = computed(() => {
+	if (isReportMode.value) return null;
+	if (useActiveTemplate.value && activeTemplateSnapshot.value?.source_crispy_format) {
+		return activeTemplateSnapshot.value.source_crispy_format;
+	}
+	return selectedFormat.value;
+});
 
 const layout = ref<any>(null);
 const loading = ref(true);
@@ -688,10 +771,23 @@ const qrEnabledEffective = computed(() => {
 });
 const logo_settings = computed(() => ensure_logo_settings(effective_presentation_settings.value));
 
+function usesLogoBranding(mode: string): boolean {
+	return mode === "logo" || mode === "logo_letterhead";
+}
+
+function usesLetterheadBranding(mode: string): boolean {
+	return mode === "letterhead" || mode === "logo_letterhead";
+}
+
 const branding_mode = computed<string>({
 	get: () => {
 		const mode = effective_presentation_settings.value.branding.mode;
-		if (mode === "letterhead" || mode === "logo" || mode === "none") {
+		if (
+			mode === "letterhead" ||
+			mode === "logo" ||
+			mode === "logo_letterhead" ||
+			mode === "none"
+		) {
 			return mode;
 		}
 		if (
@@ -733,7 +829,10 @@ let effectiveSettingsRequestSeq = 0;
 
 async function refreshEffectivePresentationSettings() {
 	const requestSeq = ++effectiveSettingsRequestSeq;
-	const resolved = await resolve_effective_presentation_settings(presentation_settings.value);
+	const resolved = await resolve_effective_presentation_settings(
+		presentation_settings.value,
+		presentation_settings.value?.branding?.company || null
+	);
 	if (requestSeq !== effectiveSettingsRequestSeq) return;
 	effective_presentation_settings.value = resolved;
 }
@@ -936,10 +1035,12 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 			? normalizeReportChartSvg(reportChartSvg.value || "")
 			: "";
 		const active_branding_mode = branding_mode.value;
-		const letterhead_image =
-			active_branding_mode === "letterhead" ? letterheadDoc.value?.image || null : null;
-		const logoImage =
-			active_branding_mode === "logo" ? logo_settings.value.image || null : null;
+		const letterhead_image = usesLetterheadBranding(active_branding_mode)
+			? letterheadDoc.value?.image || null
+			: null;
+		const logoImage = usesLogoBranding(active_branding_mode)
+			? logo_settings.value.image || null
+			: null;
 		const brandingAssetFiles = [letterhead_image, logoImage].filter((value): value is string =>
 			Boolean(value)
 		);
@@ -1078,8 +1179,10 @@ async function initializeData() {
 		if (formatToLoad) {
 			selectedFormat.value = formatToLoad;
 			await loadFormatSettings(formatToLoad);
+			await loadActiveTemplates();
 		} else {
 			logger.warn("No formats available for doctype", props.doctype);
+			await loadActiveTemplates();
 			loading.value = false;
 		}
 	} catch (error) {
@@ -1097,7 +1200,10 @@ async function loadFormatSettings(formatName: string) {
 	try {
 		loading.value = true;
 
-		const data = await loadFormatData(formatName);
+		const data = await loadFormatData(formatName, {
+			source_doctype: props.doctype || null,
+			source_docname: props.docname || null,
+		});
 
 		if (!data) {
 			throw new Error("Failed to load format data");
@@ -1108,6 +1214,10 @@ async function loadFormatSettings(formatName: string) {
 			default_presentation_settings,
 			data.presentation_settings || {}
 		);
+		if (data.formatDoc.effective_company) {
+			presentation_settings.value.branding.company = data.formatDoc.effective_company;
+			presentation_settings.value.branding.logo.company = data.formatDoc.effective_company;
+		}
 		await refreshEffectivePresentationSettings();
 		if (
 			data.presentation_settings?.qr?.enabled === undefined &&
@@ -1141,14 +1251,111 @@ async function loadFormatSettings(formatName: string) {
 	}
 }
 
+async function loadActiveTemplates() {
+	if (!props.doctype || isReportMode.value) return;
+	templatesLoading.value = true;
+	try {
+		const templates = await getActiveCrispyTemplatesForDocument({
+			source_doctype: props.doctype,
+			source_docname: props.docname || null,
+			company: presentation_settings.value.branding?.company || null,
+		});
+		activeTemplates.value = templates;
+		selectedTemplate.value = templates[0]?.name || "";
+		if (!selectedTemplate.value) {
+			useActiveTemplate.value = false;
+			activeTemplateSnapshot.value = null;
+		}
+	} catch (error) {
+		logger.error("Error loading active Crispy Templates", error);
+		activeTemplates.value = [];
+		selectedTemplate.value = "";
+		frappe.show_alert({
+			message: __("Failed to load active templates"),
+			indicator: "red",
+		});
+	} finally {
+		templatesLoading.value = false;
+	}
+}
+
+async function loadSelectedActiveTemplate() {
+	if (!props.doctype || !selectedTemplate.value) return;
+	activeTemplateLoading.value = true;
+	try {
+		const snapshot = await getResolvedCrispyTemplateForDocument({
+			source_doctype: props.doctype,
+			source_docname: props.docname || null,
+			company: presentation_settings.value.branding?.company || null,
+			template: selectedTemplate.value,
+		});
+		activeTemplateSnapshot.value = snapshot;
+		const parsed = parseCrispyFormatDoc({
+			name: snapshot.source_crispy_format || snapshot.name,
+			doc_type: snapshot.source_doctype || props.doctype,
+			crispy_format_type: snapshot.crispy_format_type,
+			company: snapshot.company || "",
+			layout_json: snapshot.layout_json || "",
+			presentation_settings: snapshot.presentation_settings || "",
+			doc_header: snapshot.doc_header || "",
+			doc_footer: snapshot.doc_footer || "",
+			typst_preamble: snapshot.typst_preamble || "",
+			typst_code: snapshot.typst_code || "",
+			pdf_standard: snapshot.pdf_standard || "PDF/A-2u",
+			raw_typst: snapshot.raw_typst ? 1 : 0,
+			effective_company: snapshot.effective_company || snapshot.company || null,
+		});
+
+		presentation_settings.value = merge_presentation_settings(
+			default_presentation_settings,
+			parsed.presentation_settings || {}
+		);
+		const effectiveCompany = snapshot.effective_company || snapshot.company || "";
+		if (effectiveCompany) {
+			presentation_settings.value.branding.company = effectiveCompany;
+			presentation_settings.value.branding.logo.company = effectiveCompany;
+		}
+		await refreshEffectivePresentationSettings();
+		letterheadDoc.value = await resolveLetterheadDoc(
+			effective_presentation_settings.value.branding.letterhead
+		);
+
+		layout.value = parsed.layout;
+		docHeader.value = snapshot.doc_header || "";
+		docFooter.value = snapshot.doc_footer || "";
+		typstPreamble.value = snapshot.typst_preamble || "";
+		typstCode.value = snapshot.typst_code || "";
+		pdfStandard.value = snapshot.pdf_standard || "PDF/A-2u";
+		rawTypst.value = Boolean(snapshot.raw_typst);
+	} catch (error) {
+		logger.error("Error loading active Crispy Template", error);
+		activeTemplateSnapshot.value = null;
+		useActiveTemplate.value = false;
+		frappe.show_alert({
+			message: __("Failed to load active template"),
+			indicator: "red",
+		});
+	} finally {
+		activeTemplateLoading.value = false;
+	}
+}
+
 // Handle format change
 async function onFormatChange() {
 	await loadFormatSettings(selectedFormat.value);
+	await loadActiveTemplates();
+	if (useActiveTemplate.value) {
+		await loadSelectedActiveTemplate();
+	}
 }
 
 async function resetFormat() {
 	if (!selectedFormat.value) return;
 	await loadFormatSettings(selectedFormat.value);
+	await loadActiveTemplates();
+	if (useActiveTemplate.value) {
+		await loadSelectedActiveTemplate();
+	}
 }
 
 // Expose settings getters for external access
@@ -1156,8 +1363,11 @@ const get_presentation_settings = () => ({
 	...effective_presentation_settings.value,
 	branding: {
 		...effective_presentation_settings.value.branding,
-		letterhead_image:
-			branding_mode.value === "letterhead" ? letterheadDoc.value?.image || "" : "",
+		letterhead_image: usesLetterheadBranding(branding_mode.value)
+			? letterheadDoc.value?.image ||
+			  effective_presentation_settings.value.branding.letterhead_image ||
+			  ""
+			: "",
 	},
 });
 
@@ -1214,6 +1424,23 @@ watch(
 		}
 	}
 );
+
+watch(useActiveTemplate, async (enabled) => {
+	if (enabled) {
+		await loadSelectedActiveTemplate();
+		return;
+	}
+	activeTemplateSnapshot.value = null;
+	if (selectedFormat.value) {
+		await loadFormatSettings(selectedFormat.value);
+	}
+});
+
+watch(selectedTemplate, async () => {
+	if (useActiveTemplate.value) {
+		await loadSelectedActiveTemplate();
+	}
+});
 
 watch(
 	() => props.reportColumns,

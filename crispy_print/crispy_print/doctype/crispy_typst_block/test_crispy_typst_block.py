@@ -93,6 +93,80 @@ class TestCrispyTypstBlock(FrappeTestCase):
 
 		self.assertIn(disabled_block.block_key, block_keys)
 
+	def test_company_scoped_blocks_override_global_blocks(self):
+		company = self._ensure_company()
+		global_block = self._insert_block(
+			block_key="cp_test_typst_block_company_override",
+			block_name="CP Test Global Override Block",
+			typst_code="#text[global]",
+		)
+		company_block = self._insert_block(
+			block_key="cp_test_typst_block_company_override",
+			block_name="CP Test Company Override Block",
+			company=company,
+			typst_code="#text[company]",
+		)
+
+		global_rows = get_applicable_typst_blocks("Sales Invoice")
+		company_rows = get_applicable_typst_blocks("Sales Invoice", company=company)
+		global_by_key = {row["block_key"]: row for row in global_rows}
+		company_by_key = {row["block_key"]: row for row in company_rows}
+
+		self.assertEqual(global_by_key[global_block.block_key]["name"], global_block.name)
+		self.assertEqual(company_by_key[company_block.block_key]["name"], company_block.name)
+		self.assertEqual(company_by_key[company_block.block_key]["company"], company)
+
+	def test_get_typst_block_prefers_company_specific_block(self):
+		company = self._ensure_company(name="CTB Lookup Company", abbr="CTBL")
+		global_block = self._insert_block(
+			block_key="cp_test_typst_block_company_lookup",
+			block_name="CP Test Global Lookup Block",
+		)
+		company_block = self._insert_block(
+			block_key="cp_test_typst_block_company_lookup",
+			block_name="CP Test Company Lookup Block",
+			company=company,
+		)
+
+		self.assertEqual(get_typst_block(global_block.block_key).name, global_block.name)
+		self.assertEqual(get_typst_block(company_block.block_key, company=company).name, company_block.name)
+
+	def test_resolve_layout_typst_blocks_uses_company_override(self):
+		company = self._ensure_company(name="CTB Resolve Company", abbr="CTBR")
+		self._insert_block(
+			block_key="cp_test_typst_block_company_resolve",
+			block_name="CP Test Global Resolve Block",
+			typst_code="#text[global]",
+		)
+		self._insert_block(
+			block_key="cp_test_typst_block_company_resolve",
+			block_name="CP Test Company Resolve Block",
+			company=company,
+			typst_code="#text[company]",
+		)
+		layout = {
+			"sections": [
+				{
+					"columns": [
+						{
+							"fields": [
+								{
+									"fieldtype": "Crispy Typst Block",
+									"crispy_typst_block": "cp_test_typst_block_company_resolve",
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+
+		resolved = resolve_layout_typst_blocks(layout, "Sales Invoice", company=company)
+		field = resolved["sections"][0]["columns"][0]["fields"][0]
+
+		self.assertEqual(field["crispy_typst_block_name"], "CP Test Company Resolve Block")
+		self.assertEqual(field["crispy_typst_block_code"], "#text[company]")
+
 	def test_api_returns_applicable_enabled_blocks_with_code(self):
 		global_block = self._insert_block(block_key="cp_test_typst_block_api_global")
 		matching_block = self._insert_block(
@@ -227,6 +301,7 @@ class TestCrispyTypstBlock(FrappeTestCase):
 		values = {
 			"doctype": "Crispy Typst Block",
 			"block_name": f"CP Test Typst Block {block_key}",
+			"company": "",
 			"block_key": block_key,
 			"enabled": 1,
 			"category": "Utility",
@@ -245,6 +320,22 @@ class TestCrispyTypstBlock(FrappeTestCase):
 		doc = self._new_block(**overrides)
 		doc.insert(ignore_permissions=True)
 		return doc
+
+	def _ensure_company(self, name="CTB Test Company", abbr="CTBT"):
+		existing = frappe.get_all("Company", filters={"abbr": abbr}, pluck="name", limit=1)
+		if existing:
+			return existing[0]
+
+		if not frappe.db.exists("Company", name):
+			frappe.get_doc(
+				{
+					"doctype": "Company",
+					"company_name": name,
+					"abbr": abbr,
+					"default_currency": "KWD",
+				}
+			).insert(ignore_permissions=True)
+		return name
 
 	def _delete_test_blocks(self):
 		names = frappe.get_all(

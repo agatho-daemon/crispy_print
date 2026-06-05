@@ -12,6 +12,7 @@ const getApplicableTypstBlocks = vi.fn(async (_args: any) => [
 const getCrispyFormat = vi.fn(async (_name: string) => ({
 	name: "Block Format",
 	doc_type: "Sales Invoice",
+	company: "ACME",
 	layout_json: JSON.stringify({
 		sections: [
 			{
@@ -70,7 +71,7 @@ describe("formatLoader letterhead cache", async () => {
 		const data = await loadFormatData("Block Format")
 		const field = data?.layout?.sections?.[0]?.columns?.[0]?.fields?.[0] as any
 
-		expect(getApplicableTypstBlocks).toHaveBeenCalledWith({ doctype: "Sales Invoice" })
+		expect(getApplicableTypstBlocks).toHaveBeenCalledWith({ doctype: "Sales Invoice", company: "ACME" })
 		expect(field.crispy_typst_block_name).toBe("Invoice Header")
 		expect(field.crispy_typst_block_code).toContain("#doc.customer_name")
 	})

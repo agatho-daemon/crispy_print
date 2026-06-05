@@ -78,6 +78,7 @@
 			@update:preview-mode="setPreviewMode"
 			@update:zoom-mode="setPreviewZoomMode"
 			@update:zoom-percent="setPreviewZoomPercent"
+			@publish-template="openPublishDialog"
 		/>
 		<div
 			class="pane-shell pane-shell--settings"
@@ -130,6 +131,15 @@
 				</template>
 			</SettingsPane>
 		</div>
+		<CrispyTemplatePublishDialog
+			:open="publishDialogOpen"
+			:loading="publishPreviewLoading"
+			:publishing="publishSubmitting"
+			:preview="publishPreview"
+			@close="publishDialogOpen = false"
+			@version-bump-change="loadPublishPreview"
+			@confirm="publishTemplate"
+		/>
 	</div>
 </template>
 
@@ -140,7 +150,9 @@ import LayoutPane from "../components/LayoutPane.vue";
 import TypstCodePane from "../components/TypstCodePane.vue";
 import PreviewPane from "../components/PreviewPane.vue";
 import SettingsPane from "../components/SettingsPane.vue";
+import CrispyTemplatePublishDialog from "../components/CrispyTemplatePublishDialog.vue";
 import { useStore } from "../composables/useStore";
+import type { CrispyTemplatePublishPreview } from "../api/crispy";
 import { getCrispyBuilderFormatName } from "../utils/routes";
 import { __ } from "../utils/i18n";
 
@@ -173,6 +185,10 @@ const previewMode = ref<PreviewMode>(defaultLayoutState.previewMode);
 const previewZoomMode = ref<PreviewZoomMode>("fit");
 const previewZoomPercent = ref(100);
 const isResizing = ref(false);
+const publishDialogOpen = ref(false);
+const publishPreviewLoading = ref(false);
+const publishSubmitting = ref(false);
+const publishPreview = ref<CrispyTemplatePublishPreview | null>(null);
 let resizeCleanup: (() => void) | null = null;
 
 const effectiveFieldsCollapsed = computed(
@@ -300,6 +316,37 @@ function setPreviewZoomMode(value: PreviewZoomMode) {
 
 function setPreviewZoomPercent(value: number) {
 	previewZoomPercent.value = clamp(value, 25, 200);
+}
+
+async function openPublishDialog() {
+	publishDialogOpen.value = true;
+	await loadPublishPreview("minor");
+}
+
+async function loadPublishPreview(versionBump: "minor" | "major") {
+	if (!publishDialogOpen.value) return;
+	publishPreviewLoading.value = true;
+	try {
+		publishPreview.value = await store.getTemplatePublishPreview(versionBump);
+	} finally {
+		publishPreviewLoading.value = false;
+	}
+}
+
+async function publishTemplate(args: {
+	version_bump: "minor" | "major";
+	make_active: boolean;
+	effective_from?: string | null;
+	notes?: string | null;
+}) {
+	publishSubmitting.value = true;
+	try {
+		await store.publishTemplate(args);
+		publishDialogOpen.value = false;
+		publishPreview.value = null;
+	} finally {
+		publishSubmitting.value = false;
+	}
 }
 
 function resetMiddleSplit() {

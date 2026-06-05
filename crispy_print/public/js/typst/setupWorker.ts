@@ -5,7 +5,7 @@ import { createTypstWorker } from "./createTypstWorker"
 import { extractUsedFields, filterDocumentFields } from "../utils/layoutFieldExtractor"
 import { extractUsedFieldsFromTypstSource } from "../utils/typstFieldExtractor"
 import { type CrispyLayout } from "../utils/layout"
-import { resolveBrandingImage, resolveBrandingMode } from "./branding"
+import { resolveBrandingImage, resolveBrandingImages, resolveBrandingMode } from "./branding"
 import {
 	CrispyPreviewEvents,
 	dispatchCrispyPreviewSource,
@@ -332,10 +332,12 @@ export function setupWorker(
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
 		const brandingImage = resolveBrandingImage(presentation_settings, letterheadData)
+		const brandingImages = resolveBrandingImages(presentation_settings, letterheadData)
 		logger.info("PDF request context", {
 			requestId: action === "download" ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID,
 			presentation_settings,
 			brandingImage,
+			brandingImages,
 		})
 
 		const requestId = action === "download" ? DOWNLOAD_REQUEST_ID : VIEW_PDF_REQUEST_ID
@@ -640,7 +642,10 @@ export function setupWorker(
 				presentation_settings = adapter.get_presentation_settings() || {}
 			}
 			const branding_mode = resolveBrandingMode(presentation_settings, letterheadCandidate)
-			const letterheadData = branding_mode === "letterhead" ? letterheadCandidate : null
+			const letterheadData =
+				branding_mode === "letterhead" || branding_mode === "logo_letterhead"
+					? letterheadCandidate
+					: null
 
 			const docHeader =
 				adapter && typeof adapter.getDocHeader === "function" ? adapter.getDocHeader() || "" : ""
@@ -746,10 +751,7 @@ export function setupWorker(
 				: {}
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
-		const brandingImage = resolveBrandingImage(presentation_settings, letterheadData)
-		if (brandingImage) {
-			assetFiles.push(brandingImage)
-		}
+		assetFiles.push(...resolveBrandingImages(presentation_settings, letterheadData))
 		assetFiles = Array.from(new Set(assetFiles))
 		lastCompileAssetFiles = assetFiles
 

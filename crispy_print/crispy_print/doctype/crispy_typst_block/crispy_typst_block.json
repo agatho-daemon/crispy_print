@@ -1,6 +1,5 @@
 {
  "actions": [],
- "autoname": "field:block_key",
  "creation": "2026-05-13 07:46:54.276532",
  "description": "Crispy Typst Block Library",
  "doctype": "DocType",
@@ -8,6 +7,7 @@
  "field_order": [
   "identity_section",
   "block_name",
+  "company",
   "block_key",
   "enabled",
   "category",
@@ -27,8 +27,15 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Block Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
+  },
+  {
+   "description": "Leave empty to treat this block as global. Set a company to make the block company-specific.",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company"
   },
   {
    "description": "Stable identifier used to reference this block from templates or code. Use lowercase words separated by underscores, for example invoice_header.",
@@ -36,8 +43,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Reference Key",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "default": "1",
@@ -112,7 +118,7 @@
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Typst Block",
- "naming_rule": "By fieldname",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {

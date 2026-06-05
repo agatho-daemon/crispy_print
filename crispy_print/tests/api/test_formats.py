@@ -128,6 +128,109 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 			stored_layout["sections"][0]["columns"][0]["fields"][0],
 		)
 
+	def test_get_crispy_format_hydrates_typst_blocks_for_effective_company(self):
+		from crispy_print.api.v1 import get_crispy_format
+
+		company = frappe.db.get_value("Company", {}, "name")
+		if not company:
+			self.skipTest("No Company records available")
+		self._insert_typst_block(
+			block_key="test_api_format_block_company_context",
+			block_name="Test API Format Global Company Context Block",
+			typst_code="#text[global]",
+		)
+		self._insert_typst_block(
+			block_key="test_api_format_block_company_context",
+			block_name="Test API Format Scoped Company Context Block",
+			company=company,
+			typst_code="#text[company]",
+		)
+
+		layout = {
+			"sections": [
+				{
+					"columns": [
+						{
+							"fields": [
+								{
+									"fieldtype": "Crispy Typst Block",
+									"fieldname": "_crispy_typst_block",
+									"crispy_typst_block": "test_api_format_block_company_context",
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+		fmt = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test API Format Company Context Block",
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"module": "Crispy Print",
+				"layout_json": json.dumps(layout),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
+			}
+		)
+		fmt.insert()
+
+		result = get_crispy_format(fmt.name, company=company)
+		field = json.loads(result["layout_json"])["sections"][0]["columns"][0]["fields"][0]
+
+		self.assertEqual(result["effective_company"], company)
+		self.assertEqual(field["crispy_typst_block_name"], "Test API Format Scoped Company Context Block")
+		self.assertEqual(field["crispy_typst_block_code"], "#text[company]")
+
+	def test_get_crispy_format_includes_pdf_standard(self):
+		from crispy_print.api.v1 import get_crispy_format
+
+		company = frappe.db.get_value("Company", {}, "name")
+		if not company:
+			self.skipTest("No Company records available")
+
+		fmt = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "Test API Format PDF Standard",
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"company": company,
+				"module": "Crispy Print",
+				"layout_json": json.dumps({"sections": []}),
+				"presentation_settings": json.dumps({"page": {"size": "A4"}}),
+				"pdf_standard": "PDF/A-3u",
+			}
+		)
+		fmt.insert()
+
+		result = get_crispy_format(fmt.name)
+
+		self.assertEqual(result["pdf_standard"], "PDF/A-3u")
+		self.assertEqual(result["company"], company)
+
+	def _insert_typst_block(
+		self,
+		block_key: str,
+		block_name: str,
+		typst_code: str,
+		company: str | None = None,
+	):
+		block = frappe.get_doc(
+			{
+				"doctype": "Crispy Typst Block",
+				"block_name": block_name,
+				"block_key": block_key,
+				"company": company,
+				"enabled": 1,
+				"typst_code": typst_code,
+			}
+		)
+		block.append("applicable_documents", {"document_type": "Sales Invoice"})
+		block.insert(ignore_permissions=True)
+		return block
+
 	def test_get_crispy_formats_excludes_invalid_json(self):
 		"""Test that formats with invalid JSON are excluded"""
 		from crispy_print.api.v1 import get_crispy_formats_for_doctype
@@ -461,7 +564,11 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 	def test_import_new_format_success(self):
 		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
 
-		self._insert_format("Test ImportExport Source")
+		company = frappe.db.get_value("Company", {}, "name")
+		if not company:
+			self.skipTest("No Company records available")
+
+		self._insert_format("Test ImportExport Source", company=company, pdf_standard="PDF/A-3u")
 		payload = export_crispy_format("Test ImportExport Source")
 		payload["format"]["name"] = "Test ImportExport Imported"
 
@@ -471,6 +578,8 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self.assertTrue(result["success"])
 		self.assertEqual(imported.name, "Test ImportExport Imported")
 		self.assertEqual(imported.typst_code, "#text[Hello]")
+		self.assertEqual(imported.company, company)
+		self.assertEqual(imported.pdf_standard, "PDF/A-3u")
 		self.assertEqual(imported.is_default, 0)
 
 	def test_import_generic_report_preserves_validation(self):

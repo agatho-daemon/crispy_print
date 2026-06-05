@@ -1,0 +1,325 @@
+{
+ "actions": [],
+ "autoname": "method",
+ "creation": "2026-06-03 10:12:07.850132",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "identity_section",
+  "template_name",
+  "company",
+  "version",
+  "status",
+  "is_active",
+  "column_break_identity",
+  "effective_from",
+  "effective_to",
+  "superseded_by",
+  "source_section",
+  "source_crispy_format",
+  "source_branding_profile",
+  "crispy_format_type",
+  "source_doctype",
+  "source_report",
+  "source_contract",
+  "render_settings_section",
+  "pdf_standard",
+  "raw_typst",
+  "typst_version",
+  "snapshot_section",
+  "layout_json",
+  "presentation_settings_json",
+  "doc_header",
+  "doc_footer",
+  "typst_preamble",
+  "typst_code",
+  "snapshot_hash",
+  "approval_section",
+  "approved_by",
+  "approved_at",
+  "retired_by",
+  "retired_at",
+  "notes_section",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Key",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Leave empty to treat this template as global. Set a company to make it company-specific.",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "search_index": 1
+  },
+  {
+   "description": "Backend-assigned version for this immutable template row.",
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nApproved\nRetired\nSuperseded",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active",
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Effective From",
+   "search_index": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Datetime",
+   "label": "Effective To",
+   "search_index": 1
+  },
+  {
+   "fieldname": "superseded_by",
+   "fieldtype": "Link",
+   "label": "Superseded By",
+   "options": "Crispy Template",
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "description": "Crispy Format used to publish this template snapshot.",
+   "fieldname": "source_crispy_format",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Source Crispy Format",
+   "options": "Crispy Format",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_branding_profile",
+   "fieldtype": "Link",
+   "label": "Source Branding Profile",
+   "options": "Crispy Branding Profile",
+   "search_index": 1
+  },
+  {
+   "fieldname": "crispy_format_type",
+   "fieldtype": "Select",
+   "label": "Format Type",
+   "options": "DocType\nReport\nContract",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Link",
+   "label": "Source DocType",
+   "options": "DocType",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_report",
+   "fieldtype": "Link",
+   "label": "Source Report",
+   "options": "Report",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_contract",
+   "fieldtype": "Data",
+   "label": "Source Contract",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "render_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Render Settings"
+  },
+  {
+   "default": "PDF/A-2u",
+   "fieldname": "pdf_standard",
+   "fieldtype": "Select",
+   "label": "PDF Standard",
+   "options": "PDF 1.7\nPDF 2.0\nPDF/A-2u\nPDF/A-3u\nPDF/A-4",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "raw_typst",
+   "fieldtype": "Check",
+   "label": "Raw Typst",
+   "read_only": 1
+  },
+  {
+   "fieldname": "typst_version",
+   "fieldtype": "Data",
+   "label": "Typst Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "snapshot_section",
+   "fieldtype": "Section Break",
+   "label": "Frozen Snapshot"
+  },
+  {
+   "fieldname": "layout_json",
+   "fieldtype": "Code",
+   "label": "Layout JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "presentation_settings_json",
+   "fieldtype": "Code",
+   "label": "Presentation Settings JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "doc_header",
+   "fieldtype": "Code",
+   "label": "Document Header",
+   "options": "HTML",
+   "read_only": 1
+  },
+  {
+   "fieldname": "doc_footer",
+   "fieldtype": "Code",
+   "label": "Document Footer",
+   "options": "HTML",
+   "read_only": 1
+  },
+  {
+   "fieldname": "typst_preamble",
+   "fieldtype": "Code",
+   "label": "Typst Preamble",
+   "options": "Typst",
+   "read_only": 1
+  },
+  {
+   "fieldname": "typst_code",
+   "fieldtype": "Code",
+   "label": "Typst Code",
+   "options": "Typst",
+   "read_only": 1
+  },
+  {
+   "fieldname": "snapshot_hash",
+   "fieldtype": "Data",
+   "label": "Snapshot Hash",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "retired_by",
+   "fieldtype": "Link",
+   "label": "Retired By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "retired_at",
+   "fieldtype": "Datetime",
+   "label": "Retired At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-03 10:12:07.850132",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Template",
+ "naming_rule": "By method",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "name",
+ "track_changes": 1
+}

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import re
 
@@ -16,6 +17,7 @@ BLOCK_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 PUBLIC_FIELDS = [
 	"name",
 	"block_name",
+	"company",
 	"block_key",
 	"enabled",
 	"category",
@@ -29,8 +31,19 @@ class CrispyTypstBlock(Document):
 	def before_naming(self) -> None:
 		self.normalize_block_key()
 
+	def autoname(self) -> None:
+		self.normalize_block_key()
+		company = (self.company or "").strip()
+		if not company:
+			self.name = self.block_key
+			return
+
+		company_hash = hashlib.sha1(company.encode()).hexdigest()[:8]
+		self.name = f"{self.block_key}__{company_hash}"
+
 	def validate(self) -> None:
 		self.validate_block_key()
+		self.validate_unique_block_key_for_company()
 		self.validate_unique_applicable_documents()
 
 	def normalize_block_key(self) -> None:
@@ -46,6 +59,22 @@ class CrispyTypstBlock(Document):
 			frappe.throw(
 				_(
 					"Reference Key must start with a lowercase letter and contain only lowercase letters, numbers, and single underscores."
+				)
+			)
+
+	def validate_unique_block_key_for_company(self) -> None:
+		company = (self.company or "").strip()
+		existing = frappe.get_all(
+			"Crispy Typst Block",
+			filters={"block_key": self.block_key, "name": ["!=", self.name or ""]},
+			fields=["name", "company"],
+		)
+		if any((row.get("company") or "").strip() == company for row in existing):
+			scope = company or _("global")
+			frappe.throw(
+				_("Reference Key {0} already exists for {1} scope.").format(
+					frappe.bold(self.block_key),
+					frappe.bold(scope),
 				)
 			)
 
@@ -77,12 +106,26 @@ class CrispyTypstBlock(Document):
 		return doctype in document_types
 
 
-def get_typst_block(block_key: str, enabled_only: bool = True) -> CrispyTypstBlock:
+def get_typst_block(
+	block_key: str,
+	enabled_only: bool = True,
+	company: str | None = None,
+) -> CrispyTypstBlock:
 	filters = {"block_key": block_key}
 	if enabled_only:
 		filters["enabled"] = 1
 
-	name = frappe.db.get_value("Crispy Typst Block", filters, "name")
+	rows = [
+		row
+		for row in frappe.get_all(
+			"Crispy Typst Block",
+			filters=filters,
+			fields=["name", "company"],
+			order_by="modified desc",
+		)
+		if _row_matches_company_scope(row, company)
+	]
+	name = _select_company_scoped_row(rows, company).get("name") if rows else None
 	if not name:
 		frappe.throw(_("Crispy Typst Block {0} was not found.").format(frappe.bold(block_key)))
 
@@ -93,6 +136,7 @@ def get_applicable_typst_blocks(
 	doctype: str,
 	enabled_only: bool = True,
 	category: str | None = None,
+	company: str | None = None,
 ) -> list[dict]:
 	filters: dict[str, object] = {}
 	if enabled_only:
@@ -100,12 +144,16 @@ def get_applicable_typst_blocks(
 	if category:
 		filters["category"] = category
 
-	rows = frappe.get_all(
-		"Crispy Typst Block",
-		filters=filters,
-		fields=PUBLIC_FIELDS,
-		order_by="category asc, block_name asc",
-	)
+	rows = [
+		row
+		for row in frappe.get_all(
+			"Crispy Typst Block",
+			filters=filters,
+			fields=PUBLIC_FIELDS,
+			order_by="category asc, block_name asc",
+		)
+		if _row_matches_company_scope(row, company)
+	]
 	if not rows:
 		return []
 
@@ -120,10 +168,17 @@ def get_applicable_typst_blocks(
 		)
 	)
 
-	return [row for row in rows if row["name"] not in restricted_names or row["name"] in matching_names]
+	applicable_rows = [
+		row for row in rows if row["name"] not in restricted_names or row["name"] in matching_names
+	]
+	return _prefer_company_scoped_blocks(applicable_rows, company)
 
 
-def resolve_layout_typst_blocks(layout: dict | list | None, doctype: str) -> dict | list | None:
+def resolve_layout_typst_blocks(
+	layout: dict | list | None,
+	doctype: str,
+	company: str | None = None,
+) -> dict | list | None:
 	"""Hydrate Crispy Typst Block layout references with transient Typst code.
 
 	The stored layout remains reference-only. This helper returns a deep copy with
@@ -140,7 +195,7 @@ def resolve_layout_typst_blocks(layout: dict | list | None, doctype: str) -> dic
 	if not fields:
 		return resolved
 
-	blocks = get_applicable_typst_blocks(doctype, enabled_only=True)
+	blocks = get_applicable_typst_blocks(doctype, enabled_only=True, company=company)
 	by_key = {block.get("block_key"): block for block in blocks}
 
 	for field in fields:
@@ -160,14 +215,59 @@ def resolve_layout_typst_blocks(layout: dict | list | None, doctype: str) -> dic
 	return resolved
 
 
-def resolve_layout_json_typst_blocks(layout_json: str | None, doctype: str) -> str | None:
+def resolve_layout_json_typst_blocks(
+	layout_json: str | None,
+	doctype: str,
+	company: str | None = None,
+) -> str | None:
 	"""Parse layout JSON and return JSON with CTB references hydrated for rendering."""
 	if not layout_json:
 		return layout_json
 
 	layout = json.loads(layout_json)
-	resolved = resolve_layout_typst_blocks(layout, doctype)
+	resolved = resolve_layout_typst_blocks(layout, doctype, company=company)
 	return json.dumps(resolved)
+
+
+def _row_matches_company_scope(row: dict, company: str | None) -> bool:
+	row_company = (row.get("company") or "").strip()
+	if not row_company:
+		return True
+
+	company = (company or "").strip()
+	return bool(company and row_company == company)
+
+
+def _select_company_scoped_row(rows: list[dict], company: str | None) -> dict:
+	company = (company or "").strip()
+	if company:
+		for row in rows:
+			if (row.get("company") or "") == company:
+				return row
+	return rows[0]
+
+
+def _prefer_company_scoped_blocks(rows: list[dict], company: str | None) -> list[dict]:
+	company = (company or "").strip()
+	by_key: dict[str, dict] = {}
+
+	for row in rows:
+		block_key = row.get("block_key")
+		if not block_key:
+			continue
+
+		current = by_key.get(block_key)
+		if not current:
+			by_key[block_key] = row
+			continue
+
+		if company and (row.get("company") or "") == company:
+			by_key[block_key] = row
+
+	return sorted(
+		by_key.values(),
+		key=lambda row: ((row.get("category") or ""), (row.get("block_name") or "")),
+	)
 
 
 def _get_typst_block_layout_fields(node) -> list[dict]:

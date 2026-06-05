@@ -11,7 +11,10 @@
   "verification_token",
   "source_doctype",
   "source_docname",
+  "company",
   "crispy_format",
+  "crispy_template",
+  "crispy_template_version",
   "status_section",
   "issuance_status",
   "business_status",
@@ -73,11 +76,34 @@
    "search_index": 1
   },
   {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
    "fieldname": "crispy_format",
    "fieldtype": "Link",
    "label": "Crispy Format",
    "options": "Crispy Format",
-   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "crispy_template",
+   "fieldtype": "Link",
+   "label": "Crispy Template",
+   "options": "Crispy Template",
+   "search_index": 1
+  },
+  {
+   "fieldname": "crispy_template_version",
+   "fieldtype": "Data",
+   "label": "Crispy Template Version",
+   "read_only": 1,
    "search_index": 1
   },
   {

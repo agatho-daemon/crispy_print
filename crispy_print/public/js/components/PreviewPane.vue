@@ -122,6 +122,14 @@
 						>
 							{{ __("View code") }}
 						</button>
+						<button
+							type="button"
+							class="btn btn-primary btn-sm preview-btn"
+							:title="__('Publish Crispy Template')"
+							@click="emit('publishTemplate')"
+						>
+							{{ __("Publish Template") }}
+						</button>
 					</div>
 				</div>
 			</div>
@@ -155,6 +163,7 @@ const emit = defineEmits<{
 	(event: "update:previewMode", value: PreviewMode): void;
 	(event: "update:zoomMode", value: PreviewZoomMode): void;
 	(event: "update:zoomPercent", value: number): void;
+	(event: "publishTemplate"): void;
 }>();
 
 const store = useStore();

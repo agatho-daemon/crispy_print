@@ -29,25 +29,50 @@
 		</div>
 		<div class="settings-pane__body">
 			<div class="settings-pane__form">
-				<div class="settings-pane__profile-field">
-					<select v-model="branding_profile_selection" class="form-control">
-						<option value="" disabled>{{ __("Select Branding Profile") }}</option>
-						<option value="custom">{{ __("Custom") }}</option>
-						<option v-if="loading_branding_profiles" disabled>
-							{{ __("Loading profiles...") }}
-						</option>
-						<option
-							v-for="profile in branding_profiles"
-							:key="profile.name"
-							:value="profile.name"
-						>
-							{{
-								profile.is_default
-									? `${profile.profile_name || profile.name} (${__("Default")})`
-									: profile.profile_name || profile.name
-							}}
-						</option>
-					</select>
+				<div class="settings-pane__identity-row">
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Company") }}</label>
+						<select v-model="selected_company" class="form-control">
+							<option value="">{{ __("Select company") }}</option>
+							<option v-if="loadingCompanies" disabled>
+								{{ __("Loading companies...") }}
+							</option>
+							<option
+								v-for="company in availableCompanies"
+								:key="company.name"
+								:value="company.name"
+							>
+								{{
+									company.abbr
+										? `${company.abbr} - ${company.name}`
+										: company.name
+								}}
+							</option>
+						</select>
+					</div>
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Branding Profile") }}</label>
+						<select v-model="branding_profile_selection" class="form-control">
+							<option value="" disabled>{{ __("Select Branding Profile") }}</option>
+							<option value="custom">{{ __("Custom") }}</option>
+							<option v-if="loading_branding_profiles" disabled>
+								{{ __("Loading profiles...") }}
+							</option>
+							<option
+								v-for="profile in branding_profiles"
+								:key="profile.name"
+								:value="profile.name"
+							>
+								{{
+									profile.is_default
+										? `${profile.profile_name || profile.name} (${__(
+												"Default"
+										  )})`
+										: profile.profile_name || profile.name
+								}}
+							</option>
+						</select>
+					</div>
 				</div>
 
 				<template v-if="is_custom_profile">
@@ -1067,28 +1092,8 @@
 								<p class="settings-pane__hint">
 									{{ __("Logo is anchored to top-left using #place().") }}
 								</p>
-								<div class="settings-pane__field">
-									<label class="settings-pane__label">{{ __("Company") }}</label>
-									<select v-model="logo_settings.company" class="form-control">
-										<option value="">{{ __("Select company") }}</option>
-										<option v-if="loadingCompanies" disabled>
-											{{ __("Loading companies...") }}
-										</option>
-										<option
-											v-for="company in availableCompanies"
-											:key="company.name"
-											:value="company.name"
-										>
-											{{
-												company.abbr
-													? `${company.abbr} - ${company.name}`
-													: company.name
-											}}
-										</option>
-									</select>
-								</div>
 								<p
-									v-if="logo_settings.company && !logo_settings.image"
+									v-if="selected_company && !logo_settings.image"
 									class="settings-pane__hint"
 								>
 									{{ __("Selected company has no logo set.") }}
@@ -1333,6 +1338,23 @@ const reportBuilderConfig = computed({
 	},
 });
 const reportBasicReadOnly = computed(() => Boolean(store.reportBasicReadOnly?.value));
+const logo_settings = computed(() => ensure_logo_settings(props.presentation_settings));
+const selected_company = computed<string>({
+	get: () =>
+		props.presentation_settings.branding.company ||
+		props.presentation_settings.branding.logo?.company ||
+		"",
+	set: (value) => {
+		props.presentation_settings.branding.company = value || "";
+		logo_settings.value.company = value || "";
+		logo_settings.value.image = resolveCompanyLogo(value || "");
+		props.presentation_settings.branding.profile = "";
+		if (props.presentation_settings.source === "branding_profile") {
+			props.presentation_settings.source = "custom";
+		}
+		props.markDirty();
+	},
+});
 const is_custom_profile = computed(() => props.presentation_settings.source === "custom");
 const branding_profile_selection = computed<string>({
 	get: () => {
@@ -1349,6 +1371,14 @@ const branding_profile_selection = computed<string>({
 		} else if (value) {
 			props.presentation_settings.source = "branding_profile";
 			props.presentation_settings.branding.profile = value;
+			const selectedProfile = branding_profiles.value.find(
+				(profile) => profile.name === value
+			);
+			if (selectedProfile?.company) {
+				props.presentation_settings.branding.company = selectedProfile.company;
+				logo_settings.value.company = selectedProfile.company;
+				logo_settings.value.image = resolveCompanyLogo(selectedProfile.company);
+			}
 		} else {
 			props.presentation_settings.source = "";
 			props.presentation_settings.branding.profile = "";
@@ -1364,8 +1394,6 @@ const typography = computed<TypographySettings>(() => {
 
 const tableSettings = ref<TableSettings>(ensure_table_settings(props.presentation_settings));
 const syncedTableRef = ref(false);
-
-const logo_settings = computed(() => ensure_logo_settings(props.presentation_settings));
 
 const qrSettings = computed(() => ensure_qr_settings(props.presentation_settings));
 
@@ -1386,7 +1414,12 @@ const updateQrFields = (fields: string[]) => {
 const branding_mode = computed<string>({
 	get: () => {
 		const mode = props.presentation_settings.branding.mode;
-		if (mode === "letterhead" || mode === "logo" || mode === "none") {
+		if (
+			mode === "letterhead" ||
+			mode === "logo" ||
+			mode === "logo_letterhead" ||
+			mode === "none"
+		) {
 			return mode;
 		}
 		if (
@@ -1401,7 +1434,11 @@ const branding_mode = computed<string>({
 		return "none";
 	},
 	set: (value) => {
-		props.presentation_settings.branding.mode = value as "letterhead" | "logo" | "none";
+		props.presentation_settings.branding.mode = value as
+			| "letterhead"
+			| "logo"
+			| "logo_letterhead"
+			| "none";
 	},
 });
 
@@ -1418,7 +1455,9 @@ async function fetchFonts() {
 async function fetch_branding_profiles() {
 	loading_branding_profiles.value = true;
 	try {
-		branding_profiles.value = await getBrandingProfiles();
+		branding_profiles.value = await getBrandingProfiles({
+			company: selected_company.value || null,
+		});
 		if (!props.presentation_settings.source && !props.presentation_settings.branding.profile) {
 			const default_profile = branding_profiles.value.find((profile) =>
 				Number(profile.is_default)
@@ -1426,6 +1465,11 @@ async function fetch_branding_profiles() {
 			if (default_profile) {
 				props.presentation_settings.source = "branding_profile";
 				props.presentation_settings.branding.profile = default_profile.name;
+				if (default_profile.company) {
+					props.presentation_settings.branding.company = default_profile.company;
+					logo_settings.value.company = default_profile.company;
+					logo_settings.value.image = resolveCompanyLogo(default_profile.company);
+				}
 				props.markDirty();
 			}
 		}
@@ -1505,13 +1549,33 @@ watch(
 watch(
 	() => logo_settings.value.company,
 	(newCompany) => {
+		props.presentation_settings.branding.company =
+			props.presentation_settings.branding.company || newCompany || "";
 		logo_settings.value.image = resolveCompanyLogo(newCompany);
 	}
 );
 
 watch(availableCompanies, () => {
-	if (!logo_settings.value.company) return;
-	logo_settings.value.image = resolveCompanyLogo(logo_settings.value.company);
+	if (!selected_company.value) return;
+	logo_settings.value.company = selected_company.value;
+	logo_settings.value.image = resolveCompanyLogo(selected_company.value);
+});
+
+watch(
+	() => selected_company.value,
+	() => {
+		fetch_branding_profiles();
+	}
+);
+
+watch(branding_profiles, (profiles) => {
+	const currentProfile = props.presentation_settings.branding.profile;
+	if (!currentProfile) return;
+	if (profiles.some((profile) => profile.name === currentProfile)) return;
+	props.presentation_settings.branding.profile = "";
+	if (props.presentation_settings.source === "branding_profile") {
+		props.presentation_settings.source = "custom";
+	}
 });
 </script>
 
@@ -1608,14 +1672,12 @@ watch(availableCompanies, () => {
 	gap: 16px;
 }
 
-.settings-pane__profile-field {
-	display: flex;
-	flex-direction: column;
-	margin: 8px 0 10px;
-}
-
-.settings-pane__profile-field .form-control {
-	margin: 0;
+.settings-pane__identity-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	align-items: end;
+	margin: 4px 0 2px;
 }
 
 .settings-pane__field {

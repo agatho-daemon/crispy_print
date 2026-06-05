@@ -356,7 +356,7 @@ class JSONTypstTranslator {
 		)
 		lines.push("  header: header_block,")
 		lines.push("  footer: footer_block,")
-		if (branding_mode === "letterhead" && letterheadFilename) {
+		if ((branding_mode === "letterhead" || branding_mode === "logo_letterhead") && letterheadFilename) {
 			if ((this.letterhead as any).letter_head_name) {
 				lines.push(`  // Letterhead: ${(this.letterhead as any).letter_head_name}`)
 			}
