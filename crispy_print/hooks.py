@@ -1,3 +1,6 @@
+import frappe
+from packaging.version import parse
+
 from . import __version__ as app_version
 
 app_name = "crispy_print"
@@ -28,6 +31,9 @@ doc_events = {
 	}
 }
 
-app_include_icons = [
-	"crispy_print/icons/crispy-print-logo.svg",
-]
+version = parse(frappe.__version__)
+
+if version.major in (14, 15):
+	app_include_icons = [
+		"crispy_print/icons/crispy-print-logo.svg",
+	]
