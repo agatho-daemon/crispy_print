@@ -11,7 +11,7 @@ app_description = (
 )
 app_email = "agatho_daemon@icloud.com"
 app_license = "mit"
-
+app_logo_url = "/assets/crispy_print/icons/crispy-print-logo.svg"
 
 # include js, css files in header of desk.html
 app_include_js = [
@@ -37,3 +37,13 @@ if version.major in (14, 15):
 	app_include_icons = [
 		"crispy_print/icons/crispy-print-logo.svg",
 	]
+
+# TODO: WIP Required for Frappe 16+
+# if version.major > 15:
+# 	add_to_apps_screen = [{
+# 		"name": app_name,
+#     	"logo": app_logo_url,
+#     	"title": app_title,
+#     	"route": "/crispy-print",
+#     	# "has_permission": "crm.api.check_app_permission"
+# 	}]
