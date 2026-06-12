@@ -10,7 +10,7 @@ app_description = (
 	"A Frappe App that uses Typst CLI engine with Vue based frontend to format DocType print formats."
 )
 app_email = "agatho_daemon@icloud.com"
-app_license = "mit"
+app_license = "MIT"
 app_logo_url = "/assets/crispy_print/icons/crispy-print-logo.svg"
 
 # include js, css files in header of desk.html

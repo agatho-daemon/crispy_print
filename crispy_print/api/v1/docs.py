@@ -49,6 +49,7 @@ def get_formatted_doc(
 							formatted_value = frappe.utils.strip_html(formatted_value)
 						formatted_row[key] = formatted_value
 					except Exception:
+						_log_format_fallback(doctype, name, f"{fieldname}.{key}")
 						formatted_row[key] = value
 				formatted_rows.append(formatted_row)
 			data[fieldname] = formatted_rows
@@ -63,7 +64,7 @@ def get_formatted_doc(
 				formatted_value = frappe.utils.strip_html(formatted_value)
 			data[fieldname] = formatted_value
 		except Exception:
-			pass
+			_log_format_fallback(doctype, name, fieldname)
 
 	document_code = _build_document_code_preview(doc, qr_source_mode=qr_source_mode)
 	if document_code:
@@ -90,3 +91,13 @@ def _build_document_code_preview(doc, qr_source_mode: str | None = None) -> dict
 		"payload": result.get("payload"),
 		"encoded_value": result.get("encoded_value"),
 	}
+
+
+def _log_format_fallback(doctype: str, name: str, fieldname: str) -> None:
+	frappe.logger("crispy_print").debug(
+		"Falling back to raw value while formatting %s %s field %s",
+		doctype,
+		name,
+		fieldname,
+		exc_info=True,
+	)
