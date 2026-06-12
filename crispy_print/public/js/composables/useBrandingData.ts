@@ -1,5 +1,10 @@
 import { ref } from "vue"
-import { getCompanies, getLetterheads, type CompanyOption } from "../api/crispy"
+import {
+	getCompanies,
+	getLetterheads,
+	type CompanyListArgs,
+	type CompanyOption,
+} from "../api/crispy"
 import { getLogger } from "../logger"
 
 const logger = getLogger({ module: "BrandingData" })
@@ -16,10 +21,13 @@ export function useBrandingData() {
 		return match?.company_logo || ""
 	}
 
-	async function fetchLetterheads() {
+	async function fetchLetterheads(args: {
+		company?: string | null
+		include_current?: string | null
+	} = {}) {
 		loadingLetterheads.value = true
 		try {
-			availableLetterheads.value = await getLetterheads()
+			availableLetterheads.value = await getLetterheads(args)
 		} catch (error) {
 			logger.error("Failed to fetch letterheads", error)
 			availableLetterheads.value = []
@@ -28,7 +36,7 @@ export function useBrandingData() {
 		}
 	}
 
-	async function fetchCompanies() {
+	async function fetchCompanies(args: CompanyListArgs = {}) {
 		if (typeof frappe === "undefined") {
 			availableCompanies.value = []
 			return
@@ -36,7 +44,7 @@ export function useBrandingData() {
 
 		loadingCompanies.value = true
 		try {
-			availableCompanies.value = await getCompanies()
+			availableCompanies.value = await getCompanies(args)
 		} catch (error) {
 			logger.error("Failed to fetch companies", error)
 			availableCompanies.value = []

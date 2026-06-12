@@ -1,11 +1,15 @@
 # Copyright (c) 2026, Agathodaemon and contributors
 # For license information, please see license.txt
 
-import json
-
 import frappe
 from frappe import _
 from frappe.model.document import Document
+
+from crispy_print.json_utils import (
+	cint_or_default,
+	parse_json_list_or_object,
+	parse_json_object,
+)
 
 REGULATORY_PROFILE_DOCTYPE = "Crispy QR Regulatory Profile"
 FISCAL_CREDENTIAL_DOCTYPE = "Crispy Fiscal Credential"
@@ -36,7 +40,9 @@ class CrispyDocumentCodeProfile(Document):
 		self.environment = self.environment or "Sandbox"
 		self.code_format = self.code_format or "QR Code"
 		self.content_source = self.content_source or "Encoder"
-		self.priority = _cint_or_default(self.priority, 100)
+		self.quiet_zone = self.quiet_zone if self.quiet_zone not in (None, "") else 1
+		self.module_size_pt = self.module_size_pt if self.module_size_pt not in (None, "") else 3
+		self.priority = cint_or_default(self.priority, 100)
 
 	def apply_fallback_output_defaults(self) -> None:
 		self.code_symbology = self.code_symbology or self._default_symbology_for_code_format()
@@ -60,8 +66,13 @@ class CrispyDocumentCodeProfile(Document):
 			self.regulatory_profile,
 			[
 				"payload_format",
+				"code_symbology",
 				"output_encoding",
 				"error_correction",
+				"quiet_zone",
+				"module_size_pt",
+				"datamatrix_encodation",
+				"datamatrix_symbols",
 				"include_hash",
 				"requires_online_verification",
 				"verification_url_template",
@@ -75,10 +86,20 @@ class CrispyDocumentCodeProfile(Document):
 
 		if self._is_unset_or_meta_default("payload_format"):
 			self.payload_format = row.payload_format
+		if self._is_unset_or_meta_default("code_symbology"):
+			self.code_symbology = row.code_symbology
 		if self._is_unset_or_meta_default("output_encoding"):
 			self.output_encoding = row.output_encoding
 		if self.code_format == "QR Code" and self._is_unset_or_meta_default("error_correction"):
 			self.error_correction = row.error_correction
+		if self._is_unset_or_meta_default("quiet_zone"):
+			self.quiet_zone = row.quiet_zone
+		if self._is_unset_or_meta_default("module_size_pt"):
+			self.module_size_pt = row.module_size_pt
+		if self._is_unset_or_meta_default("datamatrix_encodation"):
+			self.datamatrix_encodation = row.datamatrix_encodation
+		if self._is_unset_or_meta_default("datamatrix_symbols"):
+			self.datamatrix_symbols = row.datamatrix_symbols
 		if not self.include_hash and row.include_hash:
 			self.include_hash = row.include_hash
 		if not self.requires_verification_url and row.requires_online_verification:
@@ -113,11 +134,11 @@ class CrispyDocumentCodeProfile(Document):
 
 	def validate_json_fields(self) -> None:
 		if self.selected_fields_json:
-			_parse_json_list_or_object(self.selected_fields_json, _("Selected Fields JSON"))
+			parse_json_list_or_object(self.selected_fields_json, _("Selected Fields JSON"))
 		if self.field_mapping_json:
-			_parse_json_object(self.field_mapping_json, _("Field Mapping JSON"))
+			parse_json_object(self.field_mapping_json, _("Field Mapping JSON"))
 		if self.encoder_settings_json:
-			_parse_json_object(self.encoder_settings_json, _("Encoder Settings JSON"))
+			parse_json_object(self.encoder_settings_json, _("Encoder Settings JSON"))
 
 	def validate_dimensions(self) -> None:
 		for fieldname, label in (("width_mm", _("Width (mm)")), ("height_mm", _("Height (mm)"))):
@@ -130,6 +151,19 @@ class CrispyDocumentCodeProfile(Document):
 				frappe.throw(_("{0} must be a number.").format(label))
 			if numeric <= 0:
 				frappe.throw(_("{0} must be greater than zero.").format(label))
+		for fieldname, label in (
+			("quiet_zone", _("Quiet Zone")),
+			("module_size_pt", _("Module Size (pt)")),
+		):
+			value = self.get(fieldname)
+			if value in (None, ""):
+				continue
+			try:
+				numeric = float(value)
+			except (TypeError, ValueError):
+				frappe.throw(_("{0} must be a number.").format(label))
+			if numeric < 0:
+				frappe.throw(_("{0} cannot be negative.").format(label))
 
 	def validate_fiscal_credential_link(self) -> None:
 		if not self.fiscal_credential:
@@ -161,11 +195,11 @@ class CrispyDocumentCodeProfile(Document):
 	def normalize_child_rule_order(self) -> None:
 		rules = sorted(
 			self.document_rules or [],
-			key=lambda row: (_cint_or_default(row.priority, 100), row.idx or 0),
+			key=lambda row: (cint_or_default(row.priority, 100), row.idx or 0),
 		)
 		for index, row in enumerate(rules, start=1):
 			row.idx = index
-			row.priority = _cint_or_default(row.priority, 100)
+			row.priority = cint_or_default(row.priority, 100)
 		if rules:
 			self.document_rules = rules
 
@@ -187,33 +221,3 @@ class CrispyDocumentCodeProfile(Document):
 		if default in (None, ""):
 			return False
 		return str(value) == str(default)
-
-
-def _parse_json_value(value, label: str):
-	if isinstance(value, str):
-		try:
-			return json.loads(value)
-		except json.JSONDecodeError:
-			frappe.throw(_("{0} must contain valid JSON.").format(label))
-	return value
-
-
-def _parse_json_object(value, label: str) -> dict:
-	parsed = _parse_json_value(value, label)
-	if not isinstance(parsed, dict):
-		frappe.throw(_("{0} must be a JSON object.").format(label))
-	return parsed
-
-
-def _parse_json_list_or_object(value, label: str) -> list | dict:
-	parsed = _parse_json_value(value, label)
-	if not isinstance(parsed, list | dict):
-		frappe.throw(_("{0} must be a JSON array or object.").format(label))
-	return parsed
-
-
-def _cint_or_default(value, default: int) -> int:
-	try:
-		return int(value if value not in (None, "") else default)
-	except (TypeError, ValueError):
-		return default

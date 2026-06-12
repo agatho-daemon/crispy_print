@@ -148,6 +148,10 @@ class CrispyBrandingProfile(Document):
 			"qr_dx_mm": 0,
 			"qr_dy_mm": 0,
 			"qr_source_mode": "Basic QR",
+			"qr_symbology": "QR Code",
+			"qr_error_correction": "Medium",
+			"qr_quiet_zone": 1,
+			"qr_module_size_pt": 3,
 			"custom_typst_code": CBP_CODE_ONLY_TEMPLATE,
 		}
 		for fieldname, value in defaults.items():
@@ -309,6 +313,12 @@ class CrispyBrandingProfile(Document):
 				"dy": flt(self.qr_dy_mm),
 				"fields": [],
 				"sourceMode": self.get_qr_source_mode(),
+				"symbology": self.qr_symbology or "QR Code",
+				"errorCorrection": self.qr_error_correction or "Medium",
+				"quietZone": flt(self.qr_quiet_zone),
+				"moduleSize": flt(self.qr_module_size_pt),
+				"datamatrixEncodation": self.get_datamatrix_encodation(),
+				"datamatrixSymbols": self.get_datamatrix_symbols(),
 			},
 		}
 		return settings
@@ -318,6 +328,23 @@ class CrispyBrandingProfile(Document):
 			"Basic QR": "basic",
 			"Document Code Profile": "document_code_profile",
 		}.get(self.qr_source_mode or "Basic QR", "basic")
+
+	def get_datamatrix_encodation(self) -> str:
+		return {
+			"ASCII": "ascii",
+			"C40": "c40",
+			"Text": "text",
+			"X12": "x12",
+			"EDIFACT": "edifact",
+			"Base256": "base256",
+		}.get(self.datamatrix_encodation or "", "")
+
+	def get_datamatrix_symbols(self) -> str:
+		return {
+			"Square": "",
+			"Rectangular": "rect",
+			"DMRE": "rect-ext",
+		}.get(self.datamatrix_symbols or "", "")
 
 	def get_presentation_settings_branding_mode(self) -> str:
 		return {

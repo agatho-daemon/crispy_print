@@ -54,7 +54,8 @@ async function compileWithCLI(
 	pdfStandard = null,
 	assetFiles = null,
 	qrData = null,
-	qrFilename = null
+	qrFilename = null,
+	barcodeOptions = null
 ) {
 	const apiUrl = self.location.origin + "/api/method/crispy_print.api.v1.compile_typst";
 	if (!csrfToken) {
@@ -74,6 +75,9 @@ async function compileWithCLI(
 	if (qrData && qrFilename) {
 		body.qr_data = qrData;
 		body.qr_filename = qrFilename;
+	}
+	if (barcodeOptions) {
+		body.barcode_options = barcodeOptions;
 	}
 
 	let response = await postCompileRequest(apiUrl, body, csrfToken);
@@ -146,6 +150,7 @@ self.addEventListener("message", async (event) => {
 		assetFiles,
 		qrData,
 		qrFilename,
+		barcodeOptions,
 		seq,
 	} = event.data || {};
 	const desiredFormat = (outputFormat || "svg").toLowerCase();
@@ -173,7 +178,8 @@ self.addEventListener("message", async (event) => {
 			pdfStandard,
 			assetFiles,
 			qrData,
-			qrFilename
+			qrFilename,
+			barcodeOptions
 		);
 		const message = {
 			type: "compile",

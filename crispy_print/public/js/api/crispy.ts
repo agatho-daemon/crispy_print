@@ -33,11 +33,30 @@ export interface CompanyOption {
 	company_logo?: string
 }
 
+export interface CompanyListArgs {
+	include_current?: string | null
+	limit?: number | null
+}
+
 export interface ExportPayload {
 	schema_version: number
 	exported_at: string
 	app: string
 	format: CrispyFormatDoc
+	metadata?: {
+		company?: {
+			name?: string | null
+			abbr?: string | null
+		} | null
+		templates?: Array<{
+			name: string
+			template_name?: string
+			version?: string
+			company?: string | null
+			status?: string
+			is_active?: number
+		}>
+	}
 }
 
 export interface ConflictResult {
@@ -116,6 +135,10 @@ export interface DocumentCodeResolved {
 	payload_format?: string
 	output_encoding?: string
 	error_correction?: string | null
+	quiet_zone?: number | null
+	module_size_pt?: number | null
+	datamatrix_encodation?: string | null
+	datamatrix_symbols?: string | null
 	content_source?: string
 	payload_template?: string | null
 	selected_fields?: string[] | Record<string, string>
@@ -149,8 +172,13 @@ export interface QRRegulatoryProfile {
 	standard?: string
 	version?: string | null
 	payload_format?: "Custom" | "TLV" | "JSON" | "XML" | "URL" | "Text"
+	code_symbology?: "QR Code" | "DataMatrix"
 	output_encoding?: "Plain Text" | "Base64" | "URL Encoded"
 	error_correction?: "Low" | "Medium" | "Quartile" | "High"
+	quiet_zone?: number
+	module_size_pt?: number
+	datamatrix_encodation?: string | null
+	datamatrix_symbols?: string | null
 	include_signature?: number
 	include_hash?: number
 	requires_online_verification?: number
@@ -177,6 +205,10 @@ export interface CrispyTemplatePublishPreview {
 	company?: string | null
 	company_abbr?: string | null
 	source_branding_profile?: string | null
+	snapshot_hash?: string | null
+	snapshot_hash_version?: "v1" | "v2" | string | null
+	zebra_version?: string | null
+	barcode_symbology?: "QR Code" | "DataMatrix" | string | null
 	current_version?: string | null
 	next_version: string
 	version_bump: "minor" | "major"
@@ -191,6 +223,11 @@ export interface CrispyTemplatePublishResult {
 	status: string
 	is_active: boolean
 	source_branding_profile?: string | null
+	snapshot_hash?: string | null
+	snapshot_hash_version?: "v1" | "v2" | string | null
+	typst_version?: string | null
+	zebra_version?: string | null
+	barcode_symbology?: "QR Code" | "DataMatrix" | string | null
 }
 
 export interface ActiveCrispyTemplateOption {
@@ -202,6 +239,10 @@ export interface ActiveCrispyTemplateOption {
 	effective_from?: string | null
 	effective_to?: string | null
 	source_branding_profile?: string | null
+	snapshot_hash?: string | null
+	snapshot_hash_version?: "v1" | "v2" | string | null
+	zebra_version?: string | null
+	barcode_symbology?: "QR Code" | "DataMatrix" | string | null
 	scope: "Company" | "Global"
 }
 
@@ -223,6 +264,30 @@ export interface ResolvedCrispyTemplate extends ActiveCrispyTemplateOption {
 	typst_preamble?: string | null
 	typst_code?: string | null
 	snapshot_hash?: string | null
+	snapshot_hash_version?: "v1" | "v2" | string | null
+	zebra_version?: string | null
+	barcode_symbology?: "QR Code" | "DataMatrix" | string | null
+	render_payload?: {
+		name?: string | null
+		doc_type?: string | null
+		crispy_format_type?: "DocType" | "Report" | "Contract" | string | null
+		company?: string | null
+		effective_company?: string | null
+		layout_json?: string | null
+		presentation_settings?: string | null
+		doc_header?: string | null
+		doc_footer?: string | null
+		typst_preamble?: string | null
+		typst_code?: string | null
+		pdf_standard?: string | null
+		raw_typst?: boolean | number | null
+		crispy_template?: string | null
+		crispy_template_version?: string | null
+		template_hash?: string | null
+		snapshot_hash_version?: "v1" | "v2" | string | null
+		zebra_version?: string | null
+		barcode_symbology?: "QR Code" | "DataMatrix" | string | null
+	}
 }
 
 export interface CrispyBrandingProfileOption {
@@ -286,6 +351,12 @@ export interface CrispyBrandingProfileDoc extends CrispyBrandingProfileOption {
 	frappe_company_letterhead?: string
 	branding_letterhead_upload?: string
 	enable_qr_code?: number
+	qr_symbology?: "QR Code" | "DataMatrix"
+	qr_error_correction?: "Low" | "Medium" | "Quartile" | "High"
+	qr_quiet_zone?: number
+	qr_module_size_pt?: number
+	datamatrix_encodation?: string
+	datamatrix_symbols?: string
 	qr_code_size_mm?: number
 	qr_dx_mm?: number
 	qr_dy_mm?: number
@@ -306,6 +377,7 @@ export interface CrispyIssuedDocumentArtifact {
 	media_type?: string
 	file_hash?: string
 	hash_algorithm?: string
+	render_status?: "Pending" | "Generated" | "Failed" | "Skipped"
 	page_number?: number
 	is_primary?: number
 	generated_at?: string
@@ -313,6 +385,8 @@ export interface CrispyIssuedDocumentArtifact {
 }
 
 export interface CrispyIssuedDocumentTrustEvent {
+	parent?: string
+	idx?: number
 	event_type:
 		| "Hash"
 		| "Signature"
@@ -336,6 +410,7 @@ export interface CrispyIssuedDocumentTrustEvent {
 	validation_status?: "Pending" | "Valid" | "Invalid" | "Expired" | "Revoked" | "Unknown" | "Failed"
 	validation_message?: string
 	related_artifact?: string
+	creation?: string
 }
 
 export interface CrispyIssuedDocumentRegulatorySubmission {
@@ -376,7 +451,10 @@ export interface CrispyIssuedDocument {
 	verification_token: string
 	source_doctype: string
 	source_docname: string
+	company: string
 	crispy_format: string
+	crispy_template?: string | null
+	crispy_template_version?: string | null
 	issuance_status: "Draft" | "Issued" | "Failed" | "Revoked" | "Superseded"
 	business_status: "Active" | "Cancelled" | "Revoked" | "Superseded" | "Expired"
 	integrity_status: "Pending" | "Valid" | "Tampered" | "Corrupted" | "Unknown"
@@ -387,8 +465,15 @@ export interface CrispyIssuedDocument {
 	amended_from?: string
 	canonical_payload_json?: string
 	canonical_payload_hash?: string
+	template_hash?: string
 	typst_source?: string
 	typst_version?: string
+	pdf_standard?: string
+	zebra_version?: string
+	barcode_symbology?: string
+	barcode_settings_json?: string
+	pdfa_validation_status?: "Pending" | "Generated" | "Valid" | "Invalid" | "Skipped" | "Failed"
+	pdfa_validation_result?: string
 	artifacts?: CrispyIssuedDocumentArtifact[]
 	trust_events?: CrispyIssuedDocumentTrustEvent[]
 	regulatory_submissions?: CrispyIssuedDocumentRegulatorySubmission[]
@@ -400,6 +485,23 @@ export interface CrispyIssuedDocumentVerification {
 	verification_status: "Valid" | "Revoked" | "Superseded" | "Tampered" | "Corrupted" | "Unknown" | "Not Found"
 	name?: string
 	document_uuid?: string
+	company?: string
+	source_crispy_format?: string | null
+	crispy_template?: string | null
+	crispy_template_name?: string | null
+	crispy_template_version?: string | null
+	template_hash?: string | null
+	pdf_standard?: string | null
+	typst_version?: string | null
+	zebra_version?: string | null
+	barcode_symbology?: string | null
+	pdfa_validation_status?: string | null
+	source_target_identity?: {
+		crispy_format_type?: "DocType" | "Report" | "Contract" | string | null
+		source_doctype?: string | null
+		source_report?: string | null
+		source_contract?: string | null
+	}
 	issuance_status?: CrispyIssuedDocument["issuance_status"]
 	business_status?: CrispyIssuedDocument["business_status"]
 	integrity_status?: CrispyIssuedDocument["integrity_status"]
@@ -419,12 +521,27 @@ export interface TypstCompileResult {
 	pdf_url?: string
 }
 
+export interface BarcodeOptions {
+	symbology?: "QR Code" | "DataMatrix"
+	code_symbology?: "QR Code" | "DataMatrix" | string
+	code_format?: "QR Code" | "DataMatrix" | string
+	error_correction?: "Low" | "Medium" | "Quartile" | "High" | "l" | "m" | "q" | "h"
+	quiet_zone?: number
+	module_size?: number
+	scale?: number
+	width?: number
+	height?: number
+	datamatrix_encodation?: string
+	datamatrix_symbols?: string
+}
+
 export async function compileTypst(args: {
 	typst_source: string
 	output_format: "svg" | "pdf"
 	pdf_standard?: string | null
 	asset_files?: string[]
 	chart_svg?: string | null
+	barcode_options?: BarcodeOptions | null
 }): Promise<TypstCompileResult> {
 	const res = await call<TypstCompileResult>({
 		method: "crispy_print.api.v1.compile_typst",
@@ -434,6 +551,7 @@ export async function compileTypst(args: {
 			pdf_standard: args.pdf_standard || null,
 			asset_files: args.asset_files || [],
 			chart_svg: args.chart_svg || null,
+			barcode_options: args.barcode_options || null,
 		},
 	})
 	if (!res.message) {
@@ -545,6 +663,20 @@ export async function getActiveCrispyTemplatesForDocument(args: {
 	return res.message || []
 }
 
+export async function getActiveCrispyTemplatesForRender(args: {
+	source_doctype?: string | null
+	source_docname?: string | null
+	source_report?: string | null
+	source_contract?: string | null
+	company?: string | null
+}): Promise<ActiveCrispyTemplateOption[]> {
+	const res = await call<ActiveCrispyTemplateOption[]>({
+		method: "crispy_print.api.v1.get_active_crispy_templates_for_render",
+		args,
+	})
+	return res.message || []
+}
+
 export async function getResolvedCrispyTemplateForDocument(args: {
 	source_doctype: string
 	source_docname?: string | null
@@ -554,6 +686,25 @@ export async function getResolvedCrispyTemplateForDocument(args: {
 }): Promise<ResolvedCrispyTemplate> {
 	const res = await call<ResolvedCrispyTemplate>({
 		method: "crispy_print.api.v1.get_resolved_crispy_template_for_document",
+		args,
+	})
+	if (!res.message) {
+		throw new Error("Missing resolved Crispy Template")
+	}
+	return res.message
+}
+
+export async function getResolvedCrispyTemplateForRender(args: {
+	source_doctype?: string | null
+	source_docname?: string | null
+	source_report?: string | null
+	source_contract?: string | null
+	company?: string | null
+	template?: string | null
+	template_name?: string | null
+}): Promise<ResolvedCrispyTemplate> {
+	const res = await call<ResolvedCrispyTemplate>({
+		method: "crispy_print.api.v1.get_resolved_crispy_template_for_render",
 		args,
 	})
 	if (!res.message) {
@@ -591,23 +742,54 @@ export async function getDefaultCrispyFormatForDoctype(
 	return rows.length ? rows[0].name : null
 }
 
-export async function getLetterheads(): Promise<string[]> {
-	const rows = await getList<{ name: string }>("Letter Head", {
-		fields: ["name"],
-		order_by: "name asc",
+export async function getLetterheads(args: {
+	company?: string | null
+	include_current?: string | null
+} = {}): Promise<string[]> {
+	const res = await call<string[]>({
+		method: "crispy_print.api.v1.get_letterhead_options",
+		args,
 	})
-	return rows.map((r) => r.name)
+	return res.message || []
 }
 
 export async function getLetterheadDoc(name: string): Promise<any> {
 	return await getDoc<any>("Letter Head", name)
 }
 
-export async function getCompanies(): Promise<CompanyOption[]> {
-	return await getList<CompanyOption>("Company", {
+export async function getCompanies(args: CompanyListArgs = {}): Promise<CompanyOption[]> {
+	const limit = args.limit ?? 500
+	const rows = await getList<CompanyOption>("Company", {
 		fields: ["name", "abbr", "company_logo"],
 		order_by: "name asc",
+		limit,
+		limit_page_length: limit,
 	})
+	const includeCurrent = (args.include_current || "").trim()
+	if (!includeCurrent || rows.some((company) => company.name === includeCurrent)) {
+		return rows
+	}
+
+	try {
+		const current = await getDoc<CompanyOption>("Company", includeCurrent)
+		return [...rows, pickCompanyOption(current)].sort(compareCompanyOptions)
+	} catch {
+		return [...rows, { name: includeCurrent, abbr: "", company_logo: "" }].sort(
+			compareCompanyOptions
+		)
+	}
+}
+
+function pickCompanyOption(company: CompanyOption): CompanyOption {
+	return {
+		name: company.name,
+		abbr: company.abbr || "",
+		company_logo: company.company_logo || "",
+	}
+}
+
+function compareCompanyOptions(a: CompanyOption, b: CompanyOption): number {
+	return a.name.localeCompare(b.name)
 }
 
 export async function getTypstLocalFonts(): Promise<string[]> {
@@ -773,6 +955,33 @@ export async function getIssuedDocument(name: string): Promise<CrispyIssuedDocum
 	return res.message
 }
 
+export async function getIssuedDocuments(args: {
+	company?: string | null
+	issuance_status?: CrispyIssuedDocument["issuance_status"] | null
+	business_status?: CrispyIssuedDocument["business_status"] | null
+	integrity_status?: CrispyIssuedDocument["integrity_status"] | null
+	limit?: number
+} = {}): Promise<CrispyIssuedDocument[]> {
+	const res = await call<CrispyIssuedDocument[]>({
+		method: "crispy_print.api.v1.get_issued_documents",
+		args,
+	})
+	return res.message || []
+}
+
+export async function getIssuedDocumentAuditEvents(args: {
+	company?: string | null
+	issued_document?: string | null
+	event_type?: string | null
+	limit?: number
+} = {}): Promise<CrispyIssuedDocumentTrustEvent[]> {
+	const res = await call<CrispyIssuedDocumentTrustEvent[]>({
+		method: "crispy_print.api.v1.get_issued_document_audit_events",
+		args,
+	})
+	return res.message || []
+}
+
 export async function getIssuedDocumentByToken(
 	verificationToken: string
 ): Promise<CrispyIssuedDocument> {
@@ -802,7 +1011,8 @@ export async function verifyIssuedDocumentToken(
 export async function createIssuedDocumentSnapshot(args: {
 	source_doctype: string
 	source_docname: string
-	crispy_format: string
+	crispy_format?: string | null
+	crispy_template?: string | null
 }): Promise<CrispyIssuedDocument> {
 	const res = await call<CrispyIssuedDocument>({
 		method: "crispy_print.api.v1.create_issued_document_snapshot",

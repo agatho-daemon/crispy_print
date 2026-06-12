@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Agathodaemon and Contributors
 # See license.txt
 
+import base64
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -103,6 +105,157 @@ class TestDocumentCodes(FrappeTestCase):
 		self.assertEqual(out["payload"], "https://verify.test/DCR Test Company?abbr=DCR")
 		self.assertEqual(out["encoded_value"], out["payload"])
 
+	def test_regulatory_tlv_base64_with_utf8_source_returns_ascii_payload(self):
+		profile = self._make_profile(
+			profile_name="DCR Regulatory TLV Base64",
+			code_purpose="Regulatory",
+			regulatory_profile=self.regulatory_profile,
+			fiscal_credential=None,
+			content_source="Payload Template",
+			payload_template='{"seller_name":"شركة دسر","total":"د.ك 32,000.000"}',
+			payload_format="TLV",
+			output_encoding="Base64",
+			encoder_key="zatca_tlv",
+		)
+
+		out = generate_document_code(
+			doctype="Company",
+			name=self.company,
+			code_purpose="Regulatory",
+			environment="Production",
+			profile_name=profile.name,
+		)
+
+		self.assertTrue(out["encoded_value"].isascii())
+		base64.b64decode(out["encoded_value"], validate=True)
+
+	def test_regulatory_tlv_plain_text_passes_because_tlv_output_is_base64_ascii(self):
+		plain_text_profile = self._make_regulatory_profile_with_encoding(
+			"DCR Test Plain Text QR Profile",
+			"Plain Text",
+		)
+		profile = self._make_profile(
+			profile_name="DCR Regulatory TLV Plain Text",
+			code_purpose="Regulatory",
+			regulatory_profile=plain_text_profile,
+			fiscal_credential=None,
+			content_source="Payload Template",
+			payload_template='{"seller_name":"شركة دسر","total":"د.ك 32,000.000"}',
+			payload_format="TLV",
+			output_encoding="Plain Text",
+			encoder_key="zatca_tlv",
+		)
+
+		out = generate_document_code(
+			doctype="Company",
+			name=self.company,
+			code_purpose="Regulatory",
+			environment="Production",
+			profile_name=profile.name,
+		)
+
+		self.assertTrue(out["encoded_value"].isascii())
+		base64.b64decode(out["encoded_value"], validate=True)
+
+	def test_regulatory_plain_text_rejects_utf8_final_payload_by_default(self):
+		plain_text_profile = self._make_regulatory_profile_with_encoding(
+			"DCR Test Plain Text QR Profile",
+			"Plain Text",
+		)
+		profile = self._make_profile(
+			profile_name="DCR Regulatory UTF8 Plain Text",
+			code_purpose="Regulatory",
+			regulatory_profile=plain_text_profile,
+			fiscal_credential=None,
+			content_source="Static Text",
+			payload_template="total: د.ك 32,000.000",
+			payload_format="Plain Text",
+			output_encoding="Plain Text",
+			encoder_key="custom",
+		)
+
+		with self.assertRaises(frappe.ValidationError):
+			generate_document_code(
+				doctype="Company",
+				name=self.company,
+				code_purpose="Regulatory",
+				environment="Production",
+				profile_name=profile.name,
+			)
+
+	def test_regulatory_plain_text_allows_utf8_with_explicit_encoder_setting(self):
+		plain_text_profile = self._make_regulatory_profile_with_encoding(
+			"DCR Test Plain Text QR Profile",
+			"Plain Text",
+		)
+		profile = self._make_profile(
+			profile_name="DCR Regulatory UTF8 Plain Text Allowed",
+			code_purpose="Regulatory",
+			regulatory_profile=plain_text_profile,
+			fiscal_credential=None,
+			content_source="Static Text",
+			payload_template="total: د.ك 32,000.000",
+			payload_format="Plain Text",
+			output_encoding="Plain Text",
+			encoder_key="custom",
+			encoder_settings_json='{"allow_utf8_final_payload":true}',
+		)
+
+		out = generate_document_code(
+			doctype="Company",
+			name=self.company,
+			code_purpose="Regulatory",
+			environment="Production",
+			profile_name=profile.name,
+		)
+
+		self.assertEqual(out["encoded_value"], "total: د.ك 32,000.000")
+
+	def test_non_regulatory_plain_text_allows_utf8_final_payload(self):
+		profile = self._make_profile(
+			profile_name="DCR Other UTF8 Plain Text",
+			code_purpose="Other",
+			regulatory_profile=None,
+			fiscal_credential=None,
+			content_source="Static Text",
+			payload_template="total: د.ك 32,000.000",
+			payload_format="Plain Text",
+			output_encoding="Plain Text",
+			encoder_key="custom",
+		)
+
+		out = generate_document_code(
+			doctype="Company",
+			name=self.company,
+			code_purpose="Other",
+			environment="Production",
+			profile_name=profile.name,
+		)
+
+		self.assertEqual(out["encoded_value"], "total: د.ك 32,000.000")
+
+	def test_payload_template_invalid_json_raises_validation_error(self):
+		profile = self._make_profile(
+			profile_name="DCR Invalid Rendered JSON",
+			code_purpose="Other",
+			regulatory_profile=None,
+			fiscal_credential=None,
+			content_source="Payload Template",
+			payload_template="{bad",
+			payload_format="JSON",
+			output_encoding="Plain Text",
+			encoder_key="custom",
+		)
+
+		with self.assertRaisesRegex(frappe.ValidationError, "Rendered Payload Template"):
+			generate_document_code(
+				doctype="Company",
+				name=self.company,
+				code_purpose="Other",
+				environment="Production",
+				profile_name=profile.name,
+			)
+
 	def test_auto_selects_matching_profile(self):
 		self._make_profile(
 			profile_name="DCR Non Matching",
@@ -200,6 +353,24 @@ class TestDocumentCodes(FrappeTestCase):
 				"output_encoding": "Base64",
 				"error_correction": "Medium",
 				"encoder_key": "zatca_tlv",
+			}
+		).insert(ignore_permissions=True)
+		return name
+
+	def _make_regulatory_profile_with_encoding(self, name: str, output_encoding: str):
+		if frappe.db.exists("Crispy QR Regulatory Profile", name):
+			return name
+		frappe.get_doc(
+			{
+				"doctype": "Crispy QR Regulatory Profile",
+				"profile_name": name,
+				"enabled": 1,
+				"authority_code": "DCR-AUTH",
+				"standard": "Custom",
+				"payload_format": "TLV",
+				"output_encoding": output_encoding,
+				"error_correction": "Medium",
+				"encoder_key": "custom",
 			}
 		).insert(ignore_permissions=True)
 		return name

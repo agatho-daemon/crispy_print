@@ -214,6 +214,12 @@ function buildSpecimenDictionary(context: CbpPreviewTypstContext) {
 		},
 		qr: {
 			enabled: context.qrEnabled,
+			symbology: model.qr_symbology || "QR Code",
+			error_correction: model.qr_error_correction || "Medium",
+			quiet_zone: num(model.qr_quiet_zone),
+			module_size_pt: num(model.qr_module_size_pt),
+			datamatrix_encodation: model.datamatrix_encodation || "",
+			datamatrix_symbols: model.datamatrix_symbols || "",
 			size_mm: num(model.qr_code_size_mm),
 			dx_mm: num(model.qr_dx_mm),
 			dy_mm: num(model.qr_dy_mm),

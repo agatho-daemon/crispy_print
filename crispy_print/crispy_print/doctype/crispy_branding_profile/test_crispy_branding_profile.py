@@ -3,7 +3,9 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_days, nowdate
 
+from crispy_print.api.v1.branding_profiles import get_letterhead_options
 from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
 	_build_default_branding_profile_name,
 	ensure_default_branding_profile,
@@ -14,6 +16,19 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 	resolve_effective_presentation_settings,
 )
 from crispy_print.install import after_install
+from crispy_print.letterhead_lifecycle import (
+	APPROVED_AT_FIELD,
+	APPROVED_BY_FIELD,
+	COMPANY_FIELD,
+	CUSTOM_FIELDNAMES,
+	EFFECTIVE_FROM_FIELD,
+	EFFECTIVE_TO_FIELD,
+	STATUS_FIELD,
+	SUPERSEDED_BY_FIELD,
+)
+from crispy_print.patches.post_model_sync.add_letterhead_company_lifecycle_fields import (
+	execute as add_letterhead_company_lifecycle_fields,
+)
 from crispy_print.patches.post_model_sync.backfill_default_branding_profiles import (
 	execute as backfill_default_branding_profiles,
 )
@@ -221,6 +236,113 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 
 		self.assertIn(doc.name, {row["name"] for row in rows})
 
+	def test_letterhead_options_use_company_default_policy(self):
+		if not frappe.get_meta("Company").get_field("default_letter_head"):
+			self.skipTest("Company.default_letter_head is not available on this bench")
+
+		default_letterhead = self._ensure_letterhead("CBP Test Default Letterhead")
+		current_letterhead = self._ensure_letterhead("CBP Test Current Letterhead")
+		frappe.db.set_value("Company", self.company, "default_letter_head", default_letterhead)
+
+		rows = get_letterhead_options(company=self.company, include_current=current_letterhead)
+
+		self.assertEqual(rows[0], default_letterhead)
+		self.assertIn(current_letterhead, rows)
+
+	def test_letterhead_options_without_company_returns_all_letterheads(self):
+		letterhead = self._ensure_letterhead("CBP Test Global Letterhead")
+
+		rows = get_letterhead_options()
+
+		self.assertIn(letterhead, rows)
+
+	def test_letterhead_lifecycle_patch_creates_custom_fields_idempotently(self):
+		add_letterhead_company_lifecycle_fields()
+		add_letterhead_company_lifecycle_fields()
+
+		for fieldname in CUSTOM_FIELDNAMES:
+			self.assertTrue(frappe.db.exists("Custom Field", f"Letter Head-{fieldname}"))
+
+	def test_letterhead_lifecycle_rejects_invalid_dates_and_self_supersession(self):
+		add_letterhead_company_lifecycle_fields()
+		doc = frappe.get_doc("Letter Head", self._ensure_letterhead("CBP Test Invalid Lifecycle"))
+		doc.set(STATUS_FIELD, "Active")
+		doc.set(EFFECTIVE_FROM_FIELD, nowdate())
+		doc.set(EFFECTIVE_TO_FIELD, add_days(nowdate(), -1))
+
+		self.assertRaises(frappe.ValidationError, doc.save)
+
+		doc.reload()
+		doc.set(SUPERSEDED_BY_FIELD, doc.name)
+
+		self.assertRaises(frappe.ValidationError, doc.save)
+
+	def test_letterhead_lifecycle_sets_approval_on_activation(self):
+		add_letterhead_company_lifecycle_fields()
+		doc = frappe.get_doc("Letter Head", self._ensure_letterhead("CBP Test Approval"))
+		doc.set(STATUS_FIELD, "Draft")
+		doc.set(APPROVED_BY_FIELD, "")
+		doc.set(APPROVED_AT_FIELD, "")
+		doc.save(ignore_permissions=True)
+		doc.set(STATUS_FIELD, "Active")
+		doc.save(ignore_permissions=True)
+
+		self.assertEqual(doc.get(APPROVED_BY_FIELD), frappe.session.user)
+		self.assertTrue(doc.get(APPROVED_AT_FIELD))
+
+	def test_letterhead_options_apply_company_lifecycle_and_include_current_policy(self):
+		add_letterhead_company_lifecycle_fields()
+		other_company = self._ensure_company(name="CBP Test Other Company", abbr="CBPO")
+		company_letterhead = self._ensure_letterhead(
+			"CBP Test Company Active",
+			**{COMPANY_FIELD: self.company},
+		)
+		global_letterhead = self._ensure_letterhead("CBP Test Global Active")
+		other_letterhead = self._ensure_letterhead(
+			"CBP Test Other Company Active",
+			**{COMPANY_FIELD: other_company},
+		)
+		retired_letterhead = self._ensure_letterhead("CBP Test Retired", **{STATUS_FIELD: "Retired"})
+		draft_letterhead = self._ensure_letterhead("CBP Test Draft", **{STATUS_FIELD: "Draft"})
+		future_letterhead = self._ensure_letterhead(
+			"CBP Test Future",
+			**{EFFECTIVE_FROM_FIELD: add_days(nowdate(), 1)},
+		)
+		expired_letterhead = self._ensure_letterhead(
+			"CBP Test Expired",
+			**{EFFECTIVE_TO_FIELD: add_days(nowdate(), -1)},
+		)
+		disabled_letterhead = self._ensure_letterhead("CBP Test Disabled", disabled=1)
+		superseded_letterhead = self._ensure_letterhead(
+			"CBP Test Superseded",
+			**{SUPERSEDED_BY_FIELD: company_letterhead},
+		)
+		frappe.db.set_value("Company", self.company, "default_letter_head", global_letterhead)
+
+		rows = get_letterhead_options(company=self.company, include_current=retired_letterhead)
+
+		self.assertEqual(rows[0], global_letterhead)
+		self.assertIn(company_letterhead, rows)
+		self.assertIn(retired_letterhead, rows)
+		self.assertNotIn(other_letterhead, rows)
+		self.assertNotIn(draft_letterhead, rows)
+		self.assertNotIn(future_letterhead, rows)
+		self.assertNotIn(expired_letterhead, rows)
+		self.assertNotIn(disabled_letterhead, rows)
+		self.assertNotIn(superseded_letterhead, rows)
+
+	def test_letterhead_options_without_company_still_apply_lifecycle_filters(self):
+		add_letterhead_company_lifecycle_fields()
+		active_letterhead = self._ensure_letterhead("CBP Test No Company Active")
+		retired_letterhead = self._ensure_letterhead(
+			"CBP Test No Company Retired", **{STATUS_FIELD: "Retired"}
+		)
+
+		rows = get_letterhead_options()
+
+		self.assertIn(active_letterhead, rows)
+		self.assertNotIn(retired_letterhead, rows)
+
 	def test_builds_default_profile_name_from_company_abbr(self):
 		company_doc = frappe.get_doc("Company", self.company)
 		self.assertEqual(
@@ -351,6 +473,23 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 				}
 			).insert(ignore_permissions=True)
 		return company
+
+	def _ensure_letterhead(self, name: str, **values) -> str:
+		if not frappe.db.exists("Letter Head", name):
+			frappe.get_doc(
+				{
+					"doctype": "Letter Head",
+					"letter_head_name": name,
+					"source": "HTML",
+					"content": "<div>Test Letterhead</div>",
+					**values,
+				}
+			).insert(ignore_permissions=True)
+		elif values:
+			doc = frappe.get_doc("Letter Head", name)
+			doc.update(values)
+			doc.save(ignore_permissions=True)
+		return name
 
 	def _new_profile(self, **overrides):
 		values = {

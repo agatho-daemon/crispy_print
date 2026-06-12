@@ -51,7 +51,46 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(template.doc_footer, source.doc_footer)
 		self.assertEqual(template.typst_preamble, source.typst_preamble)
 		self.assertEqual(template.typst_code, source.typst_code)
+		self.assertEqual(template.snapshot_hash_version, "v2")
+		self.assertEqual(template.zebra_version, "0.1.0")
+		self.assertEqual(template.barcode_symbology, "QR Code")
 		self.assertEqual(template.snapshot_hash, template.compute_snapshot_hash())
+
+	def test_legacy_v1_snapshot_hash_still_validates_after_v2_fields_exist(self):
+		source = self._insert_format("CT Test Source Legacy Hash")
+		template = self._insert_template(
+			template_name="CT Test Legacy Hash",
+			source_crispy_format=source.name,
+			company=self.company,
+		)
+		v1_fields = template.snapshot_hash_version
+		template.snapshot_hash_version = "v1"
+		template.snapshot_hash = template.compute_snapshot_hash()
+		template.flags.allow_template_state_transition = True
+		template.save(ignore_permissions=True)
+		v1_hash = template.snapshot_hash
+
+		template.reload()
+		template.notes = "legacy hash note"
+		template.save(ignore_permissions=True)
+
+		self.assertEqual(v1_fields, "v2")
+		self.assertEqual(template.snapshot_hash_version, "v1")
+		self.assertEqual(template.snapshot_hash, v1_hash)
+
+	def test_v2_snapshot_hash_includes_render_facts(self):
+		source = self._insert_format("CT Test Source V2 Hash")
+		template = self._insert_template(
+			template_name="CT Test V2 Hash",
+			source_crispy_format=source.name,
+			company=self.company,
+		)
+		original_hash = template.snapshot_hash
+
+		template.flags.allow_template_state_transition = True
+		template.zebra_version = "0.2.0"
+
+		self.assertNotEqual(template.compute_snapshot_hash(), original_hash)
 
 	def test_insert_increments_version_for_same_template_scope(self):
 		source = self._insert_format("CT Test Source 2")
@@ -330,6 +369,36 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(resolved["name"], global_template.name)
 		self.assertEqual(resolved["resolution_reason"], "global")
 
+	def test_resolver_returns_frozen_render_payload(self):
+		source = self._insert_format("CT Test Source Frozen Payload")
+		template = self._insert_template(
+			template_name="CT Test Frozen Payload",
+			source_crispy_format=source.name,
+			company=self.company,
+			status="Approved",
+			is_active=1,
+		)
+
+		frappe.db.set_value("Crispy Format", source.name, "typst_code", "#doc.changed")
+		frappe.db.set_value(
+			"Crispy Format",
+			source.name,
+			"presentation_settings",
+			json.dumps({"page": {"size": "Letter"}}),
+		)
+		resolved = resolve_active_crispy_template(
+			source_doctype="Sales Invoice",
+			company=self.company,
+			template=template.name,
+		)
+		payload = resolved["render_payload"]
+
+		self.assertEqual(payload["crispy_template"], template.name)
+		self.assertEqual(payload["crispy_template_version"], template.version)
+		self.assertEqual(payload["template_hash"], template.snapshot_hash)
+		self.assertEqual(payload["typst_code"], "#doc.name")
+		self.assertEqual(json.loads(payload["presentation_settings"]), {"page": {"size": "A4"}})
+
 	def test_resolver_raises_for_missing_active_template(self):
 		self.assertRaises(
 			frappe.ValidationError,
@@ -379,6 +448,18 @@ class TestCrispyTemplate(FrappeTestCase):
 		)
 
 		template.typst_code = "#text[changed]"
+
+		self.assertRaises(frappe.ValidationError, template.save)
+
+	def test_rejects_mutating_frozen_render_facts_after_insert(self):
+		source = self._insert_format("CT Test Source Immutable Render Facts")
+		template = self._insert_template(
+			template_name="CT Test Immutable Render Facts",
+			source_crispy_format=source.name,
+			company=self.company,
+		)
+
+		template.zebra_version = "0.2.0"
 
 		self.assertRaises(frappe.ValidationError, template.save)
 

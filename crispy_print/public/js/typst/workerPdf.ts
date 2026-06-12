@@ -33,6 +33,7 @@ export function postPdfCompile(options: {
 	assetFiles: string[]
 	qrData?: string | null
 	qrFilename?: string | null
+	barcodeOptions?: Record<string, any> | null
 }) {
 	options.worker.postMessage({
 		typstSrc: options.typstSrc,
@@ -44,5 +45,6 @@ export function postPdfCompile(options: {
 		assetFiles: options.assetFiles,
 		qrData: options.qrData || null,
 		qrFilename: options.qrFilename || null,
+		barcodeOptions: options.barcodeOptions || null,
 	})
 }

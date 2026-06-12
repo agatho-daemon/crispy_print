@@ -17,8 +17,11 @@ class CrispyQRRegulatoryProfile(Document):
 	def set_defaults(self) -> None:
 		self.standard = self.standard or "Custom"
 		self.payload_format = self.payload_format or "TLV"
+		self.code_symbology = self.code_symbology or "QR Code"
 		self.output_encoding = self.output_encoding or "Base64"
 		self.error_correction = self.error_correction or "Medium"
+		self.quiet_zone = self.quiet_zone if self.quiet_zone not in (None, "") else 1
+		self.module_size_pt = self.module_size_pt if self.module_size_pt not in (None, "") else 3
 		self.encoder_key = (self.encoder_key or "custom").strip()
 
 	def validate_online_verification(self) -> None:

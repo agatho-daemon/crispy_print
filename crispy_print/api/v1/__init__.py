@@ -12,6 +12,7 @@ from .branding_profiles import (
 	get_branding_profile_presentation_settings as _get_branding_profile_presentation_settings,
 )
 from .branding_profiles import get_branding_profiles as _get_branding_profiles
+from .branding_profiles import get_letterhead_options as _get_letterhead_options
 from .compile import compile_typst as _compile_typst
 from .compile import get_typst_local_fonts as _get_typst_local_fonts
 from .docs import get_formatted_doc as _get_formatted_doc
@@ -32,7 +33,9 @@ from .issued_documents import add_issued_document_trust_event as _add_issued_doc
 from .issued_documents import cancel_issued_document as _cancel_issued_document
 from .issued_documents import create_issued_document_snapshot as _create_issued_document_snapshot
 from .issued_documents import get_issued_document as _get_issued_document
+from .issued_documents import get_issued_document_audit_events as _get_issued_document_audit_events
 from .issued_documents import get_issued_document_by_token as _get_issued_document_by_token
+from .issued_documents import get_issued_documents as _get_issued_documents
 from .issued_documents import (
 	record_issued_document_integrity_check as _record_issued_document_integrity_check,
 )
@@ -50,8 +53,10 @@ from .security import enforce_rate_limit, ensure_doctype_read_permission
 from .templates import (
 	get_active_crispy_templates_for_document as _get_active_crispy_templates_for_document,
 )
+from .templates import get_active_crispy_templates_for_render as _get_active_crispy_templates_for_render
 from .templates import get_crispy_template_publish_preview as _get_crispy_template_publish_preview
 from .templates import get_resolved_crispy_template_for_document as _get_resolved_crispy_template_for_document
+from .templates import get_resolved_crispy_template_for_render as _get_resolved_crispy_template_for_render
 from .templates import publish_template_from_crispy_format as _publish_template_from_crispy_format
 
 JSONDict = dict[str, Any]
@@ -116,6 +121,7 @@ def compile_typst(
 	chart_svg: str | None = None,
 	qr_data: str | None = None,
 	qr_filename: str | None = None,
+	barcode_options: JSONDict | str | None = None,
 	output_filename: str | None = None,
 	return_url: int | bool = 0,
 	**kwargs: Any,
@@ -138,6 +144,7 @@ def compile_typst(
 		chart_svg=chart_svg,
 		qr_data=qr_data,
 		qr_filename=qr_filename,
+		barcode_options=barcode_options,
 		output_filename=output_filename,
 		return_url=return_url,
 	)
@@ -196,6 +203,15 @@ def get_branding_profiles(company: str | None = None) -> list[JSONDict]:
 @frappe.whitelist()
 def get_branding_profile_presentation_settings(name: str) -> JSONDict:
 	return _get_branding_profile_presentation_settings(name)
+
+
+@frappe.whitelist()
+def get_letterhead_options(
+	company: str | None = None,
+	include_current: str | None = None,
+) -> list[str]:
+	enforce_rate_limit("get_letterhead_options", limit=120, window_seconds=60)
+	return _get_letterhead_options(company=company, include_current=include_current)
 
 
 @frappe.whitelist()
@@ -276,6 +292,23 @@ def get_active_crispy_templates_for_document(
 
 
 @frappe.whitelist()
+def get_active_crispy_templates_for_render(
+	source_doctype: str | None = None,
+	source_docname: str | None = None,
+	source_report: str | None = None,
+	source_contract: str | None = None,
+	company: str | None = None,
+) -> list[JSONDict]:
+	return _get_active_crispy_templates_for_render(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		source_report=source_report,
+		source_contract=source_contract,
+		company=company,
+	)
+
+
+@frappe.whitelist()
 def get_resolved_crispy_template_for_document(
 	source_doctype: str,
 	source_docname: str | None = None,
@@ -286,6 +319,27 @@ def get_resolved_crispy_template_for_document(
 	return _get_resolved_crispy_template_for_document(
 		source_doctype=source_doctype,
 		source_docname=source_docname,
+		company=company,
+		template=template,
+		template_name=template_name,
+	)
+
+
+@frappe.whitelist()
+def get_resolved_crispy_template_for_render(
+	source_doctype: str | None = None,
+	source_docname: str | None = None,
+	source_report: str | None = None,
+	source_contract: str | None = None,
+	company: str | None = None,
+	template: str | None = None,
+	template_name: str | None = None,
+) -> JSONDict:
+	return _get_resolved_crispy_template_for_render(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		source_report=source_report,
+		source_contract=source_contract,
 		company=company,
 		template=template,
 		template_name=template_name,
@@ -481,6 +535,40 @@ def get_issued_document(name: str) -> JSONDict:
 
 
 @frappe.whitelist()
+def get_issued_documents(
+	company: str | None = None,
+	issuance_status: str | None = None,
+	business_status: str | None = None,
+	integrity_status: str | None = None,
+	limit: int = 50,
+) -> list[JSONDict]:
+	enforce_rate_limit("get_issued_documents", limit=120, window_seconds=60)
+	return _get_issued_documents(
+		company=company,
+		issuance_status=issuance_status,
+		business_status=business_status,
+		integrity_status=integrity_status,
+		limit=limit,
+	)
+
+
+@frappe.whitelist()
+def get_issued_document_audit_events(
+	company: str | None = None,
+	issued_document: str | None = None,
+	event_type: str | None = None,
+	limit: int = 50,
+) -> list[JSONDict]:
+	enforce_rate_limit("get_issued_document_audit_events", limit=120, window_seconds=60)
+	return _get_issued_document_audit_events(
+		company=company,
+		issued_document=issued_document,
+		event_type=event_type,
+		limit=limit,
+	)
+
+
+@frappe.whitelist()
 def get_issued_document_by_token(verification_token: str) -> JSONDict:
 	enforce_rate_limit("get_issued_document_by_token", limit=120, window_seconds=60)
 	return _get_issued_document_by_token(verification_token)
@@ -577,6 +665,7 @@ __all__ = [
 	"generate_document_code",
 	"generate_report_pdf",
 	"get_active_crispy_templates_for_document",
+	"get_active_crispy_templates_for_render",
 	"get_applicable_typst_blocks",
 	"get_available_formats",
 	"get_branding_profile_presentation_settings",
@@ -589,12 +678,16 @@ __all__ = [
 	"get_fiscal_credential_status",
 	"get_formatted_doc",
 	"get_issued_document",
+	"get_issued_document_audit_events",
 	"get_issued_document_by_token",
+	"get_issued_documents",
+	"get_letterhead_options",
 	"get_qr_regulatory_profile",
 	"get_qr_regulatory_profiles",
 	"get_report_typst_source",
 	"get_reports_without_custom_html",
 	"get_resolved_crispy_template_for_document",
+	"get_resolved_crispy_template_for_render",
 	"get_sample_report_data",
 	"get_typst_local_fonts",
 	"import_crispy_format",

@@ -127,6 +127,7 @@
    "fieldname": "is_default",
    "fieldtype": "Check",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Default",
    "no_copy": 1
   },

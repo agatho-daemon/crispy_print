@@ -292,8 +292,52 @@
 					<input v-model="qrEnabled" type="checkbox" />
 					<span>{{ __("Enable QR code") }}</span>
 				</label>
+				<div class="cbp-grid cbp-grid--two">
+					<label class="cbp-field">
+						<span>{{ __("Symbology") }}</span>
+						<select v-model="model.qr_symbology">
+							<option value="QR Code">{{ __("QR Code") }}</option>
+							<option value="DataMatrix">{{ __("DataMatrix") }}</option>
+						</select>
+					</label>
+					<label v-if="model.qr_symbology !== 'DataMatrix'" class="cbp-field">
+						<span>{{ __("Error correction") }}</span>
+						<select v-model="model.qr_error_correction">
+							<option value="Low">{{ __("Low") }}</option>
+							<option value="Medium">{{ __("Medium") }}</option>
+							<option value="Quartile">{{ __("Quartile") }}</option>
+							<option value="High">{{ __("High") }}</option>
+						</select>
+					</label>
+					<label v-if="model.qr_symbology === 'DataMatrix'" class="cbp-field">
+						<span>{{ __("Encodation") }}</span>
+						<select v-model="model.datamatrix_encodation">
+							<option value="">{{ __("Auto") }}</option>
+							<option value="ASCII">ASCII</option>
+							<option value="C40">C40</option>
+							<option value="Text">Text</option>
+							<option value="X12">X12</option>
+							<option value="EDIFACT">EDIFACT</option>
+							<option value="Base256">Base256</option>
+						</select>
+					</label>
+					<label v-if="model.qr_symbology === 'DataMatrix'" class="cbp-field">
+						<span>{{ __("Symbols") }}</span>
+						<select v-model="model.datamatrix_symbols">
+							<option value="">{{ __("Square") }}</option>
+							<option value="Rectangular">{{ __("Rectangular") }}</option>
+							<option value="DMRE">DMRE</option>
+						</select>
+					</label>
+				</div>
 				<div class="cbp-grid cbp-grid--three">
 					<number-field v-model="model.qr_code_size_mm" :label="__('Size')" />
+					<number-field v-model="model.qr_quiet_zone" :label="__('Quiet')" :min="0" />
+					<number-field
+						v-model="model.qr_module_size_pt"
+						:label="__('Module')"
+						:min="0"
+					/>
 					<number-field v-model="model.qr_dx_mm" :label="__('X')" :min="0" />
 					<number-field v-model="model.qr_dy_mm" :label="__('Y')" />
 				</div>
@@ -444,6 +488,12 @@ watch(
 		} catch {
 			selectedLetterheadImage.value = "";
 		}
+	}
+);
+watch(
+	() => model.company,
+	() => {
+		refreshLetterheadOptions();
 	}
 );
 watch(
@@ -686,22 +736,25 @@ function resetPreviewDefaults() {
 }
 
 async function load() {
-	const [doc, companyRows, letterheadRows] = await Promise.all([
-		getBrandingProfile(props.profileName),
-		getCompanies(),
-		getLetterheads(),
-	]);
+	const doc = await getBrandingProfile(props.profileName);
 	Object.assign(model, fallbackModel, doc);
 	if (Number(model.code_only || 0)) {
 		model.custom_typst_code = ensureCodeReference(model.custom_typst_code || "");
 	}
-	companies.value = companyRows;
-	letterheads.value = letterheadRows;
+	companies.value = await getCompanies({ include_current: model.company || null });
 	if (!model.company && companies.value.length) {
 		model.company = companies.value[0].name;
 	}
+	await refreshLetterheadOptions();
 	await nextTick();
 	initialSnapshot.value = JSON.stringify(savableModel());
+}
+
+async function refreshLetterheadOptions() {
+	letterheads.value = await getLetterheads({
+		company: model.company || null,
+		include_current: model.frappe_company_letterhead || null,
+	});
 }
 
 onMounted(() => {

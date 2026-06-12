@@ -356,6 +356,7 @@ export function setupWorker(
 				assetFiles: lastCompileAssetFiles,
 				qrData: qrEnabled ? docNameForQr : null,
 				qrFilename: qrEnabled ? qrFilename : null,
+				barcodeOptions: qrEnabled ? getBarcodeOptions() : null,
 			})
 		} catch (err) {
 			logger.error("Failed to post PDF compile", err)
@@ -530,6 +531,20 @@ export function setupWorker(
 			: "basic"
 	}
 
+	function getBarcodeOptions(qrSettings: Record<string, any> = getQrSettings()) {
+		return {
+			symbology: qrSettings.symbology || qrSettings.code_symbology || "QR Code",
+			error_correction: qrSettings.errorCorrection || qrSettings.error_correction || "Medium",
+			quiet_zone: qrSettings.quietZone ?? qrSettings.quiet_zone ?? 1,
+			module_size: qrSettings.moduleSize ?? qrSettings.module_size ?? 3,
+			width: qrSettings.width ?? null,
+			height: qrSettings.height ?? null,
+			datamatrix_encodation:
+				qrSettings.datamatrixEncodation || qrSettings.datamatrix_encodation || "",
+			datamatrix_symbols: qrSettings.datamatrixSymbols || qrSettings.datamatrix_symbols || "",
+		}
+	}
+
 	function buildQrPayload(doc: Record<string, any> | null, fields: string[]) {
 		if (!doc) return ""
 		const generatedCode = doc.__crispy_document_code
@@ -579,6 +594,7 @@ export function setupWorker(
 			qrData: enabled ? payload : null,
 			qrFilename: enabled ? filename : null,
 			qrSettings,
+			barcodeOptions: getBarcodeOptions(qrSettings),
 		}
 	}
 
@@ -632,6 +648,7 @@ export function setupWorker(
 		let typst: string
 		let assetFiles: string[] = []
 		let qrPayloadChanged = false
+		let qrPayload: ReturnType<typeof resolveQrPayload> | null = null
 		try {
 			const letterheadCandidate =
 				adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
@@ -673,7 +690,7 @@ export function setupWorker(
 			const assetCollector = new Set<string>()
 			const normalizedDoc = normalizeDocImageAssets(filteredDoc, assetCollector)
 			assetFiles = Array.from(assetCollector)
-			const qrPayload = resolveQrPayload()
+			qrPayload = resolveQrPayload()
 			qrEnabled = qrPayload.qrEnabled
 			docNameForQr = qrPayload.qrData ? String(qrPayload.qrData) : ""
 			qrFilename = qrPayload.qrFilename ? String(qrPayload.qrFilename) : ""
@@ -694,6 +711,7 @@ export function setupWorker(
 					presentation_settings,
 					letterheadData,
 					qrEnabled,
+					qrData: docNameForQr,
 					qrFilename,
 					qrSettings: qrPayload.qrSettings,
 				})
@@ -714,6 +732,7 @@ export function setupWorker(
 					docFooter,
 					typstPreamble,
 					qrEnabled,
+					qrData: docNameForQr,
 					qrFilename,
 					qrSettings: qrPayload.qrSettings,
 				})
@@ -765,6 +784,7 @@ export function setupWorker(
 				assetFiles,
 				qrData: qrEnabled ? docNameForQr : null,
 				qrFilename: qrEnabled ? qrFilename : null,
+				barcodeOptions: qrEnabled ? qrPayload?.barcodeOptions || null : null,
 			})
 			lastTypstCode = typst
 		} catch (err) {
@@ -947,6 +967,7 @@ export function setupWorker(
 					assetFiles: lastCompileAssetFiles,
 					qrData: qrPayload.qrData,
 					qrFilename: qrPayload.qrFilename,
+					barcodeOptions: qrPayload.barcodeOptions,
 				})
 			} catch (err) {
 				logger.error("Failed to post PDF view compile", err)
@@ -988,6 +1009,7 @@ export function setupWorker(
 					assetFiles: lastCompileAssetFiles,
 					qrData: qrPayload.qrData,
 					qrFilename: qrPayload.qrFilename,
+					barcodeOptions: qrPayload.barcodeOptions,
 				})
 			} catch (err) {
 				logger.error("Failed to post PDF download compile", err)

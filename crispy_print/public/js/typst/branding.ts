@@ -1,3 +1,5 @@
+import { quoteTypstString } from "../utils/typstEscape"
+
 export type BrandingMode = "letterhead" | "logo" | "logo_letterhead" | "none"
 
 export function resolveBrandingMode(
@@ -69,6 +71,7 @@ export function buildForegroundPlacements(options: {
 	presentation_settings?: Record<string, any> | null
 	branding_mode?: BrandingMode
 	qrEnabled?: boolean
+	qrData?: string | null
 	qrFilename?: string | null
 	qrSettings?: Record<string, any> | null
 }): string[] {
@@ -95,11 +98,59 @@ export function buildForegroundPlacements(options: {
 	const qrSize = Number(qrSettings.size) || 15
 	const qrDx = Number(qrSettings.dx) || 0
 	const qrDy = Number(qrSettings.dy) || 0
-	if (options.qrEnabled && options.qrFilename) {
+	const qrData = String(options.qrData || "")
+	if (options.qrEnabled && qrData) {
+		const symbology = String(qrSettings.symbology || qrSettings.code_symbology || "QR Code")
+		const quietZone = Number(qrSettings.quietZone ?? qrSettings.quiet_zone ?? 1)
+		const moduleSize = Number(qrSettings.moduleSize ?? qrSettings.module_size ?? 3)
+		const zebraOptions =
+			symbology === "DataMatrix"
+				? buildDataMatrixOptions(qrSettings)
+				: buildQrOptions(qrSettings)
+		const helper = symbology === "DataMatrix" ? "crispy-datamatrix" : "crispy-qrcode"
+		lines.push(
+			`#{
+  import "@local/crispy-print:0.1.0": ${helper}
+  place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, ${helper}(${quoteTypstString(qrData)}, options: ${zebraOptions}, quiet-zone: ${quietZone}, module-size: ${moduleSize}pt, width: ${qrSize}mm))
+}`
+		)
+	} else if (options.qrEnabled && options.qrFilename) {
 		lines.push(
 			`#place(bottom + left, dx: ${qrDx}mm, dy: ${qrDy}mm, image("${options.qrFilename}", width: ${qrSize}mm))`
 		)
 	}
 
 	return lines
+}
+
+function buildQrOptions(qrSettings: Record<string, any>): string {
+	const ec = qrErrorCorrection(qrSettings.errorCorrection || qrSettings.error_correction || "Medium")
+	return `(ec-level: "${ec}")`
+}
+
+function buildDataMatrixOptions(qrSettings: Record<string, any>): string {
+	const entries: string[] = []
+	const encodation = String(
+		qrSettings.datamatrixEncodation || qrSettings.datamatrix_encodation || ""
+	).trim()
+	const symbols = String(qrSettings.datamatrixSymbols || qrSettings.datamatrix_symbols || "").trim()
+	if (encodation) entries.push(`encodation-type: "${encodation}"`)
+	if (symbols) entries.push(`symbols: "${symbols}"`)
+	return entries.length ? `(${entries.join(", ")})` : `(:)`
+}
+
+function qrErrorCorrection(value: unknown): string {
+	const raw = String(value || "Medium").trim().toLowerCase()
+	return (
+		{
+			low: "l",
+			l: "l",
+			medium: "m",
+			m: "m",
+			quartile: "q",
+			q: "q",
+			high: "h",
+			h: "h",
+		} as Record<string, string>
+	)[raw] || "m"
 }

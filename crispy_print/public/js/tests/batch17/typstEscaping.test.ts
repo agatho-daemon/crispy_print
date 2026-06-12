@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { typstColor, typstLength, typstQuoted } from "../../typst/typstEscaping"
+import { fontWeightToNumber } from "../../utils/typstTextStyle"
 
 describe("typst escaping helpers", () => {
 	it("escapes strings before embedding in Typst literals", () => {
@@ -18,5 +19,12 @@ describe("typst escaping helpers", () => {
 		expect(typstLength("12", 9)).toBe("12pt")
 		expect(typstLength("10mm", 9)).toBe("10mm")
 		expect(typstLength('10pt); #panic() //', 9)).toBe("9pt")
+	})
+
+	it("maps font weights consistently for Typst renderers", () => {
+		expect(fontWeightToNumber("thin")).toBe(100)
+		expect(fontWeightToNumber("extra-bold")).toBe(800)
+		expect(fontWeightToNumber("semibold")).toBe(600)
+		expect(fontWeightToNumber("unknown")).toBe(400)
 	})
 })

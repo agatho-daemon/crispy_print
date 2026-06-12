@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from typing import Any
 
 import frappe
@@ -18,9 +19,12 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block import (
 	resolve_layout_json_typst_blocks,
 )
+from crispy_print.json_utils import loads_dict_or_empty
 
+ZEBRA_VERSION = "0.1.0"
 ALLOWED_STATUSES = {"Draft", "Approved", "Retired", "Superseded"}
 ALLOWED_VERSION_BUMPS = {"minor", "major"}
+ALLOWED_SNAPSHOT_HASH_VERSIONS = {"v1", "v2"}
 ALLOWED_STATUS_TRANSITIONS = {
 	"Draft": {"Draft", "Approved", "Retired"},
 	"Approved": {"Approved", "Retired", "Superseded"},
@@ -40,6 +44,8 @@ IMMUTABLE_AFTER_INSERT_FIELDS = {
 	"pdf_standard",
 	"raw_typst",
 	"typst_version",
+	"zebra_version",
+	"barcode_symbology",
 	"layout_json",
 	"presentation_settings_json",
 	"doc_header",
@@ -47,12 +53,13 @@ IMMUTABLE_AFTER_INSERT_FIELDS = {
 	"typst_preamble",
 	"typst_code",
 	"snapshot_hash",
+	"snapshot_hash_version",
 	"approved_by",
 	"approved_at",
 	"retired_by",
 	"retired_at",
 }
-SNAPSHOT_HASH_FIELDS = (
+SNAPSHOT_HASH_FIELDS_V1 = (
 	"template_name",
 	"company",
 	"version",
@@ -72,6 +79,13 @@ SNAPSHOT_HASH_FIELDS = (
 	"typst_preamble",
 	"typst_code",
 )
+SNAPSHOT_HASH_FIELDS_V2 = (
+	*SNAPSHOT_HASH_FIELDS_V1,
+	"snapshot_hash_version",
+	"zebra_version",
+	"barcode_symbology",
+)
+SNAPSHOT_HASH_FIELDS = SNAPSHOT_HASH_FIELDS_V1
 
 
 class CrispyTemplate(Document):
@@ -111,6 +125,15 @@ class CrispyTemplate(Document):
 	def set_defaults(self) -> None:
 		self.status = self.status or "Draft"
 		self.pdf_standard = self.pdf_standard or "PDF/A-2u"
+		if self.is_new():
+			self.snapshot_hash_version = "v2"
+		elif not self.snapshot_hash_version:
+			self.snapshot_hash_version = "v1"
+		if self.snapshot_hash_version not in ALLOWED_SNAPSHOT_HASH_VERSIONS:
+			frappe.throw(_("Invalid snapshot hash version: {0}").format(self.snapshot_hash_version))
+		if self.is_new():
+			self.zebra_version = self.zebra_version or ZEBRA_VERSION
+			self.barcode_symbology = self.barcode_symbology or self.get_barcode_symbology()
 
 	def set_source_snapshot(self) -> None:
 		if not self.source_crispy_format:
@@ -125,12 +148,14 @@ class CrispyTemplate(Document):
 		self.source_contract = source.get("contract")
 		self.pdf_standard = source.get("pdf_standard") or self.pdf_standard or "PDF/A-2u"
 		self.raw_typst = 1 if source.get("raw_typst") or source.get("is_advanced") else 0
+		self.typst_version = self.typst_version or get_typst_version()
+		self.zebra_version = self.zebra_version or ZEBRA_VERSION
 		if self.company is None:
 			self.company = source.get("company") or _get_presentation_settings_company(
 				source.get("presentation_settings"),
 			)
 		presentation_settings = resolve_effective_presentation_settings(
-			_parse_json(source.get("presentation_settings")),
+			loads_dict_or_empty(source.get("presentation_settings")),
 			company=self.company,
 		)
 		self.presentation_settings_json = json.dumps(
@@ -153,6 +178,20 @@ class CrispyTemplate(Document):
 		self.source_branding_profile = self.source_branding_profile or _get_source_branding_profile(
 			self.presentation_settings_json,
 		)
+		self.barcode_symbology = self.barcode_symbology or self.get_barcode_symbology()
+
+	def get_barcode_symbology(self) -> str:
+		settings = loads_dict_or_empty(self.presentation_settings_json)
+		qr_settings = settings.get("qr") if isinstance(settings, dict) else {}
+		if not isinstance(qr_settings, dict):
+			return "QR Code"
+		value = (
+			qr_settings.get("symbology")
+			or qr_settings.get("code_symbology")
+			or qr_settings.get("code_format")
+			or "QR Code"
+		)
+		return _normalize_barcode_symbology(value)
 
 	def set_version(self) -> None:
 		if self.version:
@@ -200,9 +239,14 @@ class CrispyTemplate(Document):
 		self.snapshot_hash = self.compute_snapshot_hash()
 
 	def compute_snapshot_hash(self) -> str:
-		payload = {field: self.get(field) for field in SNAPSHOT_HASH_FIELDS}
+		payload = {field: self.get(field) for field in self.get_snapshot_hash_fields()}
 		encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
 		return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+	def get_snapshot_hash_fields(self) -> tuple[str, ...]:
+		if (self.snapshot_hash_version or "v1") == "v2":
+			return SNAPSHOT_HASH_FIELDS_V2
+		return SNAPSHOT_HASH_FIELDS_V1
 
 	def validate_snapshot_hash(self) -> None:
 		if not self.snapshot_hash:
@@ -321,6 +365,12 @@ class CrispyTemplate(Document):
 			return
 
 		for fieldname in IMMUTABLE_AFTER_INSERT_FIELDS:
+			if (
+				fieldname == "snapshot_hash_version"
+				and not previous.get(fieldname)
+				and self.get(fieldname) == "v1"
+			):
+				continue
 			if self.get(fieldname) != previous.get(fieldname):
 				frappe.throw(
 					_("Crispy Template field {0} is immutable after creation.").format(
@@ -355,6 +405,7 @@ def publish_crispy_template(
 		frappe.throw(_("Source Crispy Format is required."))
 	source = frappe.get_doc("Crispy Format", source_crispy_format)
 	source.check_permission("read")
+	source.check_permission("write")
 	_validate_publish_source_company(source)
 	_validate_expected_source_company(source, company)
 
@@ -372,7 +423,7 @@ def publish_crispy_template(
 	)
 	doc.flags.template_version_bump = version_bump
 	doc.flags.skip_active_template_uniqueness = bool(make_active)
-	doc.insert()
+	doc.insert(ignore_permissions=True)
 
 	if make_active:
 		_supersede_previous_active_templates(doc)
@@ -386,6 +437,11 @@ def publish_crispy_template(
 		"status": doc.status,
 		"is_active": bool(doc.is_active),
 		"source_branding_profile": doc.source_branding_profile,
+		"snapshot_hash": doc.snapshot_hash,
+		"snapshot_hash_version": doc.snapshot_hash_version,
+		"typst_version": doc.typst_version,
+		"zebra_version": doc.zebra_version,
+		"barcode_symbology": doc.barcode_symbology,
 	}
 
 
@@ -422,6 +478,9 @@ def get_publish_preview(
 		"company": template.company,
 		"company_abbr": get_company_abbr(template.company),
 		"source_branding_profile": template.source_branding_profile,
+		"snapshot_hash_version": template.snapshot_hash_version,
+		"zebra_version": template.zebra_version,
+		"barcode_symbology": template.barcode_symbology,
 		"current_version": current_version,
 		"next_version": next_version,
 		"version_bump": template.get_version_bump(version_bump),
@@ -566,6 +625,7 @@ def _template_resolution_payload(
 	effective_company: str | None,
 	resolution_reason: str,
 ) -> dict:
+	presentation_settings = doc.presentation_settings_json
 	return {
 		"name": doc.name,
 		"template_name": doc.template_name,
@@ -585,12 +645,36 @@ def _template_resolution_payload(
 		"pdf_standard": doc.pdf_standard,
 		"raw_typst": bool(doc.raw_typst),
 		"layout_json": doc.layout_json,
-		"presentation_settings": doc.presentation_settings_json,
+		"presentation_settings": presentation_settings,
 		"doc_header": doc.doc_header,
 		"doc_footer": doc.doc_footer,
 		"typst_preamble": doc.typst_preamble,
 		"typst_code": doc.typst_code,
 		"snapshot_hash": doc.snapshot_hash,
+		"snapshot_hash_version": doc.snapshot_hash_version,
+		"zebra_version": doc.zebra_version,
+		"barcode_symbology": doc.barcode_symbology,
+		"render_payload": {
+			"name": doc.source_crispy_format or doc.name,
+			"doc_type": doc.source_doctype,
+			"crispy_format_type": doc.crispy_format_type,
+			"company": doc.company,
+			"effective_company": effective_company,
+			"layout_json": doc.layout_json,
+			"presentation_settings": presentation_settings,
+			"doc_header": doc.doc_header,
+			"doc_footer": doc.doc_footer,
+			"typst_preamble": doc.typst_preamble,
+			"typst_code": doc.typst_code,
+			"pdf_standard": doc.pdf_standard,
+			"raw_typst": 1 if doc.raw_typst else 0,
+			"crispy_template": doc.name,
+			"crispy_template_version": doc.version,
+			"template_hash": doc.snapshot_hash,
+			"snapshot_hash_version": doc.snapshot_hash_version,
+			"zebra_version": doc.zebra_version,
+			"barcode_symbology": doc.barcode_symbology,
+		},
 	}
 
 
@@ -609,33 +693,38 @@ def get_company_abbr(company: str | None) -> str:
 	return _clean(frappe.db.get_value("Company", company, "abbr")) or _clean(company)
 
 
+def get_typst_version() -> str:
+	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
+	try:
+		result = subprocess.run(
+			[typst_bin, "--version"],
+			capture_output=True,
+			text=True,
+			check=True,
+			timeout=5,
+		)
+	except Exception:
+		return ""
+	return (result.stdout or result.stderr or "").strip()
+
+
 def _get_source_company(source: Document) -> str | None:
 	return source.get("company") or _get_presentation_settings_company(source.get("presentation_settings"))
 
 
 def _get_presentation_settings_company(presentation_settings_json: str | None) -> str | None:
-	settings = _parse_json(presentation_settings_json)
+	settings = loads_dict_or_empty(presentation_settings_json)
 	branding = settings.get("branding") or {}
 	logo = branding.get("logo") or {}
 	return _clean(branding.get("company") or logo.get("company")) or None
 
 
 def _get_source_branding_profile(presentation_settings_json: str | None) -> str | None:
-	settings = _parse_json(presentation_settings_json)
+	settings = loads_dict_or_empty(presentation_settings_json)
 	branding = settings.get("branding") or {}
 	if settings.get("source") == "branding_profile":
 		return _clean(branding.get("profile")) or None
 	return None
-
-
-def _parse_json(value: str | None) -> dict:
-	if not value:
-		return {}
-	try:
-		parsed = json.loads(value)
-	except (TypeError, json.JSONDecodeError):
-		return {}
-	return parsed if isinstance(parsed, dict) else {}
 
 
 def _get_latest_version(
@@ -701,6 +790,13 @@ def _supersede_previous_active_templates(template: CrispyTemplate) -> None:
 
 def _clean(value: Any) -> str:
 	return str(value or "").strip()
+
+
+def _normalize_barcode_symbology(value: Any) -> str:
+	raw = _clean(value).lower()
+	if raw in {"datamatrix", "data matrix", "data_matrix"}:
+		return "DataMatrix"
+	return "QR Code"
 
 
 def _parse_version(value: Any) -> tuple[int, int]:

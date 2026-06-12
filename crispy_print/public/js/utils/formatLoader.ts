@@ -212,9 +212,12 @@ function getTypstBlockLayoutFields(layout: CrispyLayout): any[] {
 /**
  * Get all available Letter Heads
  */
-export async function getLetterheads(): Promise<string[]> {
+export async function getLetterheads(args: {
+  company?: string | null;
+  include_current?: string | null;
+} = {}): Promise<string[]> {
   try {
-    return await apiGetLetterheads();
+    return await apiGetLetterheads(args);
   } catch (error) {
     logger.error("Error fetching letterheads", error);
     return [];

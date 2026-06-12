@@ -11,6 +11,7 @@ import {
 	resolveBrandingMode,
 } from "./branding"
 import { typstColor, typstLength, typstQuoted } from "./typstEscaping"
+import { fontWeightToNumber } from "../utils/typstTextStyle"
 
 const IMAGE_EXTENSIONS = new Set([
 	"png",
@@ -69,15 +70,6 @@ export function parseTypstError(error: any): string {
 	} catch (e) {
 		return String(error?.message || error || "Compilation failed")
 	}
-}
-
-function fontWeightToNumber(weight: string) {
-	const normalized = String(weight || "").toLowerCase()
-	if (normalized === "bold") return 700
-	if (normalized === "semibold" || normalized === "semi-bold") return 600
-	if (normalized === "medium") return 500
-	if (normalized === "light") return 300
-	return 400
 }
 
 export function buildDefaultStyleDefs(presentation_settings: any) {
@@ -164,6 +156,7 @@ export function buildPresentationSettingsBlock(options: {
 	presentation_settings?: Record<string, any> | null
 	letterheadData?: Record<string, any> | null
 	qrEnabled?: boolean
+	qrData?: string | null
 	qrFilename?: string | null
 	qrSettings?: Record<string, any> | null
 }) {
@@ -189,6 +182,7 @@ export function buildPresentationSettingsBlock(options: {
 		presentation_settings,
 		branding_mode,
 		qrEnabled: options.qrEnabled,
+		qrData: options.qrData,
 		qrFilename: options.qrFilename,
 		qrSettings: options.qrSettings,
 	})

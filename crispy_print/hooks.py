@@ -28,7 +28,10 @@ after_install = "crispy_print.install.after_install"
 doc_events = {
 	"Company": {
 		"after_insert": "crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile.on_company_after_insert"
-	}
+	},
+	"Letter Head": {
+		"validate": "crispy_print.letterhead_lifecycle.on_letterhead_validate",
+	},
 }
 
 version = parse(frappe.__version__)

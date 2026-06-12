@@ -5,21 +5,15 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from crispy_print.api.v1.company_context import resolve_effective_company
+
 
 class CrispyFormat(Document):
-	def _resolve_default_company(self) -> str | None:
-		return (
-			frappe.defaults.get_user_default("Company")
-			or frappe.defaults.get_user_default("company")
-			or frappe.defaults.get_global_default("company")
-			or frappe.db.get_single_value("Global Defaults", "default_company")
-		)
-
 	def _set_default_company_if_missing(self) -> None:
 		if self.company:
 			return
 
-		self.company = self._resolve_default_company()
+		self.company = resolve_effective_company(allow_global_fallback=True)
 
 	def _invalidate_doctype_formats_cache(self):
 		from crispy_print.api.v1.formats import invalidate_crispy_formats_cache_for_doctype

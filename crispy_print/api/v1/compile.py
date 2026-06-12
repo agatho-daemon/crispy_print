@@ -15,6 +15,8 @@ from .security import enforce_rate_limit, ensure_compile_typst_permission
 
 APP_PATH = frappe.get_app_path("crispy_print")
 TYPST_FONT_DIR = Path(APP_PATH) / "public" / "vendor" / "typst"
+TYPST_PACKAGE_DIR = TYPST_FONT_DIR / "packages"
+ZEBRA_VERSION = "0.1.0"
 MAX_TYPST_SOURCE_BYTES = 512 * 1024
 MAX_CHART_SVG_BYTES = 512 * 1024
 MAX_QR_DATA_BYTES = 16 * 1024
@@ -61,6 +63,24 @@ IMAGE_EXTENSIONS = {
 _IMAGE_SUFFIX_RE = re.compile(r"\.([A-Za-z0-9]+)(?:[#?].*)?$")
 _TYPST_IMAGE_LITERAL_RE = re.compile(r'image\(\s*"([^"\n]+)"')
 _TYPST_FILE_NOT_FOUND_RE = re.compile(r"file not found \(searched at ([^)]+)\)")
+QR_ERROR_CORRECTION_MAP = {
+	"l": "l",
+	"low": "l",
+	"m": "m",
+	"medium": "m",
+	"q": "q",
+	"quartile": "q",
+	"h": "h",
+	"high": "h",
+}
+BARCODE_SYMBOLOGY_ALIASES = {
+	"qr": "QR Code",
+	"qrcode": "QR Code",
+	"qr code": "QR Code",
+	"datamatrix": "DataMatrix",
+	"data matrix": "DataMatrix",
+	"data_matrix": "DataMatrix",
+}
 
 
 def _utf8_size(value: str | None) -> int:
@@ -70,6 +90,63 @@ def _utf8_size(value: str | None) -> int:
 def _throw_if_too_large(value: str | None, label: str, max_bytes: int) -> None:
 	if _utf8_size(value) > max_bytes:
 		frappe.throw(_("{0} exceeds the maximum size of {1} KB.").format(label, max_bytes // 1024))
+
+
+def _normalize_barcode_options(value) -> dict:
+	if not value:
+		return {}
+	if isinstance(value, str):
+		try:
+			value = json.loads(value)
+		except json.JSONDecodeError:
+			frappe.throw(_("Barcode options must be a JSON object."))
+	if not isinstance(value, dict):
+		frappe.throw(_("Barcode options must be a JSON object."))
+
+	normalized = {}
+	for key, option_value in value.items():
+		if option_value in (None, ""):
+			continue
+		key = str(key).strip()
+		if not key:
+			continue
+		normalized[key] = option_value
+
+	symbology_raw = (
+		normalized.get("symbology")
+		or normalized.get("code_symbology")
+		or normalized.get("code_format")
+		or "QR Code"
+	)
+	symbology = BARCODE_SYMBOLOGY_ALIASES.get(str(symbology_raw).strip().lower(), str(symbology_raw).strip())
+	if symbology not in {"QR Code", "DataMatrix"}:
+		frappe.throw(_("Unsupported barcode symbology for Typst compile fallback: {0}").format(symbology))
+	normalized["symbology"] = symbology
+
+	error_correction = (
+		normalized.get("error_correction") or normalized.get("ec_level") or normalized.get("ec-level")
+	)
+	if error_correction:
+		ec = QR_ERROR_CORRECTION_MAP.get(str(error_correction).strip().lower())
+		if not ec:
+			frappe.throw(_("Unsupported QR error correction level: {0}").format(error_correction))
+		normalized["error_correction"] = ec
+
+	for numeric_key in ("quiet_zone", "module_size", "scale", "width", "height"):
+		if numeric_key in normalized:
+			normalized[numeric_key] = _coerce_barcode_number(normalized[numeric_key], numeric_key)
+
+	return dict(sorted(normalized.items()))
+
+
+def _coerce_barcode_number(value, key: str) -> float | int:
+	try:
+		number = float(value)
+	except (TypeError, ValueError):
+		frappe.throw(_("Barcode option {0} must be numeric.").format(key))
+	if number < 0:
+		frappe.throw(_("Barcode option {0} cannot be negative.").format(key))
+	return int(number) if number.is_integer() else number
 
 
 def _minimal_subprocess_env(home: str | None = None) -> dict[str, str]:
@@ -90,6 +167,33 @@ def _minimal_subprocess_env(home: str | None = None) -> dict[str, str]:
 	if typst_font_paths:
 		env["TYPST_FONT_PATHS"] = typst_font_paths
 	return env
+
+
+def _typst_compile_command(
+	typst_bin: str,
+	output_format: str,
+	pdf_standard_cli: str,
+	src_path,
+	output_template,
+) -> list[str]:
+	command = [
+		typst_bin,
+		"compile",
+		"--font-path",
+		str(TYPST_FONT_DIR),
+	]
+	if TYPST_PACKAGE_DIR.exists():
+		command.extend(["--package-path", str(TYPST_PACKAGE_DIR)])
+	command.extend(
+		[
+			"--format",
+			output_format,
+			*(["--pdf-standard", pdf_standard_cli] if output_format == "pdf" and pdf_standard_cli else []),
+			str(src_path),
+			str(output_template),
+		]
+	)
+	return command
 
 
 def _is_relative_to(path: Path, root: Path) -> bool:
@@ -490,6 +594,7 @@ def _compile_cache_key(
 	chart_svg: str | None,
 	qr_data: str | None,
 	qr_filename: str | None,
+	barcode_options: dict | None,
 	typst_bin: str,
 ) -> str:
 	payload = {
@@ -500,14 +605,16 @@ def _compile_cache_key(
 		"chart_svg": chart_svg or "",
 		"qr_data": qr_data or "",
 		"qr_filename": qr_filename or "",
+		"barcode_options": barcode_options or {},
 		"typst_bin": typst_bin,
 		"font_dir": str(TYPST_FONT_DIR),
+		"package_dir": str(TYPST_PACKAGE_DIR) if TYPST_PACKAGE_DIR.exists() else "",
 	}
 	raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
-	return f"crispy_print:compile_typst:v1:{hashlib.sha256(raw).hexdigest()}"
+	return f"crispy_print:compile_typst:v2:{hashlib.sha256(raw).hexdigest()}"
 
 
-def _write_qr_svg(qr_data, qr_filename, temp_dir):
+def _write_qr_svg(qr_data, qr_filename, temp_dir, barcode_options: dict | None = None):
 	"""
 	Generate a QR code SVG in the temp directory.
 
@@ -519,11 +626,15 @@ def _write_qr_svg(qr_data, qr_filename, temp_dir):
 	if not qr_data or not qr_filename:
 		return None
 
+	barcode_options = _normalize_barcode_options(barcode_options)
+	if barcode_options.get("symbology") == "DataMatrix":
+		frappe.throw(_("Python barcode fallback only supports QR Code. DataMatrix requires Zebra."))
+
 	try:
-		import pyqrcode
+		import segno
 	except Exception as e:
-		frappe.log_error(f"PyQRCode not available: {e}", "QR Code Error")
-		return None
+		frappe.log_error(f"Segno not available: {e}", "QR Code Error")
+		frappe.throw(_("QR SVG generation requires the segno Python package."))
 
 	filename = Path(qr_filename).name
 	if not filename.lower().endswith(".svg"):
@@ -532,12 +643,17 @@ def _write_qr_svg(qr_data, qr_filename, temp_dir):
 	dest_path = Path(temp_dir) / filename
 
 	try:
-		qr = pyqrcode.create(str(qr_data))
-		qr.svg(str(dest_path), scale=4, quiet_zone=1)
+		error_correction = barcode_options.get("error_correction") or "m"
+		scale = barcode_options.get("module_size") or barcode_options.get("scale") or 4
+		quiet_zone = barcode_options.get("quiet_zone")
+		if quiet_zone is None:
+			quiet_zone = 1
+		qr = segno.make(str(qr_data), error=str(error_correction))
+		qr.save(str(dest_path), kind="svg", scale=scale, border=int(quiet_zone))
 		return filename
 	except Exception as e:
 		frappe.log_error(f"Failed to generate QR SVG: {e}", "QR Code Error")
-		return None
+		frappe.throw(_("Failed to generate QR SVG: {0}").format(e))
 
 
 def _write_chart_svg(chart_svg: str, temp_dir: str, filename: str = "report_chart.svg"):
@@ -594,6 +710,7 @@ def compile_typst(
 	chart_svg=None,
 	qr_data=None,
 	qr_filename=None,
+	barcode_options=None,
 	output_filename: str | None = None,
 	return_url: int | bool = 0,
 	**kwargs,
@@ -633,6 +750,12 @@ def compile_typst(
 	typst_source, literal_asset_files = _normalize_typst_image_literals(typst_source)
 	normalized_assets = _normalize_asset_files(asset_files)
 	combined_assets = _normalize_asset_files([*normalized_assets, *literal_asset_files])
+	normalized_barcode_options = _normalize_barcode_options(barcode_options)
+	uses_zebra_barcode = (
+		"@local/crispy-print" in typst_source
+		or "crispy-qrcode" in typst_source
+		or "crispy-datamatrix" in typst_source
+	)
 
 	# Log document data size for monitoring field filtering
 	doc_match = re.search(r"#let doc = \((.*?)\)", typst_source, re.DOTALL)
@@ -663,6 +786,7 @@ def compile_typst(
 				chart_svg=chart_svg,
 				qr_data=qr_data,
 				qr_filename=qr_filename,
+				barcode_options=normalized_barcode_options,
 				typst_bin=typst_bin,
 			)
 		except Exception:
@@ -679,8 +803,13 @@ def compile_typst(
 				asset_index = _copy_asset_files_to_temp(combined_assets, temp_dir)
 			if chart_svg:
 				_write_chart_svg(chart_svg, temp_dir)
-			if qr_data and qr_filename:
-				_write_qr_svg(qr_data, qr_filename, temp_dir)
+			if (
+				qr_data
+				and qr_filename
+				and not uses_zebra_barcode
+				and normalized_barcode_options.get("symbology", "QR Code") != "DataMatrix"
+			):
+				_write_qr_svg(qr_data, qr_filename, temp_dir, normalized_barcode_options)
 
 			# Write Typst source to temp file
 			src_path = Path(temp_dir) / "document.typ"
@@ -698,21 +827,13 @@ def compile_typst(
 				output_template = src_path_obj.with_name(f"{src_path_obj.stem}-{{p}}.svg")
 
 			result = subprocess.run(
-				[
+				_typst_compile_command(
 					typst_bin,
-					"compile",
-					"--font-path",
-					str(TYPST_FONT_DIR),
-					"--format",
 					output_format,
-					*(
-						["--pdf-standard", pdf_standard_cli]
-						if output_format == "pdf" and pdf_standard_cli
-						else []
-					),
+					pdf_standard_cli,
 					src_path,
-					str(output_template),
-				],
+					output_template,
+				),
 				capture_output=True,
 				text=True,
 				timeout=30,
@@ -737,21 +858,13 @@ def compile_typst(
 
 				if recovered_any:
 					result = subprocess.run(
-						[
+						_typst_compile_command(
 							typst_bin,
-							"compile",
-							"--font-path",
-							str(TYPST_FONT_DIR),
-							"--format",
 							output_format,
-							*(
-								["--pdf-standard", pdf_standard_cli]
-								if output_format == "pdf" and pdf_standard_cli
-								else []
-							),
+							pdf_standard_cli,
 							src_path,
-							str(output_template),
-						],
+							output_template,
+						),
 						capture_output=True,
 						text=True,
 						timeout=30,

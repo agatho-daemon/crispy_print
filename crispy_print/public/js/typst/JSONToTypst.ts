@@ -11,6 +11,7 @@ import {
 	type PresentationSettings,
 } from "../utils/presentation_settings"
 import { deepClone } from "../utils/json"
+import { fontWeightToNumber } from "../utils/typstTextStyle"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
 	sections?: LayoutSection[]
@@ -150,24 +151,6 @@ class JSONTypstTranslator {
 			.replace(/\*/g, "\\*")
 	}
 
-	// Convert font weight name to numeric value for Typst
-	fontWeightToNumber(weight: string): number {
-		const weightMap: Record<string, number> = {
-			thin: 100,
-			extralight: 200,
-			light: 300,
-			normal: 400,
-			regular: 400,
-			medium: 500,
-			semibold: 600,
-			bold: 700,
-			extrabold: 800,
-			black: 900,
-		}
-		const normalized = weight.toLowerCase()
-		return weightMap[normalized] || 400
-	}
-
 	formatColor(color: string, fallback = "none") {
 		return typstColor(color, fallback)
 	}
@@ -218,7 +201,7 @@ class JSONTypstTranslator {
 		lines.push(`  font: ${typstQuoted(fieldLabel.fontFamily)},`)
 		lines.push(`  size: ${typstLength(fieldLabel.fontSize, 8)},`)
 		lines.push(`  style: ${typstQuoted(fieldLabel.fontStyle)},`)
-		lines.push(`  weight: ${this.fontWeightToNumber(fieldLabel.fontWeight)},`)
+		lines.push(`  weight: ${fontWeightToNumber(fieldLabel.fontWeight)},`)
 		lines.push(`  fill: ${this.formatColor(fieldLabel.color, "black")}`)
 		lines.push(")")
 		lines.push("")
@@ -226,7 +209,7 @@ class JSONTypstTranslator {
 		lines.push(`  font: ${typstQuoted(fieldValue.fontFamily)},`)
 		lines.push(`  size: ${typstLength(fieldValue.fontSize, 10)},`)
 		lines.push(`  style: ${typstQuoted(fieldValue.fontStyle)},`)
-		lines.push(`  weight: ${this.fontWeightToNumber(fieldValue.fontWeight)},`)
+		lines.push(`  weight: ${fontWeightToNumber(fieldValue.fontWeight)},`)
 		lines.push(`  fill: ${this.formatColor(fieldValue.color, "black")}`)
 		lines.push(")")
 		lines.push("")
@@ -234,7 +217,7 @@ class JSONTypstTranslator {
 		lines.push(`  font: ${typstQuoted(sectionLabel.fontFamily)},`)
 		lines.push(`  size: ${typstLength(sectionLabel.fontSize, 14)},`)
 		lines.push(`  style: ${typstQuoted(sectionLabel.fontStyle)},`)
-		lines.push(`  weight: ${this.fontWeightToNumber(sectionLabel.fontWeight)},`)
+		lines.push(`  weight: ${fontWeightToNumber(sectionLabel.fontWeight)},`)
 		lines.push(`  fill: ${this.formatColor(sectionLabel.color, "black")}`)
 		lines.push(")")
 		lines.push("")
@@ -256,7 +239,7 @@ class JSONTypstTranslator {
 		lines.push(`  font: ${typstQuoted(tableHeader.fontFamily)},`)
 		lines.push(`  size: ${typstLength(tableHeader.fontSize, 9)},`)
 		lines.push(`  style: ${typstQuoted(tableHeader.fontStyle)},`)
-		lines.push(`  weight: ${this.fontWeightToNumber(tableHeader.fontWeight)},`)
+		lines.push(`  weight: ${fontWeightToNumber(tableHeader.fontWeight)},`)
 		lines.push(`  fill: ${this.formatColor(tableHeader.color, "black")}`)
 		lines.push(")")
 		lines.push("")
@@ -264,7 +247,7 @@ class JSONTypstTranslator {
 		lines.push(`  font: ${typstQuoted(tableBody.fontFamily)},`)
 		lines.push(`  size: ${typstLength(tableBody.fontSize, 9)},`)
 		lines.push(`  style: ${typstQuoted(tableBody.fontStyle)},`)
-		lines.push(`  weight: ${this.fontWeightToNumber(tableBody.fontWeight)},`)
+		lines.push(`  weight: ${fontWeightToNumber(tableBody.fontWeight)},`)
 		lines.push(`  fill: ${this.formatColor(tableBody.color, "black")}`)
 		lines.push(")")
 		lines.push("")
@@ -335,12 +318,14 @@ class JSONTypstTranslator {
 		const branding_mode = resolveBrandingMode(presentation_settings, this.letterhead)
 		const letterheadFilename = getLetterheadFilename(presentation_settings, this.letterhead)
 		const qrEnabled = Boolean(this.options.qrEnabled)
+		const qrData = (this.options.qrData as string | undefined) || ""
 		const qrFilename = (this.options.qrFilename as string | undefined) || ""
 		const qrSettings = presentation_settings.qr || {}
 		const foregroundLines = buildForegroundPlacements({
 			presentation_settings,
 			branding_mode,
 			qrEnabled,
+			qrData,
 			qrFilename,
 			qrSettings,
 		})

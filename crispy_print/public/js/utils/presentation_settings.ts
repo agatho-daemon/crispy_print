@@ -33,6 +33,14 @@ export interface QrSettings {
   fields: string[];
   enabled?: boolean;
   sourceMode?: "" | "basic" | "document_code_profile";
+  symbology?: "QR Code" | "DataMatrix";
+  errorCorrection?: "Low" | "Medium" | "Quartile" | "High";
+  quietZone?: number;
+  moduleSize?: number;
+  width?: number;
+  height?: number;
+  datamatrixEncodation?: string;
+  datamatrixSymbols?: string;
 }
 
 export interface LogoSettings {
@@ -163,7 +171,18 @@ export const default_presentation_settings: PresentationSettings = {
   typography: undefined,
   table: undefined,
   language: "en",
-  qr: { dx: 0, dy: 0, size: 15, fields: [], enabled: false, sourceMode: "" },
+  qr: {
+    dx: 0,
+    dy: 0,
+    size: 15,
+    fields: [],
+    enabled: false,
+    sourceMode: "",
+    symbology: "QR Code",
+    errorCorrection: "Medium",
+    quietZone: 1,
+    moduleSize: 3,
+  },
   report: getDefaultReportBuilderConfig(),
 };
 
@@ -238,6 +257,18 @@ export function ensure_qr_settings(settings: PresentationSettings): QrSettings {
   }
   if (typeof settings.qr.sourceMode !== "string") {
     settings.qr.sourceMode = "";
+  }
+  if (!settings.qr.symbology) {
+    settings.qr.symbology = "QR Code";
+  }
+  if (!settings.qr.errorCorrection) {
+    settings.qr.errorCorrection = "Medium";
+  }
+  if (typeof settings.qr.quietZone !== "number") {
+    settings.qr.quietZone = 1;
+  }
+  if (typeof settings.qr.moduleSize !== "number") {
+    settings.qr.moduleSize = 3;
   }
   return settings.qr;
 }

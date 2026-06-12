@@ -19,6 +19,7 @@ INTEGRITY_STATUSES = {"Pending", "Valid", "Tampered", "Corrupted", "Unknown"}
 
 class CrispyIssuedDocument(Document):
 	def before_insert(self):
+		self._validate_backend_insert()
 		self._ensure_identity()
 
 	def validate(self):
@@ -34,6 +35,14 @@ class CrispyIssuedDocument(Document):
 	def before_trash(self):
 		if self.issuance_status != "Draft":
 			frappe.throw(_("Issued document records cannot be deleted after issuance starts."))
+
+	def _validate_backend_insert(self):
+		if self.flags.allow_cid_backend_insert:
+			return
+		frappe.throw(
+			_("Crispy Issued Document records are created by controlled issuance actions, not manually."),
+			frappe.PermissionError,
+		)
 
 	def _ensure_identity(self):
 		if not self.document_uuid:
@@ -73,19 +82,6 @@ class CrispyIssuedDocument(Document):
 			explicit_company=self._resolve_template_company() or self._resolve_format_company(),
 		)
 
-	def _resolve_source_company(self) -> str | None:
-		if not self.source_doctype or not self.source_docname:
-			return None
-
-		for fieldname in ("company", "company_name"):
-			df = frappe.get_meta(self.source_doctype).get_field(fieldname)
-			if not df or df.fieldtype != "Link" or df.options != "Company":
-				continue
-
-			return frappe.db.get_value(self.source_doctype, self.source_docname, fieldname)
-
-		return None
-
 	def _resolve_format_company(self) -> str | None:
 		if not self.crispy_format:
 			return None
@@ -120,8 +116,15 @@ class CrispyIssuedDocument(Document):
 			"amended_from",
 			"canonical_payload_json",
 			"canonical_payload_hash",
+			"template_hash",
 			"typst_source",
 			"typst_version",
+			"pdf_standard",
+			"zebra_version",
+			"barcode_symbology",
+			"barcode_settings_json",
+			"pdfa_validation_status",
+			"pdfa_validation_result",
 			"issuance_status",
 			"business_status",
 			"integrity_status",
@@ -179,6 +182,12 @@ class CrispyIssuedDocument(Document):
 			"crispy_template": self.crispy_template,
 			"crispy_template_name": template_metadata.get("template_name"),
 			"crispy_template_version": self.crispy_template_version,
+			"template_hash": self.template_hash or template_metadata.get("snapshot_hash"),
+			"pdf_standard": self.pdf_standard or template_metadata.get("pdf_standard"),
+			"typst_version": self.typst_version or template_metadata.get("typst_version"),
+			"zebra_version": self.zebra_version or template_metadata.get("zebra_version"),
+			"barcode_symbology": self.barcode_symbology or template_metadata.get("barcode_symbology"),
+			"pdfa_validation_status": self.pdfa_validation_status,
 			"source_target_identity": self._get_source_target_identity(template_metadata),
 			"issuance_status": self.issuance_status,
 			"business_status": self.business_status,
@@ -203,6 +212,11 @@ class CrispyIssuedDocument(Document):
 				"source_doctype",
 				"source_report",
 				"source_contract",
+				"snapshot_hash",
+				"pdf_standard",
+				"typst_version",
+				"zebra_version",
+				"barcode_symbology",
 			],
 			as_dict=True,
 		)

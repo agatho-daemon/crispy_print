@@ -250,12 +250,17 @@
 									<input
 										v-model="useActiveTemplate"
 										type="checkbox"
-										:disabled="
-											activeTemplates.length === 0 || activeTemplateLoading
-										"
+										:disabled="true"
 									/>
-									<span>{{ __("Use Active Template") }}</span>
+									<span>{{ __("Use approved template snapshot") }}</span>
 								</label>
+								<p class="help-block text-muted small">
+									{{
+										__(
+											"Runtime previews use frozen approved templates. Editable formats remain available in the Builder."
+										)
+									}}
+								</p>
 								<p
 									v-if="activeTemplateLoading"
 									class="help-block text-muted small"
@@ -591,7 +596,11 @@
 		</div>
 
 		<!-- Right Pane: Preview -->
+		<div v-if="runtimeTemplateMessage" class="runtime-template-warning">
+			{{ runtimeTemplateMessage }}
+		</div>
 		<PreviewRenderer
+			v-else
 			:format-name="previewFormatName"
 			:layout="layout"
 			:doc-header="docHeader"
@@ -612,7 +621,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeUnmount, onMounted, watch, computed } from "vue";
+import { ref, onBeforeUnmount, onMounted, watch, computed, nextTick } from "vue";
 import {
 	getFormatsForDoctype,
 	loadFormatData,
@@ -641,6 +650,7 @@ import {
 } from "./reportPrintSettings";
 import { getLogger } from "../logger";
 import { fetchTypstFonts, formatPt, parseSize } from "../utils/typstTypography";
+import { escapeTypstString } from "../utils/typstEscape";
 import { __ } from "../utils/i18n";
 import {
 	compileReportPreview,
@@ -680,7 +690,8 @@ const selectedFormat = ref<string>("");
 const activeTemplates = ref<ActiveCrispyTemplateOption[]>([]);
 const selectedTemplate = ref("");
 const templatesLoading = ref(false);
-const useActiveTemplate = ref(false);
+const useActiveTemplate = ref(true);
+let suppressActiveTemplateWatcher = false;
 const activeTemplateLoading = ref(false);
 const activeTemplateSnapshot = ref<ResolvedCrispyTemplate | null>(null);
 const isReportMode = computed(() => props.source === "report");
@@ -727,6 +738,13 @@ function getPreviewCompany(): string | null {
 	);
 }
 
+function fetchScopedLetterheads() {
+	return fetchLetterheads({
+		company: getPreviewCompany(),
+		include_current: presentation_settings.value.branding?.letterhead || null,
+	});
+}
+
 // Settings state (single in-memory copy; PP does not persist)
 const presentation_settings = ref<PresentationSettings>(
 	merge_presentation_settings(default_presentation_settings, {})
@@ -748,10 +766,17 @@ const selectedTemplateInfo = computed(
 );
 const previewFormatName = computed(() => {
 	if (isReportMode.value) return null;
-	if (useActiveTemplate.value && activeTemplateSnapshot.value?.source_crispy_format) {
-		return activeTemplateSnapshot.value.source_crispy_format;
-	}
-	return selectedFormat.value;
+	return (
+		activeTemplateSnapshot.value?.source_crispy_format ||
+		activeTemplateSnapshot.value?.name ||
+		null
+	);
+});
+const runtimeTemplateMessage = computed(() => {
+	if (isReportMode.value) return "";
+	if (loading.value || templatesLoading.value || activeTemplateLoading.value) return "";
+	if (activeTemplateSnapshot.value) return "";
+	return __("No approved Crispy Template is available for this document context.");
 });
 
 const layout = ref<any>(null);
@@ -813,10 +838,6 @@ const branding_mode = computed<string>({
 		presentation_settings.value.branding.mode = value as "letterhead" | "logo" | "none";
 	},
 });
-
-function escapeTypstString(value: string): string {
-	return String(value || "").replace(/"/g, '\\"');
-}
 
 async function fetchFonts() {
 	loadingFonts.value = true;
@@ -922,8 +943,8 @@ async function initializeReportSettings() {
 			await fetchReportColumns();
 		}
 
-		await fetchLetterheads();
-		await fetchCompanies();
+		await fetchScopedLetterheads();
+		await fetchCompanies({ include_current: getPreviewCompany() });
 	} catch (error) {
 		logger.error("Failed to load report formats", error);
 		frappe.show_alert({
@@ -1178,8 +1199,8 @@ async function initializeData() {
 
 		availableFormats.value = formatsWithDefault;
 
-		await fetchLetterheads();
-		await fetchCompanies();
+		await fetchScopedLetterheads();
+		await fetchCompanies({ include_current: getPreviewCompany() });
 
 		// Determine which format to use
 		const formatToLoad = pickFormatName(formatsWithDefault, props.format || null);
@@ -1188,9 +1209,11 @@ async function initializeData() {
 			selectedFormat.value = formatToLoad;
 			await loadFormatSettings(formatToLoad);
 			await loadActiveTemplates();
+			await enableActiveTemplatePreviewDefault();
 		} else {
 			logger.warn("No formats available for doctype", props.doctype);
 			await loadActiveTemplates();
+			await enableActiveTemplatePreviewDefault();
 			loading.value = false;
 		}
 	} catch (error) {
@@ -1273,7 +1296,7 @@ async function loadActiveTemplates() {
 		activeTemplates.value = templates;
 		selectedTemplate.value = templates[0]?.name || "";
 		if (!selectedTemplate.value) {
-			useActiveTemplate.value = false;
+			useActiveTemplate.value = true;
 			activeTemplateSnapshot.value = null;
 		}
 	} catch (error) {
@@ -1300,20 +1323,26 @@ async function loadSelectedActiveTemplate() {
 			template: selectedTemplate.value,
 		});
 		activeTemplateSnapshot.value = snapshot;
+		const renderPayload = snapshot.render_payload || {};
 		const parsed = parseCrispyFormatDoc({
-			name: snapshot.source_crispy_format || snapshot.name,
-			doc_type: snapshot.source_doctype || props.doctype,
-			crispy_format_type: snapshot.crispy_format_type,
-			company: snapshot.company || "",
-			layout_json: snapshot.layout_json || "",
-			presentation_settings: snapshot.presentation_settings || "",
-			doc_header: snapshot.doc_header || "",
-			doc_footer: snapshot.doc_footer || "",
-			typst_preamble: snapshot.typst_preamble || "",
-			typst_code: snapshot.typst_code || "",
-			pdf_standard: snapshot.pdf_standard || "PDF/A-2u",
-			raw_typst: snapshot.raw_typst ? 1 : 0,
-			effective_company: snapshot.effective_company || snapshot.company || null,
+			name: renderPayload.name || snapshot.source_crispy_format || snapshot.name,
+			doc_type: renderPayload.doc_type || snapshot.source_doctype || props.doctype,
+			crispy_format_type: renderPayload.crispy_format_type || snapshot.crispy_format_type,
+			company: renderPayload.company || snapshot.company || "",
+			layout_json: renderPayload.layout_json || snapshot.layout_json || "",
+			presentation_settings:
+				renderPayload.presentation_settings || snapshot.presentation_settings || "",
+			doc_header: renderPayload.doc_header || snapshot.doc_header || "",
+			doc_footer: renderPayload.doc_footer || snapshot.doc_footer || "",
+			typst_preamble: renderPayload.typst_preamble || snapshot.typst_preamble || "",
+			typst_code: renderPayload.typst_code || snapshot.typst_code || "",
+			pdf_standard: renderPayload.pdf_standard || snapshot.pdf_standard || "PDF/A-2u",
+			raw_typst: renderPayload.raw_typst ?? (snapshot.raw_typst ? 1 : 0),
+			effective_company:
+				renderPayload.effective_company ||
+				snapshot.effective_company ||
+				snapshot.company ||
+				null,
 		});
 
 		presentation_settings.value = merge_presentation_settings(
@@ -1331,16 +1360,16 @@ async function loadSelectedActiveTemplate() {
 		);
 
 		layout.value = parsed.layout;
-		docHeader.value = snapshot.doc_header || "";
-		docFooter.value = snapshot.doc_footer || "";
-		typstPreamble.value = snapshot.typst_preamble || "";
-		typstCode.value = snapshot.typst_code || "";
-		pdfStandard.value = snapshot.pdf_standard || "PDF/A-2u";
-		rawTypst.value = Boolean(snapshot.raw_typst);
+		docHeader.value = renderPayload.doc_header || snapshot.doc_header || "";
+		docFooter.value = renderPayload.doc_footer || snapshot.doc_footer || "";
+		typstPreamble.value = renderPayload.typst_preamble || snapshot.typst_preamble || "";
+		typstCode.value = renderPayload.typst_code || snapshot.typst_code || "";
+		pdfStandard.value = renderPayload.pdf_standard || snapshot.pdf_standard || "PDF/A-2u";
+		rawTypst.value = Boolean(renderPayload.raw_typst ?? snapshot.raw_typst);
 	} catch (error) {
 		logger.error("Error loading active Crispy Template", error);
 		activeTemplateSnapshot.value = null;
-		useActiveTemplate.value = false;
+		useActiveTemplate.value = true;
 		frappe.show_alert({
 			message: __("Failed to load active template"),
 			indicator: "red",
@@ -1348,6 +1377,17 @@ async function loadSelectedActiveTemplate() {
 	} finally {
 		activeTemplateLoading.value = false;
 	}
+}
+
+async function enableActiveTemplatePreviewDefault() {
+	if (!selectedTemplate.value) return;
+	if (!useActiveTemplate.value) {
+		suppressActiveTemplateWatcher = true;
+		useActiveTemplate.value = true;
+		await nextTick();
+		suppressActiveTemplateWatcher = false;
+	}
+	await loadSelectedActiveTemplate();
 }
 
 // Handle format change
@@ -1436,14 +1476,14 @@ watch(
 );
 
 watch(useActiveTemplate, async (enabled) => {
-	if (enabled) {
-		await loadSelectedActiveTemplate();
-		return;
+	if (suppressActiveTemplateWatcher) return;
+	if (!enabled) {
+		suppressActiveTemplateWatcher = true;
+		useActiveTemplate.value = true;
+		await nextTick();
+		suppressActiveTemplateWatcher = false;
 	}
-	activeTemplateSnapshot.value = null;
-	if (selectedFormat.value) {
-		await loadFormatSettings(selectedFormat.value);
-	}
+	await loadSelectedActiveTemplate();
 });
 
 watch(selectedTemplate, async () => {
@@ -1519,6 +1559,7 @@ watch(
 	(newCompany) => {
 		logger.info("Logo company changed", newCompany);
 		logo_settings.value.image = resolveCompanyLogo(newCompany);
+		fetchScopedLetterheads();
 		logger.info("Logo image resolved", logo_settings.value.image);
 	}
 );
@@ -1832,6 +1873,18 @@ defineExpose({
 .settings-pane__report-warning {
 	margin: 10px 0 0;
 	line-height: 1.4;
+}
+
+.runtime-template-warning {
+	align-self: start;
+	margin: 24px;
+	padding: 12px 14px;
+	border: 1px solid #f59e0b;
+	border-radius: 6px;
+	background: #fffbeb;
+	color: #92400e;
+	font-size: 13px;
+	line-height: 1.5;
 }
 
 /* Preview Pane */

@@ -39,7 +39,9 @@ function makeAdapter() {
 
 async function flushCompileTimers() {
 	await Promise.resolve()
-	vi.advanceTimersByTime(151)
+	await vi.runOnlyPendingTimersAsync()
+	await Promise.resolve()
+	await vi.runOnlyPendingTimersAsync()
 	await Promise.resolve()
 }
 
@@ -249,6 +251,9 @@ describe("setupWorker race guards", () => {
 		const previewMessage = worker.messages.find((message) => message.requestId === "preview")
 		expect(previewMessage).toBeTruthy()
 		expect(previewMessage.qrData).toBe("SERVER-QR-CODE")
+		expect(previewMessage.barcodeOptions?.symbology).toBe("QR Code")
+		expect(previewMessage.typstSrc).toContain("@local/crispy-print:0.1.0")
+		expect(previewMessage.typstSrc).toContain("crispy-qrcode")
 	})
 
 	it("sends selected-field payload for basic QR compilation", async () => {
@@ -286,6 +291,7 @@ describe("setupWorker race guards", () => {
 		expect(previewMessage).toBeTruthy()
 		expect(previewMessage.qrFilename).toBe("A-qr.svg")
 		expect(previewMessage.qrData).toBe("name: A\ncustomer: Customer A")
-		expect(previewMessage.typstSrc).toContain('image("A-qr.svg"')
+		expect(previewMessage.typstSrc).toContain("crispy-qrcode")
+		expect(previewMessage.typstSrc).not.toContain('image("A-qr.svg"')
 	})
 })

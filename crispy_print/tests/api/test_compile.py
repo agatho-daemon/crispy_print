@@ -360,6 +360,52 @@ This is a test.
 
 		self.assertTrue(result["success"])
 		mock_qr.assert_called_once()
+		self.assertEqual(mock_qr.call_args.args[3], {})
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_compile_typst_uses_package_path_when_vendor_packages_exist(self, mock_run):
+		from crispy_print.api.v1 import compile_typst
+		from crispy_print.api.v1.compile import TYPST_PACKAGE_DIR
+
+		mock_result = Mock()
+		mock_result.returncode = 0
+		mock_result.stderr = ""
+
+		def mock_run_side_effect(*args, **kwargs):
+			cmd_args = args[0]
+			output_template = Path(cmd_args[-1])
+			output_dir = output_template.parent
+			base_name = output_template.stem.replace("-{p}", "")
+			(output_dir / f"{base_name}-1.svg").write_text("<svg/>", encoding="utf-8")
+			return mock_result
+
+		mock_run.side_effect = mock_run_side_effect
+
+		result = compile_typst("= Test", output_format="svg")
+
+		self.assertTrue(result["success"])
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--package-path", cmd_args)
+		self.assertEqual(cmd_args[cmd_args.index("--package-path") + 1], str(TYPST_PACKAGE_DIR))
+
+	def test_compile_cache_key_includes_barcode_options(self):
+		from crispy_print.api.v1.compile import _compile_cache_key
+
+		common = {
+			"typst_source": "= Test",
+			"output_format": "svg",
+			"pdf_standard": "",
+			"asset_files": [],
+			"chart_svg": None,
+			"qr_data": "payload",
+			"qr_filename": "qr.svg",
+			"typst_bin": "typst",
+		}
+
+		first = _compile_cache_key(**common, barcode_options={"symbology": "QR Code", "quiet_zone": 1})
+		second = _compile_cache_key(**common, barcode_options={"symbology": "QR Code", "quiet_zone": 4})
+
+		self.assertNotEqual(first, second)
 
 
 class TestAssetCopy(FrappeTestCase):
@@ -562,17 +608,28 @@ class TestQRCodeGeneration(FrappeTestCase):
 		"""Test QR code SVG generation"""
 		from crispy_print.api.v1.compile import _write_qr_svg
 
-		# Mock the pyqrcode module import
-		with patch.dict("sys.modules", {"pyqrcode": MagicMock()}):
+		# Mock the segno module import
+		with patch.dict("sys.modules", {"segno": MagicMock()}):
 			import sys
 
-			sys.modules["pyqrcode"].create = MagicMock()
+			sys.modules["segno"].make = MagicMock()
 			qr_obj = MagicMock()
-			sys.modules["pyqrcode"].create.return_value = qr_obj
-			qr_obj.svg = MagicMock()
+			sys.modules["segno"].make.return_value = qr_obj
+			qr_obj.save = MagicMock()
 
-			result = _write_qr_svg("test", "test.svg", "/tmp")
+			result = _write_qr_svg("total: د.ك 32,000.000", "test.svg", "/tmp")
 
 			self.assertEqual(result, "test.svg")
-			sys.modules["pyqrcode"].create.assert_called_once_with("test")
-			qr_obj.svg.assert_called_once()
+			sys.modules["segno"].make.assert_called_once_with("total: د.ك 32,000.000", error="m")
+			qr_obj.save.assert_called_once()
+
+	def test_write_qr_svg_rejects_datamatrix_fallback(self):
+		from crispy_print.api.v1.compile import _write_qr_svg
+
+		with self.assertRaises(frappe.ValidationError):
+			_write_qr_svg(
+				"payload",
+				"dm.svg",
+				"/tmp",
+				{"symbology": "DataMatrix"},
+			)

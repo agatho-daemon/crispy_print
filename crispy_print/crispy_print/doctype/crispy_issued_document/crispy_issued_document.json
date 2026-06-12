@@ -27,8 +27,15 @@
   "canonical_snapshot_section",
   "canonical_payload_json",
   "canonical_payload_hash",
+  "template_hash",
   "typst_source",
   "typst_version",
+  "pdf_standard",
+  "zebra_version",
+  "barcode_symbology",
+  "barcode_settings_json",
+  "pdfa_validation_status",
+  "pdfa_validation_result",
   "rendered_artifacts_section",
   "artifacts",
   "trust_events",
@@ -79,6 +86,7 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
    "reqd": 1,
@@ -115,6 +123,8 @@
    "default": "Draft",
    "fieldname": "issuance_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Issuance Status",
    "options": "Draft\nIssued\nFailed\nRevoked\nSuperseded",
    "search_index": 1
@@ -123,6 +133,8 @@
    "default": "Active",
    "fieldname": "business_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Business Status",
    "options": "Active\nCancelled\nRevoked\nSuperseded\nExpired",
    "search_index": 1
@@ -131,6 +143,8 @@
    "default": "Pending",
    "fieldname": "integrity_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Integrity Status",
    "options": "Pending\nValid\nTampered\nCorrupted\nUnknown",
    "search_index": 1
@@ -183,6 +197,13 @@
    "search_index": 1
   },
   {
+   "fieldname": "template_hash",
+   "fieldtype": "Data",
+   "label": "Template Hash",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
    "fieldname": "typst_source",
    "fieldtype": "Code",
    "label": "Typst Source",
@@ -192,6 +213,49 @@
    "fieldname": "typst_version",
    "fieldtype": "Data",
    "label": "Typst Version"
+  },
+  {
+   "fieldname": "pdf_standard",
+   "fieldtype": "Data",
+   "label": "PDF Standard",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "zebra_version",
+   "fieldtype": "Data",
+   "label": "Zebra Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "barcode_symbology",
+   "fieldtype": "Data",
+   "label": "Barcode Symbology",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "barcode_settings_json",
+   "fieldtype": "Code",
+   "label": "Barcode Settings JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "default": "Skipped",
+   "fieldname": "pdfa_validation_status",
+   "fieldtype": "Select",
+   "label": "PDF/A Validation Status",
+   "options": "Pending\nGenerated\nValid\nInvalid\nSkipped\nFailed",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "pdfa_validation_result",
+   "fieldtype": "Small Text",
+   "label": "PDF/A Validation Result",
+   "read_only": 1
   },
   {
    "fieldname": "rendered_artifacts_section",
@@ -238,7 +302,6 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
    "email": 1,
    "export": 1,
    "print": 1,

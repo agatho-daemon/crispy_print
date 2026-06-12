@@ -5,3 +5,6 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 crispy_print.patches.post_model_sync.backfill_default_branding_profiles
+crispy_print.patches.post_model_sync.set_crispy_template_snapshot_hash_version
+crispy_print.patches.post_model_sync.add_letterhead_company_lifecycle_fields
+crispy_print.patches.post_model_sync.update_letterhead_lifecycle_field_labels

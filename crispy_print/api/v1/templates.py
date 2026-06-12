@@ -29,20 +29,83 @@ def get_active_crispy_templates_for_document(
 	source_docname: str | None = None,
 	company: str | None = None,
 ) -> list[JSONDict]:
-	if not source_doctype:
-		frappe.throw("Source DocType is required.")
-	ensure_doctype_read_permission(source_doctype)
-
-	effective_company = resolve_effective_company(
+	return get_active_crispy_templates_for_render(
 		source_doctype=source_doctype,
 		source_docname=source_docname,
-		explicit_company=company,
-		allow_global_fallback=False,
+		company=company,
 	)
+
+
+def get_active_crispy_templates_for_render(
+	source_doctype: str | None = None,
+	source_docname: str | None = None,
+	source_report: str | None = None,
+	source_contract: str | None = None,
+	company: str | None = None,
+) -> list[JSONDict]:
+	_validate_template_render_context(
+		source_doctype=source_doctype,
+		source_report=source_report,
+		source_contract=source_contract,
+	)
+	target_filters = _template_target_filters(
+		source_doctype=source_doctype,
+		source_report=source_report,
+		source_contract=source_contract,
+	)
+	effective_company = _resolve_render_company(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		company=company,
+	)
+	return _get_active_templates(target_filters, effective_company)
+
+
+def get_resolved_crispy_template_for_document(
+	source_doctype: str,
+	source_docname: str | None = None,
+	company: str | None = None,
+	template: str | None = None,
+	template_name: str | None = None,
+) -> JSONDict:
+	return get_resolved_crispy_template_for_render(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		company=company,
+		template=template,
+		template_name=template_name,
+	)
+
+
+def get_resolved_crispy_template_for_render(
+	source_doctype: str | None = None,
+	source_docname: str | None = None,
+	source_report: str | None = None,
+	source_contract: str | None = None,
+	company: str | None = None,
+	template: str | None = None,
+	template_name: str | None = None,
+) -> JSONDict:
+	_validate_template_render_context(
+		source_doctype=source_doctype,
+		source_report=source_report,
+		source_contract=source_contract,
+	)
+	return resolve_active_crispy_template(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		source_report=source_report,
+		source_contract=source_contract,
+		company=company,
+		template=template,
+		template_name=template_name,
+	)
+
+
+def _get_active_templates(target_filters: dict[str, Any], effective_company: str | None) -> list[JSONDict]:
 	now = now_datetime()
 	filters: dict[str, Any] = {
-		"crispy_format_type": "DocType",
-		"source_doctype": source_doctype,
+		**target_filters,
 		"status": "Approved",
 		"is_active": 1,
 	}
@@ -57,6 +120,10 @@ def get_active_crispy_templates_for_document(
 			"effective_from",
 			"effective_to",
 			"source_branding_profile",
+			"snapshot_hash",
+			"snapshot_hash_version",
+			"zebra_version",
+			"barcode_symbology",
 		],
 	)
 
@@ -79,6 +146,10 @@ def get_active_crispy_templates_for_document(
 				"effective_from": row.get("effective_from"),
 				"effective_to": row.get("effective_to"),
 				"source_branding_profile": row.get("source_branding_profile"),
+				"snapshot_hash": row.get("snapshot_hash"),
+				"snapshot_hash_version": row.get("snapshot_hash_version"),
+				"zebra_version": row.get("zebra_version"),
+				"barcode_symbology": row.get("barcode_symbology"),
 				"scope": "Company" if row_company else "Global",
 			}
 		)
@@ -90,22 +161,45 @@ def get_active_crispy_templates_for_document(
 	return applicable
 
 
-def get_resolved_crispy_template_for_document(
-	source_doctype: str,
+def _validate_template_render_context(
+	source_doctype: str | None = None,
+	source_report: str | None = None,
+	source_contract: str | None = None,
+) -> None:
+	target_count = sum(bool(value) for value in (source_doctype, source_report, source_contract))
+	if target_count != 1:
+		frappe.throw("Exactly one template render target is required.")
+	if source_doctype:
+		ensure_doctype_read_permission(source_doctype)
+		return
+	if source_report:
+		ensure_doctype_read_permission("Report")
+		return
+	ensure_doctype_read_permission("Crispy Template")
+
+
+def _template_target_filters(
+	source_doctype: str | None = None,
+	source_report: str | None = None,
+	source_contract: str | None = None,
+) -> dict[str, str]:
+	if source_doctype:
+		return {"crispy_format_type": "DocType", "source_doctype": source_doctype}
+	if source_report:
+		return {"crispy_format_type": "Report", "source_report": source_report}
+	return {"crispy_format_type": "Contract", "source_contract": source_contract or ""}
+
+
+def _resolve_render_company(
+	source_doctype: str | None = None,
 	source_docname: str | None = None,
 	company: str | None = None,
-	template: str | None = None,
-	template_name: str | None = None,
-) -> JSONDict:
-	if not source_doctype:
-		frappe.throw("Source DocType is required.")
-	ensure_doctype_read_permission(source_doctype)
-	return resolve_active_crispy_template(
+) -> str | None:
+	return resolve_effective_company(
 		source_doctype=source_doctype,
 		source_docname=source_docname,
-		company=company,
-		template=template,
-		template_name=template_name,
+		explicit_company=company,
+		allow_global_fallback=False,
 	)
 
 

@@ -1,0 +1,7 @@
+[package]
+name = "crispy-print"
+version = "0.1.0"
+entrypoint = "src/lib.typ"
+authors = ["Agathodaemon"]
+license = "MIT"
+description = "Crispy Print Typst helpers for pinned barcode rendering."

@@ -8,6 +8,8 @@ from typing import Any
 import frappe
 from frappe import _
 
+from crispy_print.json_utils import parse_json_object, parse_json_value
+
 from .company_context import resolve_effective_company
 from .fiscal_credentials import get_fiscal_credential_doc
 
@@ -225,7 +227,7 @@ def _rule_matches(rule: Any, doc: Any, profile: Any, throw_on_custom: bool = Tru
 	if condition_type == "Always":
 		return True
 	if condition_type == "Filter JSON":
-		filters = _parse_json_dict(rule.condition_json, _("Condition JSON"))
+		filters = parse_json_object(rule.condition_json, _("Condition JSON"))
 		return _document_matches_filters(doc.as_dict(), filters)
 	if condition_type == "Python Expression":
 		return bool(
@@ -299,6 +301,10 @@ def _build_resolved_config(
 		"payload_format": profile.payload_format,
 		"output_encoding": profile.output_encoding,
 		"error_correction": profile.error_correction,
+		"quiet_zone": profile.quiet_zone,
+		"module_size_pt": profile.module_size_pt,
+		"datamatrix_encodation": _datamatrix_encodation_value(profile.datamatrix_encodation),
+		"datamatrix_symbols": _datamatrix_symbols_value(profile.datamatrix_symbols),
 		"content_source": profile.content_source,
 		"payload_template": profile.payload_template,
 		"selected_fields": _normalize_selected_fields(profile.selected_fields_json),
@@ -392,7 +398,13 @@ def _encode_document_code_payload(payload: Any, resolved: JSONDict) -> str:
 	else:
 		frappe.throw(_("Unsupported encoder key: {0}").format(resolved.get("encoder_key")))
 
-	return _apply_output_encoding(base_value, payload if isinstance(payload, dict) else None, output_encoding)
+	encoded_value = _apply_output_encoding(
+		base_value,
+		payload if isinstance(payload, dict) else None,
+		output_encoding,
+	)
+	_validate_final_document_code_payload(encoded_value, resolved)
+	return encoded_value
 
 
 def _serialize_payload(payload: Any, payload_format: str) -> str:
@@ -429,6 +441,51 @@ def _apply_output_encoding(base_value: str, payload_dict: JSONDict | None, outpu
 	if output_encoding == "Hex":
 		return base_value.encode("utf-8").hex()
 	frappe.throw(_("Unsupported output encoding: {0}").format(output_encoding))
+
+
+def _validate_final_document_code_payload(encoded_value: str, resolved: JSONDict) -> None:
+	if (resolved.get("code_purpose") or "") != "Regulatory":
+		return
+
+	output_encoding = (resolved.get("output_encoding") or "Plain Text").strip()
+	if output_encoding == "Plain Text":
+		if encoded_value.isascii() or _allows_utf8_final_payload(resolved):
+			return
+		frappe.throw(
+			_(
+				"Regulatory Plain Text QR payload must be US-ASCII unless the regulatory profile explicitly allows UTF-8 final payloads."
+			)
+		)
+	if output_encoding == "Base64":
+		if _is_valid_base64_ascii(encoded_value):
+			return
+		frappe.throw(_("Regulatory Base64 QR payload must be valid US-ASCII Base64."))
+	if output_encoding == "URL Encoded":
+		if encoded_value.isascii() and not any(char.isspace() or ord(char) < 32 for char in encoded_value):
+			return
+		frappe.throw(_("Regulatory URL Encoded QR payload must be US-ASCII without raw whitespace."))
+	if output_encoding == "Hex":
+		if _is_hex_ascii(encoded_value):
+			return
+		frappe.throw(_("Regulatory Hex QR payload must be US-ASCII hexadecimal."))
+
+
+def _allows_utf8_final_payload(resolved: JSONDict) -> bool:
+	settings = resolved.get("encoder_settings")
+	return isinstance(settings, dict) and settings.get("allow_utf8_final_payload") is True
+
+
+def _is_valid_base64_ascii(value: str) -> bool:
+	if not value.isascii():
+		return False
+	return _looks_like_base64(value)
+
+
+def _is_hex_ascii(value: str) -> bool:
+	if not value.isascii():
+		return False
+	text = str(value or "")
+	return bool(text) and len(text) % 2 == 0 and all(char in "0123456789abcdefABCDEF" for char in text)
 
 
 def _encode_tlv_base64(payload: JSONDict) -> str:
@@ -546,7 +603,7 @@ def _infer_company(doc: JSONDict) -> str | None:
 def _normalize_selected_fields(value: Any) -> list[str] | JSONDict:
 	if not value:
 		return []
-	parsed = _parse_json_value(value)
+	parsed = parse_json_value(value, _("Selected fields"))
 	if isinstance(parsed, dict):
 		return parsed
 	if isinstance(parsed, list):
@@ -557,30 +614,33 @@ def _normalize_selected_fields(value: Any) -> list[str] | JSONDict:
 def _normalize_json_dict(value: Any) -> JSONDict:
 	if not value:
 		return {}
-	return _parse_json_dict(value, _("JSON value"))
+	return parse_json_object(value, _("JSON value"))
 
 
-def _parse_json_dict(value: Any, label: str) -> JSONDict:
-	parsed = _parse_json_value(value)
-	if not isinstance(parsed, dict):
-		frappe.throw(_("{0} must be a JSON object.").format(label))
-	return parsed
+def _datamatrix_encodation_value(value: str | None) -> str:
+	return {
+		"ASCII": "ascii",
+		"C40": "c40",
+		"Text": "text",
+		"X12": "x12",
+		"EDIFACT": "edifact",
+		"Base256": "base256",
+	}.get(str(value or "").strip(), "")
 
 
-def _parse_json_value(value: Any) -> Any:
-	if isinstance(value, str):
-		return json.loads(value)
-	return deepcopy(value)
+def _datamatrix_symbols_value(value: str | None) -> str:
+	return {
+		"Square": "",
+		"Rectangular": "rect",
+		"DMRE": "rect-ext",
+	}.get(str(value or "").strip(), "")
 
 
 def _parse_json_if_possible(value: str) -> Any | None:
 	text = str(value or "").strip()
 	if not text or text[0] not in "[{":
 		return None
-	try:
-		return json.loads(text)
-	except json.JSONDecodeError:
-		return None
+	return parse_json_value(text, _("Rendered Payload Template"))
 
 
 def _get_value_by_path(value: Any, path: str) -> Any:

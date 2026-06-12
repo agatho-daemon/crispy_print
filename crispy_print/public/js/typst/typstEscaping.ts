@@ -1,16 +1,14 @@
+import { escapeTypstString, quoteTypstString } from "../utils/typstEscape"
+
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{3,8}$/
 const TYPST_LENGTH_RE = /^-?\d+(?:\.\d+)?(?:pt|mm|cm|in|em|%)?$/
 
 export function typstString(value: unknown, fallback = "") {
-	return String(value ?? fallback)
-		.replace(/\\/g, "\\\\")
-		.replace(/"/g, '\\"')
-		.replace(/\r/g, "\\n")
-		.replace(/\n/g, "\\n")
+	return escapeTypstString(value ?? fallback)
 }
 
 export function typstQuoted(value: unknown, fallback = "") {
-	return `"${typstString(value, fallback)}"`
+	return quoteTypstString(value ?? fallback)
 }
 
 export function typstColor(value: unknown, fallback = "none") {

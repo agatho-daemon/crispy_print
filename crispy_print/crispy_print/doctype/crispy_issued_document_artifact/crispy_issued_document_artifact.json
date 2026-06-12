@@ -10,6 +10,7 @@
   "media_type",
   "file_hash",
   "hash_algorithm",
+  "render_status",
   "page_number",
   "is_primary",
   "generated_at",
@@ -46,6 +47,13 @@
    "fieldname": "hash_algorithm",
    "fieldtype": "Data",
    "label": "Hash Algorithm"
+  },
+  {
+   "default": "Generated",
+   "fieldname": "render_status",
+   "fieldtype": "Select",
+   "label": "Render Status",
+   "options": "Pending\nGenerated\nFailed\nSkipped"
   },
   {
    "description": "For multipage artifacts, e.g. SVG, JPEG, PNG etc.",

@@ -86,4 +86,16 @@ describe("sanitizeSvg", () => {
 
 		expect(out).toContain('<symbol id="glyph-g" overflow="visible">');
 	});
+
+	it("preserves Typst/Zebra barcode path output", () => {
+		const out = sanitizeSvg(`
+			<svg viewBox="0 0 32 32" width="32" height="32">
+				<path fill="#000" fill-rule="evenodd" d="M 0 0h 1v 1h -1z M 2 0h 1v 1h -1z" transform="matrix(3.5 0 0 3.5 0 0)" />
+			</svg>
+		`);
+
+		expect(out).toContain("<path");
+		expect(out).toContain('fill-rule="evenodd"');
+		expect(out).toContain("matrix(3.5 0 0 3.5 0 0)");
+	});
 });

@@ -6,6 +6,9 @@ from frappe.tests.utils import FrappeTestCase
 
 from crispy_print.api.v1.issued_documents import (
 	cancel_issued_document,
+	create_issued_document_snapshot,
+	get_issued_document_audit_events,
+	get_issued_documents,
 	record_issued_document_integrity_check,
 	revoke_issued_document,
 	supersede_issued_document,
@@ -32,6 +35,11 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(doc.business_status, "Active")
 		self.assertEqual(doc.integrity_status, "Pending")
 		self.assertEqual(doc.company, self.company)
+
+	def test_manual_insert_is_blocked_without_backend_flag(self):
+		doc = self._new_issued_document(allow_backend_insert=False)
+
+		self.assertRaises(frappe.PermissionError, doc.insert, ignore_permissions=True)
 
 	def test_derives_company_on_insert(self):
 		other_company = self._ensure_company(name="CID Other Company", abbr="CIDO")
@@ -153,6 +161,70 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(result["source_target_identity"]["source_doctype"], "DocType")
 		self.assertNotIn("source_docname", result)
 
+	def test_create_snapshot_records_template_render_facts(self):
+		template = frappe.get_doc(
+			{
+				"doctype": "Crispy Template",
+				"template_name": "CID Test Snapshot Template",
+				"source_crispy_format": self.format_name,
+				"company": self.company,
+				"status": "Approved",
+				"is_active": 1,
+			}
+		)
+		template.insert(ignore_permissions=True)
+
+		result = create_issued_document_snapshot("DocType", "DocType", crispy_template=template.name)
+		doc = frappe.get_doc("Crispy Issued Document", result["name"])
+
+		self.assertEqual(doc.crispy_template, template.name)
+		self.assertEqual(doc.crispy_template_version, template.version)
+		self.assertEqual(doc.template_hash, template.snapshot_hash)
+		self.assertEqual(doc.pdf_standard, template.pdf_standard)
+		self.assertEqual(doc.zebra_version, template.zebra_version)
+		self.assertEqual(doc.barcode_symbology, template.barcode_symbology)
+		self.assertEqual(doc.typst_source, template.typst_code)
+		self.assertTrue(doc.canonical_payload_hash)
+		canonical_payload = frappe.parse_json(doc.canonical_payload_json)
+		self.assertIn("render_payload_hashes", canonical_payload)
+		self.assertIn("typst_code", canonical_payload["render_payload_hashes"])
+		self.assertEqual(doc.pdfa_validation_status, "Generated")
+		self.assertIn("producer-asserted by Typst", doc.pdfa_validation_result)
+		events = {row.event_type: row for row in doc.trust_events}
+		self.assertEqual(events["Hash"].validation_status, "Valid")
+		self.assertIn("Canonical payload", events["Hash"].validation_message)
+		self.assertEqual(events["Other"].validation_status, "Valid")
+		self.assertIn("Render contract", events["Other"].validation_message)
+		self.assertEqual(events["Validation"].validation_status, "Valid")
+		self.assertIn("producer-asserted by Typst", events["Validation"].validation_message)
+
+	def test_issued_document_lists_filter_by_company_without_source_docname(self):
+		other_company = self._ensure_company(name="CID List Other Company", abbr="CIDLO")
+		other_format = self._ensure_format("CID List Other Format", company=other_company)
+		doc = self._new_issued_document()
+		doc.integrity_status = "Valid"
+		doc.insert(ignore_permissions=True)
+		other = self._new_issued_document()
+		other.crispy_format = other_format
+		other.integrity_status = "Valid"
+		other.flags.allow_cid_backend_insert = True
+		other.insert(ignore_permissions=True)
+
+		rows = get_issued_documents(company=self.company, integrity_status="Valid")
+
+		self.assertTrue(any(row["name"] == doc.name for row in rows))
+		self.assertFalse(any(row["name"] == other.name for row in rows))
+		self.assertTrue(all("source_docname" not in row for row in rows))
+
+	def test_issued_document_audit_events_filter_by_company(self):
+		doc = self._new_issued_document()
+		doc.append_trust_event("Hash", validation_status="Valid", validation_message="ok")
+		doc.insert(ignore_permissions=True)
+
+		rows = get_issued_document_audit_events(company=self.company)
+
+		self.assertTrue(any(row["parent"] == doc.name and row["event_type"] == "Hash" for row in rows))
+
 	def test_superseded_business_status_controls_verification_result(self):
 		doc = self._new_issued_document()
 		doc.business_status = "Superseded"
@@ -225,8 +297,8 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(doc.regulatory_submissions[0].environment, "Sandbox")
 		self.assertEqual(doc.regulatory_submissions[0].submission_status, "Draft")
 
-	def _new_issued_document(self):
-		return frappe.get_doc(
+	def _new_issued_document(self, allow_backend_insert: bool = True):
+		doc = frappe.get_doc(
 			{
 				"doctype": "Crispy Issued Document",
 				"source_doctype": "DocType",
@@ -234,17 +306,20 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 				"crispy_format": self.format_name,
 			}
 		)
+		if allow_backend_insert:
+			doc.flags.allow_cid_backend_insert = True
+		return doc
 
-	def _ensure_format(self):
-		name = "CID Test Format"
+	def _ensure_format(self, name="CID Test Format", company: str | None = None):
+		company = company or self.company
 		if frappe.db.exists("Crispy Format", name):
-			frappe.db.set_value("Crispy Format", name, "company", self.company)
+			frappe.db.set_value("Crispy Format", name, "company", company)
 			return name
 		frappe.get_doc(
 			{
 				"doctype": "Crispy Format",
 				"name": name,
-				"company": self.company,
+				"company": company,
 				"crispy_format_type": "DocType",
 				"doc_type": "DocType",
 				"module": "Crispy Print",

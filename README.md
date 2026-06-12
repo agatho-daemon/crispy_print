@@ -175,7 +175,8 @@ typst --version
 ### Frappe Compatibility
 
 - **Frappe:** v15 or later (all Python/Node.js dependencies already satisfied)
-- **Python dependency:** `pyqrcode` (installed with the app; required for QR SVG generation)
+- **Python dependency:** `segno` (installed with the app; used as the temporary Python QR-only SVG fallback)
+- **Typst barcode package:** Zebra `0.1.0` is vendored with the app for QR Code and DataMatrix rendering through Typst.
 
 ## Installation
 

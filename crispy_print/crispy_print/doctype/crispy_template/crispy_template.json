@@ -26,7 +26,10 @@
   "pdf_standard",
   "raw_typst",
   "typst_version",
+  "zebra_version",
+  "barcode_symbology",
   "snapshot_section",
+  "snapshot_hash_version",
   "layout_json",
   "presentation_settings_json",
   "doc_header",
@@ -61,6 +64,7 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
    "search_index": 1
@@ -79,6 +83,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "Draft\nApproved\nRetired\nSuperseded",
    "reqd": 1,
@@ -89,6 +94,7 @@
    "fieldname": "is_active",
    "fieldtype": "Check",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Active",
    "search_index": 1
   },
@@ -196,9 +202,34 @@
    "read_only": 1
   },
   {
+   "fieldname": "zebra_version",
+   "fieldtype": "Data",
+   "label": "Zebra Version",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "QR Code",
+   "fieldname": "barcode_symbology",
+   "fieldtype": "Select",
+   "label": "Barcode Symbology",
+   "options": "QR Code\nDataMatrix",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
    "fieldname": "snapshot_section",
    "fieldtype": "Section Break",
    "label": "Frozen Snapshot"
+  },
+  {
+   "default": "v1",
+   "fieldname": "snapshot_hash_version",
+   "fieldtype": "Select",
+   "label": "Snapshot Hash Version",
+   "options": "v1\nv2",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "layout_json",
@@ -302,7 +333,7 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
+   "create": 0,
    "delete": 1,
    "email": 1,
    "export": 1,
@@ -320,6 +351,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "name",
+ "title_field": "template_name",
  "track_changes": 1
 }

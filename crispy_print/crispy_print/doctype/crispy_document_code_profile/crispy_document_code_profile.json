@@ -21,6 +21,10 @@
   "payload_format",
   "output_encoding",
   "error_correction",
+  "quiet_zone",
+  "module_size_pt",
+  "datamatrix_encodation",
+  "datamatrix_symbols",
   "payload_section",
   "content_source",
   "payload_template",
@@ -65,12 +69,14 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Enabled"
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
    "reqd": 1
@@ -153,6 +159,37 @@
    "fieldtype": "Select",
    "label": "Error Correction",
    "options": "Low\nMedium\nQuartile\nHigh"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:[\"QR Code\", \"DataMatrix\"].includes(doc.code_format)",
+   "fieldname": "quiet_zone",
+   "fieldtype": "Int",
+   "label": "Quiet Zone",
+   "non_negative": 1
+  },
+  {
+   "default": "3.00",
+   "depends_on": "eval:[\"QR Code\", \"DataMatrix\"].includes(doc.code_format)",
+   "fieldname": "module_size_pt",
+   "fieldtype": "Float",
+   "label": "Module Size (pt)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "depends_on": "eval:doc.code_format == \"DataMatrix\" || doc.code_symbology == \"DataMatrix\"",
+   "fieldname": "datamatrix_encodation",
+   "fieldtype": "Select",
+   "label": "DataMatrix Encodation",
+   "options": "\nASCII\nC40\nText\nX12\nEDIFACT\nBase256"
+  },
+  {
+   "depends_on": "eval:doc.code_format == \"DataMatrix\" || doc.code_symbology == \"DataMatrix\"",
+   "fieldname": "datamatrix_symbols",
+   "fieldtype": "Select",
+   "label": "DataMatrix Symbols",
+   "options": "\nSquare\nRectangular\nDMRE"
   },
   {
    "fieldname": "payload_section",

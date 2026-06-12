@@ -1183,11 +1183,95 @@
 								</p>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">{{
+										__("Symbology")
+									}}</label>
+									<select v-model="qrSettings.symbology" class="form-control">
+										<option value="QR Code">{{ __("QR Code") }}</option>
+										<option value="DataMatrix">{{ __("DataMatrix") }}</option>
+									</select>
+								</div>
+								<div
+									v-if="qrSettings.symbology !== 'DataMatrix'"
+									class="settings-pane__field"
+								>
+									<label class="settings-pane__sublabel">{{
+										__("Error correction")
+									}}</label>
+									<select
+										v-model="qrSettings.errorCorrection"
+										class="form-control"
+									>
+										<option value="Low">{{ __("Low") }}</option>
+										<option value="Medium">{{ __("Medium") }}</option>
+										<option value="Quartile">{{ __("Quartile") }}</option>
+										<option value="High">{{ __("High") }}</option>
+									</select>
+								</div>
+								<div
+									v-if="qrSettings.symbology === 'DataMatrix'"
+									class="settings-pane__field"
+								>
+									<label class="settings-pane__sublabel">{{
+										__("DataMatrix encodation")
+									}}</label>
+									<select
+										v-model="qrSettings.datamatrixEncodation"
+										class="form-control"
+									>
+										<option value="">{{ __("Auto") }}</option>
+										<option value="ascii">ASCII</option>
+										<option value="c40">C40</option>
+										<option value="text">Text</option>
+										<option value="x12">X12</option>
+										<option value="edifact">EDIFACT</option>
+										<option value="base256">Base256</option>
+									</select>
+								</div>
+								<div
+									v-if="qrSettings.symbology === 'DataMatrix'"
+									class="settings-pane__field"
+								>
+									<label class="settings-pane__sublabel">{{
+										__("DataMatrix symbols")
+									}}</label>
+									<select
+										v-model="qrSettings.datamatrixSymbols"
+										class="form-control"
+									>
+										<option value="">{{ __("Square") }}</option>
+										<option value="rect">{{ __("Rectangular") }}</option>
+										<option value="rect-ext">DMRE</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">{{
 										__("Size (mm)")
 									}}</label>
 									<input
 										v-model.number="qrSettings.size"
 										type="number"
+										class="form-control"
+									/>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">{{
+										__("Quiet zone")
+									}}</label>
+									<input
+										v-model.number="qrSettings.quietZone"
+										type="number"
+										min="0"
+										class="form-control"
+									/>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">{{
+										__("Module size")
+									}}</label>
+									<input
+										v-model.number="qrSettings.moduleSize"
+										type="number"
+										min="0"
 										class="form-control"
 									/>
 								</div>
@@ -1518,10 +1602,17 @@ const tableBodyFontSizePt = computed<number>({
 
 onMounted(() => {
 	fetchFonts();
-	fetchLetterheads();
-	fetchCompanies();
+	fetchScopedLetterheads();
+	fetchCompanies({ include_current: selected_company.value || null });
 	fetch_branding_profiles();
 });
+
+function fetchScopedLetterheads() {
+	return fetchLetterheads({
+		company: selected_company.value || null,
+		include_current: props.presentation_settings.branding.letterhead || null,
+	});
+}
 
 watch(
 	() => props.presentation_settings,
@@ -1564,6 +1655,7 @@ watch(availableCompanies, () => {
 watch(
 	() => selected_company.value,
 	() => {
+		fetchScopedLetterheads();
 		fetch_branding_profiles();
 	}
 );
