@@ -233,6 +233,7 @@ export interface CrispyTemplatePublishResult {
 export interface ActiveCrispyTemplateOption {
 	name: string
 	template_name: string
+	template_id?: string | null
 	company?: string | null
 	company_abbr?: string | null
 	version: string

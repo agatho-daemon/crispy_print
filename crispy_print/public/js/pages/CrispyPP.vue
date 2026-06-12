@@ -2,36 +2,6 @@
 	<div class="crispy-preview-layout">
 		<!-- Left Pane: Settings -->
 		<div class="settings-pane">
-			<div class="section-head settings-pane__header">
-				<h4 class="pull-left">{{ __("Print Settings") }}</h4>
-				<div class="pull-right settings-pane__header-actions">
-					<button
-						type="button"
-						class="btn btn-default btn-xs"
-						@click="resetFormat"
-						:title="__('Reset to saved format')"
-					>
-						{{ __("Reset") }}
-					</button>
-					<button
-						type="button"
-						class="btn btn-default btn-xs"
-						popovertarget="preview-settings-help"
-						popovertargetaction="toggle"
-						:title="__('Toggle help')"
-						aria-haspopup="dialog"
-						aria-controls="preview-settings-help"
-					>
-						?
-					</button>
-					<div id="preview-settings-help" popover class="settings-pane__help-popover">
-						<ul class="settings-pane__help-list">
-							<li>{{ __("Configure page settings and document options.") }}</li>
-							<li>{{ __("Changes apply immediately to the preview.") }}</li>
-						</ul>
-					</div>
-				</div>
-			</div>
 			<div class="settings-pane__body">
 				<div class="form-layout">
 					<div v-if="isReportMode" class="settings-pane__section-card card">
@@ -208,10 +178,48 @@
 						</div>
 					</div>
 
-					<div v-if="!isReportMode" class="settings-pane__section-card card">
+					<div
+						v-if="!isReportMode"
+						class="settings-pane__section-card settings-pane__template-section card"
+					>
 						<div class="settings-pane__section-content card-body">
 							<div class="form-group">
-								<label class="control-label">{{ __("Active Template") }}</label>
+								<div class="settings-pane__template-head">
+									<label class="control-label">{{ __("Template") }}</label>
+									<button
+										type="button"
+										class="btn btn-default btn-xs settings-pane__help-button"
+										popovertarget="preview-template-help"
+										popovertargetaction="toggle"
+										:title="__('Toggle help')"
+										aria-haspopup="dialog"
+										aria-controls="preview-template-help"
+									>
+										?
+									</button>
+									<div
+										id="preview-template-help"
+										popover
+										class="settings-pane__help-popover"
+									>
+										<ul class="settings-pane__help-list">
+											<li>
+												{{
+													__(
+														"Select an approved template for this preview."
+													)
+												}}
+											</li>
+											<li>
+												{{
+													__(
+														"Runtime previews use frozen template snapshots."
+													)
+												}}
+											</li>
+										</ul>
+									</div>
+								</div>
 								<select
 									v-model="selectedTemplate"
 									class="form-control"
@@ -232,8 +240,7 @@
 										:key="template.name"
 										:value="template.name"
 									>
-										{{ template.template_name }} v{{ template.version }} -
-										{{ __(template.scope) }}
+										{{ templateOptionLabel(template) }}
 									</option>
 								</select>
 								<p v-if="selectedTemplateInfo" class="help-block text-muted small">
@@ -246,21 +253,6 @@
 											: __("Global fallback template")
 									}}
 								</p>
-								<label class="settings-pane__toggle">
-									<input
-										v-model="useActiveTemplate"
-										type="checkbox"
-										:disabled="true"
-									/>
-									<span>{{ __("Use approved template snapshot") }}</span>
-								</label>
-								<p class="help-block text-muted small">
-									{{
-										__(
-											"Runtime previews use frozen approved templates. Editable formats remain available in the Builder."
-										)
-									}}
-								</p>
 								<p
 									v-if="activeTemplateLoading"
 									class="help-block text-muted small"
@@ -271,87 +263,10 @@
 						</div>
 					</div>
 
-					<div class="settings-pane__section-card card">
-						<button
-							type="button"
-							class="btn btn-link card-header settings-pane__section-header"
-							:class="{ 'is-expanded': isOverridesExpanded }"
-							@click="isOverridesExpanded = !isOverridesExpanded"
-						>
-							<span>{{ __("Preview Overrides") }}</span>
-							<svg
-								:class="[
-									'settings-pane__chevron',
-									{ 'settings-pane__chevron--expanded': isOverridesExpanded },
-								]"
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path
-									fill-rule="evenodd"
-									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-						</button>
-						<div
-							v-if="isOverridesExpanded"
-							class="settings-pane__section-content card-body"
-						>
-							<p class="help-block text-muted small">
-								{{ __("Preview-only changes. The saved format is unchanged.") }}
-							</p>
-
-							<!-- Print Format (doctype source) -->
-							<div v-if="!isReportMode" class="form-group">
-								<label class="control-label">{{ __("Print Format") }}</label>
-								<select
-									v-model="selectedFormat"
-									class="form-control"
-									@change="onFormatChange"
-								>
-									<option
-										v-for="fmt in availableFormats"
-										:key="fmt.name"
-										:value="fmt.name"
-									>
-										{{ fmt.name }}{{ fmt.is_default ? " (Default)" : "" }}
-									</option>
-								</select>
-							</div>
-
-							<div class="form-group">
-								<label class="control-label">{{ __("Language") }}</label>
-								<select
-									v-model="presentation_settings.language"
-									class="form-control"
-									disabled
-								>
-									<option value="en">{{ __("English") }}</option>
-									<option value="ar">{{ __("Arabic") }}</option>
-									<option value="fr">{{ __("French") }}</option>
-									<option value="de">{{ __("German") }}</option>
-									<option value="es">{{ __("Spanish") }}</option>
-								</select>
-								<p class="help-block text-muted small">
-									Default language. More languages coming soon.
-								</p>
-							</div>
-						</div>
-					</div>
-					<div v-if="isBrandingProfileDriven" class="settings-pane__section-card card">
-						<div class="settings-pane__section-content card-body">
-							<p class="help-block text-muted small">
-								{{
-									__("Presentation is controlled by Branding Profile: {0}", [
-										activeBrandingProfile,
-									])
-								}}
-							</p>
-						</div>
-					</div>
-					<div v-if="!isBrandingProfileDriven" class="settings-pane__section-card card">
+					<div
+						v-if="isReportMode && !isBrandingProfileDriven"
+						class="settings-pane__section-card card"
+					>
 						<button
 							type="button"
 							class="btn btn-link card-header settings-pane__section-header"
@@ -482,7 +397,10 @@
 							</div>
 						</div>
 					</div>
-					<div v-if="!isBrandingProfileDriven" class="settings-pane__section-card card">
+					<div
+						v-if="isReportMode && !isBrandingProfileDriven"
+						class="settings-pane__section-card card"
+					>
 						<button
 							type="button"
 							class="btn btn-link card-header settings-pane__section-header"
@@ -621,14 +539,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeUnmount, onMounted, watch, computed, nextTick } from "vue";
-import {
-	getFormatsForDoctype,
-	loadFormatData,
-	parseCrispyFormatDoc,
-	resolveLetterheadDoc,
-	type FormatInfo,
-} from "../utils/formatLoader";
+import { ref, onBeforeUnmount, onMounted, watch, computed } from "vue";
+import { loadFormatData, parseCrispyFormatDoc, resolveLetterheadDoc } from "../utils/formatLoader";
 import {
 	default_presentation_settings,
 	defaultTypography,
@@ -638,7 +550,6 @@ import {
 } from "../utils/presentation_settings";
 import { resolve_effective_presentation_settings } from "../utils/effectivePresentationSettings";
 import PreviewRenderer from "../components/PreviewRenderer.vue";
-import { pickFormatName } from "../utils/formatSelection";
 import { useBrandingData } from "../composables/useBrandingData";
 import { loadReportState, normalizeReportChartSvg } from "../utils/reportState";
 import { dispatchCrispyPreviewSource } from "../utils/events";
@@ -675,8 +586,6 @@ interface Props {
 const props = defineProps<Props>();
 const logger = getLogger({ component: "CrispyPP" });
 
-// Format selection
-const availableFormats = ref<FormatInfo[]>([]);
 const {
 	availableLetterheads,
 	loadingLetterheads,
@@ -686,12 +595,9 @@ const {
 	fetchLetterheads,
 	fetchCompanies,
 } = useBrandingData();
-const selectedFormat = ref<string>("");
 const activeTemplates = ref<ActiveCrispyTemplateOption[]>([]);
 const selectedTemplate = ref("");
 const templatesLoading = ref(false);
-const useActiveTemplate = ref(true);
-let suppressActiveTemplateWatcher = false;
 const activeTemplateLoading = ref(false);
 const activeTemplateSnapshot = ref<ResolvedCrispyTemplate | null>(null);
 const isReportMode = computed(() => props.source === "report");
@@ -757,9 +663,6 @@ const isBrandingProfileDriven = computed(
 		presentation_settings.value.source === "branding_profile" &&
 		Boolean(presentation_settings.value.branding?.profile)
 );
-const activeBrandingProfile = computed(
-	() => presentation_settings.value.branding?.profile || __("selected profile")
-);
 const selectedTemplateInfo = computed(
 	() =>
 		activeTemplates.value.find((template) => template.name === selectedTemplate.value) || null
@@ -779,6 +682,12 @@ const runtimeTemplateMessage = computed(() => {
 	return __("No approved Crispy Template is available for this document context.");
 });
 
+function templateOptionLabel(template: ActiveCrispyTemplateOption): string {
+	if (template.template_id) return template.template_id;
+	const scope = template.company_abbr || template.company || template.scope;
+	return `${template.template_name} - ${scope} - v${template.version}`;
+}
+
 const layout = ref<any>(null);
 const loading = ref(true);
 const docHeader = ref("");
@@ -790,8 +699,6 @@ const rawTypst = ref(false);
 const removeQr = ref(false);
 const letterheadDoc = ref<any | null>(null);
 const changeKey = ref(0);
-const OVERRIDES_STORAGE_KEY = "crispy-print:pp:preview-overrides-expanded";
-const isOverridesExpanded = ref(false);
 const isReportTemplateExpanded = ref(true);
 const isBrandingExpanded = ref(false);
 const isPresentationSettingsExpanded = ref(false);
@@ -1167,7 +1074,7 @@ watch(
 	{ deep: true }
 );
 
-// Initialize: Load available formats and letterheads
+// Initialize: document runtime uses approved frozen templates only.
 async function initializeData() {
 	if (!props.doctype) {
 		if (props.source === "report") {
@@ -1181,41 +1088,11 @@ async function initializeData() {
 
 	try {
 		loading.value = true;
-
-		// Load available formats for this doctype
-		const formats = await getFormatsForDoctype(props.doctype, getPreviewCompany());
-
-		// Check is_default flag for each format
-		const formatsWithDefault = await Promise.all(
-			formats.map(async (fmt) => {
-				const isDefault = await frappe.db.get_value(
-					"Crispy Format",
-					fmt.name,
-					"is_default"
-				);
-				return { ...fmt, is_default: isDefault.message.is_default };
-			})
-		);
-
-		availableFormats.value = formatsWithDefault;
-
 		await fetchScopedLetterheads();
 		await fetchCompanies({ include_current: getPreviewCompany() });
-
-		// Determine which format to use
-		const formatToLoad = pickFormatName(formatsWithDefault, props.format || null);
-
-		if (formatToLoad) {
-			selectedFormat.value = formatToLoad;
-			await loadFormatSettings(formatToLoad);
-			await loadActiveTemplates();
-			await enableActiveTemplatePreviewDefault();
-		} else {
-			logger.warn("No formats available for doctype", props.doctype);
-			await loadActiveTemplates();
-			await enableActiveTemplatePreviewDefault();
-			loading.value = false;
-		}
+		await loadActiveTemplates();
+		await loadSelectedActiveTemplate();
+		loading.value = false;
 	} catch (error) {
 		logger.error("Error initializing", error);
 		frappe.show_alert({
@@ -1296,7 +1173,6 @@ async function loadActiveTemplates() {
 		activeTemplates.value = templates;
 		selectedTemplate.value = templates[0]?.name || "";
 		if (!selectedTemplate.value) {
-			useActiveTemplate.value = true;
 			activeTemplateSnapshot.value = null;
 		}
 	} catch (error) {
@@ -1369,42 +1245,12 @@ async function loadSelectedActiveTemplate() {
 	} catch (error) {
 		logger.error("Error loading active Crispy Template", error);
 		activeTemplateSnapshot.value = null;
-		useActiveTemplate.value = true;
 		frappe.show_alert({
 			message: __("Failed to load active template"),
 			indicator: "red",
 		});
 	} finally {
 		activeTemplateLoading.value = false;
-	}
-}
-
-async function enableActiveTemplatePreviewDefault() {
-	if (!selectedTemplate.value) return;
-	if (!useActiveTemplate.value) {
-		suppressActiveTemplateWatcher = true;
-		useActiveTemplate.value = true;
-		await nextTick();
-		suppressActiveTemplateWatcher = false;
-	}
-	await loadSelectedActiveTemplate();
-}
-
-// Handle format change
-async function onFormatChange() {
-	await loadFormatSettings(selectedFormat.value);
-	await loadActiveTemplates();
-	if (useActiveTemplate.value) {
-		await loadSelectedActiveTemplate();
-	}
-}
-
-async function resetFormat() {
-	if (!selectedFormat.value) return;
-	await loadFormatSettings(selectedFormat.value);
-	await loadActiveTemplates();
-	if (useActiveTemplate.value) {
-		await loadSelectedActiveTemplate();
 	}
 }
 
@@ -1475,21 +1321,8 @@ watch(
 	}
 );
 
-watch(useActiveTemplate, async (enabled) => {
-	if (suppressActiveTemplateWatcher) return;
-	if (!enabled) {
-		suppressActiveTemplateWatcher = true;
-		useActiveTemplate.value = true;
-		await nextTick();
-		suppressActiveTemplateWatcher = false;
-	}
-	await loadSelectedActiveTemplate();
-});
-
 watch(selectedTemplate, async () => {
-	if (useActiveTemplate.value) {
-		await loadSelectedActiveTemplate();
-	}
+	await loadSelectedActiveTemplate();
 });
 
 watch(
@@ -1582,12 +1415,6 @@ watch(availableCompanies, () => {
 // No explicit preview events needed: PreviewRenderer/setupWorker reacts to prop changes directly.
 
 onMounted(async () => {
-	if (typeof window !== "undefined") {
-		const stored = window.localStorage.getItem(OVERRIDES_STORAGE_KEY);
-		if (stored !== null) {
-			isOverridesExpanded.value = stored === "true";
-		}
-	}
 	hydrateReportStateFromStorage();
 	await fetchFonts();
 	reportFontSizePt.value =
@@ -1605,11 +1432,6 @@ onBeforeUnmount(() => {
 		window.clearTimeout(reportPreviewDebounceTimer.value);
 		reportPreviewDebounceTimer.value = null;
 	}
-});
-
-watch(isOverridesExpanded, (next) => {
-	if (typeof window === "undefined") return;
-	window.localStorage.setItem(OVERRIDES_STORAGE_KEY, String(next));
 });
 
 // Generate and open PDF in new tab
@@ -1740,12 +1562,6 @@ defineExpose({
 	overflow: hidden;
 }
 
-.settings-pane__header {
-	padding: 16px;
-	border-bottom: 1px solid #e5e7eb;
-	flex-shrink: 0;
-}
-
 .report-columns {
 	border: 1px solid #e5e7eb;
 	border-radius: 6px;
@@ -1778,12 +1594,6 @@ defineExpose({
 	font-size: 12px;
 	border: 1px solid #d1d5db;
 	border-radius: 4px;
-}
-
-.settings-pane__header-actions {
-	display: flex;
-	gap: 6px;
-	align-items: center;
 }
 
 .settings-pane__help-popover {
@@ -1844,6 +1654,36 @@ defineExpose({
 .settings-pane__section-content {
 	padding: 12px;
 	border-top: 1px solid #e2e8f0;
+}
+
+.settings-pane__template-section {
+	border: 0;
+	box-shadow: none;
+	background: transparent;
+}
+
+.settings-pane__template-section .settings-pane__section-content {
+	border-top: 0;
+	padding: 0;
+}
+
+.settings-pane__template-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.settings-pane__template-head .control-label {
+	margin-bottom: 0;
+	font-size: 18px;
+	font-weight: 700;
+	color: #111827;
+}
+
+.settings-pane__help-button {
+	flex: 0 0 auto;
 }
 
 .settings-pane__chevron {
