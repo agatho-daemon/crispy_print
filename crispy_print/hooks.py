@@ -1,8 +1,3 @@
-import frappe
-from packaging.version import parse
-
-from . import __version__ as app_version
-
 app_name = "crispy_print"
 app_title = "Crispy Print"
 app_publisher = "Agathodaemon"
@@ -34,21 +29,24 @@ doc_events = {
 	},
 }
 
-version = parse(frappe.__version__)
+from frappe import __version__ as frappe_version
 
-if version.major in (14, 15):
+frappe_major = int(frappe_version.lstrip("v").split(".", 1)[0])
+
+if frappe_major >= 16:
+	app_include_icons = [
+		"/assets/crispy_print/icons/crispy-print-logo.svg",
+	]
+	add_to_apps_screen = [
+		{
+			"name": app_name,
+			"logo": app_logo_url,
+			"title": app_title,
+			"route": "/desk/crispy-print",
+			# "has_permission": "crispy_print.api.check_app_permission"
+		}
+	]
+else:
 	app_include_icons = [
 		"crispy_print/icons/crispy-print-logo.svg",
 	]
-
-# TODO: WIP Required for Frappe 16+
-# if version.major > 15:
-# 	add_to_apps_screen = [
-# 		{
-# 			"name": app_name,
-# 			"logo": app_logo_url,
-# 			"title": app_title,
-# 			"route": "/crispy-print",
-# 			# "has_permission": "crispy_print.api.check_app_permission"
-# 		}
-# 	]
