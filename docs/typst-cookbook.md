@@ -86,6 +86,7 @@ Use these snippets inside `typst_code` for report-mode formats.
 ```
 
 ## Notes
+
 - Always guard optional keys with `"key" in data` before access.
 - In some preview payloads, rows can be absent or shape-shifted; prefer defensive checks.
 - Keep helper names consistent (`asText`, `isNumeric`, etc.) to reduce template errors.

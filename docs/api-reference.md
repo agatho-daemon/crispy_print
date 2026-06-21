@@ -7,14 +7,17 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 ## Compile & Fonts
 
 ### `get_typst_local_fonts()`
+
 - Args: none
 - Returns: `list[str]`
 - Shape: `['Inter', 'Noto Sans', ...]`
 
-### `compile_typst(typst_source, output_format='svg', asset_files=None, chart_svg=None, qr_data=None, qr_filename=None, output_filename=None, return_url=0)`
+### `compile_typst(typst_source, output_format='svg', pdf_standard=None, asset_files=None, chart_svg=None, qr_data=None, qr_filename=None, output_filename=None, return_url=0)`
+
 - Args:
   - `typst_source: str`
   - `output_format: 'svg' | 'pdf'`
+  - optional `pdf_standard` (e.g. `PDF/A-2u`, `PDF/A-3u`, `PDF/A-4`, `PDF 1.7`, `PDF 2.0`)
   - optional `asset_files` list for approved site/app assets used by Typst image calls
   - optional chart/qr/output args
 - Returns (svg):
@@ -25,52 +28,64 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 ## Doc & Formats
 
 ### `get_formatted_doc(doctype, name)`
+
 - Args: `doctype: str`, `name: str`, optional `qr_source_mode: str`
 - Returns: formatted document dict
 
 ### `get_crispy_formats_for_doctype(doctype)`
+
 - Args: `doctype: str`
 - Returns: `[{ name: str, doc_type: str }]`
 
 ### `get_default_doctypes()`
+
 - Args: none
 - Returns: `list[str]`
 
 ### `get_builder_mode(format_name)`
+
 - Args: `format_name: str`
 - Returns: `{ mode: 'advanced' | 'basic' | 'layout' }`
 
 ### `export_crispy_format(name)`
+
 - Args: `name: str`
 - Returns: export payload dict
 
 ### `check_import_conflicts(payload)`
+
 - Args: `payload: dict | str`
 - Returns: conflict report dict
 
 ### `import_crispy_format(payload, on_conflict='copy')`
+
 - Args: `payload: dict | str`, `on_conflict: 'copy' | 'replace' | 'skip'`
 - Returns: import result dict
 
 ## Reports
 
 ### `get_reports_without_custom_html(generic_report_type=None)`
+
 - Args: optional `generic_report_type: str`
 - Returns: `list[dict]`
 
 ### `get_default_report_builder_config(generic_report_type=None)`
+
 - Args: optional `generic_report_type: str`
 - Returns: report builder config dict
 
 ### `get_available_formats(report)`
+
 - Args: `report: str`
 - Returns: available report format metadata
 
 ### `get_sample_report_data(report, filters=None, limit=50)`
+
 - Args: `report: str`, optional `filters`, `limit: int`
 - Returns: sample report payload (`columns`, `rows`, `filters`, `report_summary`, etc.)
 
 ### `get_report_typst_source(report, format_name, ..., limit=50)`
+
 - Args (core):
   - `report: str`
   - `format_name: str`
@@ -80,73 +95,146 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Returns: Typst source + payload metadata used for preview/printing
 
 ### `compile_report_preview(report, format_name, ..., limit=50, asset_files=None)`
+
 - Args: same core arguments as `get_report_typst_source`, plus optional approved `asset_files`
 - Returns: compiled SVG preview payload and report metadata
 
 ### `generate_report_pdf(report, filters=None, format_name=None, orientation='landscape', include_filters=0, column_config=None)`
+
 - Args: report + filter/format options
 - Returns: generated PDF response payload
 
 ### `run_report_template_parity_check(report, format_name, legacy_template_path=None, filters=None)`
+
 - Args: report + format + optional template path/filters
 - Returns: parity result dict
 
 ## Branding, Blocks & Compliance
 
 ### `get_branding_profiles(company=None)`
+
 - Args: optional `company: str`
 - Returns: available Branding Profile metadata
 
 ### `get_branding_profile_presentation_settings(name)`
+
 - Args: `name: str`
 - Returns: normalized presentation settings for the profile
 
 ### `get_applicable_typst_blocks(doctype, query=None, category=None)`
+
 - Args: `doctype: str`, optional search/category filters
 - Returns: enabled Typst blocks applicable to the document type
 
 ### `resolve_document_code(doctype, name, code_purpose='Regulatory', environment='Production', document_role=None, company=None, profile_name=None)`
+
 - Args: document identity plus optional profile selectors
 - Returns: resolved document-code payload without necessarily issuing a new code
 
 ### `generate_document_code(doctype, name, code_purpose='Regulatory', environment='Production', document_role=None, company=None, profile_name=None)`
+
 - Args: document identity plus optional profile selectors
 - Returns: generated document-code payload
 
 ### `get_qr_regulatory_profiles(country=None, authority_code=None, enabled_only=1)`
+
 - Args: optional country/authority filters
 - Returns: available QR Regulatory Profiles
 
 ### `get_qr_regulatory_profile(name)`
+
 - Args: `name: str`
 - Returns: QR Regulatory Profile detail
 
 ### `get_fiscal_credential_status(company, regulatory_profile, environment='Production', authority_code=None)`
+
 - Args: company, regulatory profile, environment, optional authority code
 - Returns: fiscal credential availability/status payload
 
-## Issued Documents
+## Approved Templates
 
-These endpoints are scaffolding for the future Crispy Issued Document registry.
-They are not public guest verification endpoints yet.
+A Crispy Template is a frozen, versioned approved render contract published from a
+Crispy Format. Resolution is company-aware, with fallback from company-specific
+templates to global templates.
+
+### `publish_template_from_crispy_format(source_crispy_format, version_bump='minor', make_active=1, effective_from=None, notes=None, company=None)`
+
+- Args: source Crispy Format plus versioning/activation options
+- Returns: published Crispy Template payload (with snapshot hash and version)
+
+### `get_crispy_template_publish_preview(source_crispy_format, version_bump='minor', company=None)`
+
+- Args: source Crispy Format, version bump, optional company
+- Returns: preview of the template that would be published (no write)
+
+### `get_active_crispy_templates_for_document(source_doctype, source_docname=None, company=None)`
+
+- Args: source document identity, optional company
+- Returns: `list[dict]` of active templates applicable to the document
+
+### `get_active_crispy_templates_for_render(source_doctype=None, source_docname=None, source_report=None, source_contract=None, company=None)`
+
+- Args: render source identity (doctype/report/contract), optional company
+- Returns: `list[dict]` of active templates applicable to the render source
+
+### `get_resolved_crispy_template_for_document(source_doctype, source_docname=None, company=None, template=None, template_name=None)`
+
+- Args: source document identity, optional company and explicit template selector
+- Returns: resolved template payload (includes `template_id`)
+
+### `get_resolved_crispy_template_for_render(source_doctype=None, source_docname=None, source_report=None, source_contract=None, company=None, template=None, template_name=None)`
+
+- Args: render source identity, optional company and explicit template selector
+- Returns: resolved template payload (includes `template_id`)
+
+## Issued Documents (CID)
+
+The Crispy Issued Document registry records immutable issued snapshots linked to
+frozen templates. These are permission-gated user endpoints (not public guest
+verification endpoints).
 
 ### `get_issued_document(name)`
+
 - Args: `name: str`
 - Returns: full Crispy Issued Document payload for users with read permission
 
 ### `get_issued_document_by_token(verification_token)`
+
 - Args: `verification_token: str`
 - Returns: full Crispy Issued Document payload for users with read permission
 
 ### `verify_issued_document_token(verification_token)`
+
 - Args: `verification_token: str`
 - Returns: minimal verification summary (`exists`, `verification_status`, status fields)
 
-### `create_issued_document_snapshot(source_doctype, source_docname, crispy_format)`
-- Args: source document identity and Crispy Format
-- Returns: not implemented yet; reserved API shape for future immutable issuance
+### `create_issued_document_snapshot(source_doctype, source_docname, crispy_format=None, crispy_template=None)`
+
+- Args: source document identity plus a Crispy Format and/or frozen Crispy Template
+- Returns: created Crispy Issued Document payload with immutable render facts
+
+### `cancel_issued_document(name, reason=None)`
+
+- Args: `name: str`, optional `reason: str`
+- Returns: updated issued-document payload reflecting cancelled state
+
+### `revoke_issued_document(name, reason=None)`
+
+- Args: `name: str`, optional `reason: str`
+- Returns: updated issued-document payload reflecting revoked state
+
+### `supersede_issued_document(name, superseded_by, reason=None)`
+
+- Args: `name: str`, `superseded_by: str` (replacement issued document), optional `reason: str`
+- Returns: updated issued-document payload reflecting supersession
+
+### `add_issued_document_trust_event(name, event=None, **values)`
+
+- Args: `name: str`, plus a trust-event dict (or keyword values)
+- Returns: updated issued-document payload with the appended trust event
 
 ## Notes
+
 - API errors are returned as Frappe exceptions (`ValidationError`, etc.).
 - Large report previews are intentionally truncated by `limit`.
 - Deprecated direct image params such as `letterhead_image` and `logo_image` are rejected by `compile_typst`; use `asset_files`.
