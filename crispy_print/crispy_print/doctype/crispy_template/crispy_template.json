@@ -25,6 +25,9 @@
   "render_settings_section",
   "pdf_standard",
   "raw_typst",
+  "compact_item_print",
+  "print_uom_after_quantity",
+  "print_taxes_with_zero_amount",
   "typst_version",
   "zebra_version",
   "barcode_symbology",
@@ -193,6 +196,27 @@
    "fieldname": "raw_typst",
    "fieldtype": "Check",
    "label": "Raw Typst",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "compact_item_print",
+   "fieldtype": "Check",
+   "label": "Compact Item Print",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "print_uom_after_quantity",
+   "fieldtype": "Check",
+   "label": "Print UOM after Quantity",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "print_taxes_with_zero_amount",
+   "fieldtype": "Check",
+   "label": "Print Taxes with Zero Amount",
    "read_only": 1
   },
   {

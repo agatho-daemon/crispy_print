@@ -1,47 +1,58 @@
-import type { CrispyBrandingProfileDoc } from "../api/crispy"
-import { num, pageDimensions, specimenRows } from "./cbpBuilderSupport"
+import type { CrispyBrandingProfileDoc } from "../api/crispy";
+import { typstTextStyle as renderTypstTextStyle } from "../typst/textStyles";
+import {
+  cbpTypographySpecimen,
+  cbpTypographyStyle,
+} from "./cbpTypographyAdapter";
+import { num, pageDimensions, specimenRows } from "./cbpBuilderSupport";
 
 export interface CbpPreviewTypstContext {
-	model: CrispyBrandingProfileDoc
-	profileName: string
-	isDefault: boolean
-	effectiveCodeOnly: boolean
-	tableStriping: boolean
-	qrEnabled: boolean
-	usesLogo: boolean
-	logoImage: string
-	letterheadImage: string
-	letterheadLabel: string
-	letterheadSourceLabel: string
+  model: CrispyBrandingProfileDoc;
+  profileName: string;
+  isDefault: boolean;
+  effectiveCodeOnly: boolean;
+  tableStriping: boolean;
+  qrEnabled: boolean;
+  usesLogo: boolean;
+  logoImage: string;
+  letterheadImage: string;
+  letterheadLabel: string;
+  letterheadSourceLabel: string;
 }
 
-export function buildCodePreviewTypst(source: string, context: CbpPreviewTypstContext) {
-	return `${buildSpecimenDictionary(context)}\n\n${source}`
+export function buildCodePreviewTypst(
+  source: string,
+  context: CbpPreviewTypstContext,
+) {
+  return `${buildSpecimenDictionary(context)}\n\n${source}`;
 }
 
 export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
-	const { model } = context
-	const page = pageDimensions(model.page_size || "A4", model.orientation || "portrait")
-	const letterhead = assetFilename(context.letterheadImage)
-	const logo = context.usesLogo ? assetFilename(context.logoImage) : ""
-	const pageBackground = letterhead
-		? `\n  background: image(${toTypstValue(letterhead)}, width: 100%),`
-		: ""
-	const logoPlacement = logo
-		? `\n    #place(top + left, dx: ${num(model.branding_logo_offset_x_mm)}mm, dy: ${num(model.branding_logo_offset_y_mm)}mm, image(${toTypstValue(logo)}, width: ${num(model.branding_logo_width_mm)}mm))`
-		: ""
-	const qrPlacement = context.qrEnabled
-		? `\n    #place(bottom + left, dx: ${num(model.qr_dx_mm)}mm, dy: ${num(model.qr_dy_mm)}mm)[#box(width: ${num(model.qr_code_size_mm)}mm, height: ${num(model.qr_code_size_mm)}mm, stroke: (paint: black, thickness: 0.7pt))[#align(center + horizon)[#text(size: 8pt, weight: "bold")[QR]]]]`
-		: ""
-	const pageForeground =
-		logoPlacement || qrPlacement
-			? `\n  foreground: [${logoPlacement}${qrPlacement}\n  ],`
-			: ""
-	const tableFill = context.tableStriping
-		? `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) } else if y == 2 { rgb(${toTypstValue(model.table_stripe_color || "#F8FAFC")}) }`
-		: `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) }`
+  const { model } = context;
+  const page = pageDimensions(
+    model.page_size || "A4",
+    model.orientation || "portrait",
+  );
+  const letterhead = assetFilename(context.letterheadImage);
+  const logo = context.usesLogo ? assetFilename(context.logoImage) : "";
+  const pageBackground = letterhead
+    ? `\n  background: image(${toTypstValue(letterhead)}, width: 100%),`
+    : "";
+  const logoPlacement = logo
+    ? `\n    #place(top + left, dx: ${num(model.branding_logo_offset_x_mm)}mm, dy: ${num(model.branding_logo_offset_y_mm)}mm, image(${toTypstValue(logo)}, width: ${num(model.branding_logo_width_mm)}mm))`
+    : "";
+  const qrPlacement = context.qrEnabled
+    ? `\n    #place(bottom + left, dx: ${num(model.qr_dx_mm)}mm, dy: ${num(model.qr_dy_mm)}mm)[#box(width: ${num(model.qr_code_size_mm)}mm, height: ${num(model.qr_code_size_mm)}mm, stroke: (paint: black, thickness: 0.7pt))[#align(center + horizon)[#text(size: 8pt, weight: "bold")[QR]]]]`
+    : "";
+  const pageForeground =
+    logoPlacement || qrPlacement
+      ? `\n  foreground: [${logoPlacement}${qrPlacement}\n  ],`
+      : "";
+  const tableFill = context.tableStriping
+    ? `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) } else if y == 2 { rgb(${toTypstValue(model.table_stripe_color || "#F8FAFC")}) }`
+    : `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) }`;
 
-	return `#set page(
+  return `#set page(
   width: ${page.width}mm,
   height: ${page.height}mm,
   margin: (
@@ -54,11 +65,11 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 
 #set text(font: ${toTypstValue(model.field_value_font_family || "Arial")}, size: ${num(model.field_value_font_size_pt)}pt)
 
-#let sectionStyle = ${typstTextStyle(model, "section_label")}
-#let fieldLabelStyle = ${typstTextStyle(model, "field_label")}
-#let fieldValueStyle = ${typstTextStyle(model, "field_value")}
-#let tableHeaderStyle = ${typstTextStyle(model, "table_header")}
-#let tableBodyStyle = ${typstTextStyle(model, "table_body")}
+#let sectionStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "section_label"), 14)}
+#let fieldLabelStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "field_label"), 8)}
+#let fieldValueStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "field_value"), 10)}
+#let tableHeaderStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "table_header"), 9)}
+#let tableBodyStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "table_body"), 9)}
 #let specimenSectionStyle = (size: 14pt, weight: "bold", fill: black)
 #let specimenSampleHeadingStyle = (size: 10pt, weight: "bold", fill: rgb("#334155"))
 
@@ -163,127 +174,104 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
   field[X][${typstContent(mmValue(model.qr_dx_mm))}],
   field[Y][${typstContent(mmValue(model.qr_dy_mm))}],
 )
-`
+`;
 }
 
 function buildSpecimenDictionary(context: CbpPreviewTypstContext) {
-	const { model } = context
-	const profile = {
-		name: model.name || context.profileName,
-		profile_name: model.profile_name || context.profileName,
-		company: model.company || "",
-		is_default: context.isDefault,
-		code_only: context.effectiveCodeOnly,
-	}
-	const specimen = {
-		page: {
-			size: model.page_size || "A4",
-			orientation: model.orientation || "portrait",
-			margin_top_mm: num(model.margin_top_mm),
-			margin_right_mm: num(model.margin_right_mm),
-			margin_bottom_mm: num(model.margin_bottom_mm),
-			margin_left_mm: num(model.margin_left_mm),
-		},
-		typography: {
-			section_label: typstTypography(model, "section_label"),
-			field_label: typstTypography(model, "field_label"),
-			field_value: typstTypography(model, "field_value"),
-			table_header: typstTypography(model, "table_header"),
-			table_body: typstTypography(model, "table_body"),
-		},
-		table: {
-			inset_top_pt: num(model.table_cell_inset_top_pt),
-			inset_right_pt: num(model.table_cell_inset_right_pt),
-			inset_bottom_pt: num(model.table_cell_inset_bottom_pt),
-			inset_left_pt: num(model.table_cell_inset_left_pt),
-			border_width_pt: num(model.table_border_stroke_width_pt),
-			border_color: model.table_border_color || "#E2E8F0",
-			header_fill: model.table_header_background_color || "#F1F5F9",
-			striping_enabled: context.tableStriping,
-			stripe_fill: model.table_stripe_color || "#F8FAFC",
-			rows: specimenRows,
-		},
-		branding: {
-			mode: model.branding_mode || "None",
-			logo_source: model.branding_logo_source || "Company logo",
-			logo_width_mm: num(model.branding_logo_width_mm),
-			logo_offset_x_mm: num(model.branding_logo_offset_x_mm),
-			logo_offset_y_mm: num(model.branding_logo_offset_y_mm),
-			letterhead_source: context.letterheadSourceLabel,
-			letterhead: context.letterheadLabel,
-		},
-		qr: {
-			enabled: context.qrEnabled,
-			symbology: model.qr_symbology || "QR Code",
-			error_correction: model.qr_error_correction || "Medium",
-			quiet_zone: num(model.qr_quiet_zone),
-			module_size_pt: num(model.qr_module_size_pt),
-			datamatrix_encodation: model.datamatrix_encodation || "",
-			datamatrix_symbols: model.datamatrix_symbols || "",
-			size_mm: num(model.qr_code_size_mm),
-			dx_mm: num(model.qr_dx_mm),
-			dy_mm: num(model.qr_dy_mm),
-		},
-	}
-	return `#let profile = ${toTypstValue(profile)}\n#let specimen = ${toTypstValue(specimen)}`
-}
-
-function typstTypography(model: CrispyBrandingProfileDoc, prefix: string) {
-	return {
-		family: String((model as any)[`${prefix}_font_family`] || "Arial"),
-		size_pt: num((model as any)[`${prefix}_font_size_pt`]),
-		style: String((model as any)[`${prefix}_font_style`] || "Normal"),
-		weight: String((model as any)[`${prefix}_font_weight`] || "Regular"),
-		color: String((model as any)[`${prefix}_font_color`] || "#000000"),
-	}
-}
-
-function typstTextStyle(model: CrispyBrandingProfileDoc, prefix: string) {
-	const typography = typstTypography(model, prefix)
-	return `(font: ${toTypstValue(typography.family)}, size: ${typography.size_pt}pt, style: ${toTypstValue(typstFontStyle(typography.style))}, weight: ${toTypstValue(typstFontWeight(typography.weight))}, fill: rgb(${toTypstValue(typography.color)}))`
-}
-
-function typstFontStyle(value: string) {
-	const style = String(value || "Normal").toLowerCase()
-	return style === "italic" || style === "oblique" ? style : "normal"
-}
-
-function typstFontWeight(value: string) {
-	return String(value || "Regular").toLowerCase()
+  const { model } = context;
+  const profile = {
+    name: model.name || context.profileName,
+    profile_name: model.profile_name || context.profileName,
+    company: model.company || "",
+    is_default: context.isDefault,
+    code_only: context.effectiveCodeOnly,
+  };
+  const specimen = {
+    page: {
+      size: model.page_size || "A4",
+      orientation: model.orientation || "portrait",
+      margin_top_mm: num(model.margin_top_mm),
+      margin_right_mm: num(model.margin_right_mm),
+      margin_bottom_mm: num(model.margin_bottom_mm),
+      margin_left_mm: num(model.margin_left_mm),
+    },
+    typography: {
+      section_label: cbpTypographySpecimen(model, "section_label"),
+      field_label: cbpTypographySpecimen(model, "field_label"),
+      field_value: cbpTypographySpecimen(model, "field_value"),
+      table_header: cbpTypographySpecimen(model, "table_header"),
+      table_body: cbpTypographySpecimen(model, "table_body"),
+    },
+    table: {
+      inset_top_pt: num(model.table_cell_inset_top_pt),
+      inset_right_pt: num(model.table_cell_inset_right_pt),
+      inset_bottom_pt: num(model.table_cell_inset_bottom_pt),
+      inset_left_pt: num(model.table_cell_inset_left_pt),
+      border_width_pt: num(model.table_border_stroke_width_pt),
+      border_color: model.table_border_color || "#E2E8F0",
+      header_fill: model.table_header_background_color || "#F1F5F9",
+      striping_enabled: context.tableStriping,
+      stripe_fill: model.table_stripe_color || "#F8FAFC",
+      rows: specimenRows,
+    },
+    branding: {
+      mode: model.branding_mode || "None",
+      logo_source: model.branding_logo_source || "Company logo",
+      logo_width_mm: num(model.branding_logo_width_mm),
+      logo_offset_x_mm: num(model.branding_logo_offset_x_mm),
+      logo_offset_y_mm: num(model.branding_logo_offset_y_mm),
+      letterhead_source: context.letterheadSourceLabel,
+      letterhead: context.letterheadLabel,
+    },
+    qr: {
+      enabled: context.qrEnabled,
+      symbology: model.qr_symbology || "QR Code",
+      error_correction: model.qr_error_correction || "Medium",
+      quiet_zone: num(model.qr_quiet_zone),
+      module_size_pt: num(model.qr_module_size_pt),
+      datamatrix_encodation: model.datamatrix_encodation || "",
+      datamatrix_symbols: model.datamatrix_symbols || "",
+      size_mm: num(model.qr_code_size_mm),
+      dx_mm: num(model.qr_dx_mm),
+      dy_mm: num(model.qr_dy_mm),
+    },
+  };
+  return `#let profile = ${toTypstValue(profile)}\n#let specimen = ${toTypstValue(specimen)}`;
 }
 
 function typstContent(value: any) {
-	return `#(${toTypstValue(value)})`
+  return `#(${toTypstValue(value)})`;
 }
 
 function toTypstValue(value: any): string {
-	if (value === null || value === undefined) return `""`
-	if (Array.isArray(value)) {
-		return `(${value.map((item) => `${toTypstValue(item)},`).join("")})`
-	}
-	if (typeof value === "object") {
-		return `(${Object.entries(value)
-			.map(([key, entryValue]) => `${key}: ${toTypstValue(entryValue)},`)
-			.join("")})`
-	}
-	if (typeof value === "number" || typeof value === "boolean") return String(value)
-	return `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`
+  if (value === null || value === undefined) return `""`;
+  if (Array.isArray(value)) {
+    return `(${value.map((item) => `${toTypstValue(item)},`).join("")})`;
+  }
+  if (typeof value === "object") {
+    return `(${Object.entries(value)
+      .map(([key, entryValue]) => `${key}: ${toTypstValue(entryValue)},`)
+      .join("")})`;
+  }
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  return `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`;
 }
 
 function assetFilename(path: string) {
-	if (!path) return ""
-	const clean = String(path).split("?")[0].split("#")[0]
-	return decodeURIComponent(clean.split("/").filter(Boolean).at(-1) || "")
+  if (!path) return "";
+  const clean = String(path).split("?")[0].split("#")[0];
+  return decodeURIComponent(clean.split("/").filter(Boolean).at(-1) || "");
 }
 
 function mmValue(value: any) {
-	return `${num(value)} mm`
+  return `${num(value)} mm`;
 }
 
 function ptValue(value: any) {
-	return `${num(value)} pt`
+  return `${num(value)} pt`;
 }
 
 function titleCase(value: string) {
-	return value ? value.charAt(0).toUpperCase() + value.slice(1) : ""
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
 }

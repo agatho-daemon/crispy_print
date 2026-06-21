@@ -394,7 +394,7 @@ You can create multiple formats for the same DocType without setting them as def
 
 ### Bundled Fonts
 
-The app automatically includes fonts from `crispy_print/public/vendor/typst/`. These fonts are available to all print formats without additional configuration.
+The app automatically includes fonts from `crispy_print/public/vendor/fonts/`. These fonts are available to all print formats without additional configuration.
 
 ### System Fonts
 
@@ -452,7 +452,7 @@ typst fonts
 This includes:
 - System fonts
 - Fonts in `TYPST_FONT_PATHS`
-- Bundled fonts from `crispy_print/public/vendor/typst/`
+- Bundled fonts from `crispy_print/public/vendor/fonts/`
 
 ## Known Limitations
 
@@ -838,7 +838,9 @@ crispy_print/
 │   │   │       ├── reportState.ts        # Report builder state helpers
 │   │   │       ├── presentation_settings.ts
 │   │   │       └── safeSvg.ts            # Preview SVG sanitization
-│   │   └── vendor/typst/                 # Bundled fonts (optional)
+│   │   └── vendor/
+│   │       ├── fonts/                    # Bundled fonts (optional)
+│   │       └── typst/                    # Bundled Typst packages
 │   ├── doctype/
 │   │   ├── crispy_format/                # Format registry and generated Typst
 │   │   ├── crispy_branding_profile/      # Reusable presentation profile

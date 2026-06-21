@@ -105,4 +105,72 @@ describe("Typst edge cases", () => {
 		expect(typst).toContain("Consider Tax or Charge for \\[X\\]")
 		expect(typst).toContain("Add or Deduct \\[Y\\]")
 	})
+
+	it("honors print behavior options for item quantity and zero tax rows", () => {
+		const typst = translateJSONToTypst(
+			{
+				sections: [
+					{
+						label: "Lines",
+						columns: [
+							{
+								label: "",
+								fields: [
+									{
+										fieldname: "items",
+										fieldtype: "Table",
+										label: "Items",
+										table_columns: [
+											{ fieldname: "qty", label: "Qty", fieldtype: "Float" },
+										],
+									},
+									{
+										fieldname: "taxes",
+										fieldtype: "Table",
+										label: "Taxes",
+										table_columns: [
+											{ fieldname: "tax_amount", label: "Tax Amount", fieldtype: "Currency" },
+										],
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			null,
+			"Sales Invoice",
+			{
+				name: "INV-0001",
+				items: [{ qty: "1", uom: "Nos" }],
+				taxes: [{ tax_amount: "0.00" }],
+			},
+			{
+				printBehavior: {
+					compact_item_print: 1,
+					print_uom_after_quantity: 1,
+					print_taxes_with_zero_amount: 0,
+				},
+			},
+		)
+
+		expect(typst).toContain("inset: (x: 1pt, y: 1pt)")
+		expect(typst).toContain('row.uom != ""')
+		expect(typst).toContain("doc.taxes.filter(row => not cp_is_zero_tax_row(row))")
+	})
+
+	it("adds a draft heading when the document print context requests it", () => {
+		const typst = translateJSONToTypst(
+			{ sections: [] },
+			null,
+			"Sales Invoice",
+			{
+				name: "INV-DRAFT",
+				__crispy_print_context: { show_draft_heading: true },
+			},
+			{},
+		)
+
+		expect(typst).toContain("[Draft]")
+	})
 })

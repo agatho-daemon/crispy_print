@@ -3,15 +3,16 @@
 
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
 import { buildForegroundPlacements, getLetterheadFilename, resolveBrandingMode } from "./branding"
-import { typstColor, typstLength, typstQuoted } from "./typstEscaping"
+import { typstLength, typstQuoted } from "./typstEscaping"
+import { buildTableStyleConstants, buildTypographyStyleDefs } from "./textStyles"
 import {
 	default_presentation_settings,
 	ensure_table_settings,
+	ensure_typography,
 	merge_presentation_settings,
 	type PresentationSettings,
 } from "../utils/presentation_settings"
 import { deepClone } from "../utils/json"
-import { fontWeightToNumber } from "../utils/typstTextStyle"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
 	sections?: LayoutSection[]
@@ -103,6 +104,14 @@ class JSONTypstTranslator {
 	options: Record<string, any>
 	private _presentation_settings: PresentationSettings | null = null
 
+	private get_print_behavior(): Record<string, any> {
+		return ((this.options.printBehavior || {}) as Record<string, any>) || {}
+	}
+
+	private is_enabled_behavior(key: string): boolean {
+		return Boolean(this.get_print_behavior()[key])
+	}
+
 	constructor(
 		layoutData: LayoutWithOptionalSections,
 		letterheadData: any,
@@ -151,18 +160,6 @@ class JSONTypstTranslator {
 			.replace(/\*/g, "\\*")
 	}
 
-	formatColor(color: string, fallback = "none") {
-		return typstColor(color, fallback)
-	}
-
-	formatPtValue(value: any, fallback: number) {
-		const num = Number(value)
-		if (Number.isFinite(num)) {
-			return typstLength(num, fallback)
-		}
-		return typstLength(fallback, fallback)
-	}
-
 	generateUserSection() {
 		const lines = [
 			"// ========================================",
@@ -172,104 +169,23 @@ class JSONTypstTranslator {
 			"",
 		]
 
-		// Typography styles for labels and values
-		const typography = (this.options?.typography || {}) as any
-		const fieldLabel = typography.fieldLabel || {
-			fontFamily: "Inter 18pt",
-			fontSize: "8pt",
-			fontStyle: "normal",
-			fontWeight: "semibold",
-			color: "#64748b",
-		}
-		const fieldValue = typography.fieldValue || {
-			fontFamily: "Inter 18pt",
-			fontSize: "10pt",
-			fontStyle: "normal",
-			fontWeight: "regular",
-			color: "#0f172a",
-		}
-		const sectionLabel = typography.sectionLabel || {
-			fontFamily: "Inter 18pt",
-			fontSize: "14pt",
-			fontStyle: "normal",
-			fontWeight: "bold",
-			color: "#1e293b",
-		}
-
-		lines.push("// Typography styles")
-		lines.push("#let fieldLabelStyle = (")
-		lines.push(`  font: ${typstQuoted(fieldLabel.fontFamily)},`)
-		lines.push(`  size: ${typstLength(fieldLabel.fontSize, 8)},`)
-		lines.push(`  style: ${typstQuoted(fieldLabel.fontStyle)},`)
-		lines.push(`  weight: ${fontWeightToNumber(fieldLabel.fontWeight)},`)
-		lines.push(`  fill: ${this.formatColor(fieldLabel.color, "black")}`)
-		lines.push(")")
-		lines.push("")
-		lines.push("#let fieldValueStyle = (")
-		lines.push(`  font: ${typstQuoted(fieldValue.fontFamily)},`)
-		lines.push(`  size: ${typstLength(fieldValue.fontSize, 10)},`)
-		lines.push(`  style: ${typstQuoted(fieldValue.fontStyle)},`)
-		lines.push(`  weight: ${fontWeightToNumber(fieldValue.fontWeight)},`)
-		lines.push(`  fill: ${this.formatColor(fieldValue.color, "black")}`)
-		lines.push(")")
-		lines.push("")
-		lines.push("#let sectionLabelStyle = (")
-		lines.push(`  font: ${typstQuoted(sectionLabel.fontFamily)},`)
-		lines.push(`  size: ${typstLength(sectionLabel.fontSize, 14)},`)
-		lines.push(`  style: ${typstQuoted(sectionLabel.fontStyle)},`)
-		lines.push(`  weight: ${fontWeightToNumber(sectionLabel.fontWeight)},`)
-		lines.push(`  fill: ${this.formatColor(sectionLabel.color, "black")}`)
-		lines.push(")")
-		lines.push("")
-
-		const tableSettings = ensure_table_settings(this.get_presentation_settings())
-		const tableHeader = tableSettings.typography.header
-		const tableBody = tableSettings.typography.body
-		const tableInset = tableSettings.inset
-		const tableStrokeWidth = Number.isFinite(tableSettings.stroke.width)
-			? tableSettings.stroke.width
-			: 0
-		const tableStrokeColor = this.formatColor(tableSettings.stroke.color, "black")
-		const tableHeaderFill = this.formatColor(tableSettings.header.backgroundColor, "none")
-		const tableStripeFill = this.formatColor(tableSettings.stripe.color, "none")
-		const tableStripeEnabled = Boolean(tableSettings.stripe.enabled)
-
-		lines.push("// Table styles")
-		lines.push("#let tableHeaderStyle = (")
-		lines.push(`  font: ${typstQuoted(tableHeader.fontFamily)},`)
-		lines.push(`  size: ${typstLength(tableHeader.fontSize, 9)},`)
-		lines.push(`  style: ${typstQuoted(tableHeader.fontStyle)},`)
-		lines.push(`  weight: ${fontWeightToNumber(tableHeader.fontWeight)},`)
-		lines.push(`  fill: ${this.formatColor(tableHeader.color, "black")}`)
-		lines.push(")")
-		lines.push("")
-		lines.push("#let tableBodyStyle = (")
-		lines.push(`  font: ${typstQuoted(tableBody.fontFamily)},`)
-		lines.push(`  size: ${typstLength(tableBody.fontSize, 9)},`)
-		lines.push(`  style: ${typstQuoted(tableBody.fontStyle)},`)
-		lines.push(`  weight: ${fontWeightToNumber(tableBody.fontWeight)},`)
-		lines.push(`  fill: ${this.formatColor(tableBody.color, "black")}`)
-		lines.push(")")
-		lines.push("")
+		const presentationSettings = this.get_presentation_settings()
+		const typography = ensure_typography(presentationSettings)
+		const tableSettings = ensure_table_settings(presentationSettings)
 		lines.push(
-			`#let tableCellInset = (top: ${this.formatPtValue(
-				tableInset.top,
-				2
-			)}, right: ${this.formatPtValue(tableInset.right, 2)}, bottom: ${this.formatPtValue(
-				tableInset.bottom,
-				2
-			)}, left: ${this.formatPtValue(tableInset.left, 2)})`
+			buildTypographyStyleDefs(typography, tableSettings, {
+				typographyComment: "// Typography styles",
+				tableComment: "// Table styles",
+			})
 		)
-		lines.push(
-			`#let tableStroke = ${
-				tableStrokeWidth > 0
-					? `${this.formatPtValue(tableStrokeWidth, 0)} + ${tableStrokeColor}`
-					: "none"
-			}`
-		)
-		lines.push(`#let tableHeaderFill = ${tableHeaderFill}`)
-		lines.push(`#let tableStripeFill = ${tableStripeFill}`)
-		lines.push(`#let tableStripeEnabled = ${tableStripeEnabled ? "true" : "false"}`)
+		lines.push(buildTableStyleConstants(tableSettings))
+		lines.push("#let cp_is_zero_tax_value(value) = value == 0 or value == \"0\" or value == \"0.0\" or value == \"0.00\" or value == \"\"")
+		lines.push("#let cp_is_zero_tax_row(row) = {")
+		lines.push("  if \"tax_amount\" in row { cp_is_zero_tax_value(row.tax_amount) }")
+		lines.push("  else if \"base_tax_amount\" in row { cp_is_zero_tax_value(row.base_tax_amount) }")
+		lines.push("  else if \"amount\" in row { cp_is_zero_tax_value(row.amount) }")
+		lines.push("  else { false }")
+		lines.push("}")
 		lines.push("")
 
 		lines.push("#let header_block = []")
@@ -478,6 +394,13 @@ class JSONTypstTranslator {
 		}
 
 		lines.push(this.buildPageSetupBlock())
+
+		const printContext = (this.realDocData as any)?.__crispy_print_context || {}
+		if (printContext.show_draft_heading) {
+			lines.push('#align(center)[#text(size: 18pt, weight: "bold", fill: rgb("#b91c1c"))[Draft]]')
+			lines.push("#v(1em)")
+			lines.push("")
+		}
 
 		const lastSectionIndex = (this.sections?.length || 1) - 1
 		this.sections?.forEach((section, idx) => {
@@ -780,6 +703,9 @@ class JSONTypstTranslator {
 
 		if (field.table_columns && field.table_columns.length > 0) {
 			const columns = field.table_columns
+			const compactItems =
+				this.is_enabled_behavior("compact_item_print") && this.is_item_table(fieldname)
+			const rowSource = this.getTableRowSource(fieldname)
 
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
 			lines.push(`  #table(`)
@@ -791,7 +717,7 @@ class JSONTypstTranslator {
 				return align
 			})
 			lines.push(`    align: (${alignments.join(", ")}),`)
-			lines.push(`    inset: tableCellInset,`)
+			lines.push(`    inset: ${compactItems ? "(x: 1pt, y: 1pt)" : "tableCellInset"},`)
 			lines.push(`    stroke: tableStroke,`)
 			lines.push(
 				`    fill: (x, y) => if y == 0 { tableHeaderFill } else { if tableStripeEnabled and calc.even(y) { tableStripeFill } else { none } },`
@@ -804,9 +730,9 @@ class JSONTypstTranslator {
 
 			// Row data - map each row to all its column values and flatten
 			const rowCells = columns
-				.map((col) => `[#text(..tableBodyStyle)[#row.${col.fieldname}]]`)
+				.map((col) => this.renderTableCell(col))
 				.join(", ")
-			lines.push(`    ..doc.${fieldname}.map(row => (${rowCells})).flatten(),`)
+			lines.push(`    ..${rowSource}.map(row => (${rowCells})).flatten(),`)
 
 			lines.push(`  )`)
 			lines.push(`]`)
@@ -817,6 +743,35 @@ class JSONTypstTranslator {
 		}
 
 		return lines.join("\n")
+	}
+
+	private is_item_table(fieldname: string): boolean {
+		return ["items", "packed_items"].includes(String(fieldname || "").toLowerCase())
+	}
+
+	private is_tax_table(fieldname: string): boolean {
+		return ["taxes", "taxes_and_charges"].includes(String(fieldname || "").toLowerCase())
+	}
+
+	private getTableRowSource(fieldname: string): string {
+		if (
+			!this.is_enabled_behavior("print_taxes_with_zero_amount") &&
+			this.is_tax_table(fieldname)
+		) {
+			return `doc.${fieldname}.filter(row => not cp_is_zero_tax_row(row))`
+		}
+		return `doc.${fieldname}`
+	}
+
+	private renderTableCell(col: TableColumn): string {
+		const fieldname = col.fieldname || ""
+		if (
+			this.is_enabled_behavior("print_uom_after_quantity") &&
+			["qty", "quantity", "stock_qty"].includes(fieldname)
+		) {
+			return `[#text(..tableBodyStyle)[#row.${fieldname}#if "uom" in row and row.uom != "" [ #row.uom] else if "stock_uom" in row and row.stock_uom != "" [ #row.stock_uom]]]`
+		}
+		return `[#text(..tableBodyStyle)[#row.${fieldname}]]`
 	}
 }
 

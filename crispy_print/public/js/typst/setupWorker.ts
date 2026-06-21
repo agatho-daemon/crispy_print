@@ -43,6 +43,7 @@ export interface TypstAdapter {
 	getTypstCode?: () => string | null | undefined
 	getPdfStandard?: () => string | null | undefined
 	getRawTypst?: () => boolean
+	getPrintBehavior?: () => Record<string, any> | null | undefined
 	getQrEnabled?: () => boolean
 	getLetterhead?: () => any
 	getDoctype?: () => string | null | undefined
@@ -50,6 +51,20 @@ export interface TypstAdapter {
 	get_presentation_settings?: () => any
 	hookDataChanges?: (callback: () => void) => () => void
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
+}
+
+function buildPrintBehaviorBlock(printBehavior: Record<string, any> = {}) {
+	const compactItemPrint = Boolean(printBehavior.compact_item_print)
+	const printUomAfterQuantity = Boolean(printBehavior.print_uom_after_quantity)
+	const printTaxesWithZeroAmount = Boolean(printBehavior.print_taxes_with_zero_amount)
+	return [
+		"// Crispy Print format behavior",
+		"#let crispy_print_behavior = (",
+		`  compact_item_print: ${compactItemPrint ? "true" : "false"},`,
+		`  print_uom_after_quantity: ${printUomAfterQuantity ? "true" : "false"},`,
+		`  print_taxes_with_zero_amount: ${printTaxesWithZeroAmount ? "true" : "false"},`,
+		")",
+	].join("\n")
 }
 
 export function setupWorker(
@@ -674,6 +689,10 @@ export function setupWorker(
 					: ""
 			const typstCode =
 				adapter && typeof adapter.getTypstCode === "function" ? adapter.getTypstCode() || "" : ""
+			const printBehavior =
+				adapter && typeof adapter.getPrintBehavior === "function"
+					? adapter.getPrintBehavior() || {}
+					: {}
 			const typstFieldSource = [docHeader, docFooter, typstPreamble, typstCode]
 				.filter(Boolean)
 				.join("\n")
@@ -702,6 +721,7 @@ export function setupWorker(
 			if (rawTypst) {
 				const parts: string[] = []
 				parts.push(buildDocDictionary(normalizedDoc, printFormatName))
+				parts.push(buildPrintBehaviorBlock(printBehavior))
 				parts.push(buildDefaultStyleDefs(presentation_settings))
 				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
 				if (headerFooterBlock) {
@@ -735,6 +755,7 @@ export function setupWorker(
 					qrData: docNameForQr,
 					qrFilename,
 					qrSettings: qrPayload.qrSettings,
+					printBehavior,
 				})
 			}
 		} catch (e: any) {

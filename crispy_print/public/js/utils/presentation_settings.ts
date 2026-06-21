@@ -203,7 +203,22 @@ export function ensure_typography(
   settings = ensure_presentation_shape(settings);
   if (!settings.typography) {
     settings.typography = deepClone(defaultTypography);
+    return settings.typography;
   }
+  settings.typography = {
+    fieldLabel: {
+      ...defaultTypography.fieldLabel,
+      ...(settings.typography.fieldLabel || {}),
+    },
+    fieldValue: {
+      ...defaultTypography.fieldValue,
+      ...(settings.typography.fieldValue || {}),
+    },
+    sectionLabel: {
+      ...defaultTypography.sectionLabel,
+      ...(settings.typography.sectionLabel || {}),
+    },
+  };
   return settings.typography;
 }
 

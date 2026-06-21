@@ -1,4 +1,5 @@
 import type { TableSettings } from "./presentation_settings"
+import { typstTextStyle } from "../typst/textStyles"
 import { escapeTypstString } from "./typstEscape"
 
 export const REPORT_BASIC_SIGNATURE_PREFIX = "CRISPY_REPORT_BASIC_SIGNATURE:"
@@ -200,6 +201,16 @@ export function buildReportTypstFromConfig(
 		tableSettings?.typography?.header?.color || "#0f172a",
 		"#0f172a"
 	)
+	const headerTextStyle = typstTextStyle(
+		{
+			fontFamily: headerFontFamily,
+			fontSize: headerFontSize,
+			fontStyle: headerFontStyle,
+			fontWeight: headerFontWeight,
+			color: `#${headerFontColor}`,
+		},
+		fontSize
+	)
 	const bodyFontFamily = asString(
 		tableSettings?.typography?.body?.fontFamily,
 		config.font_family
@@ -212,6 +223,26 @@ export function buildReportTypstFromConfig(
 	const bodyFontColor = asHexColor(
 		tableSettings?.typography?.body?.color || "#0f172a",
 		"#0f172a"
+	)
+	const bodyTextStyle = typstTextStyle(
+		{
+			fontFamily: bodyFontFamily,
+			fontSize: bodyFontSize,
+			fontStyle: bodyFontStyle,
+			fontWeight: bodyFontWeight,
+			color: `#${bodyFontColor}`,
+		},
+		fontSize
+	)
+	const boldBodyTextStyle = typstTextStyle(
+		{
+			fontFamily: bodyFontFamily,
+			fontSize: bodyFontSize,
+			fontStyle: bodyFontStyle,
+			fontWeight: "bold",
+			color: `#${bodyFontColor}`,
+		},
+		fontSize
 	)
 
 	const lines: string[] = []
@@ -365,7 +396,7 @@ export function buildReportTypstFromConfig(
 	lines.push("")
 	lines.push("  table.header(")
 	lines.push(
-		`    ..data.columns.map(col => text(font: "${escapeTypstString(headerFontFamily)}", size: ${headerFontSize}, style: "${escapeTypstString(headerFontStyle)}", weight: "${escapeTypstString(headerFontWeight)}", fill: rgb("${headerFontColor}"))[#col.label])`
+		`    ..data.columns.map(col => text(..${headerTextStyle})[#col.label])`
 	)
 	lines.push("  ),")
 	lines.push("")
@@ -380,11 +411,11 @@ export function buildReportTypstFromConfig(
 	lines.push("        let cell = cell_entry.at(1)")
 	lines.push("        let content = if row.is_bold {")
 	lines.push(
-		`          text(font: "${escapeTypstString(bodyFontFamily)}", size: ${bodyFontSize}, style: "${escapeTypstString(bodyFontStyle)}", weight: "bold", fill: rgb("${bodyFontColor}"))[#cell.value]`
+		`          text(..${boldBodyTextStyle})[#cell.value]`
 	)
 	lines.push("        } else {")
 	lines.push(
-		`          text(font: "${escapeTypstString(bodyFontFamily)}", size: ${bodyFontSize}, style: "${escapeTypstString(bodyFontStyle)}", weight: "${escapeTypstString(bodyFontWeight)}", fill: rgb("${bodyFontColor}"))[#cell.value]`
+		`          text(..${bodyTextStyle})[#cell.value]`
 	)
 	lines.push("        }")
 	lines.push('        if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {')

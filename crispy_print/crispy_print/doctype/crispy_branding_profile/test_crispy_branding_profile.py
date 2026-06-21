@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Agathodaemon and Contributors
 # See license.txt
 
+from pathlib import Path
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
@@ -15,7 +17,7 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 	on_company_after_insert,
 	resolve_effective_presentation_settings,
 )
-from crispy_print.install import after_install
+from crispy_print.install import after_install, get_site_font_directory
 from crispy_print.letterhead_lifecycle import (
 	APPROVED_AT_FIELD,
 	APPROVED_BY_FIELD,
@@ -417,6 +419,7 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 
 		after_install()
 
+		self.assertTrue(Path(get_site_font_directory()).is_dir())
 		self.assertTrue(
 			frappe.db.exists(
 				"Crispy Branding Profile",

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { typstColor, typstLength, typstQuoted } from "../../typst/typstEscaping"
+import { buildTypographyStyleDefs, typstTextStyle } from "../../typst/textStyles"
+import { defaultTableSettings, defaultTypography } from "../../utils/presentation_settings"
 import { fontWeightToNumber } from "../../utils/typstTextStyle"
 
 describe("typst escaping helpers", () => {
@@ -26,5 +28,36 @@ describe("typst escaping helpers", () => {
 		expect(fontWeightToNumber("extra-bold")).toBe(800)
 		expect(fontWeightToNumber("semibold")).toBe(600)
 		expect(fontWeightToNumber("unknown")).toBe(400)
+	})
+
+	it("renders shared Typst text style dictionaries safely", () => {
+		const style = typstTextStyle(
+			{
+				fontFamily: 'Inter"; #panic() //',
+				fontSize: '12pt); #panic() //',
+				fontStyle: 'italic"; #panic() //',
+				fontWeight: "semibold",
+				color: "red",
+			},
+			9
+		)
+
+		expect(style).toContain('font: "Inter\\"; #panic() //",')
+		expect(style).toContain("size: 9pt,")
+		expect(style).toContain('style: "italic\\"; #panic() //",')
+		expect(style).toContain("weight: 600,")
+		expect(style).toContain("fill: black")
+	})
+
+	it("builds the standard shared typography style definitions", () => {
+		const defs = buildTypographyStyleDefs(defaultTypography, defaultTableSettings)
+
+		expect(defs).toContain("#let fieldLabelStyle = (")
+		expect(defs).toContain("#let fieldValueStyle = (")
+		expect(defs).toContain("#let sectionLabelStyle = (")
+		expect(defs).toContain("#let tableHeaderStyle = (")
+		expect(defs).toContain("#let tableBodyStyle = (")
+		expect(defs).toContain('font: "Inter 18pt",')
+		expect(defs).toContain('fill: rgb("64748b")')
 	})
 })

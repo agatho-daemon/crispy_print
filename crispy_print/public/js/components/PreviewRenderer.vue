@@ -113,6 +113,7 @@ interface Props {
 	typstCode?: string;
 	pdfStandard?: string | null;
 	rawTypst?: boolean;
+	printBehavior?: Record<string, any>;
 	qrEnabled: boolean;
 	presentation_settings: any;
 	letterhead: any;
@@ -188,6 +189,7 @@ function createAdapter() {
 		getTypstCode: () => props.typstCode || "",
 		getPdfStandard: () => props.pdfStandard || "PDF/A-2u",
 		getRawTypst: () => Boolean(props.rawTypst),
+		getPrintBehavior: () => props.printBehavior || {},
 		getQrEnabled: () => props.qrEnabled,
 		getLetterhead: () => props.letterhead,
 		getDoctype: () => props.docType,
@@ -203,6 +205,7 @@ function createAdapter() {
 								props.presentation_settings,
 								props.letterhead,
 								props.qrEnabled,
+								props.printBehavior,
 							],
 							(_newVal, oldVal) => {
 								if (oldVal !== undefined) {

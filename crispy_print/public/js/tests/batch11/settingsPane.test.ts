@@ -246,6 +246,48 @@ describe("SettingsPane", () => {
     expect(markDirty).toHaveBeenCalled();
   });
 
+  it("renders typography controls when saved typography is partially empty", async () => {
+    const presentation_settings = reactive({
+      source: "custom",
+      page: {
+        size: "A4",
+        orientation: "portrait",
+        margins: { top: 10, bottom: 10, left: 10, right: 10 },
+      },
+      branding: {
+        profile: "",
+        mode: "none",
+        letterhead: "",
+        letterhead_image: "",
+        logo: { company: "", image: "", size: 20, dx: 0, dy: 0 },
+      },
+      typography: {},
+      qr: {},
+    }) as any;
+
+    const wrapper = mount(SettingsPane, {
+      props: { presentation_settings, markDirty: vi.fn() },
+      global: {
+        stubs: {
+          ColorInput: true,
+          QrFieldsDialog: true,
+        },
+      },
+    });
+
+    const typographyHeader = wrapper
+      .findAll("button.settings-pane__section-header")
+      .find((btn) => btn.text().includes("Typography"));
+    expect(typographyHeader).toBeTruthy();
+    await typographyHeader!.trigger("click");
+    await nextTick();
+
+    expect(wrapper.text()).toContain("Section Labels");
+    expect(wrapper.text()).toContain("Field Labels");
+    expect(wrapper.text()).toContain("Field Values");
+    expect(presentation_settings.typography.sectionLabel.fontFamily).toBe("Inter 18pt");
+  });
+
   it("auto-selects the default branding profile for fresh undecided settings", async () => {
     const presentation_settings = reactive({
       source: "",

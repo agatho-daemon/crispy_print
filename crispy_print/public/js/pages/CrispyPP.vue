@@ -4,185 +4,126 @@
 		<div class="settings-pane">
 			<div class="settings-pane__body">
 				<div class="form-layout">
-					<div v-if="isReportMode" class="settings-pane__section-card card">
-						<button
-							type="button"
-							class="btn btn-link card-header settings-pane__section-header"
-							:class="{ 'is-expanded': isReportTemplateExpanded }"
-							@click="isReportTemplateExpanded = !isReportTemplateExpanded"
-						>
-							<span>{{ __("Report Template") }}</span>
-							<svg
-								:class="[
-									'settings-pane__chevron',
-									{
-										'settings-pane__chevron--expanded':
-											isReportTemplateExpanded,
-									},
-								]"
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path
-									fill-rule="evenodd"
-									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-						</button>
-						<div
-							v-if="isReportTemplateExpanded"
-							class="settings-pane__section-content card-body"
-						>
-							<div class="form-group">
-								<label class="control-label">{{ __("Report Format") }}</label>
-								<select
-									v-model="selectedReportFormat"
-									class="form-control"
-									@change="onReportFormatChange"
-								>
-									<option v-if="reportLoading" disabled>
-										{{ __("Loading formats...") }}
-									</option>
-									<option
-										v-for="fmt in reportFormats"
-										:key="fmt.value"
-										:value="fmt.value"
-									>
-										{{ fmt.label }}
-									</option>
-								</select>
-							</div>
-
-							<div class="form-group">
-								<label class="control-label">{{ __("Font") }}</label>
-								<select v-model="reportFontFamily" class="form-control">
-									<option v-if="loadingFonts" disabled>
-										{{ __("Loading fonts...") }}
-									</option>
-									<option
-										v-for="font in availableFonts"
-										:key="font"
-										:value="font"
-									>
-										{{ font }}
-									</option>
-								</select>
-							</div>
-
-							<div class="form-group">
-								<label class="control-label">{{ __("Font Size (pt)") }}</label>
-								<input
-									v-model.number="reportFontSizePt"
-									type="number"
-									min="1"
-									step="0.5"
-									class="form-control"
-								/>
-							</div>
-
-							<div class="settings-pane__toggles">
-								<label class="settings-pane__toggle">
-									<input v-model="reportIncludeFilters" type="checkbox" />
-									<span>{{ __("Show Filters") }}</span>
-								</label>
-								<label class="settings-pane__toggle">
-									<input v-model="reportShowSummary" type="checkbox" />
-									<span>{{ __("Show Summary") }}</span>
-								</label>
-								<label class="settings-pane__toggle">
-									<input
-										v-model="reportShowTotalRow"
-										type="checkbox"
-										:disabled="!reportHasTotalRow"
-									/>
-									<span>{{ __("Show Totals") }}</span>
-								</label>
-								<label class="settings-pane__toggle">
-									<input
-										v-model="reportShowChart"
-										type="checkbox"
-										:disabled="!reportHasChart"
-									/>
-									<span>{{ __("Show Chart") }}</span>
-								</label>
-							</div>
-							<p
-								v-if="reportTruncationWarning"
-								class="settings-pane__report-warning text-warning small"
-							>
-								{{ reportTruncationWarning }}
-							</p>
-						</div>
-					</div>
-
-					<div v-if="isReportMode" class="settings-pane__section-card card">
-						<button
-							type="button"
-							class="btn btn-link card-header settings-pane__section-header"
-							:class="{ 'is-expanded': isReportColumnsExpanded }"
-							@click="isReportColumnsExpanded = !isReportColumnsExpanded"
-						>
-							<span>{{ __("Columns") }}</span>
-							<svg
-								:class="[
-									'settings-pane__chevron',
-									{
-										'settings-pane__chevron--expanded':
-											isReportColumnsExpanded,
-									},
-								]"
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path
-									fill-rule="evenodd"
-									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-						</button>
-						<div
-							v-if="isReportColumnsExpanded"
-							class="settings-pane__section-content card-body"
-						>
-							<p
-								v-if="reportColumnsState.length === 0"
-								class="help-block text-muted small"
-							>
-								{{ __("No report columns available.") }}
-							</p>
-							<div v-else class="report-columns">
-								<div
-									v-for="col in reportColumnsState"
-									:key="col.fieldname"
-									class="report-columns__row"
-								>
-									<input
-										v-model="reportColumnSelections[col.fieldname].selected"
-										type="checkbox"
-										class="input-sm"
-									/>
-									<span class="report-columns__label">{{ col.label }}</span>
-									<input
-										v-model.lazy="reportColumnSelections[col.fieldname].width"
-										type="text"
-										class="form-control input-sm report-columns__width"
-										:placeholder="__('auto')"
-										:disabled="!reportColumnSelections[col.fieldname].selected"
-									/>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div
-						v-if="!isReportMode"
-						class="settings-pane__section-card settings-pane__template-section card"
+					<SettingsSection
+						v-if="isReportMode"
+						v-model="isReportTemplateExpanded"
+						:title="__('Report Template')"
+						content-border
 					>
-						<div class="settings-pane__section-content card-body">
+						<div class="form-group">
+							<label class="control-label">{{ __("Report Format") }}</label>
+							<select
+								v-model="selectedReportFormat"
+								class="form-control"
+								@change="onReportFormatChange"
+							>
+								<option v-if="reportLoading" disabled>
+									{{ __("Loading formats...") }}
+								</option>
+								<option
+									v-for="fmt in reportFormats"
+									:key="fmt.value"
+									:value="fmt.value"
+								>
+									{{ fmt.label }}
+								</option>
+							</select>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">{{ __("Font") }}</label>
+							<select v-model="reportFontFamily" class="form-control">
+								<option v-if="loadingFonts" disabled>
+									{{ __("Loading fonts...") }}
+								</option>
+								<option v-for="font in availableFonts" :key="font" :value="font">
+									{{ font }}
+								</option>
+							</select>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">{{ __("Font Size (pt)") }}</label>
+							<input
+								v-model.number="reportFontSizePt"
+								type="number"
+								min="1"
+								step="0.5"
+								class="form-control"
+							/>
+						</div>
+
+						<div class="settings-pane__toggles">
+							<label class="settings-pane__toggle">
+								<input v-model="reportIncludeFilters" type="checkbox" />
+								<span>{{ __("Show Filters") }}</span>
+							</label>
+							<label class="settings-pane__toggle">
+								<input v-model="reportShowSummary" type="checkbox" />
+								<span>{{ __("Show Summary") }}</span>
+							</label>
+							<label class="settings-pane__toggle">
+								<input
+									v-model="reportShowTotalRow"
+									type="checkbox"
+									:disabled="!reportHasTotalRow"
+								/>
+								<span>{{ __("Show Totals") }}</span>
+							</label>
+							<label class="settings-pane__toggle">
+								<input
+									v-model="reportShowChart"
+									type="checkbox"
+									:disabled="!reportHasChart"
+								/>
+								<span>{{ __("Show Chart") }}</span>
+							</label>
+						</div>
+						<p
+							v-if="reportTruncationWarning"
+							class="settings-pane__report-warning text-warning small"
+						>
+							{{ reportTruncationWarning }}
+						</p>
+					</SettingsSection>
+
+					<SettingsSection
+						v-if="isReportMode"
+						v-model="isReportColumnsExpanded"
+						:title="__('Columns')"
+						content-border
+					>
+						<p
+							v-if="reportColumnsState.length === 0"
+							class="help-block text-muted small"
+						>
+							{{ __("No report columns available.") }}
+						</p>
+						<div v-else class="report-columns">
+							<div
+								v-for="col in reportColumnsState"
+								:key="col.fieldname"
+								class="report-columns__row"
+							>
+								<input
+									v-model="reportColumnSelections[col.fieldname].selected"
+									type="checkbox"
+									class="input-sm"
+								/>
+								<span class="report-columns__label">{{ col.label }}</span>
+								<input
+									v-model.lazy="reportColumnSelections[col.fieldname].width"
+									type="text"
+									class="form-control input-sm report-columns__width"
+									:placeholder="__('auto')"
+									:disabled="!reportColumnSelections[col.fieldname].selected"
+								/>
+							</div>
+						</div>
+					</SettingsSection>
+
+					<div v-if="!isReportMode" class="settings-pane__template-section card">
+						<div class="settings-pane__template-content card-body">
 							<div class="form-group">
 								<div class="settings-pane__template-head">
 									<label class="control-label">{{ __("Template") }}</label>
@@ -263,252 +204,182 @@
 						</div>
 					</div>
 
-					<div
+					<SettingsSection
 						v-if="isReportMode && !isBrandingProfileDriven"
-						class="settings-pane__section-card card"
+						v-model="isBrandingExpanded"
+						:title="__('Branding')"
+						content-border
 					>
-						<button
-							type="button"
-							class="btn btn-link card-header settings-pane__section-header"
-							:class="{ 'is-expanded': isBrandingExpanded }"
-							@click="isBrandingExpanded = !isBrandingExpanded"
-						>
-							<span>{{ __("Branding") }}</span>
-							<svg
-								:class="[
-									'settings-pane__chevron',
-									{ 'settings-pane__chevron--expanded': isBrandingExpanded },
-								]"
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path
-									fill-rule="evenodd"
-									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-						</button>
-						<div
-							v-if="isBrandingExpanded"
-							class="settings-pane__section-content card-body"
-						>
-							<div class="form-group">
-								<label class="control-label">{{ __("Branding") }}</label>
-								<select v-model="branding_mode" class="form-control">
-									<option value="none">{{ __("None") }}</option>
-									<option value="letterhead">{{ __("Letterhead") }}</option>
-									<option value="logo">{{ __("Logo") }}</option>
-								</select>
-							</div>
+						<div class="form-group">
+							<label class="control-label">{{ __("Branding") }}</label>
+							<select v-model="branding_mode" class="form-control">
+								<option value="none">{{ __("None") }}</option>
+								<option value="letterhead">{{ __("Letterhead") }}</option>
+								<option value="logo">{{ __("Logo") }}</option>
+							</select>
+						</div>
 
-							<div v-if="branding_mode === 'letterhead'" class="form-group">
-								<label class="control-label">{{ __("Letter Head") }}</label>
-								<select
-									v-model="presentation_settings.branding.letterhead"
-									class="form-control"
-								>
-									<option value="">{{ __("None") }}</option>
-									<option v-if="loadingLetterheads" disabled>
-										{{ __("Loading letterheads...") }}
+						<div v-if="branding_mode === 'letterhead'" class="form-group">
+							<label class="control-label">{{ __("Letter Head") }}</label>
+							<select
+								v-model="presentation_settings.branding.letterhead"
+								class="form-control"
+							>
+								<option value="">{{ __("None") }}</option>
+								<option v-if="loadingLetterheads" disabled>
+									{{ __("Loading letterheads...") }}
+								</option>
+								<option v-for="lh in availableLetterheads" :key="lh" :value="lh">
+									{{ lh }}
+								</option>
+							</select>
+						</div>
+
+						<div v-if="branding_mode === 'logo'">
+							<p class="help-block text-muted small">
+								{{ __("Logo is anchored to top-left using #place().") }}
+							</p>
+							<div class="form-group">
+								<label class="control-label">{{ __("Company") }}</label>
+								<select v-model="logo_settings.company" class="form-control">
+									<option value="">{{ __("Select company") }}</option>
+									<option v-if="loadingCompanies" disabled>
+										{{ __("Loading companies...") }}
 									</option>
 									<option
-										v-for="lh in availableLetterheads"
-										:key="lh"
-										:value="lh"
+										v-for="company in availableCompanies"
+										:key="company.name"
+										:value="company.name"
 									>
-										{{ lh }}
+										{{
+											company.abbr
+												? `${company.abbr} - ${company.name}`
+												: company.name
+										}}
 									</option>
 								</select>
 							</div>
-
-							<div v-if="branding_mode === 'logo'">
-								<p class="help-block text-muted small">
-									{{ __("Logo is anchored to top-left using #place().") }}
-								</p>
-								<div class="form-group">
-									<label class="control-label">{{ __("Company") }}</label>
-									<select v-model="logo_settings.company" class="form-control">
-										<option value="">{{ __("Select company") }}</option>
-										<option v-if="loadingCompanies" disabled>
-											{{ __("Loading companies...") }}
-										</option>
-										<option
-											v-for="company in availableCompanies"
-											:key="company.name"
-											:value="company.name"
-										>
-											{{
-												company.abbr
-													? `${company.abbr} - ${company.name}`
-													: company.name
-											}}
-										</option>
-									</select>
-								</div>
-								<p
-									v-if="logo_settings.company && !logo_settings.image"
-									class="help-block text-muted small"
-								>
-									{{ __("Selected company has no logo set.") }}
-								</p>
-								<div class="row">
-									<div class="col-xs-12 form-group">
-										<label class="control-label text-muted small">{{
-											__("Size (mm)")
-										}}</label>
-										<input
-											v-model.number="logo_settings.size"
-											type="number"
-											class="form-control input-sm"
-										/>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-xs-6 form-group">
-										<label class="control-label text-muted small">{{
-											__("dx (mm)")
-										}}</label>
-										<input
-											v-model.number="logo_settings.dx"
-											type="number"
-											class="form-control input-sm"
-										/>
-									</div>
-									<div class="col-xs-6 form-group">
-										<label class="control-label text-muted small">{{
-											__("dy (mm)")
-										}}</label>
-										<input
-											v-model.number="logo_settings.dy"
-											type="number"
-											class="form-control input-sm"
-										/>
-									</div>
-								</div>
-							</div>
-
-							<div v-if="!isReportMode" class="checkbox">
-								<label>
-									<input v-model="removeQr" type="checkbox" />
-									{{ __("Remove QRCode") }}
-								</label>
-							</div>
-						</div>
-					</div>
-					<div
-						v-if="isReportMode && !isBrandingProfileDriven"
-						class="settings-pane__section-card card"
-					>
-						<button
-							type="button"
-							class="btn btn-link card-header settings-pane__section-header"
-							:class="{ 'is-expanded': isPresentationSettingsExpanded }"
-							@click="
-								isPresentationSettingsExpanded = !isPresentationSettingsExpanded
-							"
-						>
-							<span>{{ __("Presentation Settings") }}</span>
-							<svg
-								:class="[
-									'settings-pane__chevron',
-									{
-										'settings-pane__chevron--expanded':
-											isPresentationSettingsExpanded,
-									},
-								]"
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 20 20"
-								fill="currentColor"
+							<p
+								v-if="logo_settings.company && !logo_settings.image"
+								class="help-block text-muted small"
 							>
-								<path
-									fill-rule="evenodd"
-									d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-						</button>
-						<div
-							v-if="isPresentationSettingsExpanded"
-							class="settings-pane__section-content card-body"
-						>
-							<div class="form-group">
-								<label class="control-label">{{ __("Page Size") }}</label>
-								<select
-									v-model="presentation_settings.page.size"
-									class="form-control"
-								>
-									<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
-									<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
-									<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
-									<option value="Letter">
-										{{ __("Letter (8.5 × 11 in)") }}
-									</option>
-									<option value="Legal">{{ __("Legal (8.5 × 14 in)") }}</option>
-								</select>
+								{{ __("Selected company has no logo set.") }}
+							</p>
+							<div class="row">
+								<div class="col-xs-12 form-group">
+									<label class="control-label text-muted small">{{
+										__("Size (mm)")
+									}}</label>
+									<input
+										v-model.number="logo_settings.size"
+										type="number"
+										class="form-control input-sm"
+									/>
+								</div>
 							</div>
-
-							<div class="form-group">
-								<label class="control-label">{{ __("Orientation") }}</label>
-								<select
-									v-model="presentation_settings.page.orientation"
-									class="form-control"
-								>
-									<option value="portrait">{{ __("Portrait") }}</option>
-									<option value="landscape">{{ __("Landscape") }}</option>
-								</select>
-							</div>
-
-							<div class="form-group">
-								<label class="control-label">{{ __("Margins (mm)") }}</label>
-								<div class="row">
-									<div class="col-xs-6 form-group">
-										<span class="text-muted small">{{ __("T") }}</span>
-										<input
-											v-model.number="presentation_settings.page.margins.top"
-											type="number"
-											:placeholder="__('Top')"
-											class="form-control input-sm"
-										/>
-									</div>
-									<div class="col-xs-6 form-group">
-										<span class="text-muted small">{{ __("B") }}</span>
-										<input
-											v-model.number="
-												presentation_settings.page.margins.bottom
-											"
-											type="number"
-											:placeholder="__('Bottom')"
-											class="form-control input-sm"
-										/>
-									</div>
-									<div class="col-xs-6 form-group">
-										<span class="text-muted small">{{ __("L") }}</span>
-										<input
-											v-model.number="
-												presentation_settings.page.margins.left
-											"
-											type="number"
-											:placeholder="__('Left')"
-											class="form-control input-sm"
-										/>
-									</div>
-									<div class="col-xs-6 form-group">
-										<span class="text-muted small">{{ __("R") }}</span>
-										<input
-											v-model.number="
-												presentation_settings.page.margins.right
-											"
-											type="number"
-											:placeholder="__('Right')"
-											class="form-control input-sm"
-										/>
-									</div>
+							<div class="row">
+								<div class="col-xs-6 form-group">
+									<label class="control-label text-muted small">{{
+										__("dx (mm)")
+									}}</label>
+									<input
+										v-model.number="logo_settings.dx"
+										type="number"
+										class="form-control input-sm"
+									/>
+								</div>
+								<div class="col-xs-6 form-group">
+									<label class="control-label text-muted small">{{
+										__("dy (mm)")
+									}}</label>
+									<input
+										v-model.number="logo_settings.dy"
+										type="number"
+										class="form-control input-sm"
+									/>
 								</div>
 							</div>
 						</div>
-					</div>
+
+						<div v-if="!isReportMode" class="checkbox">
+							<label>
+								<input v-model="removeQr" type="checkbox" />
+								{{ __("Remove QRCode") }}
+							</label>
+						</div>
+					</SettingsSection>
+					<SettingsSection
+						v-if="isReportMode && !isBrandingProfileDriven"
+						v-model="isPresentationSettingsExpanded"
+						:title="__('Presentation Settings')"
+						content-border
+					>
+						<div class="form-group">
+							<label class="control-label">{{ __("Page Size") }}</label>
+							<select v-model="presentation_settings.page.size" class="form-control">
+								<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
+								<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
+								<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
+								<option value="Letter">
+									{{ __("Letter (8.5 × 11 in)") }}
+								</option>
+								<option value="Legal">{{ __("Legal (8.5 × 14 in)") }}</option>
+							</select>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">{{ __("Orientation") }}</label>
+							<select
+								v-model="presentation_settings.page.orientation"
+								class="form-control"
+							>
+								<option value="portrait">{{ __("Portrait") }}</option>
+								<option value="landscape">{{ __("Landscape") }}</option>
+							</select>
+						</div>
+
+						<div class="form-group">
+							<label class="control-label">{{ __("Margins (mm)") }}</label>
+							<div class="row">
+								<div class="col-xs-6 form-group">
+									<span class="text-muted small">{{ __("T") }}</span>
+									<input
+										v-model.number="presentation_settings.page.margins.top"
+										type="number"
+										:placeholder="__('Top')"
+										class="form-control input-sm"
+									/>
+								</div>
+								<div class="col-xs-6 form-group">
+									<span class="text-muted small">{{ __("B") }}</span>
+									<input
+										v-model.number="presentation_settings.page.margins.bottom"
+										type="number"
+										:placeholder="__('Bottom')"
+										class="form-control input-sm"
+									/>
+								</div>
+								<div class="col-xs-6 form-group">
+									<span class="text-muted small">{{ __("L") }}</span>
+									<input
+										v-model.number="presentation_settings.page.margins.left"
+										type="number"
+										:placeholder="__('Left')"
+										class="form-control input-sm"
+									/>
+								</div>
+								<div class="col-xs-6 form-group">
+									<span class="text-muted small">{{ __("R") }}</span>
+									<input
+										v-model.number="presentation_settings.page.margins.right"
+										type="number"
+										:placeholder="__('Right')"
+										class="form-control input-sm"
+									/>
+								</div>
+							</div>
+						</div>
+					</SettingsSection>
 				</div>
 			</div>
 		</div>
@@ -527,6 +398,7 @@
 			:typst-code="typstCode"
 			:pdf-standard="pdfStandard"
 			:raw-typst="rawTypst"
+			:print-behavior="printBehavior"
 			:qr-enabled="qrEnabledEffective"
 			:letterhead="letterheadDoc"
 			:doc-type="props.doctype || null"
@@ -550,6 +422,7 @@ import {
 } from "../utils/presentation_settings";
 import { resolve_effective_presentation_settings } from "../utils/effectivePresentationSettings";
 import PreviewRenderer from "../components/PreviewRenderer.vue";
+import SettingsSection from "../components/SettingsSection.vue";
 import { useBrandingData } from "../composables/useBrandingData";
 import { loadReportState, normalizeReportChartSvg } from "../utils/reportState";
 import { dispatchCrispyPreviewSource } from "../utils/events";
@@ -696,6 +569,11 @@ const typstPreamble = ref("");
 const typstCode = ref("");
 const pdfStandard = ref("PDF/A-2u");
 const rawTypst = ref(false);
+const printBehavior = ref({
+	compact_item_print: 0,
+	print_uom_after_quantity: 0,
+	print_taxes_with_zero_amount: 0,
+});
 const removeQr = ref(false);
 const letterheadDoc = ref<any | null>(null);
 const changeKey = ref(0);
@@ -1149,6 +1027,11 @@ async function loadFormatSettings(formatName: string) {
 		typstCode.value = data.formatDoc.typst_code || "";
 		pdfStandard.value = data.formatDoc.pdf_standard || "PDF/A-2u";
 		rawTypst.value = Boolean(data.formatDoc.raw_typst);
+		printBehavior.value = {
+			compact_item_print: data.formatDoc.compact_item_print ? 1 : 0,
+			print_uom_after_quantity: data.formatDoc.print_uom_after_quantity ? 1 : 0,
+			print_taxes_with_zero_amount: data.formatDoc.print_taxes_with_zero_amount ? 1 : 0,
+		};
 
 		loading.value = false;
 	} catch (error) {
@@ -1242,6 +1125,18 @@ async function loadSelectedActiveTemplate() {
 		typstCode.value = renderPayload.typst_code || snapshot.typst_code || "";
 		pdfStandard.value = renderPayload.pdf_standard || snapshot.pdf_standard || "PDF/A-2u";
 		rawTypst.value = Boolean(renderPayload.raw_typst ?? snapshot.raw_typst);
+		printBehavior.value = {
+			compact_item_print:
+				renderPayload.compact_item_print || snapshot.compact_item_print ? 1 : 0,
+			print_uom_after_quantity:
+				renderPayload.print_uom_after_quantity || snapshot.print_uom_after_quantity
+					? 1
+					: 0,
+			print_taxes_with_zero_amount:
+				renderPayload.print_taxes_with_zero_amount || snapshot.print_taxes_with_zero_amount
+					? 1
+					: 0,
+		};
 	} catch (error) {
 		logger.error("Error loading active Crispy Template", error);
 		activeTemplateSnapshot.value = null;
@@ -1625,45 +1520,13 @@ defineExpose({
 	gap: 12px;
 }
 
-.settings-pane__section-card {
-	border: 1px solid #e2e8f0;
-	border-radius: 12px;
-	overflow: hidden;
-	background: #fff;
-}
-
-.settings-pane__section-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	width: 100%;
-	cursor: pointer;
-	background: #fff;
-	border: 0;
-	padding: 10px 12px;
-	text-align: left;
-	color: #334155;
-	text-decoration: none;
-}
-
-.settings-pane__section-header:hover {
-	text-decoration: none;
-	background: #f8fafc;
-}
-
-.settings-pane__section-content {
-	padding: 12px;
-	border-top: 1px solid #e2e8f0;
-}
-
 .settings-pane__template-section {
 	border: 0;
 	box-shadow: none;
 	background: transparent;
 }
 
-.settings-pane__template-section .settings-pane__section-content {
-	border-top: 0;
+.settings-pane__template-content {
 	padding: 0;
 }
 
@@ -1684,16 +1547,6 @@ defineExpose({
 
 .settings-pane__help-button {
 	flex: 0 0 auto;
-}
-
-.settings-pane__chevron {
-	width: 16px;
-	height: 16px;
-	transition: transform 0.2s ease;
-}
-
-.settings-pane__chevron--expanded {
-	transform: rotate(-180deg);
 }
 
 .settings-pane__toggles {

@@ -73,6 +73,9 @@ interface CrispyFormat {
   pdf_standard?: string;
   layout_json?: string;
   presentation_settings?: string;
+  compact_item_print?: number;
+  print_uom_after_quantity?: number;
+  print_taxes_with_zero_amount?: number;
     __onload?: any;
 }
 
@@ -216,6 +219,11 @@ function buildStore() {
       typstCode: typstCode.value || "",
       rawTypst: Boolean(rawTypst.value),
       reportBuilderConfig: reportBuilderConfig.value || null,
+      printBehavior: {
+        compact_item_print: Number(crispyFormat.value?.compact_item_print || 0),
+        print_uom_after_quantity: Number(crispyFormat.value?.print_uom_after_quantity || 0),
+        print_taxes_with_zero_amount: Number(crispyFormat.value?.print_taxes_with_zero_amount || 0),
+      },
     });
   }
 
@@ -230,6 +238,11 @@ function buildStore() {
       rawTypst.value = Boolean(parsed.rawTypst);
       if (parsed.reportBuilderConfig) {
         reportBuilderConfig.value = parsed.reportBuilderConfig;
+      }
+      if (crispyFormat.value && parsed.printBehavior) {
+        crispyFormat.value.compact_item_print = parsed.printBehavior.compact_item_print ? 1 : 0;
+        crispyFormat.value.print_uom_after_quantity = parsed.printBehavior.print_uom_after_quantity ? 1 : 0;
+        crispyFormat.value.print_taxes_with_zero_amount = parsed.printBehavior.print_taxes_with_zero_amount ? 1 : 0;
       }
       assignReportBuilderConfigToPresentationSettings();
       dirty.value = snapshotHash !== savedSnapshotHash;
@@ -1271,6 +1284,9 @@ function buildStore() {
             ? 1
             : 0
           : 0,
+        compact_item_print: crispyFormat.value.compact_item_print ? 1 : 0,
+        print_uom_after_quantity: crispyFormat.value.print_uom_after_quantity ? 1 : 0,
+        print_taxes_with_zero_amount: crispyFormat.value.print_taxes_with_zero_amount ? 1 : 0,
       };
 
       await saveCrispyFormat(crispyFormat.value.name, updateData);

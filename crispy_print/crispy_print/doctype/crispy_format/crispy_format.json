@@ -21,6 +21,10 @@
   "output_settings_section",
   "default_print_language",
   "pdf_standard",
+  "print_behavior_section",
+  "compact_item_print",
+  "print_uom_after_quantity",
+  "print_taxes_with_zero_amount",
   "typst_code_section",
   "typst_preamble",
   "doc_header",
@@ -97,6 +101,32 @@
    "fieldtype": "Select",
    "label": "PDF Standard",
    "options": "PDF 1.7\nPDF 2.0\nPDF/A-2u\nPDF/A-3u\nPDF/A-4"
+  },
+  {
+   "fieldname": "print_behavior_section",
+   "fieldtype": "Section Break",
+   "label": "Print Behavior"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+   "fieldname": "compact_item_print",
+   "fieldtype": "Check",
+   "label": "Compact Item Print"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+   "fieldname": "print_uom_after_quantity",
+   "fieldtype": "Check",
+   "label": "Print UOM after Quantity"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+   "fieldname": "print_taxes_with_zero_amount",
+   "fieldtype": "Check",
+   "label": "Print Taxes with Zero Amount"
   },
   {
    "default": "#set text(font: \"Inter 18pt\", size: 11pt)\n#set table(\n  stroke: 0.25pt,\n  inset: 8pt,\n)\n#set grid(\n  inset: 8pt,\n)",

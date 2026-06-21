@@ -24,6 +24,9 @@ export interface CrispyFormatDoc {
 	typst_code?: string
 	typst_preamble?: string
 	pdf_standard?: string
+	compact_item_print?: number
+	print_uom_after_quantity?: number
+	print_taxes_with_zero_amount?: number
 	__onload?: any
 }
 
@@ -258,6 +261,9 @@ export interface ResolvedCrispyTemplate extends ActiveCrispyTemplateOption {
 	source_contract?: string | null
 	pdf_standard?: string | null
 	raw_typst?: boolean
+	compact_item_print?: number | boolean | null
+	print_uom_after_quantity?: number | boolean | null
+	print_taxes_with_zero_amount?: number | boolean | null
 	layout_json?: string | null
 	presentation_settings?: string | null
 	doc_header?: string | null
@@ -282,6 +288,9 @@ export interface ResolvedCrispyTemplate extends ActiveCrispyTemplateOption {
 		typst_code?: string | null
 		pdf_standard?: string | null
 		raw_typst?: boolean | number | null
+		compact_item_print?: number | boolean | null
+		print_uom_after_quantity?: number | boolean | null
+		print_taxes_with_zero_amount?: number | boolean | null
 		crispy_template?: string | null
 		crispy_template_version?: string | null
 		template_hash?: string | null
@@ -611,6 +620,9 @@ export async function saveCrispyFormat(
 		raw_typst?: number
 		is_advanced?: number
 		company?: string | null
+		compact_item_print?: number
+		print_uom_after_quantity?: number
+		print_taxes_with_zero_amount?: number
 	}
 ): Promise<void> {
 	await setValue("Crispy Format", name, values)

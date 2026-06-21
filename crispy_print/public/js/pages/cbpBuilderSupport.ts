@@ -3,18 +3,6 @@ import cbpCodeOnlyTemplate from "../templates/cbp_code_only_template.json"
 
 export const showCodeMode = false
 export const pageSizes = ["A3", "A4", "A5", "Letter", "Legal", "Tabloid", "Executive"]
-export const weights = [
-	"Thin",
-	"Extralight",
-	"Light",
-	"Regular",
-	"Medium",
-	"Semibold",
-	"Bold",
-	"Extrabold",
-	"Black",
-]
-export const styles = ["Normal", "Italic", "Oblique"]
 
 export const defaultCodeOnlyTypst = String(cbpCodeOnlyTemplate.template || "")
 const codeReferenceComment = defaultCodeOnlyTypst.split("*/")[0] + "*/"

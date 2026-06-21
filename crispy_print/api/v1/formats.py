@@ -34,6 +34,9 @@ MAX_IMPORT_FIELD_BYTES = {
 	"typst_code": 512 * 1024,
 	"default_print_language": 140,
 	"pdf_standard": 40,
+	"compact_item_print": 8,
+	"print_uom_after_quantity": 8,
+	"print_taxes_with_zero_amount": 8,
 }
 EXPORT_FIELDS = [
 	"name",
@@ -54,6 +57,9 @@ EXPORT_FIELDS = [
 	"typst_code",
 	"default_print_language",
 	"pdf_standard",
+	"compact_item_print",
+	"print_uom_after_quantity",
+	"print_taxes_with_zero_amount",
 ]
 FORMAT_LIST_CACHE_TTL_SECONDS = 5 * 60
 

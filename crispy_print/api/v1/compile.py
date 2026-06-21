@@ -11,11 +11,18 @@ from tempfile import TemporaryDirectory
 import frappe
 from frappe import _
 
+from crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settings import (
+	get_render_timeout_seconds,
+	get_typst_font_dirs,
+	should_ignore_system_fonts,
+)
+
 from .security import enforce_rate_limit, ensure_compile_typst_permission
 
 APP_PATH = frappe.get_app_path("crispy_print")
-TYPST_FONT_DIR = Path(APP_PATH) / "public" / "vendor" / "typst"
-TYPST_PACKAGE_DIR = TYPST_FONT_DIR / "packages"
+TYPST_VENDOR_DIR = Path(APP_PATH) / "public" / "vendor"
+TYPST_FONT_DIR = TYPST_VENDOR_DIR / "fonts"
+TYPST_PACKAGE_DIR = TYPST_VENDOR_DIR / "typst" / "packages"
 ZEBRA_VERSION = "0.1.0"
 MAX_TYPST_SOURCE_BYTES = 512 * 1024
 MAX_CHART_SVG_BYTES = 512 * 1024
@@ -149,7 +156,9 @@ def _coerce_barcode_number(value, key: str) -> float | int:
 	return int(number) if number.is_integer() else number
 
 
-def _minimal_subprocess_env(home: str | None = None) -> dict[str, str]:
+def _minimal_subprocess_env(
+	home: str | None = None, include_system_fonts: bool | None = None
+) -> dict[str, str]:
 	env = {
 		"PATH": os.environ.get("PATH", ""),
 		"LANG": os.environ.get("LANG", "C.UTF-8"),
@@ -159,7 +168,9 @@ def _minimal_subprocess_env(home: str | None = None) -> dict[str, str]:
 	# (e.g. ~/Library/Fonts on macOS, ~/.fonts and ~/.local/share/fonts on Linux).
 	# Callers that need an isolated working directory may override HOME by
 	# passing it explicitly.
-	env["HOME"] = home or os.environ.get("HOME", "")
+	if include_system_fonts is None:
+		include_system_fonts = not should_ignore_system_fonts()
+	env["HOME"] = home or (os.environ.get("HOME", "") if include_system_fonts else "")
 	# TYPST_FONT_PATHS is the official Typst CLI env var for additional font
 	# directories (colon/semicolon-separated). Forward it when present so users
 	# can point Typst at extra font locations without modifying app code.
@@ -167,6 +178,21 @@ def _minimal_subprocess_env(home: str | None = None) -> dict[str, str]:
 	if typst_font_paths:
 		env["TYPST_FONT_PATHS"] = typst_font_paths
 	return env
+
+
+def _typst_font_dirs() -> list[Path]:
+	return get_typst_font_dirs(existing_only=True)
+
+
+def _site_font_dir() -> Path:
+	for font_dir in get_typst_font_dirs(existing_only=False):
+		if font_dir.name == "fonts" and "private" in font_dir.parts:
+			return font_dir
+	return Path(frappe.get_site_path("private", "files", "crispy_print", "fonts"))
+
+
+def _typst_font_path_arg() -> str:
+	return os.pathsep.join(str(font_dir) for font_dir in _typst_font_dirs())
 
 
 def _typst_compile_command(
@@ -179,9 +205,12 @@ def _typst_compile_command(
 	command = [
 		typst_bin,
 		"compile",
-		"--font-path",
-		str(TYPST_FONT_DIR),
 	]
+	font_path = _typst_font_path_arg()
+	if font_path:
+		command.extend(["--font-path", font_path])
+	if should_ignore_system_fonts():
+		command.append("--ignore-system-fonts")
 	if TYPST_PACKAGE_DIR.exists():
 		command.extend(["--package-path", str(TYPST_PACKAGE_DIR)])
 	command.extend(
@@ -337,7 +366,7 @@ def get_typst_local_fonts() -> list[str]:
 	ensure_compile_typst_permission()
 	enforce_rate_limit("typst_fonts", limit=20, window_seconds=60)
 
-	cache_key = "crispy_print:typst_local_fonts:v1"
+	cache_key = "crispy_print:typst_local_fonts:v3"
 	cached_fonts = frappe.cache().get_value(cache_key, expires=True)
 	if isinstance(cached_fonts, list):
 		return cached_fonts
@@ -345,12 +374,18 @@ def get_typst_local_fonts() -> list[str]:
 	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
 
 	try:
+		font_path = _typst_font_path_arg()
+		command = [typst_bin, "fonts"]
+		if font_path:
+			command.extend(["--font-path", font_path])
+		if should_ignore_system_fonts():
+			command.append("--ignore-system-fonts")
 		result = subprocess.run(
-			[typst_bin, "fonts"],
+			command,
 			capture_output=True,
 			text=True,
 			check=True,
-			timeout=5,
+			timeout=get_render_timeout_seconds(),
 			env=_minimal_subprocess_env(),
 			start_new_session=True,
 		)
@@ -372,9 +407,14 @@ def get_typst_local_fonts() -> list[str]:
 
 		fonts.append(family)
 
-	# Add bundled fonts from public/vendor/typst/
-	if TYPST_FONT_DIR.exists():
-		for font_file in TYPST_FONT_DIR.glob("*.[ot]tf"):
+	# Add app-bundled and site-private fonts by filename as a fallback.
+	for font_dir in _typst_font_dirs():
+		for font_file in [
+			*font_dir.rglob("*.ttf"),
+			*font_dir.rglob("*.otf"),
+			*font_dir.rglob("*.woff"),
+			*font_dir.rglob("*.woff2"),
+		]:
 			# Extract font family name from filename (basic approach)
 			font_name = font_file.stem
 			# Remove common suffixes like -Regular, -Bold, etc.
@@ -607,7 +647,8 @@ def _compile_cache_key(
 		"qr_filename": qr_filename or "",
 		"barcode_options": barcode_options or {},
 		"typst_bin": typst_bin,
-		"font_dir": str(TYPST_FONT_DIR),
+		"font_dirs": [str(font_dir) for font_dir in _typst_font_dirs()],
+		"ignore_system_fonts": should_ignore_system_fonts(),
 		"package_dir": str(TYPST_PACKAGE_DIR) if TYPST_PACKAGE_DIR.exists() else "",
 	}
 	raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
@@ -774,6 +815,7 @@ def compile_typst(
 	pdf_standard_cli = _resolve_pdf_standard_cli(pdf_standard) if output_format == "pdf" else ""
 
 	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
+	render_timeout = get_render_timeout_seconds()
 	cache_ttl = int(frappe.conf.get("CRISPY_PRINT_COMPILE_CACHE_TTL_SECONDS", COMPILE_CACHE_TTL_SECONDS) or 0)
 	cache_key = None
 	if cache_ttl > 0 and not return_url:
@@ -836,7 +878,7 @@ def compile_typst(
 				),
 				capture_output=True,
 				text=True,
-				timeout=30,
+				timeout=render_timeout,
 				env=_minimal_subprocess_env(),
 				cwd=temp_dir,
 				start_new_session=True,
@@ -867,7 +909,7 @@ def compile_typst(
 						),
 						capture_output=True,
 						text=True,
-						timeout=30,
+						timeout=render_timeout,
 						env=_minimal_subprocess_env(),
 						cwd=temp_dir,
 						start_new_session=True,

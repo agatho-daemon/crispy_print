@@ -83,43 +83,22 @@
 			<section v-if="!effectiveCodeOnly" class="cbp-panel">
 				<h3>{{ __("Typography") }}</h3>
 				<typography-editor
+					v-model="sectionLabelTypography"
 					:title="__('Section Label')"
-					:family="model.section_label_font_family"
-					:size="model.section_label_font_size_pt"
-					:style="model.section_label_font_style"
-					:weight="model.section_label_font_weight"
-					:color="model.section_label_font_color"
-					@update:family="model.section_label_font_family = $event"
-					@update:size="model.section_label_font_size_pt = $event"
-					@update:style="model.section_label_font_style = $event"
-					@update:weight="model.section_label_font_weight = $event"
-					@update:color="model.section_label_font_color = $event"
+					variant="cbp"
+					option-value-format="label"
 				/>
 				<typography-editor
+					v-model="fieldLabelTypography"
 					:title="__('Field Label')"
-					:family="model.field_label_font_family"
-					:size="model.field_label_font_size_pt"
-					:style="model.field_label_font_style"
-					:weight="model.field_label_font_weight"
-					:color="model.field_label_font_color"
-					@update:family="model.field_label_font_family = $event"
-					@update:size="model.field_label_font_size_pt = $event"
-					@update:style="model.field_label_font_style = $event"
-					@update:weight="model.field_label_font_weight = $event"
-					@update:color="model.field_label_font_color = $event"
+					variant="cbp"
+					option-value-format="label"
 				/>
 				<typography-editor
+					v-model="fieldValueTypography"
 					:title="__('Field Value')"
-					:family="model.field_value_font_family"
-					:size="model.field_value_font_size_pt"
-					:style="model.field_value_font_style"
-					:weight="model.field_value_font_weight"
-					:color="model.field_value_font_color"
-					@update:family="model.field_value_font_family = $event"
-					@update:size="model.field_value_font_size_pt = $event"
-					@update:style="model.field_value_font_style = $event"
-					@update:weight="model.field_value_font_weight = $event"
-					@update:color="model.field_value_font_color = $event"
+					variant="cbp"
+					option-value-format="label"
 				/>
 			</section>
 
@@ -154,30 +133,16 @@
 					<color-field v-model="model.table_stripe_color" :label="__('Stripe Fill')" />
 				</div>
 				<typography-editor
+					v-model="tableHeaderTypography"
 					:title="__('Table Header')"
-					:family="model.table_header_font_family"
-					:size="model.table_header_font_size_pt"
-					:style="model.table_header_font_style"
-					:weight="model.table_header_font_weight"
-					:color="model.table_header_font_color"
-					@update:family="model.table_header_font_family = $event"
-					@update:size="model.table_header_font_size_pt = $event"
-					@update:style="model.table_header_font_style = $event"
-					@update:weight="model.table_header_font_weight = $event"
-					@update:color="model.table_header_font_color = $event"
+					variant="cbp"
+					option-value-format="label"
 				/>
 				<typography-editor
+					v-model="tableBodyTypography"
 					:title="__('Table Body')"
-					:family="model.table_body_font_family"
-					:size="model.table_body_font_size_pt"
-					:style="model.table_body_font_style"
-					:weight="model.table_body_font_weight"
-					:color="model.table_body_font_color"
-					@update:family="model.table_body_font_family = $event"
-					@update:size="model.table_body_font_size_pt = $event"
-					@update:style="model.table_body_font_style = $event"
-					@update:weight="model.table_body_font_weight = $event"
-					@update:color="model.table_body_font_color = $event"
+					variant="cbp"
+					option-value-format="label"
 				/>
 			</section>
 
@@ -411,8 +376,10 @@ import {
 	type CompanyOption,
 	type CrispyBrandingProfileDoc,
 } from "../api/crispy";
+import TypographyEditor from "../components/TypographyStyleEditor.vue";
 import { __ } from "../utils/i18n";
 import { sanitizeSvg } from "../utils/safeSvg";
+import { cbpTypographyModel } from "./cbpTypographyAdapter";
 import {
 	createFallbackModel,
 	defaultCodeOnlyTypst,
@@ -427,7 +394,6 @@ import {
 } from "./cbpBuilderTypst";
 import ColorField from "./cbpFields/ColorField";
 import NumberField from "./cbpFields/NumberField";
-import TypographyEditor from "./cbpFields/TypographyEditor";
 
 const props = defineProps<{ profileName: string }>();
 const emit = defineEmits<{ (event: "dirty", value: boolean): void }>();
@@ -464,10 +430,16 @@ const tableStriping = computed({
 	get: () => Boolean(Number(model.table_row_striping || 0)),
 	set: (value: boolean) => (model.table_row_striping = value ? 1 : 0),
 });
+const sectionLabelTypography = cbpTypographyModel(model, "section_label");
+const fieldLabelTypography = cbpTypographyModel(model, "field_label");
+const fieldValueTypography = cbpTypographyModel(model, "field_value");
+const tableHeaderTypography = cbpTypographyModel(model, "table_header");
+const tableBodyTypography = cbpTypographyModel(model, "table_body");
 const qrEnabled = computed({
 	get: () => Boolean(Number(model.enable_qr_code || 0)),
 	set: (value: boolean) => (model.enable_qr_code = value ? 1 : 0),
 });
+
 const usesLogo = computed(() =>
 	["Logo Only", "Logo + Letterhead"].includes(model.branding_mode || "")
 );
@@ -918,8 +890,7 @@ label span,
 	margin: 0;
 }
 
-.cbp-nested,
-.cbp-typography {
+.cbp-nested {
 	margin: 0 12px 12px;
 	padding-top: 12px;
 	border-top: 1px solid #edf2f7;
@@ -978,79 +949,6 @@ label span,
 	padding: 6px 10px;
 	font-size: 13px;
 	line-height: 1.4;
-}
-
-.cbp-builder :deep(.cbp-field) {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-}
-
-.cbp-builder :deep(.cbp-field span) {
-	display: block;
-	margin-bottom: 4px;
-	font-size: 11px;
-	font-weight: 500;
-	color: #475569;
-}
-
-.cbp-builder :deep(.cbp-typography) {
-	margin: 0 12px 14px;
-	padding-top: 12px;
-	border-top: 1px solid #edf2f7;
-}
-
-.cbp-builder :deep(.cbp-typography .cbp-subtitle) {
-	margin-bottom: 8px;
-	font-size: 13px;
-	font-weight: 600;
-	color: #525252;
-}
-
-.cbp-builder :deep(.cbp-typography .cbp-grid) {
-	padding: 0;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 10px 16px;
-}
-
-.cbp-builder :deep(.cbp-field--color) {
-	grid-column: 1 / -1;
-	max-width: 230px;
-}
-
-.cbp-builder :deep(.cbp-color-input) {
-	display: grid;
-	grid-template-columns: 36px minmax(0, 1fr);
-	gap: 8px;
-	align-items: center;
-}
-
-.cbp-builder :deep(.cbp-color-input input[type="color"]) {
-	width: 36px;
-	height: 36px;
-	padding: 0;
-	border: 0;
-	border-radius: 8px;
-	background: transparent;
-	box-shadow: none;
-	overflow: hidden;
-	appearance: none;
-	-webkit-appearance: none;
-}
-
-.cbp-builder :deep(input[type="color"]::-webkit-color-swatch-wrapper) {
-	padding: 0;
-	border: 0;
-}
-
-.cbp-builder :deep(input[type="color"]::-webkit-color-swatch) {
-	border: 0;
-	border-radius: 8px;
-}
-
-.cbp-builder :deep(input[type="color"]::-moz-color-swatch) {
-	border: 0;
-	border-radius: 8px;
 }
 
 .cbp-builder__preview-wrap {

@@ -8,6 +8,13 @@
 		:typst-code="store.typstCode.value"
 		:pdf-standard="store.crispyFormat.value?.pdf_standard || 'PDF/A-2u'"
 		:raw-typst="store.rawTypst.value"
+		:print-behavior="{
+			compact_item_print: store.crispyFormat.value?.compact_item_print ? 1 : 0,
+			print_uom_after_quantity: store.crispyFormat.value?.print_uom_after_quantity ? 1 : 0,
+			print_taxes_with_zero_amount: store.crispyFormat.value?.print_taxes_with_zero_amount
+				? 1
+				: 0,
+		}"
 		:qr-enabled="qrEnabled"
 		:letterhead="store.letterhead.value"
 		:doc-type="store.docType.value"

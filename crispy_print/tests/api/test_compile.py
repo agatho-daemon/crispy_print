@@ -17,11 +17,16 @@ class TestTypstAPI(FrappeTestCase):
 	def setUp(self):
 		"""Set up test environment"""
 		frappe.set_user("Administrator")
+		frappe.cache().delete_value("crispy_print:typst_local_fonts:v3")
+		from crispy_print.install import ensure_site_font_directory
+
+		ensure_site_font_directory()
 
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_get_typst_local_fonts(self, mock_run):
 		"""Test font discovery from Typst CLI"""
 		from crispy_print.api.v1 import get_typst_local_fonts
+		from crispy_print.api.v1.compile import TYPST_FONT_DIR, _site_font_dir
 
 		# Mock Typst CLI output
 		mock_result = Mock()
@@ -42,6 +47,11 @@ Liberation Sans
 
 		# Verify fonts are deduplicated and sorted
 		self.assertEqual(fonts, sorted(set(fonts)))
+		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--font-path", cmd_args)
+		font_path = cmd_args[cmd_args.index("--font-path") + 1]
+		self.assertIn(str(TYPST_FONT_DIR), font_path.split(os.pathsep))
+		self.assertIn(str(_site_font_dir()), font_path.split(os.pathsep))
 
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_get_typst_local_fonts_with_bundled(self, mock_run):
@@ -365,7 +375,7 @@ This is a test.
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_compile_typst_uses_package_path_when_vendor_packages_exist(self, mock_run):
 		from crispy_print.api.v1 import compile_typst
-		from crispy_print.api.v1.compile import TYPST_PACKAGE_DIR
+		from crispy_print.api.v1.compile import TYPST_FONT_DIR, TYPST_PACKAGE_DIR, _site_font_dir
 
 		mock_result = Mock()
 		mock_result.returncode = 0
@@ -385,6 +395,10 @@ This is a test.
 
 		self.assertTrue(result["success"])
 		cmd_args = mock_run.call_args.args[0]
+		self.assertIn("--font-path", cmd_args)
+		font_path = cmd_args[cmd_args.index("--font-path") + 1]
+		self.assertIn(str(TYPST_FONT_DIR), font_path.split(os.pathsep))
+		self.assertIn(str(_site_font_dir()), font_path.split(os.pathsep))
 		self.assertIn("--package-path", cmd_args)
 		self.assertEqual(cmd_args[cmd_args.index("--package-path") + 1], str(TYPST_PACKAGE_DIR))
 

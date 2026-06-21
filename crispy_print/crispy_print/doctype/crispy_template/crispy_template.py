@@ -43,6 +43,9 @@ IMMUTABLE_AFTER_INSERT_FIELDS = {
 	"source_contract",
 	"pdf_standard",
 	"raw_typst",
+	"compact_item_print",
+	"print_uom_after_quantity",
+	"print_taxes_with_zero_amount",
 	"typst_version",
 	"zebra_version",
 	"barcode_symbology",
@@ -71,6 +74,9 @@ SNAPSHOT_HASH_FIELDS_V1 = (
 	"source_contract",
 	"pdf_standard",
 	"raw_typst",
+	"compact_item_print",
+	"print_uom_after_quantity",
+	"print_taxes_with_zero_amount",
 	"typst_version",
 	"layout_json",
 	"presentation_settings_json",
@@ -148,6 +154,9 @@ class CrispyTemplate(Document):
 		self.source_contract = source.get("contract")
 		self.pdf_standard = source.get("pdf_standard") or self.pdf_standard or "PDF/A-2u"
 		self.raw_typst = 1 if source.get("raw_typst") or source.get("is_advanced") else 0
+		self.compact_item_print = 1 if source.get("compact_item_print") else 0
+		self.print_uom_after_quantity = 1 if source.get("print_uom_after_quantity") else 0
+		self.print_taxes_with_zero_amount = 1 if source.get("print_taxes_with_zero_amount") else 0
 		self.typst_version = self.typst_version or get_typst_version()
 		self.zebra_version = self.zebra_version or ZEBRA_VERSION
 		if self.company is None:
@@ -644,6 +653,9 @@ def _template_resolution_payload(
 		"source_contract": doc.source_contract,
 		"pdf_standard": doc.pdf_standard,
 		"raw_typst": bool(doc.raw_typst),
+		"compact_item_print": doc.compact_item_print,
+		"print_uom_after_quantity": doc.print_uom_after_quantity,
+		"print_taxes_with_zero_amount": doc.print_taxes_with_zero_amount,
 		"layout_json": doc.layout_json,
 		"presentation_settings": presentation_settings,
 		"doc_header": doc.doc_header,
@@ -668,6 +680,9 @@ def _template_resolution_payload(
 			"typst_code": doc.typst_code,
 			"pdf_standard": doc.pdf_standard,
 			"raw_typst": 1 if doc.raw_typst else 0,
+			"compact_item_print": doc.compact_item_print,
+			"print_uom_after_quantity": doc.print_uom_after_quantity,
+			"print_taxes_with_zero_amount": doc.print_taxes_with_zero_amount,
 			"crispy_template": doc.name,
 			"crispy_template_version": doc.version,
 			"template_hash": doc.snapshot_hash,

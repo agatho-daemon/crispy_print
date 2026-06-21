@@ -1,0 +1,115 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-20 09:11:48.699885",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "font_settings_section",
+  "enable_uploaded_fonts",
+  "enable_system_fonts",
+  "font_search_paths",
+  "upload_font",
+  "refresh_font_list",
+  "rendering_policy_section",
+  "render_timeout_seconds",
+  "allow_print_for_draft",
+  "always_add_draft_heading",
+  "allow_print_for_cancelled"
+ ],
+ "fields": [
+  {
+   "fieldname": "font_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Font Settings"
+  },
+  {
+   "default": "1",
+   "description": "Include fonts uploaded to the site private Crispy Print font directory.",
+   "fieldname": "enable_uploaded_fonts",
+   "fieldtype": "Check",
+   "label": "Enable Uploaded Fonts"
+  },
+  {
+   "default": "0",
+   "description": "Allow Typst to discover system fonts. Ensure selected system fonts permit PDF embedding/subsetting.",
+   "fieldname": "enable_system_fonts",
+   "fieldtype": "Check",
+   "label": "Enable System Fonts"
+  },
+  {
+   "description": "Resolved font directories used by Crispy Print. System fonts are discovered by Typst when enabled and are not listed here.",
+   "fieldname": "font_search_paths",
+   "fieldtype": "Small Text",
+   "label": "Font Search Paths",
+   "read_only": 1
+  },
+  {
+   "fieldname": "upload_font",
+   "fieldtype": "Button",
+   "label": "Upload Font"
+  },
+  {
+   "fieldname": "refresh_font_list",
+   "fieldtype": "Button",
+   "label": "Refresh Font List"
+  },
+  {
+   "fieldname": "rendering_policy_section",
+   "fieldtype": "Section Break",
+   "label": "Rendering Policy"
+  },
+  {
+   "default": "60",
+   "description": "Maximum seconds allowed for each Typst render or font discovery command.",
+   "fieldname": "render_timeout_seconds",
+   "fieldtype": "Int",
+   "label": "Render Timeout Seconds"
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_print_for_draft",
+   "fieldtype": "Check",
+   "label": "Allow Print for Draft"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.allow_print_for_draft",
+   "fieldname": "always_add_draft_heading",
+   "fieldtype": "Check",
+   "label": "Always Add Draft Heading"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_print_for_cancelled",
+   "fieldtype": "Check",
+   "label": "Allow Print for Cancelled"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-06-20 09:11:48.699885",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Print Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

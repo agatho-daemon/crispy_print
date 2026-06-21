@@ -43,10 +43,12 @@ if version.major in (14, 15):
 
 # TODO: WIP Required for Frappe 16+
 # if version.major > 15:
-# 	add_to_apps_screen = [{
-# 		"name": app_name,
-#     	"logo": app_logo_url,
-#     	"title": app_title,
-#     	"route": "/crispy-print",
-#     	# "has_permission": "crm.api.check_app_permission"
-# 	}]
+# 	add_to_apps_screen = [
+# 		{
+# 			"name": app_name,
+# 			"logo": app_logo_url,
+# 			"title": app_title,
+# 			"route": "/crispy-print",
+# 			# "has_permission": "crispy_print.api.check_app_permission"
+# 		}
+# 	]

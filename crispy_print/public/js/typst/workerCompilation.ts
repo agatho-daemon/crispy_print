@@ -10,8 +10,8 @@ import {
 	getLetterheadFilename,
 	resolveBrandingMode,
 } from "./branding"
-import { typstColor, typstLength, typstQuoted } from "./typstEscaping"
-import { fontWeightToNumber } from "../utils/typstTextStyle"
+import { typstQuoted } from "./typstEscaping"
+import { buildTableStyleConstants, buildTypographyStyleDefs } from "./textStyles"
 
 const IMAGE_EXTENSIONS = new Set([
 	"png",
@@ -82,72 +82,19 @@ export function buildDefaultStyleDefs(presentation_settings: any) {
 	const fieldValue = typography.fieldValue
 	const sectionLabel = typography.sectionLabel
 	const tableSettings = ensure_table_settings(safePresentationSettings)
-	const tableHeader = tableSettings.typography.header
-	const tableBody = tableSettings.typography.body
-	const tableInset = tableSettings.inset
-	const tableStrokeWidth = Number.isFinite(tableSettings.stroke.width)
-		? tableSettings.stroke.width
-		: 0
-	const formatColor = (color: string, fallback = "none") => typstColor(color, fallback)
-	const tableStrokeColor = formatColor(tableSettings.stroke.color, "black")
-	const tableHeaderFill = formatColor(tableSettings.header.backgroundColor, "none")
-	const tableStripeFill = formatColor(tableSettings.stripe.color, "none")
-	const tableStripeEnabled = Boolean(tableSettings.stripe.enabled)
 
 	const lines: string[] = []
-	lines.push("// Typography styles (auto-injected for raw Typst)")
-	lines.push("#let fieldLabelStyle = (")
-	lines.push(`  font: ${typstQuoted(fieldLabel.fontFamily)},`)
-	lines.push(`  size: ${typstLength(fieldLabel.fontSize, 8)},`)
-	lines.push(`  style: ${typstQuoted(fieldLabel.fontStyle)},`)
-	lines.push(`  weight: ${fontWeightToNumber(fieldLabel.fontWeight)},`)
-	lines.push(`  fill: ${formatColor(fieldLabel.color, "black")}`)
-	lines.push(")")
-	lines.push("")
-	lines.push("#let fieldValueStyle = (")
-	lines.push(`  font: ${typstQuoted(fieldValue.fontFamily)},`)
-	lines.push(`  size: ${typstLength(fieldValue.fontSize, 10)},`)
-	lines.push(`  style: ${typstQuoted(fieldValue.fontStyle)},`)
-	lines.push(`  weight: ${fontWeightToNumber(fieldValue.fontWeight)},`)
-	lines.push(`  fill: ${formatColor(fieldValue.color, "black")}`)
-	lines.push(")")
-	lines.push("")
-	lines.push("#let sectionLabelStyle = (")
-	lines.push(`  font: ${typstQuoted(sectionLabel.fontFamily)},`)
-	lines.push(`  size: ${typstLength(sectionLabel.fontSize, 14)},`)
-	lines.push(`  style: ${typstQuoted(sectionLabel.fontStyle)},`)
-	lines.push(`  weight: ${fontWeightToNumber(sectionLabel.fontWeight)},`)
-	lines.push(`  fill: ${formatColor(sectionLabel.color, "black")}`)
-	lines.push(")")
-	lines.push("")
-	lines.push("// Table styles (auto-injected for raw Typst)")
-	lines.push("#let tableHeaderStyle = (")
-	lines.push(`  font: ${typstQuoted(tableHeader.fontFamily)},`)
-	lines.push(`  size: ${typstLength(tableHeader.fontSize, 9)},`)
-	lines.push(`  style: ${typstQuoted(tableHeader.fontStyle)},`)
-	lines.push(`  weight: ${fontWeightToNumber(tableHeader.fontWeight)},`)
-	lines.push(`  fill: ${formatColor(tableHeader.color, "black")}`)
-	lines.push(")")
-	lines.push("")
-	lines.push("#let tableBodyStyle = (")
-	lines.push(`  font: ${typstQuoted(tableBody.fontFamily)},`)
-	lines.push(`  size: ${typstLength(tableBody.fontSize, 9)},`)
-	lines.push(`  style: ${typstQuoted(tableBody.fontStyle)},`)
-	lines.push(`  weight: ${fontWeightToNumber(tableBody.fontWeight)},`)
-	lines.push(`  fill: ${formatColor(tableBody.color, "black")}`)
-	lines.push(")")
-	lines.push("")
 	lines.push(
-		`#let tableCellInset = (top: ${tableInset.top}pt, right: ${tableInset.right}pt, bottom: ${tableInset.bottom}pt, left: ${tableInset.left}pt)`
+		buildTypographyStyleDefs(
+			{ fieldLabel, fieldValue, sectionLabel },
+			tableSettings,
+			{
+				typographyComment: "// Typography styles (auto-injected for raw Typst)",
+				tableComment: "// Table styles (auto-injected for raw Typst)",
+			}
+		)
 	)
-	lines.push(
-		`#let tableStroke = ${
-			tableStrokeWidth > 0 ? `${tableStrokeWidth}pt + ${tableStrokeColor}` : "none"
-		}`
-	)
-	lines.push(`#let tableHeaderFill = ${tableHeaderFill}`)
-	lines.push(`#let tableStripeFill = ${tableStripeFill}`)
-	lines.push(`#let tableStripeEnabled = ${tableStripeEnabled ? "true" : "false"}`)
+	lines.push(buildTableStyleConstants(tableSettings))
 	lines.push("")
 	return lines.join("\n")
 }

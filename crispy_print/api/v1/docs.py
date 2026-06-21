@@ -1,6 +1,10 @@
 import frappe
 from frappe import _
 
+from crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settings import (
+	validate_document_print_policy,
+)
+
 from .document_codes import get_preferred_document_code_for_doc
 
 
@@ -19,8 +23,10 @@ def get_formatted_doc(
 
 	doc = frappe.get_doc(doctype, name)
 	doc.check_permission("read")
+	print_policy = validate_document_print_policy(doc)
 	meta = frappe.get_meta(doctype)
 	data = doc.as_dict()
+	data["__crispy_print_context"] = print_policy
 
 	field_map = {df.fieldname: df for df in meta.fields if df.fieldname}
 
