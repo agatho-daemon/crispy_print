@@ -43,7 +43,7 @@ if frappe_major >= 16:
 			"logo": app_logo_url,
 			"title": app_title,
 			"route": "/desk/crispy-print",
-			# "has_permission": "crispy_print.api.check_app_permission"
+			"has_permission": "crispy_print.check_app_permission",
 		}
 	]
 else:
