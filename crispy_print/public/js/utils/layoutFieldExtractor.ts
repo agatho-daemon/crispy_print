@@ -56,16 +56,20 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
 			}
 
 			// Add all columns from table (both namespaced and bare)
-			field.table_columns.forEach((col) => {
-				if (col.fieldname) {
-					// Add bare column name for table rendering
-					usedFields.add(col.fieldname)
-					// Add namespaced column for filtering
-					if (field.fieldname) {
-						usedFields.add(`${field.fieldname}.${col.fieldname}`)
+				field.table_columns.forEach((col) => {
+					if (col.fieldname) {
+						// Add bare column name for table rendering
+						usedFields.add(col.fieldname)
+						// Add namespaced column for filtering
+						if (field.fieldname) {
+							usedFields.add(`${field.fieldname}.${col.fieldname}`)
+							getDependentTableFields(col.fieldname).forEach((dependentField) => {
+								usedFields.add(dependentField)
+								usedFields.add(`${field.fieldname}.${dependentField}`)
+							})
+						}
 					}
-				}
-			})
+				})
 		}
 
 		// Custom Typst field - extract field references from Typst code
@@ -88,6 +92,13 @@ function isBuilderOnlyField(field: { fieldname?: string; fieldtype?: string }): 
 	return ["Typst", "Spacer", "Divider", "Empty", "Crispy Typst Block"].includes(
 		field.fieldtype || ""
 	)
+}
+
+function getDependentTableFields(fieldname: string): string[] {
+	if (["qty", "quantity", "stock_qty"].includes(fieldname)) {
+		return ["uom", "stock_uom"]
+	}
+	return []
 }
 
 /**

@@ -186,6 +186,43 @@ class JSONTypstTranslator {
 		lines.push("  else if \"amount\" in row { cp_is_zero_tax_value(row.amount) }")
 		lines.push("  else { false }")
 		lines.push("}")
+		lines.push("#let cp_row_uom(row) = {")
+		lines.push("  if \"uom\" in row and row.uom != \"\" { row.uom }")
+		lines.push("  else if \"stock_uom\" in row and row.stock_uom != \"\" { row.stock_uom }")
+		lines.push("  else { \"\" }")
+		lines.push("}")
+		lines.push("#let cp_compact_measure_cell(label, value) = {")
+		lines.push("  if label != \"\" [")
+		lines.push("    #text(size: tableBodyStyle.size * 0.50, fill: rgb(\"#64748b\"), baseline: -1.5em, weight: \"regular\")[#label#sym.space.third]")
+		lines.push("  ]")
+		lines.push("  text(..tableBodyStyle)[#value]")
+		lines.push("}")
+		lines.push("#let cp_currency_parts(value) = {")
+		lines.push("  let text = str(value)")
+		lines.push("  let parts = text.split(\" \")")
+		lines.push("  if parts.len() > 1 and parts.at(0).len() <= 4 {")
+		lines.push("    (label: parts.at(0), value: parts.slice(1).join(\" \"))")
+		lines.push("  } else {")
+		lines.push("    (label: \"\", value: text)")
+		lines.push("  }")
+		lines.push("}")
+		lines.push("#let cp_currency_cell(value) = {")
+		lines.push("  let parts = cp_currency_parts(value)")
+		lines.push("  cp_compact_measure_cell(parts.label, parts.value)")
+		lines.push("}")
+		lines.push(
+			`#let cp_print_uom_after_quantity = ${
+				this.is_enabled_behavior("print_uom_after_quantity") ? "true" : "false"
+			}`
+		)
+		lines.push("#let cp_quantity_cell(row, value) = {")
+		lines.push("  let uom = cp_row_uom(row)")
+		lines.push("  if cp_print_uom_after_quantity and uom != \"\" {")
+		lines.push("    text(..tableBodyStyle)[#value#sym.space.third#uom]")
+		lines.push("  } else {")
+		lines.push("    cp_compact_measure_cell(uom, value)")
+		lines.push("  }")
+		lines.push("}")
 		lines.push("")
 
 		lines.push("#let header_block = []")
@@ -703,8 +740,8 @@ class JSONTypstTranslator {
 
 		if (field.table_columns && field.table_columns.length > 0) {
 			const columns = field.table_columns
-			const compactItems =
-				this.is_enabled_behavior("compact_item_print") && this.is_item_table(fieldname)
+			const itemTable = this.is_item_table(fieldname)
+			const compactItems = this.is_enabled_behavior("compact_item_print") && itemTable
 			const rowSource = this.getTableRowSource(fieldname)
 
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
@@ -730,7 +767,7 @@ class JSONTypstTranslator {
 
 			// Row data - map each row to all its column values and flatten
 			const rowCells = columns
-				.map((col) => this.renderTableCell(col))
+				.map((col) => this.renderTableCell(col, { itemTable }))
 				.join(", ")
 			lines.push(`    ..${rowSource}.map(row => (${rowCells})).flatten(),`)
 
@@ -763,13 +800,19 @@ class JSONTypstTranslator {
 		return `doc.${fieldname}`
 	}
 
-	private renderTableCell(col: TableColumn): string {
+	private renderTableCell(
+		col: TableColumn,
+		options: { itemTable?: boolean } = {}
+	): string {
 		const fieldname = col.fieldname || ""
 		if (
-			this.is_enabled_behavior("print_uom_after_quantity") &&
+			options.itemTable &&
 			["qty", "quantity", "stock_qty"].includes(fieldname)
 		) {
-			return `[#text(..tableBodyStyle)[#row.${fieldname}#if "uom" in row and row.uom != "" [ #row.uom] else if "stock_uom" in row and row.stock_uom != "" [ #row.stock_uom]]]`
+			return `[#cp_quantity_cell(row, row.${fieldname})]`
+		}
+		if (options.itemTable && col.fieldtype === "Currency") {
+			return `[#cp_currency_cell(row.${fieldname})]`
 		}
 		return `[#text(..tableBodyStyle)[#row.${fieldname}]]`
 	}

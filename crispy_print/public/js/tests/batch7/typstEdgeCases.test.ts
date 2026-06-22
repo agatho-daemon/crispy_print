@@ -122,6 +122,7 @@ describe("Typst edge cases", () => {
 										label: "Items",
 										table_columns: [
 											{ fieldname: "qty", label: "Qty", fieldtype: "Float" },
+											{ fieldname: "rate", label: "Rate", fieldtype: "Currency" },
 										],
 									},
 									{
@@ -142,20 +143,26 @@ describe("Typst edge cases", () => {
 			"Sales Invoice",
 			{
 				name: "INV-0001",
-				items: [{ qty: "1", uom: "Nos" }],
+				items: [{ qty: "1", uom: "Nos", rate: "KWD 10.000" }],
 				taxes: [{ tax_amount: "0.00" }],
 			},
 			{
 				printBehavior: {
 					compact_item_print: 1,
-					print_uom_after_quantity: 1,
+					print_uom_after_quantity: 0,
 					print_taxes_with_zero_amount: 0,
 				},
 			},
 		)
 
 		expect(typst).toContain("inset: (x: 1pt, y: 1pt)")
-		expect(typst).toContain('row.uom != ""')
+		expect(typst).toContain("cp_quantity_cell(row, row.qty)")
+		expect(typst).toContain("#let cp_print_uom_after_quantity = false")
+		expect(typst).toContain("text(..tableBodyStyle)[#value#sym.space.third#uom]")
+		expect(typst).toContain("baseline: -1.5em")
+		expect(typst).toContain("[#label#sym.space.third]")
+		expect(typst).toContain("cp_currency_cell(row.rate)")
+		expect(typst).toContain("cp_currency_parts(value)")
 		expect(typst).toContain("doc.taxes.filter(row => not cp_is_zero_tax_row(row))")
 	})
 

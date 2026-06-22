@@ -53,6 +53,41 @@ describe("layout field extractor", () => {
 		expect(filtered.items[0].name).toBe("row1")
 	})
 
+	it("retains item UOM fields when quantity columns are used", () => {
+		const used = extractUsedFields({
+			sections: [
+				{
+					label: "Items",
+					columns: [
+						{
+							label: "",
+							fields: [
+								{
+									fieldname: "items",
+									fieldtype: "Table",
+									label: "Items",
+									table_columns: [{ fieldname: "qty", label: "Qty", fieldtype: "Float" }],
+								},
+							],
+						},
+					],
+				},
+			],
+		})
+		const doc = {
+			items: [{ qty: "2", uom: "Nos", stock_uom: "Nos", item_code: "A-1" }],
+		}
+
+		const filtered = filterDocumentFields(doc, used)
+
+		expect(used.has("items.uom")).toBe(true)
+		expect(used.has("items.stock_uom")).toBe(true)
+		expect(filtered.items[0].qty).toBe("2")
+		expect(filtered.items[0].uom).toBe("Nos")
+		expect(filtered.items[0].stock_uom).toBe("Nos")
+		expect(filtered.items[0].item_code).toBeUndefined()
+	})
+
 	it("includes all child fields when flag is set", () => {
 		const used = new Set(["items"])
 		const doc = { items: [{ item_code: "A-1", qty: 2 }] }
