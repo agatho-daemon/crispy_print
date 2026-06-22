@@ -4,7 +4,7 @@ _Part of the [Crispy Print documentation](README.md)._
 
 ### Build System
 
-This app uses **Frappe v15's native esbuild bundler** - no separate Vite or webpack setup required.
+This app uses **Frappe's native esbuild bundler** - no separate Vite or webpack setup required.
 
 - **Main Builder Bundle:** `crispy_print/public/js/crispy_print.bundle.js`
 - **Preview Bundle:** `crispy_print/public/js/crispy_preview.bundle.js`
@@ -21,6 +21,11 @@ This alpha structure is documented here for orientation only. It is expected to 
 crispy_print/
 ├── crispy_print/
 │   ├── hooks.py                          # Frappe hooks, fixtures, desk assets
+│   ├── install.py                        # Install-time setup helpers
+│   ├── json_utils.py                     # Shared JSON parsing/coercion helpers
+│   ├── letterhead_lifecycle.py           # Letter Head lifecycle fields and validation
+│   ├── config/
+│   │   └── __init__.py                   # Frappe config package marker
 │   ├── api/
 │   │   └── v1/                           # Versioned backend API surface
 │   │       ├── compile.py                # Typst compile, cache, asset controls
@@ -58,27 +63,34 @@ crispy_print/
 │   │   └── vendor/
 │   │       ├── fonts/                    # Bundled fonts (optional)
 │   │       └── typst/                    # Bundled Typst packages
-│   ├── doctype/
-│   │   ├── crispy_format/                # Format registry and generated Typst
-│   │   ├── crispy_branding_profile/      # Reusable presentation profile
-│   │   ├── crispy_typst_block/           # Reusable Typst snippet library
-│   │   ├── crispy_qr_regulatory_profile/ # Compliance QR profile
-│   │   ├── crispy_fiscal_credential/     # Fiscal/compliance identity data
-│   │   ├── crispy_document_code_profile/ # Document-code strategy
-│   │   ├── crispy_document_code_rule/    # Document-code rule rows
-│   │   ├── crispy_format_reports/        # Report links for formats
-│   │   ├── crispy_generic_report/        # Generic report definition
-│   │   ├── crispy_template/              # Frozen approved render contract
-│   │   ├── crispy_issued_document/       # Issued-document registry (CID) + child tables
-│   │   └── crispy_print_settings/        # Global font, render, and print policy (Single)
-│   ├── page/
-│   │   ├── crispy_format_builder/        # Format Builder Desk page
-│   │   ├── crispy_print_preview/         # Print Preview Desk page
-│   │   └── cbp_builder/                  # Branding Profile Builder page
-│   ├── workspace/
-│   │   └── crispy_print/                 # Crispy Print Desk workspace
-│   └── workspace_sidebar/
-│       └── crispy_print/                 # Frappe v16 curated sidebar export
+│   ├── crispy_print/                     # Inner Frappe module package
+│   │   ├── doctype/
+│   │   │   ├── crispy_format/                # Format registry and generated Typst
+│   │   │   ├── crispy_branding_profile/      # Reusable presentation profile
+│   │   │   ├── crispy_typst_block/           # Reusable Typst snippet library
+│   │   │   ├── crispy_qr_regulatory_profile/ # Compliance QR profile
+│   │   │   ├── crispy_fiscal_credential/     # Fiscal/compliance identity data
+│   │   │   ├── crispy_document_code_profile/ # Document-code strategy
+│   │   │   ├── crispy_document_code_rule/    # Document-code rule rows
+│   │   │   ├── crispy_format_reports/        # Report links for formats
+│   │   │   ├── crispy_generic_report/        # Generic report definition
+│   │   │   ├── crispy_template/              # Frozen approved render contract
+│   │   │   ├── crispy_issued_document/       # Issued-document registry (CID) + child tables
+│   │   │   └── crispy_print_settings/        # Global font, render, and print policy (Single)
+│   │   ├── page/
+│   │   │   ├── crispy_format_builder/        # Format Builder Desk page
+│   │   │   ├── crispy_print_preview/         # Print Preview Desk page
+│   │   │   └── cbp_builder/                  # Branding Profile Builder page
+│   │   └── workspace/
+│   │       └── crispy_print/                 # Crispy Print Desk workspace
+│   ├── workspace_sidebar/
+│   │   └── crispy_print.json             # Frappe v16 curated sidebar export
+│   ├── desktop_icon/
+│   │   └── crispy_print.json             # Frappe v16 app/category icon export
+│   ├── templates/
+│   │   └── pages/                        # Frappe website template package
+│   ├── translations/                     # App translation CSV files
+│   └── tests/                            # Backend API/helper tests
 ├── fixtures/
 │   └── crispy_format.json                # Demo/seed formats
 ├── patches/                             # Schema/data backfill patches
@@ -98,7 +110,7 @@ crispy_print/
 
 **Workspace:**
 
-- **Crispy Print** (`/app/crispy-print`) - Desk workspace for builder shortcuts, core records, reusable libraries, issued-document tracking, reports, and regulatory setup.
+- **Crispy Print** (`/desk/crispy-print` on v16+, `/app/crispy-print` on v15) - Desk workspace for builder shortcuts, core records, reusable libraries, issued-document tracking, reports, regulatory setup, and settings.
 
 **Core Files:**
 

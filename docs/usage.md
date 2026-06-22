@@ -64,6 +64,8 @@ Crispy Print does not treat headers and footers as mandatory separate HTML-style
 
 Crispy Print uses Typst and SVG/PDF-oriented composition instead. A letterhead can be a full-page SVG asset sized exactly to the document page, with the header, footer, watermark, borders, legal text, brand marks, and other static elements already composed into the page background.
 
+When Crispy Print is installed, it extends Frappe **Letter Head** records with lifecycle metadata and validation. The Branding Profile and builder flows use this metadata to filter selectable letterheads by company, active status, approval state, effective dates, and supersession.
+
 For many business documents, the recommended model is:
 
 ```text

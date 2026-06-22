@@ -12,14 +12,14 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Returns: `list[str]`
 - Shape: `['Inter', 'Noto Sans', ...]`
 
-### `compile_typst(typst_source, output_format='svg', pdf_standard=None, asset_files=None, chart_svg=None, qr_data=None, qr_filename=None, output_filename=None, return_url=0)`
+### `compile_typst(typst_source, output_format='svg', pdf_standard=None, asset_files=None, chart_svg=None, qr_data=None, qr_filename=None, barcode_options=None, output_filename=None, return_url=0)`
 
 - Args:
   - `typst_source: str`
   - `output_format: 'svg' | 'pdf'`
   - optional `pdf_standard` (e.g. `PDF/A-2u`, `PDF/A-3u`, `PDF/A-4`, `PDF 1.7`, `PDF 2.0`)
   - optional `asset_files` list for approved site/app assets used by Typst image calls
-  - optional chart/qr/output args
+  - optional chart/qr/barcode/output args
 - Returns (svg):
   - `{ success, format: 'svg', svg_pages: string[], page_count: number }`
 - Returns (pdf):
@@ -32,10 +32,15 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Args: `doctype: str`, `name: str`, optional `qr_source_mode: str`
 - Returns: formatted document dict
 
-### `get_crispy_formats_for_doctype(doctype)`
+### `get_crispy_formats_for_doctype(doctype, company=None)`
 
-- Args: `doctype: str`
+- Args: `doctype: str`, optional `company: str`
 - Returns: `[{ name: str, doc_type: str }]`
+
+### `get_crispy_format(name, company=None, source_doctype=None, source_docname=None, report_filters=None)`
+
+- Args: format name plus optional render context
+- Returns: Crispy Format payload with transient render hydration
 
 ### `get_default_doctypes()`
 
@@ -59,7 +64,7 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 
 ### `import_crispy_format(payload, on_conflict='copy')`
 
-- Args: `payload: dict | str`, `on_conflict: 'copy' | 'replace' | 'skip'`
+- Args: `payload: dict | str`, `on_conflict: 'copy' | 'overwrite'`
 - Returns: import result dict
 
 ## Reports
@@ -74,9 +79,9 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Args: optional `generic_report_type: str`
 - Returns: report builder config dict
 
-### `get_available_formats(report)`
+### `get_available_formats(report, company=None)`
 
-- Args: `report: str`
+- Args: `report: str`, optional `company: str`
 - Returns: available report format metadata
 
 ### `get_sample_report_data(report, filters=None, limit=50)`
@@ -121,9 +126,14 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Args: `name: str`
 - Returns: normalized presentation settings for the profile
 
-### `get_applicable_typst_blocks(doctype, query=None, category=None)`
+### `get_letterhead_options(company=None, include_current=None)`
 
-- Args: `doctype: str`, optional search/category filters
+- Args: optional company and current Letter Head name
+- Returns: selectable Letter Head names after Crispy lifecycle filtering
+
+### `get_applicable_typst_blocks(doctype, query=None, category=None, company=None)`
+
+- Args: `doctype: str`, optional search/category/company filters
 - Returns: enabled Typst blocks applicable to the document type
 
 ### `resolve_document_code(doctype, name, code_purpose='Regulatory', environment='Production', document_role=None, company=None, profile_name=None)`
@@ -198,6 +208,16 @@ verification endpoints).
 - Args: `name: str`
 - Returns: full Crispy Issued Document payload for users with read permission
 
+### `get_issued_documents(company=None, issuance_status=None, business_status=None, integrity_status=None, limit=50)`
+
+- Args: optional status/company filters and result limit
+- Returns: `list[dict]` of issued-document registry rows
+
+### `get_issued_document_audit_events(company=None, issued_document=None, event_type=None, limit=50)`
+
+- Args: optional company, parent issued document, event type, and limit
+- Returns: `list[dict]` of trust-event audit rows
+
 ### `get_issued_document_by_token(verification_token)`
 
 - Args: `verification_token: str`
@@ -232,6 +252,11 @@ verification endpoints).
 
 - Args: `name: str`, plus a trust-event dict (or keyword values)
 - Returns: updated issued-document payload with the appended trust event
+
+### `record_issued_document_integrity_check(name, integrity_status, message=None)`
+
+- Args: issued document name, integrity status, optional validation message
+- Returns: updated issued-document verification summary
 
 ## Notes
 

@@ -6,7 +6,7 @@ _Part of the [Crispy Print documentation](README.md)._
 
 This app includes comprehensive test coverage:
 
-- **343 tests/test methods** (175 frontend + 168 backend)
+- **438 tests/test methods** (187 frontend + 251 backend)
 - **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
@@ -75,9 +75,9 @@ bench --site your-site run-tests --doctype "Crispy Format"
 
 **Test Coverage:**
 
-- **Frontend:** 175 tests across 52 test files
-- **Backend:** 168 test methods across 16 test files
-- **Total:** 343 tests/test methods
+- **Frontend:** 187 tests across 52 test files
+- **Backend:** 251 test methods across 21 test files
+- **Total:** 438 tests/test methods
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 

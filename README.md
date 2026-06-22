@@ -112,7 +112,7 @@ typst --version
 ### Frappe Compatibility
 
 - **Frappe:** v15 or later (all Python/Node.js dependencies already satisfied)
-- **Frappe v16:** Ships a curated Workspace Sidebar export so v16 renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of the auto-generated sidebar. The legacy app-icon hook is skipped on v16+.
+- **Frappe v16:** Ships a curated Workspace Sidebar export so v16 renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of the auto-generated sidebar. The v16+ app tile uses Frappe's native `add_to_apps_screen` `has_permission` parameter to hide the tile from website-only users and show it only to users with read access to user-facing Crispy Print records.
 - **Python dependency:** `segno` (installed with the app; used as the QR-only SVG generator)
 - **Typst barcode package:** Zebra `0.1.0` is vendored with the app and used for DataMatrix rendering through Typst.
 
@@ -165,10 +165,12 @@ bench build --app crispy_print
 After installation, open the **Crispy Print** workspace from Desk or visit:
 
 ```text
-/app/crispy-print
+/desk/crispy-print
 ```
 
-The workspace groups the main builder pages, format records, branding profiles, reusable Typst blocks, issued-document tracking, report templates, and regulatory setup records. The print preview page is intentionally not shown as a standalone workspace link because it expects document or report route context.
+On Frappe v15, the legacy workspace route may also resolve as `/app/crispy-print`.
+
+The workspace groups the main builder pages, format records, templates, branding profiles, reusable Typst blocks, issued-document tracking, report templates, regulatory setup records, and settings. On Frappe v16+, the curated sidebar also exposes the Print Preview page for direct access, although normal document previews are usually opened from the document or report route context.
 
 ### Creating Your First Print Format
 
