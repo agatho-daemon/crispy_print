@@ -24,6 +24,8 @@ TYPST_VENDOR_DIR = Path(APP_PATH) / "public" / "vendor"
 TYPST_FONT_DIR = TYPST_VENDOR_DIR / "fonts"
 TYPST_PACKAGE_DIR = TYPST_VENDOR_DIR / "typst" / "packages"
 ZEBRA_VERSION = "0.1.0"
+MIN_TYPST_VERSION = (0, 15, 0)
+MIN_TYPST_VERSION_LABEL = ".".join(str(part) for part in MIN_TYPST_VERSION)
 MAX_TYPST_SOURCE_BYTES = 512 * 1024
 MAX_CHART_SVG_BYTES = 512 * 1024
 MAX_QR_DATA_BYTES = 16 * 1024
@@ -193,6 +195,35 @@ def _site_font_dir() -> Path:
 
 def _typst_font_path_arg() -> str:
 	return os.pathsep.join(str(font_dir) for font_dir in _typst_font_dirs())
+
+
+def _parse_typst_version(output: str) -> tuple[int, int, int] | None:
+	match = re.search(r"\btypst\s+(\d+)\.(\d+)\.(\d+)", output or "", re.IGNORECASE)
+	if not match:
+		return None
+	return tuple(int(part) for part in match.groups())
+
+
+def _ensure_typst_minimum_version(typst_bin: str) -> None:
+	result = subprocess.run(
+		[typst_bin, "--version"],
+		capture_output=True,
+		text=True,
+		timeout=5,
+		env=_minimal_subprocess_env(),
+	)
+	output = (result.stdout or result.stderr or "").strip()
+	version = _parse_typst_version(output)
+	if result.returncode != 0 or version is None:
+		frappe.throw(
+			_("Unable to determine Typst CLI version. Crispy Print requires Typst {0} or newer.").format(
+				MIN_TYPST_VERSION_LABEL
+			)
+		)
+	if version < MIN_TYPST_VERSION:
+		frappe.throw(
+			_("Typst CLI {0} or newer is required. Found: {1}").format(MIN_TYPST_VERSION_LABEL, output)
+		)
 
 
 def _typst_compile_command(
@@ -815,6 +846,13 @@ def compile_typst(
 	pdf_standard_cli = _resolve_pdf_standard_cli(pdf_standard) if output_format == "pdf" else ""
 
 	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
+	try:
+		_ensure_typst_minimum_version(typst_bin)
+	except FileNotFoundError:
+		frappe.throw(_("Typst compiler not found. Please install Typst CLI: brew install typst"))
+	except subprocess.TimeoutExpired:
+		frappe.throw(_("Unable to determine Typst CLI version before timeout."))
+
 	render_timeout = get_render_timeout_seconds()
 	cache_ttl = int(frappe.conf.get("CRISPY_PRINT_COMPILE_CACHE_TTL_SECONDS", COMPILE_CACHE_TTL_SECONDS) or 0)
 	cache_key = None

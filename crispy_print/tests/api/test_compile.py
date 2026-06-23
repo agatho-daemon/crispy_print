@@ -11,6 +11,32 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 
+class TestTypstVersionRequirement(FrappeTestCase):
+	def test_parse_typst_version(self):
+		from crispy_print.api.v1.compile import _parse_typst_version
+
+		self.assertEqual(_parse_typst_version("typst 0.15.0"), (0, 15, 0))
+		self.assertEqual(_parse_typst_version("typst 0.15.1 (abc123)"), (0, 15, 1))
+		self.assertIsNone(_parse_typst_version("typst version unknown"))
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_typst_minimum_version_accepts_supported_versions(self, mock_run):
+		from crispy_print.api.v1.compile import _ensure_typst_minimum_version
+
+		mock_run.return_value = Mock(returncode=0, stdout="typst 0.15.0", stderr="")
+
+		_ensure_typst_minimum_version("typst")
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_typst_minimum_version_rejects_old_versions(self, mock_run):
+		from crispy_print.api.v1.compile import _ensure_typst_minimum_version
+
+		mock_run.return_value = Mock(returncode=0, stdout="typst 0.14.0", stderr="")
+
+		with self.assertRaises(Exception):
+			_ensure_typst_minimum_version("typst")
+
+
 class TestTypstAPI(FrappeTestCase):
 	"""Test Typst-related API methods"""
 
@@ -18,6 +44,9 @@ class TestTypstAPI(FrappeTestCase):
 		"""Set up test environment"""
 		frappe.set_user("Administrator")
 		frappe.cache().delete_value("crispy_print:typst_local_fonts:v3")
+		self.typst_version_patcher = patch("crispy_print.api.v1.compile._ensure_typst_minimum_version")
+		self.typst_version_patcher.start()
+		self.addCleanup(self.typst_version_patcher.stop)
 		from crispy_print.install import ensure_site_font_directory
 
 		ensure_site_font_directory()
@@ -424,6 +453,11 @@ This is a test.
 
 class TestAssetCopy(FrappeTestCase):
 	"""Test image asset handling"""
+
+	def setUp(self):
+		self.typst_version_patcher = patch("crispy_print.api.v1.compile._ensure_typst_minimum_version")
+		self.typst_version_patcher.start()
+		self.addCleanup(self.typst_version_patcher.stop)
 
 	def test_copy_asset_file_to_temp(self):
 		"""Test copying image file to temp directory"""

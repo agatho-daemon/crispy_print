@@ -15,6 +15,8 @@
 >
 > A migration patch is provided to convert existing formats to the new structure, but complex custom layouts may require manual adjustments in the builder after migration.
 >
+> Typst CLI `0.15.0` or newer is required because Crispy Print ships variable fonts, and Typst supports variable fonts starting in `0.15.0`. Upgrade Typst before running previews, PDF generation, or migration verification; older Typst versions are rejected at compile time.
+>
 > After update run `bench migrate` to apply database changes and data migration. Then open each format in the builder and verify that the layout is correct. Some fields may need to be re-dragged or reconfigured due to changes in field properties and layout structure.
 
 ## Alpha 3 Testing Request
@@ -106,8 +108,10 @@ Or download from [Typst Releases](https://github.com/typst/typst/releases)
 
 ```bash
 typst --version
-# Should output: typst 0.11.0 or higher
+# Should output: typst 0.15.0 or higher
 ```
+
+Crispy Print ships variable fonts to avoid maintaining separate font files for every style and weight. Typst CLI `0.15.0` or newer is required for variable font support.
 
 ### Frappe Compatibility
 
