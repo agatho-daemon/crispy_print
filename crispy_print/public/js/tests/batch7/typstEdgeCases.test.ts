@@ -156,14 +156,76 @@ describe("Typst edge cases", () => {
 		)
 
 		expect(typst).toContain("inset: (x: 1pt, y: 1pt)")
-		expect(typst).toContain("cp_quantity_cell(row, row.qty)")
+		expect(typst).toContain("#let tableCellLabelEnabled = true")
+		expect(typst).toContain("fill: rgb(\"475569\")")
+		expect(typst).toContain("table.cell(colspan: 2)[#text(..tableHeaderStyle)[Qty]]")
+		expect(typst).toContain("cp_measure_label_table_cell(cp_quantity_parts(row, row.qty).label)")
+		expect(typst).toContain("cp_measure_value_table_cell(cp_quantity_parts(row, row.qty).value)")
 		expect(typst).toContain("#let cp_print_uom_after_quantity = false")
-		expect(typst).toContain("text(..tableBodyStyle)[#value#sym.space.third#uom]")
-		expect(typst).toContain("baseline: -1.5em")
-		expect(typst).toContain("[#label#sym.space.third]")
-		expect(typst).toContain("cp_currency_cell(row.rate)")
+		expect(typst).toContain("baseline: -2pt")
+		expect(typst).toContain("cp_measure_label_table_cell(cp_currency_parts(row.rate).label)")
+		expect(typst).toContain("cp_measure_value_table_cell(cp_currency_parts(row.rate).value)")
 		expect(typst).toContain("cp_currency_parts(value)")
 		expect(typst).toContain("doc.taxes.filter(row => not cp_is_zero_tax_row(row))")
+	})
+
+	it("can disable split table cell labels while preserving custom label style constants", () => {
+		const typst = translateJSONToTypst(
+			{
+				sections: [
+					{
+						label: "Lines",
+						columns: [
+							{
+								label: "",
+								fields: [
+									{
+										fieldname: "items",
+										fieldtype: "Table",
+										label: "Items",
+										table_columns: [
+											{ fieldname: "qty", label: "Qty", fieldtype: "Float" },
+											{ fieldname: "rate", label: "Rate", fieldtype: "Currency" },
+										],
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			null,
+			"Sales Invoice",
+			{
+				name: "INV-0001",
+				items: [{ qty: "1", uom: "Nos", rate: "KWD 10.000" }],
+			},
+			{
+				table: {
+					cellLabel: {
+						enabled: false,
+						fontSize: "7pt",
+						fontWeight: "medium",
+						baselineShift: 1.5,
+						color: "#334155",
+					},
+				},
+				printBehavior: {
+					print_uom_after_quantity: 1,
+				},
+			},
+		)
+
+		expect(typst).toContain("#let tableCellLabelEnabled = false")
+		expect(typst).toContain("size: 7pt")
+		expect(typst).toContain("baseline: 1.5pt")
+		expect(typst).toContain("fill: rgb(\"334155\")")
+		expect(typst).not.toContain("table.cell(colspan: 2)[#text(..tableHeaderStyle)[Qty]]")
+		expect(typst).not.toContain("cp_measure_label_table_cell(cp_quantity_parts(row, row.qty).label)")
+		expect(typst).toContain("[#text(..tableBodyStyle)[#cp_quantity_inline(row, row.qty)]]")
+		expect(typst).toContain("if cp_print_uom_after_quantity and uom != \"\"")
+		expect(typst).toContain("uom + \" \" + str(value)")
+		expect(typst).toContain("[#text(..tableBodyStyle)[#row.rate]]")
 	})
 
 	it("adds a draft heading when the document print context requests it", () => {

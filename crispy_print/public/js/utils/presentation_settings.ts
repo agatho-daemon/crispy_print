@@ -26,6 +26,14 @@ export interface TableTypographySettings {
   body: TypographyStyle;
 }
 
+export interface TableCellLabelSettings {
+  enabled: boolean;
+  fontSize: string;
+  fontWeight: string;
+  baselineShift: number;
+  color: string;
+}
+
 export interface QrSettings {
   dx: number;
   dy: number;
@@ -69,6 +77,7 @@ export interface TableSettings {
     enabled: boolean;
     color: string;
   };
+  cellLabel: TableCellLabelSettings;
   typography: TableTypographySettings;
 }
 
@@ -150,6 +159,13 @@ export const defaultTableSettings: TableSettings = {
   stroke: { width: 0.5, color: "#e2e8f0" },
   header: { backgroundColor: "#f1f5f9" },
   stripe: { enabled: false, color: "#f8fafc" },
+  cellLabel: {
+    enabled: true,
+    fontSize: "8pt",
+    fontWeight: "regular",
+    baselineShift: -2,
+    color: "#475569",
+  },
   typography: defaultTableTypography,
 };
 
@@ -245,6 +261,10 @@ export function ensure_table_settings(
   settings.table.stripe = {
     ...defaultTableSettings.stripe,
     ...(settings.table.stripe || {}),
+  };
+  settings.table.cellLabel = {
+    ...defaultTableSettings.cellLabel,
+    ...(settings.table.cellLabel || {}),
   };
   settings.table.typography = {
     header: {
@@ -361,6 +381,10 @@ export function merge_presentation_settings(
       stripe: {
         ...(base.table?.stripe || defaultTableSettings.stripe),
         ...(safeOverrides.table?.stripe || {}),
+      },
+      cellLabel: {
+        ...(base.table?.cellLabel || defaultTableSettings.cellLabel),
+        ...(safeOverrides.table?.cellLabel || {}),
       },
       typography: {
         header: {

@@ -449,6 +449,78 @@
 							</div>
 						</div>
 
+						<div class="settings-pane__subsection">
+							<label class="settings-pane__label">{{
+								__("Cell Label Settings")
+							}}</label>
+							<div class="settings-pane__grid settings-pane__grid--stripe">
+								<div class="settings-pane__field settings-pane__field--toggle">
+									<label class="settings-pane__sublabel">{{
+										__("Compact Labels")
+									}}</label>
+									<div class="settings-pane__checkbox-wrap">
+										<input
+											v-model="tableSettings.cellLabel.enabled"
+											type="checkbox"
+											class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										/>
+									</div>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">{{
+										__("Size (pt)")
+									}}</label>
+									<input
+										v-model="tableSettings.cellLabel.fontSize"
+										type="text"
+										class="form-control"
+										:disabled="!tableSettings.cellLabel.enabled"
+									/>
+								</div>
+							</div>
+							<div class="settings-pane__grid">
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">{{
+										__("Weight")
+									}}</label>
+									<select
+										v-model="tableSettings.cellLabel.fontWeight"
+										class="form-control"
+										:disabled="!tableSettings.cellLabel.enabled"
+									>
+										<option
+											v-for="option in weightOptions"
+											:key="option.value"
+											:value="option.value"
+										>
+											{{ __(option.label) }}
+										</option>
+									</select>
+								</div>
+								<div class="settings-pane__field">
+									<label class="settings-pane__sublabel">{{
+										__("Baseline Shift (pt)")
+									}}</label>
+									<input
+										v-model.number="tableSettings.cellLabel.baselineShift"
+										type="number"
+										min="-24"
+										max="24"
+										step="0.5"
+										class="form-control"
+										:disabled="!tableSettings.cellLabel.enabled"
+									/>
+								</div>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">{{ __("Color") }}</label>
+								<ColorInput
+									v-model="tableSettings.cellLabel.color"
+									:disabled="!tableSettings.cellLabel.enabled"
+								/>
+							</div>
+						</div>
+
 						<TypographyStyleEditor
 							v-model="tableSettings.typography.header"
 							:title="__('Header Typography')"
@@ -763,6 +835,7 @@ import QrFieldsDialog from "./QrFieldsDialog.vue";
 import { getLogger } from "../logger";
 import { getBrandingProfiles, type CrispyBrandingProfileOption } from "../api/crispy";
 import { getDefaultReportBuilderConfig } from "../utils/reportBuilder";
+import { FONT_WEIGHT_OPTIONS } from "../utils/typographyOptions";
 import { __ } from "../utils/i18n";
 
 interface Props {
@@ -809,6 +882,7 @@ const reportBuilderConfig = computed({
 	},
 });
 const reportBasicReadOnly = computed(() => Boolean(store.reportBasicReadOnly?.value));
+const weightOptions = FONT_WEIGHT_OPTIONS;
 const compactItemPrint = computed<boolean>({
 	get: () => Boolean(store.crispyFormat.value?.compact_item_print),
 	set: (value) => updatePrintBehavior("compact_item_print", value),

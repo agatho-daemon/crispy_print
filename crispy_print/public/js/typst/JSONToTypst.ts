@@ -191,12 +191,13 @@ class JSONTypstTranslator {
 		lines.push("  else if \"stock_uom\" in row and row.stock_uom != \"\" { row.stock_uom }")
 		lines.push("  else { \"\" }")
 		lines.push("}")
-		lines.push("#let cp_compact_measure_cell(label, value) = {")
-		lines.push("  if label != \"\" [")
-		lines.push("    #text(size: tableBodyStyle.size * 0.50, fill: rgb(\"#64748b\"), baseline: -1.5em, weight: \"regular\")[#label#sym.space.third]")
-		lines.push("  ]")
-		lines.push("  text(..tableBodyStyle)[#value]")
+		lines.push("#let cp_measure_label_cell(label) = {")
+		lines.push("  if tableCellLabelEnabled and label != \"\" {")
+		lines.push("    text(..tableCellLabelStyle)[#label]")
+		lines.push("  }")
 		lines.push("}")
+		lines.push("#let cp_measure_label_table_cell(label) = table.cell(stroke: (right: none))[#cp_measure_label_cell(label)]")
+		lines.push("#let cp_measure_value_table_cell(value) = table.cell(stroke: (left: none))[#text(..tableBodyStyle)[#value]]")
 		lines.push("#let cp_currency_parts(value) = {")
 		lines.push("  let text = str(value)")
 		lines.push("  let parts = text.split(\" \")")
@@ -206,21 +207,27 @@ class JSONTypstTranslator {
 		lines.push("    (label: \"\", value: text)")
 		lines.push("  }")
 		lines.push("}")
-		lines.push("#let cp_currency_cell(value) = {")
-		lines.push("  let parts = cp_currency_parts(value)")
-		lines.push("  cp_compact_measure_cell(parts.label, parts.value)")
-		lines.push("}")
 		lines.push(
 			`#let cp_print_uom_after_quantity = ${
 				this.is_enabled_behavior("print_uom_after_quantity") ? "true" : "false"
 			}`
 		)
-		lines.push("#let cp_quantity_cell(row, value) = {")
+		lines.push("#let cp_quantity_parts(row, value) = {")
 		lines.push("  let uom = cp_row_uom(row)")
 		lines.push("  if cp_print_uom_after_quantity and uom != \"\" {")
-		lines.push("    text(..tableBodyStyle)[#value#sym.space.third#uom]")
+		lines.push("    (label: \"\", value: str(value) + \" \" + uom)")
 		lines.push("  } else {")
-		lines.push("    cp_compact_measure_cell(uom, value)")
+		lines.push("    (label: uom, value: str(value))")
+		lines.push("  }")
+		lines.push("}")
+		lines.push("#let cp_quantity_inline(row, value) = {")
+		lines.push("  let uom = cp_row_uom(row)")
+		lines.push("  if cp_print_uom_after_quantity and uom != \"\" {")
+		lines.push("    str(value) + \" \" + uom")
+		lines.push("  } else if uom != \"\" {")
+		lines.push("    uom + \" \" + str(value)")
+		lines.push("  } else {")
+		lines.push("    str(value)")
 		lines.push("  }")
 		lines.push("}")
 		lines.push("")
@@ -742,16 +749,24 @@ class JSONTypstTranslator {
 			const columns = field.table_columns
 			const itemTable = this.is_item_table(fieldname)
 			const compactItems = this.is_enabled_behavior("compact_item_print") && itemTable
+			const tableSettings = ensure_table_settings(this.get_presentation_settings())
+			const splitCellLabels = Boolean(tableSettings.cellLabel?.enabled)
 			const rowSource = this.getTableRowSource(fieldname)
 
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
 			lines.push(`  #table(`)
 			// Use column widths from layout (auto, 1fr, 2fr, 100pt, etc.)
-			const widths = columns.map((col) => col.width || "auto")
+			const widths = columns.flatMap((col) =>
+				this.shouldSplitTableCellLabel(col, { itemTable, splitCellLabels })
+					? ["auto", col.width || "auto"]
+					: [col.width || "auto"]
+			)
 			lines.push(`    columns: (${widths.join(", ")}),`)
-			const alignments = columns.map((col) => {
+			const alignments = columns.flatMap((col) => {
 				const align = col.align || this.getDefaultAlignment(col.fieldtype)
-				return align
+				return this.shouldSplitTableCellLabel(col, { itemTable, splitCellLabels })
+					? [align, align]
+					: [align]
 			})
 			lines.push(`    align: (${alignments.join(", ")}),`)
 			lines.push(`    inset: ${compactItems ? "(x: 1pt, y: 1pt)" : "tableCellInset"},`)
@@ -761,15 +776,22 @@ class JSONTypstTranslator {
 			)
 
 			const headerCells = columns
-				.map((col) => `[#text(..tableHeaderStyle)[${this.escapeTypstText(col.label || "")}]]`)
+				.map((col) => {
+					const label = this.escapeTypstText(col.label || "")
+					return this.shouldSplitTableCellLabel(col, { itemTable, splitCellLabels })
+						? `table.cell(colspan: 2)[#text(..tableHeaderStyle)[${label}]]`
+						: `[#text(..tableHeaderStyle)[${label}]]`
+				})
 				.join(", ")
 			lines.push(`    table.header(${headerCells}),`)
 
 			// Row data - map each row to all its column values and flatten
 			const rowCells = columns
-				.map((col) => this.renderTableCell(col, { itemTable }))
+				.map((col) => this.renderTableCell(col, { itemTable, splitCellLabels }))
 				.join(", ")
-			lines.push(`    ..${rowSource}.map(row => (${rowCells})).flatten(),`)
+			lines.push(`    ..${rowSource}.map(row => {`)
+			lines.push(`      (${rowCells})`)
+			lines.push(`    }).flatten(),`)
 
 			lines.push(`  )`)
 			lines.push(`]`)
@@ -802,19 +824,34 @@ class JSONTypstTranslator {
 
 	private renderTableCell(
 		col: TableColumn,
-		options: { itemTable?: boolean } = {}
+		options: { itemTable?: boolean; splitCellLabels?: boolean } = {}
 	): string {
 		const fieldname = col.fieldname || ""
 		if (
 			options.itemTable &&
 			["qty", "quantity", "stock_qty"].includes(fieldname)
 		) {
-			return `[#cp_quantity_cell(row, row.${fieldname})]`
+			if (options.splitCellLabels) {
+				return `cp_measure_label_table_cell(cp_quantity_parts(row, row.${fieldname}).label), cp_measure_value_table_cell(cp_quantity_parts(row, row.${fieldname}).value)`
+			}
+			return `[#text(..tableBodyStyle)[#cp_quantity_inline(row, row.${fieldname})]]`
 		}
 		if (options.itemTable && col.fieldtype === "Currency") {
-			return `[#cp_currency_cell(row.${fieldname})]`
+			if (options.splitCellLabels) {
+				return `cp_measure_label_table_cell(cp_currency_parts(row.${fieldname}).label), cp_measure_value_table_cell(cp_currency_parts(row.${fieldname}).value)`
+			}
+			return `[#text(..tableBodyStyle)[#row.${fieldname}]]`
 		}
 		return `[#text(..tableBodyStyle)[#row.${fieldname}]]`
+	}
+
+	private shouldSplitTableCellLabel(
+		col: TableColumn,
+		options: { itemTable?: boolean; splitCellLabels?: boolean } = {}
+	): boolean {
+		if (!options.itemTable || !options.splitCellLabels) return false
+		const fieldname = col.fieldname || ""
+		return ["qty", "quantity", "stock_qty"].includes(fieldname) || col.fieldtype === "Currency"
 	}
 }
 

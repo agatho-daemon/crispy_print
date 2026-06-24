@@ -44,6 +44,8 @@ describe("presentation_settings helpers", () => {
 		expect(table.stroke.width).toBeDefined()
 		expect(table.header.backgroundColor).toBeDefined()
 		expect(table.stripe.enabled).toBeDefined()
+		expect(table.cellLabel.enabled).toBe(true)
+		expect(table.cellLabel.color).toBe("#475569")
 		expect(table.typography.header).toBeDefined()
 		expect(table.typography.body).toBeDefined()
 	})
@@ -53,7 +55,10 @@ describe("presentation_settings helpers", () => {
 			page: { margins: { top: 10, bottom: 20, left: 30, right: 40 } } as any,
 			qr: { size: 20, dx: 0, dy: 0, fields: [], enabled: true, sourceMode: "basic" },
 			branding: { logo: { company: "Acme", image: "", size: 25, dx: 0, dy: 0 } } as any,
-			table: { stroke: { width: 1, color: "#000000" } } as any,
+			table: {
+				stroke: { width: 1, color: "#000000" },
+				cellLabel: { enabled: false, baselineShift: 1, color: "#334155" },
+			} as any,
 		})
 		expect(merged.page.margins.top).toBe(10)
 		expect(merged.page.margins.left).toBe(30)
@@ -61,6 +66,9 @@ describe("presentation_settings helpers", () => {
 		expect(merged.qr?.sourceMode).toBe("basic")
 		expect(merged.branding.logo?.company).toBe("Acme")
 		expect(merged.table?.stroke.width).toBe(1)
+		expect(merged.table?.cellLabel.enabled).toBe(false)
+		expect(merged.table?.cellLabel.baselineShift).toBe(1)
+		expect(merged.table?.cellLabel.color).toBe("#334155")
 	})
 
 	it("preserves inherited qr source mode when override is blank", () => {

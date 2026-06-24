@@ -99,6 +99,9 @@ export function buildTableStyleConstants(tableSettings: TableSettings) {
 	const tableHeaderFill = typstColor(tableSettings.header.backgroundColor, "none")
 	const tableStripeFill = typstColor(tableSettings.stripe.color, "none")
 	const tableStripeEnabled = Boolean(tableSettings.stripe.enabled)
+	const tableCellLabel = tableSettings.cellLabel
+	const tableCellLabelEnabled = Boolean(tableCellLabel?.enabled)
+	const tableCellLabelFill = typstColor(tableCellLabel?.color, "rgb(\"475569\")")
 
 	return [
 		`#let tableCellInset = (top: ${typstLength(
@@ -116,6 +119,15 @@ export function buildTableStyleConstants(tableSettings: TableSettings) {
 		`#let tableHeaderFill = ${tableHeaderFill}`,
 		`#let tableStripeFill = ${tableStripeFill}`,
 		`#let tableStripeEnabled = ${tableStripeEnabled ? "true" : "false"}`,
+		`#let tableCellLabelEnabled = ${tableCellLabelEnabled ? "true" : "false"}`,
+		`#let tableCellLabelStyle = (size: ${typstLength(
+			tableCellLabel?.fontSize,
+			8
+		)}, weight: ${fontWeightToNumber(
+			tableCellLabel?.fontWeight
+		)}, baseline: ${typstLength(
+			tableCellLabel?.baselineShift,
+			-2
+		)}, fill: ${tableCellLabelFill})`,
 	].join("\n")
 }
-
