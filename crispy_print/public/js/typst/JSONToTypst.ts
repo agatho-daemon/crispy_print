@@ -749,6 +749,10 @@ class JSONTypstTranslator {
 			const columns = field.table_columns
 			const itemTable = this.is_item_table(fieldname)
 			const compactItems = this.is_enabled_behavior("compact_item_print") && itemTable
+			const compactColumns = compactItems
+				? this.getCompactItemColumns(columns)
+				: { visible: columns, folded: [] as TableColumn[] }
+			const effectiveColumns = compactColumns.visible
 			const tableSettings = ensure_table_settings(this.get_presentation_settings())
 			const splitCellLabels = Boolean(tableSettings.cellLabel?.enabled)
 			const rowSource = this.getTableRowSource(fieldname)
@@ -756,26 +760,26 @@ class JSONTypstTranslator {
 			lines.push(`#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`)
 			lines.push(`  #table(`)
 			// Use column widths from layout (auto, 1fr, 2fr, 100pt, etc.)
-			const widths = columns.flatMap((col) =>
+			const widths = effectiveColumns.flatMap((col) =>
 				this.shouldSplitTableCellLabel(col, { itemTable, splitCellLabels })
 					? ["auto", col.width || "auto"]
 					: [col.width || "auto"]
 			)
 			lines.push(`    columns: (${widths.join(", ")}),`)
-			const alignments = columns.flatMap((col) => {
+			const alignments = effectiveColumns.flatMap((col) => {
 				const align = col.align || this.getDefaultAlignment(col.fieldtype)
 				return this.shouldSplitTableCellLabel(col, { itemTable, splitCellLabels })
 					? [align, align]
 					: [align]
 			})
 			lines.push(`    align: (${alignments.join(", ")}),`)
-			lines.push(`    inset: ${compactItems ? "(x: 1pt, y: 1pt)" : "tableCellInset"},`)
+			lines.push(`    inset: tableCellInset,`)
 			lines.push(`    stroke: tableStroke,`)
 			lines.push(
 				`    fill: (x, y) => if y == 0 { tableHeaderFill } else { if tableStripeEnabled and calc.even(y) { tableStripeFill } else { none } },`
 			)
 
-			const headerCells = columns
+			const headerCells = effectiveColumns
 				.map((col) => {
 					const label = this.escapeTypstText(col.label || "")
 					return this.shouldSplitTableCellLabel(col, { itemTable, splitCellLabels })
@@ -786,8 +790,15 @@ class JSONTypstTranslator {
 			lines.push(`    table.header(${headerCells}),`)
 
 			// Row data - map each row to all its column values and flatten
-			const rowCells = columns
-				.map((col) => this.renderTableCell(col, { itemTable, splitCellLabels }))
+			const rowCells = effectiveColumns
+				.map((col) =>
+					this.renderTableCell(col, {
+						itemTable,
+						splitCellLabels,
+						compactItems,
+						foldedColumns: compactColumns.folded,
+					})
+				)
 				.join(", ")
 			lines.push(`    ..${rowSource}.map(row => {`)
 			lines.push(`      (${rowCells})`)
@@ -824,9 +835,17 @@ class JSONTypstTranslator {
 
 	private renderTableCell(
 		col: TableColumn,
-		options: { itemTable?: boolean; splitCellLabels?: boolean } = {}
+		options: {
+			itemTable?: boolean
+			splitCellLabels?: boolean
+			compactItems?: boolean
+			foldedColumns?: TableColumn[]
+		} = {}
 	): string {
 		const fieldname = col.fieldname || ""
+		if (options.itemTable && options.compactItems && fieldname === "description") {
+			return this.renderCompactDescriptionCell(options.foldedColumns || [])
+		}
 		if (
 			options.itemTable &&
 			["qty", "quantity", "stock_qty"].includes(fieldname)
@@ -843,6 +862,43 @@ class JSONTypstTranslator {
 			return `[#text(..tableBodyStyle)[#row.${fieldname}]]`
 		}
 		return `[#text(..tableBodyStyle)[#row.${fieldname}]]`
+	}
+
+	private getCompactItemColumns(columns: TableColumn[]): {
+		visible: TableColumn[]
+		folded: TableColumn[]
+	} {
+		const compactFieldnames = new Set(["description", "qty", "rate", "amount"])
+		const visible = columns.filter((col) => compactFieldnames.has(col.fieldname || ""))
+		const folded = columns.filter((col) => !compactFieldnames.has(col.fieldname || ""))
+
+		if (folded.length && !visible.some((col) => col.fieldname === "description")) {
+			visible.unshift({
+				fieldname: "description",
+				label: "Description",
+				fieldtype: "Data",
+				width: "1fr",
+				align: "left",
+			})
+		}
+
+		return { visible, folded }
+	}
+
+	private renderCompactDescriptionCell(foldedColumns: TableColumn[]): string {
+		const lines = [
+			"[#if \"description\" in row and row.description != \"\" [#text(..tableBodyStyle)[#row.description]]",
+		]
+		foldedColumns.forEach((col) => {
+			const fieldname = col.fieldname || ""
+			if (!fieldname || fieldname === "image") return
+			const label = this.escapeTypstText(col.label || fieldname)
+			lines.push(
+				`#if "${fieldname}" in row and row.${fieldname} != "" [#linebreak()#text(size: tableBodyStyle.size * 0.85, weight: "semibold")[${label}:] #text(..tableBodyStyle)[#row.${fieldname}]]`
+			)
+		})
+		lines.push("]")
+		return lines.join("")
 	}
 
 	private shouldSplitTableCellLabel(

@@ -121,8 +121,12 @@ describe("Typst edge cases", () => {
 										fieldtype: "Table",
 										label: "Items",
 										table_columns: [
+											{ fieldname: "item_code", label: "Item Code", fieldtype: "Data" },
+											{ fieldname: "description", label: "Description", fieldtype: "Data", width: "1fr" },
 											{ fieldname: "qty", label: "Qty", fieldtype: "Float" },
+											{ fieldname: "discount_amount", label: "Discount Amount", fieldtype: "Currency" },
 											{ fieldname: "rate", label: "Rate", fieldtype: "Currency" },
+											{ fieldname: "amount", label: "Amount", fieldtype: "Currency" },
 										],
 									},
 									{
@@ -143,7 +147,15 @@ describe("Typst edge cases", () => {
 			"Sales Invoice",
 			{
 				name: "INV-0001",
-				items: [{ qty: "1", uom: "Nos", rate: "KWD 10.000" }],
+				items: [{
+					item_code: "STO-0001",
+					description: "Wireless Keyboard",
+					qty: "1",
+					uom: "Nos",
+					discount_amount: "KWD -1.000",
+					rate: "KWD 10.000",
+					amount: "KWD 10.000",
+				}],
 				taxes: [{ tax_amount: "0.00" }],
 			},
 			{
@@ -155,7 +167,12 @@ describe("Typst edge cases", () => {
 			},
 		)
 
-		expect(typst).toContain("inset: (x: 1pt, y: 1pt)")
+		expect(typst).toContain("inset: tableCellInset")
+		expect(typst).toContain("[#if \"description\" in row and row.description != \"\"")
+		expect(typst).toContain("[Item Code:]")
+		expect(typst).toContain("[Discount Amount:]")
+		expect(typst).not.toContain("[#text(..tableHeaderStyle)[Item Code]]")
+		expect(typst).not.toContain("[#text(..tableHeaderStyle)[Discount Amount]]")
 		expect(typst).toContain("#let tableCellLabelEnabled = true")
 		expect(typst).toContain("fill: rgb(\"475569\")")
 		expect(typst).toContain("table.cell(colspan: 2)[#text(..tableHeaderStyle)[Qty]]")
