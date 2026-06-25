@@ -5,6 +5,7 @@ import os
 import re
 import stat
 import subprocess
+import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -204,7 +205,7 @@ def _parse_typst_version(output: str) -> tuple[int, int, int] | None:
 	return tuple(int(part) for part in match.groups())
 
 
-def _ensure_typst_minimum_version(typst_bin: str) -> None:
+def _ensure_typst_minimum_version(typst_bin: str) -> str:
 	result = subprocess.run(
 		[typst_bin, "--version"],
 		capture_output=True,
@@ -224,6 +225,7 @@ def _ensure_typst_minimum_version(typst_bin: str) -> None:
 		frappe.throw(
 			_("Typst CLI {0} or newer is required. Found: {1}").format(MIN_TYPST_VERSION_LABEL, output)
 		)
+	return str(output)
 
 
 def _typst_compile_command(
@@ -847,7 +849,7 @@ def compile_typst(
 
 	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
 	try:
-		_ensure_typst_minimum_version(typst_bin)
+		typst_version = str(_ensure_typst_minimum_version(typst_bin) or "")
 	except FileNotFoundError:
 		frappe.throw(_("Typst compiler not found. Please install Typst CLI: brew install typst"))
 	except subprocess.TimeoutExpired:
@@ -874,9 +876,15 @@ def compile_typst(
 		if cache_key:
 			cached_result = frappe.cache().get_value(cache_key, expires=True)
 			if isinstance(cached_result, dict):
-				return cached_result
+				return {
+					**cached_result,
+					"cache_hit": True,
+					"cache_ttl_seconds": cache_ttl,
+					"typst_version": cached_result.get("typst_version") or typst_version,
+				}
 
 	try:
+		start_time = time.perf_counter()
 		with TemporaryDirectory() as temp_dir:
 			asset_index: dict[str, str] = {}
 			if combined_assets:
@@ -967,13 +975,29 @@ def compile_typst(
 					frappe.throw(_("Compiled PDF was not produced"))
 
 				if return_url:
-					return {"success": True, "format": "pdf", "pdf_url": f"/files/{output_path.name}"}
+					return {
+						"success": True,
+						"format": "pdf",
+						"pdf_url": f"/files/{output_path.name}",
+						"cache_hit": False,
+						"render_ms": round((time.perf_counter() - start_time) * 1000),
+						"typst_version": typst_version,
+						"pdf_standard": pdf_standard_cli or None,
+					}
 
 				with output_path.open("rb") as pdf_file:
 					pdf_bytes = pdf_file.read()
 
 				pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
-				result_payload = {"success": True, "format": "pdf", "pdf_data": pdf_base64}
+				result_payload = {
+					"success": True,
+					"format": "pdf",
+					"pdf_data": pdf_base64,
+					"cache_hit": False,
+					"render_ms": round((time.perf_counter() - start_time) * 1000),
+					"typst_version": typst_version,
+					"pdf_standard": pdf_standard_cli or None,
+				}
 				if cache_key:
 					frappe.cache().set_value(cache_key, result_payload, expires_in_sec=cache_ttl)
 				return result_payload
@@ -1007,6 +1031,10 @@ def compile_typst(
 				"format": "svg",
 				"svg_pages": svg_pages,
 				"page_count": len(svg_pages),
+				"cache_hit": False,
+				"render_ms": round((time.perf_counter() - start_time) * 1000),
+				"typst_version": typst_version,
+				"pdf_standard": None,
 			}
 			if cache_key:
 				frappe.cache().set_value(cache_key, result_payload, expires_in_sec=cache_ttl)

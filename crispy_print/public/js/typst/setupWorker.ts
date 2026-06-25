@@ -822,7 +822,21 @@ export function setupWorker(
 		if (disposed) {
 			return
 		}
-		const { type, ok, format, svgPages, pdfBytes, error, requestId, seq, tokenRequestId } =
+		const {
+			type,
+			ok,
+			format,
+			svgPages,
+			pdfBytes,
+			error,
+			requestId,
+			seq,
+			tokenRequestId,
+			cacheHit,
+			renderMs,
+			typstVersion,
+			pdfStandard,
+		} =
 			e.data || {}
 		if (type === "csrf-token-request") {
 			worker.postMessage({
@@ -897,7 +911,15 @@ export function setupWorker(
 						statusEl.textContent = __("compiled ✓")
 						statusEl.style.color = "#27ae60"
 					}
-					dispatchStatus("ready")
+					dispatchCrispyPreviewStatus({
+						status: "ready",
+						instanceId,
+						pageCount: Array.isArray(svgPages) ? svgPages.length : undefined,
+						renderMs: typeof renderMs === "number" ? renderMs : null,
+						cacheHit: typeof cacheHit === "boolean" ? cacheHit : null,
+						typstVersion: typstVersion || null,
+						pdfStandard: pdfStandard || null,
+					})
 				} else {
 					logger.warn("SVG response received for download request")
 				}

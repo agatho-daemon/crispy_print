@@ -77,6 +77,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Permission-Aware API Surface** - Versioned Frappe APIs with read/write permission checks, manager-only operations, and rate limits around expensive compile paths.
 - **Controlled Asset Resolution** - Typst image assets resolve through approved site/app roots with traversal, symlink, external URL, and duplicate-basename protections.
 - **Compile Caching and Preview Optimizations** - Short-lived Typst compile cache, document fetch cache, report preview consolidation, lazy page bundles, SVG rerender avoidance, and bounded undo snapshots.
+- **Builder and Preview Diagnostics** - Collapsed builder checks plus runtime preview diagnostics for resolved format/template context, Typst version, render timing, page count, and cache state.
 - **Import, Export, and Migration Support** - Structured format import/export, schema validation, backfill patches, and compatibility tests for evolving format data.
 - **Typed Frontend Architecture** - Vue 3 and TypeScript modules for builder state, report state, presentation settings, Typst translation, workers, and sanitization utilities.
 
@@ -209,6 +210,7 @@ Recommended setup order:
    - **Drag fields:** From right pane to layout grid
    - **Configure fields:** Click field to edit label, style, alignment
    - **Add tables:** Drag table fields (e.g., "items") for line items
+   - **Compact item tables:** Use compact table labels when narrow table cells need clearer field names in print output
    - **Adjust columns:** Split sections into 1-4 columns
 
 4. **Configure page settings** (left sidebar)
@@ -224,6 +226,11 @@ Recommended setup order:
    - Open any document of that DocType (e.g., Sales Invoice)
    - Look for **Typst** button in toolbar (top-right)
    - Click to preview and download PDF
+
+**Diagnostics:**
+
+- In the builder, open **Presentation → Diagnostics** to review passive setup checks for format/DocType/company setup, default-format status, PDF standard, branding profile context, raw/report Typst source state, unresolved Typst Blocks, and unsaved changes.
+- In runtime preview, use **Diagnostics** to inspect the resolved format/template context, company, branding profile, PDF standard, Typst version, page count, render time, compile-cache state, and raw Typst mode.
 
 ### Using Your Print Format
 

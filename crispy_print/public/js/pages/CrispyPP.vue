@@ -406,7 +406,21 @@
 			:presentation_settings="presentation_settings_computed"
 			:change-key="changeKey"
 			:watch-data-changes="true"
-		/>
+		>
+			<template #toolbar-actions>
+				<div class="preview-diagnostics-action">
+					<button
+						type="button"
+						class="btn btn-default btn-xs preview-diagnostics-button"
+						:title="__('Show preview diagnostics')"
+						@click.stop.prevent="diagnosticsOpen = !diagnosticsOpen"
+					>
+						{{ __("Diagnostics") }}
+					</button>
+					<PreviewDiagnosticsDrawer :open="diagnosticsOpen" :items="diagnosticItems" />
+				</div>
+			</template>
+		</PreviewRenderer>
 	</div>
 </template>
 
@@ -422,10 +436,14 @@ import {
 } from "../utils/presentation_settings";
 import { resolve_effective_presentation_settings } from "../utils/effectivePresentationSettings";
 import PreviewRenderer from "../components/PreviewRenderer.vue";
+import PreviewDiagnosticsDrawer, {
+	type PreviewDiagnosticItem,
+} from "../components/PreviewDiagnosticsDrawer.vue";
 import SettingsSection from "../components/SettingsSection.vue";
 import { useBrandingData } from "../composables/useBrandingData";
 import { loadReportState, normalizeReportChartSvg } from "../utils/reportState";
 import { dispatchCrispyPreviewSource } from "../utils/events";
+import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
 import {
 	buildReportFormatOptions,
 	normalizeReportColumns,
@@ -473,6 +491,8 @@ const selectedTemplate = ref("");
 const templatesLoading = ref(false);
 const activeTemplateLoading = ref(false);
 const activeTemplateSnapshot = ref<ResolvedCrispyTemplate | null>(null);
+const diagnosticsOpen = ref(false);
+const previewStatus = ref<CrispyPreviewStatusDetail>({ status: "fetching" });
 const isReportMode = computed(() => props.source === "report");
 const reportName = computed(() => props.report || "");
 const reportFormats = ref<ReportFormatOption[]>([]);
@@ -540,6 +560,45 @@ const selectedTemplateInfo = computed(
 	() =>
 		activeTemplates.value.find((template) => template.name === selectedTemplate.value) || null
 );
+const diagnosticItems = computed<PreviewDiagnosticItem[]>(() => {
+	const template = activeTemplateSnapshot.value;
+	const renderPayload = template?.render_payload || {};
+	return [
+		{ label: __("Status"), value: previewStatus.value.status },
+		{ label: __("Format"), value: renderPayload.name || template?.source_crispy_format },
+		{ label: __("Template"), value: template?.template_id || template?.name },
+		{ label: __("Template Version"), value: template?.version },
+		{
+			label: __("Company"),
+			value: template?.effective_company || template?.company || getPreviewCompany(),
+		},
+		{
+			label: __("Branding Profile"),
+			value:
+				template?.source_branding_profile ||
+				presentation_settings.value?.branding?.profile ||
+				__("Custom"),
+		},
+		{
+			label: __("PDF Standard"),
+			value: pdfStandard.value || template?.pdf_standard || "PDF/A-2u",
+		},
+		{
+			label: __("Typst Version"),
+			value: previewStatus.value.typstVersion || template?.typst_version || null,
+		},
+		{ label: __("Pages"), value: previewStatus.value.pageCount || null },
+		{
+			label: __("Render Time"),
+			value:
+				typeof previewStatus.value.renderMs === "number"
+					? `${previewStatus.value.renderMs} ms`
+					: null,
+		},
+		{ label: __("Cache Hit"), value: previewStatus.value.cacheHit },
+		{ label: __("Raw Typst"), value: rawTypst.value },
+	];
+});
 const previewFormatName = computed(() => {
 	if (isReportMode.value) return null;
 	return (
@@ -1307,9 +1366,8 @@ watch(availableCompanies, () => {
 	logo_settings.value.image = resolveCompanyLogo(logo_settings.value.company);
 });
 
-// No explicit preview events needed: PreviewRenderer/setupWorker reacts to prop changes directly.
-
 onMounted(async () => {
+	window.addEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
 	hydrateReportStateFromStorage();
 	await fetchFonts();
 	reportFontSizePt.value =
@@ -1323,11 +1381,18 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
 	if (reportPreviewDebounceTimer.value) {
 		window.clearTimeout(reportPreviewDebounceTimer.value);
 		reportPreviewDebounceTimer.value = null;
 	}
 });
+
+function onPreviewStatus(event: Event) {
+	const detail = (event as CustomEvent<CrispyPreviewStatusDetail>).detail;
+	if (!detail) return;
+	previewStatus.value = detail;
+}
 
 // Generate and open PDF in new tab
 async function generatePDF() {
@@ -1439,12 +1504,18 @@ defineExpose({
 <style scoped>
 /* Layout */
 .crispy-preview-layout {
+	position: relative;
 	display: grid;
 	grid-template-columns: 280px 1fr;
 	gap: 0;
 	background: #f8fafc;
 	height: calc(100vh - 110px);
 	min-height: 0;
+}
+
+.preview-diagnostics-action {
+	position: relative;
+	flex: 0 0 auto;
 }
 
 /* Settings Pane */

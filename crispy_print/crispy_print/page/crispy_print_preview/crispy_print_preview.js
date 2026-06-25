@@ -139,7 +139,7 @@ frappe.ui.CrispyPrintView = class {
 		$view_pdf_btn && $view_pdf_btn.attr && $view_pdf_btn.attr("id", "typst-view-pdf");
 
 		const $download_pdf_btn = this.page.add_button(__("Download"), () => this.download_pdf(), {
-			icon: "download",
+			icon: "es-line-download",
 		});
 		$download_pdf_btn &&
 			$download_pdf_btn.attr &&

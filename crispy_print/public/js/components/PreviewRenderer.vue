@@ -63,6 +63,8 @@
 				>
 					+
 				</button>
+				<div class="preview-zoom-toolbar__spacer"></div>
+				<slot name="toolbar-actions"></slot>
 			</div>
 			<div
 				ref="viewportEl"
@@ -555,6 +557,11 @@ onBeforeUnmount(() => {
 	width: 28px;
 	padding-left: 0;
 	padding-right: 0;
+}
+
+.preview-zoom-toolbar__spacer {
+	flex: 1 1 auto;
+	min-width: 12px;
 }
 
 .preview-zoom-toolbar__value {

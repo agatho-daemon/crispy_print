@@ -58,6 +58,24 @@ Branding Profiles centralize presentation settings that should not be duplicated
 3. Open the Branding Profile Builder to preview the generated Typst specimen.
 4. Attach the profile to Crispy Formats that should inherit the same presentation system.
 
+### Compact Table Labels
+
+For narrow item tables, compact table mode can render each item column as collapsed
+cell content with configurable labels. Use compact labels when the printed cell
+needs a clearer field name than the source DocField label or when space is too
+tight for a normal multi-column item table.
+
+### Builder Health And Preview Diagnostics
+
+The builder settings pane includes a collapsed **Diagnostics** section that flags common
+setup problems before preview or publish, including missing format, DocType, or
+company setup, default-format status, unsupported PDF standards, branding profile
+context, raw/report Typst source state, unresolved Typst Blocks, and unsaved changes.
+
+Use **Diagnostics** in runtime preview to inspect the resolved format/template
+context, company, branding profile, PDF standard, Typst version, page count,
+render time, cache-hit state, and raw Typst mode.
+
 ### Letterhead, Headers, And Footers
 
 Crispy Print does not treat headers and footers as mandatory separate HTML-style blocks. That separation comes from legacy browser-print workflows where letterheads were often just images placed at the top of a page and headers/footers had to be managed as separate template regions.

@@ -29,6 +29,7 @@
 		</div>
 		<div class="settings-pane__body">
 			<div class="settings-pane__form">
+				<slot name="before-form"></slot>
 				<div class="settings-pane__identity-row">
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">{{ __("Company") }}</label>

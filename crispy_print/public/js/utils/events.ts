@@ -6,6 +6,11 @@ export type CrispyPreviewStatusDetail = {
 	status: CrispyPreviewStatus
 	message?: string
 	instanceId?: string
+	pageCount?: number
+	renderMs?: number | null
+	cacheHit?: boolean | null
+	typstVersion?: string | null
+	pdfStandard?: string | null
 }
 
 export type CrispyPreviewSourceDetail = {

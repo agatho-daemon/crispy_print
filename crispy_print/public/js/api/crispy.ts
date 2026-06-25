@@ -270,6 +270,7 @@ export interface ResolvedCrispyTemplate extends ActiveCrispyTemplateOption {
 	doc_footer?: string | null
 	typst_preamble?: string | null
 	typst_code?: string | null
+	typst_version?: string | null
 	snapshot_hash?: string | null
 	snapshot_hash_version?: "v1" | "v2" | string | null
 	zebra_version?: string | null
@@ -529,6 +530,11 @@ export interface TypstCompileResult {
 	page_count?: number
 	pdf_data?: string
 	pdf_url?: string
+	cache_hit?: boolean
+	cache_ttl_seconds?: number
+	render_ms?: number
+	typst_version?: string | null
+	pdf_standard?: string | null
 }
 
 export interface BarcodeOptions {

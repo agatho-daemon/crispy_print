@@ -129,6 +129,15 @@
 						</span>
 					</button>
 				</template>
+				<template #before-form>
+					<SettingsSection
+						v-model="isDiagnosticsExpanded"
+						:title="__('Diagnostics')"
+						content-border
+					>
+						<FormatHealthPanel :items="formatHealthItems" />
+					</SettingsSection>
+				</template>
 			</SettingsPane>
 		</div>
 		<CrispyTemplatePublishDialog
@@ -150,7 +159,9 @@ import LayoutPane from "../components/LayoutPane.vue";
 import TypstCodePane from "../components/TypstCodePane.vue";
 import PreviewPane from "../components/PreviewPane.vue";
 import SettingsPane from "../components/SettingsPane.vue";
+import SettingsSection from "../components/SettingsSection.vue";
 import CrispyTemplatePublishDialog from "../components/CrispyTemplatePublishDialog.vue";
+import FormatHealthPanel, { type FormatHealthItem } from "../components/FormatHealthPanel.vue";
 import { useStore } from "../composables/useStore";
 import type { CrispyTemplatePublishPreview } from "../api/crispy";
 import { getCrispyBuilderFormatName } from "../utils/routes";
@@ -189,6 +200,7 @@ const publishDialogOpen = ref(false);
 const publishPreviewLoading = ref(false);
 const publishSubmitting = ref(false);
 const publishPreview = ref<CrispyTemplatePublishPreview | null>(null);
+const isDiagnosticsExpanded = ref(false);
 let resizeCleanup: (() => void) | null = null;
 
 const effectiveFieldsCollapsed = computed(
@@ -213,6 +225,78 @@ const layoutStyle = computed(() => {
 	return {
 		gridTemplateColumns: `${fieldsWidth} ${layoutWidth} 10px ${previewWidth} ${settingsWidth}`,
 	};
+});
+
+const allowedPdfStandards = new Set(["PDF/A-2u", "PDF/A-3u", "PDF/A-4", "PDF 1.7", "PDF 2.0"]);
+const formatHealthItems = computed<FormatHealthItem[]>(() => {
+	const items: FormatHealthItem[] = [];
+	const format = store.crispyFormat.value;
+	const settings = store.presentation_settings.value;
+	const pdfStandard = format?.pdf_standard || "PDF/A-2u";
+
+	if (!format) return items;
+	if (!format.name) {
+		items.push({ level: "error", message: __("Format name is missing.") });
+	}
+	if (store.formatType.value === "DocType" && !format.doc_type) {
+		items.push({ level: "error", message: __("DocType formats need a target DocType.") });
+	}
+	if (!settings?.branding?.company && !format.company) {
+		items.push({
+			level: "warning",
+			message: __(
+				"Set a company so company-scoped formats, templates, and assets resolve predictably."
+			),
+		});
+	}
+	if (store.formatType.value === "DocType" && !format.is_default) {
+		items.push({
+			level: "warning",
+			message: __(
+				"This format is not marked as the default, so the Typst button may not use it automatically."
+			),
+		});
+	}
+	if (!allowedPdfStandards.has(pdfStandard)) {
+		items.push({
+			level: "error",
+			message: __("Unsupported PDF standard: {0}", [pdfStandard]),
+		});
+	}
+	if (settings?.source !== "branding_profile" && !settings?.branding?.profile) {
+		items.push({
+			level: "info",
+			message: __(
+				"No Branding Profile is attached; this format uses custom presentation settings."
+			),
+		});
+	}
+	if (store.rawTypst.value && !store.typstCode.value.trim()) {
+		items.push({ level: "error", message: __("Raw Typst mode has no Typst source.") });
+	}
+	if (store.isReportMode.value && !store.typstCode.value.trim()) {
+		items.push({
+			level: "warning",
+			message: __("Report format has no generated Typst source yet."),
+		});
+	}
+	if (store.dirty.value) {
+		items.push({
+			level: "info",
+			message: __(
+				"Unsaved changes are present; published templates and previews from saved records may be stale."
+			),
+		});
+	}
+	if (findUnresolvedTypstBlocks(store.layout.value).length) {
+		items.push({
+			level: "warning",
+			message: __(
+				"One or more Typst Block fields are not resolved for the current company/DocType."
+			),
+		});
+	}
+	return items;
 });
 
 onMounted(async () => {
@@ -249,6 +333,24 @@ function clamp(value: number, min: number, max: number) {
 
 function isPreviewMode(value: unknown): value is PreviewMode {
 	return value === "normal" || value === "half" || value === "full";
+}
+
+function findUnresolvedTypstBlocks(layout: any): any[] {
+	const unresolved: any[] = [];
+	(layout?.sections || []).forEach((section: any) => {
+		(section?.columns || []).forEach((column: any) => {
+			(column?.fields || []).forEach((field: any) => {
+				if (
+					field?.fieldtype === "Crispy Typst Block" &&
+					field?.crispy_typst_block &&
+					!field?.crispy_typst_block_code
+				) {
+					unresolved.push(field);
+				}
+			});
+		});
+	});
+	return unresolved;
 }
 
 function loadLayoutState() {

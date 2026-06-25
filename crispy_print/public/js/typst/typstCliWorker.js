@@ -110,6 +110,10 @@ async function compileWithCLI(
 			format: "svg",
 			svgPages: pages,
 			pageCount: payload?.page_count || pages.length,
+			cacheHit: payload?.cache_hit,
+			renderMs: payload?.render_ms,
+			typstVersion: payload?.typst_version,
+			pdfStandard: payload?.pdf_standard,
 		};
 	}
 
@@ -126,6 +130,10 @@ async function compileWithCLI(
 	return {
 		format: "pdf",
 		pdfBytes: bytes,
+		cacheHit: payload?.cache_hit,
+		renderMs: payload?.render_ms,
+		typstVersion: payload?.typst_version,
+		pdfStandard: payload?.pdf_standard,
 	};
 }
 
@@ -187,6 +195,10 @@ self.addEventListener("message", async (event) => {
 			format: result.format,
 			requestId,
 			seq,
+			cacheHit: result.cacheHit,
+			renderMs: result.renderMs,
+			typstVersion: result.typstVersion,
+			pdfStandard: result.pdfStandard,
 		};
 
 		if (result.format === "svg") {
