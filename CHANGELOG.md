@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added stable company-scoped frozen render contracts, including template snapshot and letterhead lifecycle support.
 - Added configurable render settings, typography controls, site font directory setup, and bundled variable fonts.
 - Added configurable labels for compact table cells so compact item output can show clearer field names.
-- Added a collapsed builder Diagnostics section for missing format/DocType/company setup, default-format status, unsupported PDF standards, branding profile context, raw/report Typst source state, unresolved Typst Blocks, and unsaved changes.
+- Added a collapsed builder Diagnostics section for missing format/DocType/company setup, default-format status, unsupported PDF standards, branding profile context, unavailable configured fonts, raw/report Typst source state, stale generated report Typst, unresolved Typst Blocks, and unsaved changes.
 - Added runtime preview diagnostics with resolved format/template, company, branding profile, PDF standard, Typst version, render time, page count, cache-hit metadata, and raw Typst mode.
 - Ignored local Zed editor and Pyright configuration files.
 

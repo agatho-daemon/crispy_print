@@ -829,7 +829,6 @@ import ColorInput from "./ColorInput.vue";
 import TypographyStyleEditor from "./TypographyStyleEditor.vue";
 import SettingsSection from "./SettingsSection.vue";
 import BoxSidesEditor from "./BoxSidesEditor.vue";
-import { fetchTypstFonts } from "../utils/typstTypography";
 import { useBrandingData } from "../composables/useBrandingData";
 import { useStore } from "../composables/useStore";
 import QrFieldsDialog from "./QrFieldsDialog.vue";
@@ -842,13 +841,18 @@ import { __ } from "../utils/i18n";
 interface Props {
 	presentation_settings: PresentationSettings;
 	markDirty: () => void;
+	availableFonts?: string[];
+	loadingFonts?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+	availableFonts: () => [],
+	loadingFonts: false,
+});
 const logger = getLogger({ component: "SettingsPane" });
 
-const availableFonts = ref<string[]>([]);
-const loadingFonts = ref(false);
+const availableFonts = computed(() => props.availableFonts || []);
+const loadingFonts = computed(() => props.loadingFonts);
 const branding_profiles = ref<CrispyBrandingProfileOption[]>([]);
 const loading_branding_profiles = ref(false);
 const {
@@ -1009,16 +1013,6 @@ const branding_mode = computed<string>({
 	},
 });
 
-// Fetch available fonts from Typst
-async function fetchFonts() {
-	loadingFonts.value = true;
-	try {
-		availableFonts.value = await fetchTypstFonts({ logger });
-	} finally {
-		loadingFonts.value = false;
-	}
-}
-
 async function fetch_branding_profiles() {
 	loading_branding_profiles.value = true;
 	try {
@@ -1049,7 +1043,6 @@ async function fetch_branding_profiles() {
 }
 
 onMounted(() => {
-	fetchFonts();
 	fetchScopedLetterheads();
 	fetchCompanies({ include_current: selected_company.value || null });
 	fetch_branding_profiles();

@@ -109,6 +109,8 @@
 				class="pane pane--settings"
 				:presentation_settings="presentation_settings"
 				:mark-dirty="store.markDirty"
+				:available-fonts="availableFonts"
+				:loading-fonts="loadingFonts"
 			>
 				<template #header-actions>
 					<button
@@ -166,9 +168,13 @@ import { useStore } from "../composables/useStore";
 import type { CrispyTemplatePublishPreview } from "../api/crispy";
 import { getCrispyBuilderFormatName } from "../utils/routes";
 import { __ } from "../utils/i18n";
+import { fetchTypstFonts } from "../utils/typstTypography";
+import { buildReportTypstFromConfig } from "../utils/reportBuilder";
+import { getLogger } from "../logger";
 
 const store = useStore();
 const presentation_settings = store.presentation_settings;
+const logger = getLogger({ page: "CrispyPFB" });
 const STORAGE_KEY = "crispy-print:format-builder-layout:v1";
 const MIN_SPLIT = 30;
 const MAX_SPLIT = 70;
@@ -201,6 +207,8 @@ const publishPreviewLoading = ref(false);
 const publishSubmitting = ref(false);
 const publishPreview = ref<CrispyTemplatePublishPreview | null>(null);
 const isDiagnosticsExpanded = ref(false);
+const availableFonts = ref<string[]>([]);
+const loadingFonts = ref(false);
 let resizeCleanup: (() => void) | null = null;
 
 const effectiveFieldsCollapsed = computed(
@@ -280,6 +288,21 @@ const formatHealthItems = computed<FormatHealthItem[]>(() => {
 			message: __("Report format has no generated Typst source yet."),
 		});
 	}
+	if (isGeneratedReportTypstStale()) {
+		items.push({
+			level: "warning",
+			message: __("Generated report Typst is out of sync with the current report settings."),
+		});
+	}
+	const missingFonts = getUnavailableFonts(settings);
+	if (missingFonts.length) {
+		items.push({
+			level: "warning",
+			message: __("Selected font(s) are not available to Typst: {0}", [
+				missingFonts.join(", "),
+			]),
+		});
+	}
 	if (store.dirty.value) {
 		items.push({
 			level: "info",
@@ -301,10 +324,61 @@ const formatHealthItems = computed<FormatHealthItem[]>(() => {
 
 onMounted(async () => {
 	loadLayoutState();
+	await fetchFonts();
 	const formatName = getCrispyBuilderFormatName();
 	if (formatName) await store.fetch(formatName);
 	window.addEventListener("keydown", handleHistoryShortcuts);
 });
+
+async function fetchFonts() {
+	loadingFonts.value = true;
+	try {
+		availableFonts.value = await fetchTypstFonts({ logger });
+	} finally {
+		loadingFonts.value = false;
+	}
+}
+
+function getUnavailableFonts(settings: any): string[] {
+	if (loadingFonts.value || !availableFonts.value.length) return [];
+	const available = new Set(
+		availableFonts.value.map((font) => normalizeFontFamily(font)).filter(Boolean)
+	);
+	const selected = new Map<string, string>();
+	const addFont = (font: unknown) => {
+		const label = String(font || "").trim();
+		const normalized = normalizeFontFamily(label);
+		if (normalized && !selected.has(normalized)) selected.set(normalized, label);
+	};
+	addFont(settings?.typography?.sectionLabel?.fontFamily);
+	addFont(settings?.typography?.fieldLabel?.fontFamily);
+	addFont(settings?.typography?.fieldValue?.fontFamily);
+	addFont(settings?.table?.typography?.header?.fontFamily);
+	addFont(settings?.table?.typography?.body?.fontFamily);
+	if (store.isReportMode.value) {
+		addFont(store.reportBuilderConfig.value?.font_family);
+	}
+	return [...selected.entries()]
+		.filter(([font]) => !available.has(font))
+		.map(([, label]) => label);
+}
+
+function normalizeFontFamily(font: unknown): string {
+	return String(font || "")
+		.trim()
+		.toLowerCase();
+}
+
+function isGeneratedReportTypstStale(): boolean {
+	if (!store.isReportMode.value) return false;
+	if (store.rawTypst.value) return false;
+	if (store.reportBuilderConfig.value?.mode !== "basic") return false;
+	if (store.reportBasicReadOnly.value) return false;
+	const expected = buildReportTypstFromConfig(store.reportBuilderConfig.value, {
+		tableSettings: presentation_settings.value?.table,
+	});
+	return Boolean(store.typstCode.value.trim()) && store.typstCode.value !== expected;
+}
 
 onBeforeUnmount(() => {
 	window.removeEventListener("keydown", handleHistoryShortcuts);
