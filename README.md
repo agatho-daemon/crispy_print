@@ -229,7 +229,7 @@ Recommended setup order:
 
 **Diagnostics:**
 
-- In the builder, open **Presentation → Diagnostics** to review passive setup checks for format/DocType/company setup, default-format status, PDF standard, branding profile context, unavailable configured fonts, raw/report Typst source state, stale generated report Typst, unresolved Typst Blocks, and unsaved changes.
+- In the builder, open **Presentation → Diagnostics** to review passive setup checks for format/DocType/company setup, default-format status, PDF standard, branding profile context, multiple default Branding Profile candidates, unavailable configured fonts, raw/report Typst source state, stale generated report Typst, unresolved Typst Blocks, and unsaved changes.
 - In runtime preview, use **Diagnostics** to inspect the resolved format/template context, company, branding profile, PDF standard, Typst version, page count, render time, compile-cache state, and raw Typst mode.
 
 ### Using Your Print Format

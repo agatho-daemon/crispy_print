@@ -849,6 +849,9 @@ const props = withDefaults(defineProps<Props>(), {
 	availableFonts: () => [],
 	loadingFonts: false,
 });
+const emit = defineEmits<{
+	(event: "branding-profiles-change", profiles: CrispyBrandingProfileOption[]): void;
+}>();
 const logger = getLogger({ component: "SettingsPane" });
 
 const availableFonts = computed(() => props.availableFonts || []);
@@ -1019,6 +1022,7 @@ async function fetch_branding_profiles() {
 		branding_profiles.value = await getBrandingProfiles({
 			company: selected_company.value || null,
 		});
+		emit("branding-profiles-change", branding_profiles.value);
 		if (!props.presentation_settings.source && !props.presentation_settings.branding.profile) {
 			const default_profile = branding_profiles.value.find((profile) =>
 				Number(profile.is_default)
@@ -1037,6 +1041,7 @@ async function fetch_branding_profiles() {
 	} catch (error) {
 		logger.warn("Failed to load Crispy Branding Profiles", error);
 		branding_profiles.value = [];
+		emit("branding-profiles-change", []);
 	} finally {
 		loading_branding_profiles.value = false;
 	}

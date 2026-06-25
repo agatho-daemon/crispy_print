@@ -70,8 +70,14 @@ tight for a normal multi-column item table.
 The builder settings pane includes a collapsed **Diagnostics** section that flags common
 setup problems before preview or publish, including missing format, DocType, or
 company setup, default-format status, unsupported PDF standards, branding profile
-context, unavailable configured fonts, raw/report Typst source state, stale
-generated report Typst, unresolved Typst Blocks, and unsaved changes.
+context, multiple default Branding Profile candidates, unavailable configured
+fonts, raw/report Typst source state, stale generated report Typst, unresolved
+Typst Blocks, and unsaved changes.
+
+Branding Profile defaults are treated as selection priority, not a hard
+one-default-per-company rule. If imported or manually edited data leaves multiple
+default profiles for a company, Diagnostics reports it and the user can still pick
+the profile that fits the current format.
 
 Use **Diagnostics** in runtime preview to inspect the resolved format/template
 context, company, branding profile, PDF standard, Typst version, page count,

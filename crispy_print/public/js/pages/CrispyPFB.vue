@@ -111,6 +111,7 @@
 				:mark-dirty="store.markDirty"
 				:available-fonts="availableFonts"
 				:loading-fonts="loadingFonts"
+				@branding-profiles-change="brandingProfiles = $event"
 			>
 				<template #header-actions>
 					<button
@@ -171,6 +172,7 @@ import { __ } from "../utils/i18n";
 import { fetchTypstFonts } from "../utils/typstTypography";
 import { buildReportTypstFromConfig } from "../utils/reportBuilder";
 import { getLogger } from "../logger";
+import type { CrispyBrandingProfileOption } from "../api/crispy";
 
 const store = useStore();
 const presentation_settings = store.presentation_settings;
@@ -209,6 +211,7 @@ const publishPreview = ref<CrispyTemplatePublishPreview | null>(null);
 const isDiagnosticsExpanded = ref(false);
 const availableFonts = ref<string[]>([]);
 const loadingFonts = ref(false);
+const brandingProfiles = ref<CrispyBrandingProfileOption[]>([]);
 let resizeCleanup: (() => void) | null = null;
 
 const effectiveFieldsCollapsed = computed(
@@ -276,6 +279,15 @@ const formatHealthItems = computed<FormatHealthItem[]>(() => {
 			level: "info",
 			message: __(
 				"No Branding Profile is attached; this format uses custom presentation settings."
+			),
+		});
+	}
+	const defaultBrandingProfiles = getDefaultBrandingProfiles();
+	if (defaultBrandingProfiles.length > 1) {
+		items.push({
+			level: "info",
+			message: __(
+				"Multiple default Branding Profiles match this company; the builder uses the first matching profile, and you can choose another profile manually."
 			),
 		});
 	}
@@ -367,6 +379,17 @@ function normalizeFontFamily(font: unknown): string {
 	return String(font || "")
 		.trim()
 		.toLowerCase();
+}
+
+function getDefaultBrandingProfiles(): CrispyBrandingProfileOption[] {
+	const company = String(
+		presentation_settings.value?.branding?.company || store.crispyFormat.value?.company || ""
+	).trim();
+	return brandingProfiles.value.filter((profile) => {
+		if (!Number(profile.is_default)) return false;
+		if (!company) return true;
+		return !profile.company || profile.company === company;
+	});
 }
 
 function isGeneratedReportTypstStale(): boolean {
