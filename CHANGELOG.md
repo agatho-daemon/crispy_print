@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added stable company-scoped frozen render contracts, including template snapshot and letterhead lifecycle support.
 - Added configurable render settings, typography controls, site font directory setup, and bundled variable fonts.
 - Added configurable labels for compact table cells so compact item output can show clearer field names.
+- Added one-click **Duplicate for Company** support in the builder for cloning Crispy Formats or frozen Crispy Template snapshots to another company, including target-company presentation retargeting and snapshot-preserving template duplication.
 - Added a collapsed builder Diagnostics section for missing format/DocType/company setup, default-format status, unsupported PDF standards, branding profile context, multiple default Branding Profile candidates, unavailable configured fonts, raw/report Typst source state, stale generated report Typst, unresolved Typst Blocks, and unsaved changes.
 - Added runtime preview diagnostics with resolved format/template, company, branding profile, PDF standard, Typst version, render time, page count, cache-hit metadata, and raw Typst mode.
 - Ignored local Zed editor and Pyright configuration files.
@@ -50,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 - Tightened the report button unit test to assert the exact `crispy-print-preview` route.
-- Added tests for PDF standards, company-scoped template/render behavior, frozen render contracts, render settings, Typst version validation, preview diagnostics metadata, and compact table label/metadata rendering.
+- Added tests for PDF standards, company-scoped template/render behavior, frozen render contracts, Duplicate for Company format/template flows, render settings, Typst version validation, preview diagnostics metadata, and compact table label/metadata rendering.
 
 ## [0.1.0-alpha.3] - 2026-05-28
 

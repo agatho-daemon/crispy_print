@@ -233,6 +233,24 @@ export interface CrispyTemplatePublishResult {
 	barcode_symbology?: "QR Code" | "DataMatrix" | string | null
 }
 
+export interface CrispyFormatDuplicateResult {
+	success: boolean
+	name: string
+	source_name: string
+	company: string
+	is_default?: number
+	warnings?: string[]
+}
+
+export interface CrispyTemplateDuplicateResult {
+	success: boolean
+	source_template: string
+	cloned_format: string
+	clone_mode: "snapshot" | "current_format"
+	template: CrispyTemplatePublishResult
+	warnings?: string[]
+}
+
 export interface ActiveCrispyTemplateOption {
 	name: string
 	template_name: string
@@ -666,6 +684,46 @@ export async function publishTemplateFromCrispyFormat(args: {
 	})
 	if (!res.message) {
 		throw new Error("Missing Crispy Template publish result")
+	}
+	return res.message
+}
+
+export async function duplicateCrispyFormatForCompany(args: {
+	source_name: string
+	target_company: string
+	set_default?: boolean
+	name?: string | null
+	name_strategy?: "copy" | "replace"
+}): Promise<CrispyFormatDuplicateResult> {
+	const res = await call<CrispyFormatDuplicateResult>({
+		method: "crispy_print.api.v1.duplicate_crispy_format_for_company",
+		args: {
+			...args,
+			set_default: args.set_default ? 1 : 0,
+		},
+	})
+	if (!res.message) {
+		throw new Error("Missing Crispy Format duplicate result")
+	}
+	return res.message
+}
+
+export async function duplicateCrispyTemplateForCompany(args: {
+	source_template: string
+	target_company: string
+	clone_mode?: "snapshot" | "current_format"
+	make_active?: boolean
+	version_bump?: "minor" | "major"
+}): Promise<CrispyTemplateDuplicateResult> {
+	const res = await call<CrispyTemplateDuplicateResult>({
+		method: "crispy_print.api.v1.duplicate_crispy_template_for_company",
+		args: {
+			...args,
+			make_active: args.make_active ? 1 : 0,
+		},
+	})
+	if (!res.message) {
+		throw new Error("Missing Crispy Template duplicate result")
 	}
 	return res.message
 }

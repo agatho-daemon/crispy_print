@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest"
 vi.mock("../../api/crispy", () => ({
 	getCrispyFormat: vi.fn(),
 	saveCrispyFormat: vi.fn(),
+	duplicateCrispyFormatForCompany: vi.fn(),
+	duplicateCrispyTemplateForCompany: vi.fn(),
 	compileReportPreview: vi.fn(async (args) => {
 		const response = await (globalThis as any).frappe.call({
 			method: "crispy_print.api.v1.compile_report_preview",

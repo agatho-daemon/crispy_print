@@ -48,6 +48,8 @@ vi.mock("../../api/crispy", () => ({
     raw_signature: null as unknown,
     report_table_sync_signature: null as unknown,
   })),
+  duplicateCrispyFormatForCompany: vi.fn(),
+  duplicateCrispyTemplateForCompany: vi.fn(),
   saveCrispyFormat: vi.fn(async () => {}),
 }));
 

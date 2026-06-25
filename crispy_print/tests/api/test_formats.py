@@ -258,6 +258,37 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertEqual(field["crispy_typst_block_name"], "Test API Format Scoped Company Context Block")
 		self.assertEqual(field["crispy_typst_block_code"], "#text[company]")
 
+	def test_duplicate_crispy_format_for_company_preserves_layout_and_retargets_settings(self):
+		from crispy_print.api.v1 import duplicate_crispy_format_for_company
+
+		source_company = self._ensure_company("Test API Format Duplicate Source", "TAFDS")
+		target_company = self._ensure_company("Test API Format Duplicate Target", "TAFDT")
+		layout = {"sections": [{"label": "Frozen", "columns": []}]}
+		fmt = self._insert_doctype_format(
+			"Test API Format Duplicate Source Format",
+			company=source_company,
+			is_default=1,
+			layout=layout,
+		)
+		fmt.presentation_settings = json.dumps(
+			{
+				"page": {"size": "A4"},
+				"branding": {"company": source_company, "logo": {"company": source_company}},
+			}
+		)
+		fmt.save()
+
+		result = duplicate_crispy_format_for_company(fmt.name, target_company)
+		clone = frappe.get_doc("Crispy Format", result["name"])
+		settings = json.loads(clone.presentation_settings)
+
+		self.assertEqual(result["source_name"], fmt.name)
+		self.assertEqual(clone.company, target_company)
+		self.assertFalse(clone.is_default)
+		self.assertEqual(json.loads(clone.layout_json), layout)
+		self.assertEqual(settings["branding"]["company"], target_company)
+		self.assertEqual(settings["branding"]["logo"]["company"], target_company)
+
 	def test_get_crispy_format_includes_pdf_standard(self):
 		from crispy_print.api.v1 import get_crispy_format
 

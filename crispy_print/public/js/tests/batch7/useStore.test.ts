@@ -22,6 +22,13 @@ vi.mock("../../api/crispy", () => ({
 			version: "1.0.0",
 		},
 	],
+	duplicateCrispyFormatForCompany: async () => ({ name: "Duplicate", source_name: "Test Format", company: "ACME" }),
+	duplicateCrispyTemplateForCompany: async () => ({
+		cloned_format: "Duplicate",
+		clone_mode: "snapshot",
+		source_template: "Template",
+		template: { name: "Template Duplicate", version: "1.0", status: "Approved", is_active: false },
+	}),
 	saveCrispyFormat: async () => {},
 }))
 

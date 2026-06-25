@@ -4,6 +4,13 @@ vi.mock("../../api/crispy", () => ({
 	getApplicableTypstBlocks: vi.fn(async () => []),
 	getCrispyFormat: vi.fn(),
 	getCrispyTemplatePublishPreview: vi.fn(async () => ({ template_name: "Template", next_version: "1.0" })),
+	duplicateCrispyFormatForCompany: vi.fn(async () => ({ name: "Format ACME", source_name: "Format-1", company: "ACME" })),
+	duplicateCrispyTemplateForCompany: vi.fn(async () => ({
+		cloned_format: "Format ACME",
+		clone_mode: "snapshot",
+		source_template: "Template-1",
+		template: { name: "Template ACME", version: "1.0", status: "Approved", is_active: false },
+	})),
 	publishTemplateFromCrispyFormat: vi.fn(async () => ({ name: "Template v1" })),
 	saveCrispyFormat: vi.fn(),
 }))
@@ -15,6 +22,7 @@ vi.mock("../../api/frappe", () => ({
 describe("useStore actions", () => {
 	beforeEach(() => {
 		vi.resetModules()
+		vi.clearAllMocks()
 		;(globalThis as any).__ = (msg: string) => msg
 		;(globalThis as any).frappe = {
 			show_alert: vi.fn(),
@@ -85,6 +93,49 @@ describe("useStore actions", () => {
 			effective_from: null,
 			notes: null,
 			company: "ACME",
+		})
+	})
+
+	it("saves dirty format before duplicating current format for company", async () => {
+		const { useStore } = await import("../../composables/useStore")
+		const { duplicateCrispyFormatForCompany, saveCrispyFormat } = await import("../../api/crispy")
+
+		const store = useStore()
+		store.crispyFormat.value = { name: "Format-1", doc_type: "Invoice", company: "Source Co" } as any
+		store.layout.value = { sections: [] } as any
+		store.presentation_settings.value = { page: { size: "A4", orientation: "portrait", margins: { top: 25, bottom: 20, left: 20, right: 20 } }, branding: { mode: "none", letterhead: "", letterhead_image: "", logo: { company: "Source Co", image: "", size: 25, dx: 0, dy: 0 } } } as any
+		store.dirty.value = true
+
+		await store.duplicateFormatForCompany({ target_company: "ACME", set_default: true })
+
+		expect(saveCrispyFormat).toHaveBeenCalledTimes(1)
+		expect(duplicateCrispyFormatForCompany).toHaveBeenCalledWith({
+			source_name: "Format-1",
+			target_company: "ACME",
+			set_default: true,
+			name: null,
+			name_strategy: "copy",
+		})
+	})
+
+	it("duplicates a template snapshot for another company", async () => {
+		const { useStore } = await import("../../composables/useStore")
+		const { duplicateCrispyTemplateForCompany } = await import("../../api/crispy")
+
+		const store = useStore()
+		await store.duplicateTemplateForCompany({
+			source_template: "Template-1",
+			target_company: "ACME",
+			clone_mode: "snapshot",
+			make_active: false,
+		})
+
+		expect(duplicateCrispyTemplateForCompany).toHaveBeenCalledWith({
+			source_template: "Template-1",
+			target_company: "ACME",
+			clone_mode: "snapshot",
+			make_active: false,
+			version_bump: "minor",
 		})
 	})
 })

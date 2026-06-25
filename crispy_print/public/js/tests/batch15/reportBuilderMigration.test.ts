@@ -7,6 +7,8 @@ vi.mock("../../api/frappe", () => ({
 vi.mock("../../api/crispy", () => ({
 	getCrispyFormat: vi.fn(),
 	getDefaultReportBuilderConfig: vi.fn(async () => ({})),
+	duplicateCrispyFormatForCompany: vi.fn(),
+	duplicateCrispyTemplateForCompany: vi.fn(),
 	saveCrispyFormat: vi.fn(async () => {}),
 }));
 

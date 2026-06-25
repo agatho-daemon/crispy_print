@@ -20,6 +20,7 @@ from .document_codes import generate_document_code as _generate_document_code
 from .document_codes import resolve_document_code as _resolve_document_code
 from .fiscal_credentials import get_fiscal_credential_status as _get_fiscal_credential_status
 from .formats import check_import_conflicts as _check_import_conflicts
+from .formats import duplicate_crispy_format_for_company as _duplicate_crispy_format_for_company
 from .formats import export_crispy_format as _export_crispy_format
 from .formats import get_available_formats as _get_available_formats
 from .formats import get_builder_mode as _get_builder_mode
@@ -50,6 +51,7 @@ from .reports import generate_report_pdf as _generate_report_pdf
 from .reports import get_report_typst_source as _get_report_typst_source
 from .reports import get_sample_report_data as _get_sample_report_data
 from .security import enforce_rate_limit, ensure_doctype_read_permission
+from .templates import duplicate_crispy_template_for_company as _duplicate_crispy_template_for_company
 from .templates import (
 	get_active_crispy_templates_for_document as _get_active_crispy_templates_for_document,
 )
@@ -275,6 +277,42 @@ def publish_template_from_crispy_format(
 		effective_from=effective_from,
 		notes=notes,
 		company=company,
+	)
+
+
+@frappe.whitelist()
+def duplicate_crispy_format_for_company(
+	source_name: str,
+	target_company: str,
+	set_default: int | bool = 0,
+	name: str | None = None,
+	name_strategy: str = "copy",
+) -> JSONDict:
+	enforce_rate_limit("duplicate_crispy_format_for_company", limit=20, window_seconds=60)
+	return _duplicate_crispy_format_for_company(
+		source_name=source_name,
+		target_company=target_company,
+		set_default=set_default,
+		name=name,
+		name_strategy=name_strategy,
+	)
+
+
+@frappe.whitelist()
+def duplicate_crispy_template_for_company(
+	source_template: str,
+	target_company: str,
+	clone_mode: str = "snapshot",
+	make_active: int | bool = 0,
+	version_bump: str = "minor",
+) -> JSONDict:
+	enforce_rate_limit("duplicate_crispy_template_for_company", limit=12, window_seconds=60)
+	return _duplicate_crispy_template_for_company(
+		source_template=source_template,
+		target_company=target_company,
+		clone_mode=clone_mode,
+		make_active=make_active,
+		version_bump=version_bump,
 	)
 
 

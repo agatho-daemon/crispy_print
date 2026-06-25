@@ -79,6 +79,7 @@
 			@update:zoom-mode="setPreviewZoomMode"
 			@update:zoom-percent="setPreviewZoomPercent"
 			@publish-template="openPublishDialog"
+			@duplicate-for-company="duplicateDialogOpen = true"
 		/>
 		<div
 			class="pane-shell pane-shell--settings"
@@ -152,6 +153,12 @@
 			@version-bump-change="loadPublishPreview"
 			@confirm="publishTemplate"
 		/>
+		<DuplicateForCompanyDialog
+			:open="duplicateDialogOpen"
+			:submitting="duplicateSubmitting"
+			@close="duplicateDialogOpen = false"
+			@confirm="duplicateForCompany"
+		/>
 	</div>
 </template>
 
@@ -164,6 +171,7 @@ import PreviewPane from "../components/PreviewPane.vue";
 import SettingsPane from "../components/SettingsPane.vue";
 import SettingsSection from "../components/SettingsSection.vue";
 import CrispyTemplatePublishDialog from "../components/CrispyTemplatePublishDialog.vue";
+import DuplicateForCompanyDialog from "../components/DuplicateForCompanyDialog.vue";
 import FormatHealthPanel, { type FormatHealthItem } from "../components/FormatHealthPanel.vue";
 import { useStore } from "../composables/useStore";
 import type { CrispyTemplatePublishPreview } from "../api/crispy";
@@ -208,6 +216,8 @@ const publishDialogOpen = ref(false);
 const publishPreviewLoading = ref(false);
 const publishSubmitting = ref(false);
 const publishPreview = ref<CrispyTemplatePublishPreview | null>(null);
+const duplicateDialogOpen = ref(false);
+const duplicateSubmitting = ref(false);
 const isDiagnosticsExpanded = ref(false);
 const availableFonts = ref<string[]>([]);
 const loadingFonts = ref(false);
@@ -545,6 +555,42 @@ async function publishTemplate(args: {
 		publishPreview.value = null;
 	} finally {
 		publishSubmitting.value = false;
+	}
+}
+
+async function duplicateForCompany(
+	args:
+		| {
+				source_type: "format";
+				target_company: string;
+				set_default: boolean;
+		  }
+		| {
+				source_type: "template";
+				target_company: string;
+				source_template: string;
+				clone_mode: "snapshot" | "current_format";
+				make_active: boolean;
+		  }
+) {
+	duplicateSubmitting.value = true;
+	try {
+		if (args.source_type === "template") {
+			await store.duplicateTemplateForCompany({
+				source_template: args.source_template,
+				target_company: args.target_company,
+				clone_mode: args.clone_mode,
+				make_active: args.make_active,
+			});
+		} else {
+			await store.duplicateFormatForCompany({
+				target_company: args.target_company,
+				set_default: args.set_default,
+			});
+		}
+		duplicateDialogOpen.value = false;
+	} finally {
+		duplicateSubmitting.value = false;
 	}
 }
 

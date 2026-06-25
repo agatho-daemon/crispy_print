@@ -67,6 +67,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **DocType-Aware Format Registry** - Crispy Format records link formats to target DocTypes, format types, branding profiles, custom builders, and generated Typst.
 - **Company-Scoped Rendering** - Format, template, branding profile, and Typst block resolution is company-aware, with company-scoped default selection and cache invalidation.
 - **Approved Render Contracts (Crispy Template)** - Publish frozen, versioned approved render snapshots from a Crispy Format with snapshot-hash versioning, PDF standard, and Typst/Zebra/barcode facts, including company-specific templates with fallback to global templates.
+- **Duplicate for Company** - Clone a Crispy Format or frozen Crispy Template snapshot to another company while preserving layout/content, retargeting company-scoped presentation settings, and optionally publishing a target-company template from the frozen snapshot.
 - **Crispy Issued Document Registry (CID)** - Immutable issued-document snapshots linked to frozen templates, with opaque verification tokens, render-hash facts, artifact tracking, trust-event and regulatory-submission child tables, and revocation/supersession state.
 - **Per-Format PDF Standard** - Output standard selection with a PDF/A-2u default plus PDF/A-3u, PDF/A-4, PDF 1.7, and PDF 2.0.
 - **Global Print Settings** - Crispy Print Settings DocType for font configuration (uploaded/system fonts, search paths), render timeout, and draft/cancelled print policy.
@@ -226,6 +227,12 @@ Recommended setup order:
    - Open any document of that DocType (e.g., Sales Invoice)
    - Look for **Typst** button in toolbar (top-right)
    - Click to preview and download PDF
+
+6. **Reuse across companies when needed**
+   - In the builder preview pane, click **Duplicate**.
+   - Choose **Current Format** to clone the saved format layout/settings to another company.
+   - Choose **Template Snapshot** to preserve an approved frozen Crispy Template snapshot, create a target-company format from that snapshot, and publish a target-company template.
+   - Use snapshot mode when the approved template must remain byte-for-byte stable apart from company-scoped presentation fields.
 
 **Diagnostics:**
 

@@ -30,6 +30,15 @@ Crispy Print is company-aware end to end:
 - A **Crispy Template** is a frozen, approved render contract published from a Crispy Format. It stores an immutable snapshot, snapshot-hash version, PDF standard, and Typst/Zebra/barcode facts, and supports company-specific templates with fallback to global templates.
 - A **Crispy Issued Document** (CID) records an immutable issued snapshot linked to a frozen template, exposing non-sensitive verification metadata and an opaque verification token, with revocation/supersession state.
 
+### Duplicate For Company
+
+Use **Duplicate** in the builder preview pane when the same document design should be reused for another company without manually rebuilding layout, typography, tables, Typst code, or print behavior.
+
+- **Current Format** clones the saved Crispy Format to the target company, preserves layout/settings, clears inherited default status unless explicitly requested, and retargets company-scoped presentation fields such as branding company and logo company.
+- **Template Snapshot** clones a frozen Crispy Template snapshot to another company by first creating a target-company Crispy Format from the template's immutable snapshot fields, then publishing a new target-company template from that cloned format.
+- **Frozen Snapshot** mode is the recommended template duplication mode when the approved template content must remain stable even if the original source Crispy Format has changed since publication.
+- **Current Format** mode for templates intentionally uses the template's current source Crispy Format, so it should be selected only when the latest saved format state is desired instead of the previously approved snapshot.
+
 ### Report Builder Workflow (Dual Mode)
 
 For `Crispy Format Type = Report`, builder now supports two editing modes:

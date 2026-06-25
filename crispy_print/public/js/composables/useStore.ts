@@ -22,8 +22,12 @@ import {
   getApplicableTypstBlocks,
   getDefaultReportBuilderConfig as getServerReportBuilderConfig,
   getCrispyTemplatePublishPreview,
+  duplicateCrispyFormatForCompany,
+  duplicateCrispyTemplateForCompany,
   publishTemplateFromCrispyFormat,
   saveCrispyFormat,
+  type CrispyFormatDuplicateResult,
+  type CrispyTemplateDuplicateResult,
   type CrispyTemplatePublishPreview,
   type CrispyTemplatePublishResult,
   type CrispyTypstBlockOption,
@@ -1358,6 +1362,75 @@ function buildStore() {
     }
   }
 
+  async function duplicateFormatForCompany(args: {
+    target_company: string;
+    set_default?: boolean;
+    name?: string | null;
+    name_strategy?: "copy" | "replace";
+  }): Promise<CrispyFormatDuplicateResult | null> {
+    if (!crispyFormat.value?.name) return null;
+    if (dirty.value) {
+      await saveChanges();
+    }
+    loading.value = true;
+    try {
+      const result = await duplicateCrispyFormatForCompany({
+        source_name: crispyFormat.value.name,
+        target_company: args.target_company,
+        set_default: Boolean(args.set_default),
+        name: args.name || null,
+        name_strategy: args.name_strategy || "copy",
+      });
+      frappe.show_alert({
+        message: __("Crispy Format duplicated: {0}", [result.name]),
+        indicator: "green",
+      });
+      return result;
+    } catch (error) {
+      logger.error("Failed to duplicate Crispy Format", error);
+      frappe.show_alert({
+        message: __("Failed to duplicate Crispy Format"),
+        indicator: "red",
+      });
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function duplicateTemplateForCompany(args: {
+    source_template: string;
+    target_company: string;
+    clone_mode?: "snapshot" | "current_format";
+    make_active?: boolean;
+    version_bump?: "minor" | "major";
+  }): Promise<CrispyTemplateDuplicateResult | null> {
+    loading.value = true;
+    try {
+      const result = await duplicateCrispyTemplateForCompany({
+        source_template: args.source_template,
+        target_company: args.target_company,
+        clone_mode: args.clone_mode || "snapshot",
+        make_active: Boolean(args.make_active),
+        version_bump: args.version_bump || "minor",
+      });
+      frappe.show_alert({
+        message: __("Crispy Template duplicated: {0}", [result.template.name]),
+        indicator: "green",
+      });
+      return result;
+    } catch (error) {
+      logger.error("Failed to duplicate Crispy Template", error);
+      frappe.show_alert({
+        message: __("Failed to duplicate Crispy Template"),
+        indicator: "red",
+      });
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   function initializeReportBuilderMode(doc: CrispyFormat) {
     if (!isReportMode.value) return;
     const advancedMode = Boolean(doc.is_advanced || doc.raw_typst);
@@ -1508,6 +1581,8 @@ function buildStore() {
     saveChanges,
     getTemplatePublishPreview,
     publishTemplate,
+    duplicateFormatForCompany,
+    duplicateTemplateForCompany,
     loadApplicableTypstBlocks,
     resolveLayoutTypstBlocks,
     markDirty,

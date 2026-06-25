@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("../../api/crispy", () => ({
 	getCrispyFormat: vi.fn(),
+	duplicateCrispyFormatForCompany: vi.fn(),
+	duplicateCrispyTemplateForCompany: vi.fn(),
 	saveCrispyFormat: vi.fn(),
 }))
 

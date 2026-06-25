@@ -131,6 +131,14 @@
 						</button>
 						<button
 							type="button"
+							class="btn btn-default btn-sm preview-btn"
+							:title="__('Duplicate for another company')"
+							@click="emit('duplicateForCompany')"
+						>
+							{{ __("Duplicate") }}
+						</button>
+						<button
+							type="button"
 							class="btn btn-primary btn-sm preview-btn"
 							:title="__('Publish Crispy Template')"
 							@click="emit('publishTemplate')"
@@ -171,6 +179,7 @@ const emit = defineEmits<{
 	(event: "update:zoomMode", value: PreviewZoomMode): void;
 	(event: "update:zoomPercent", value: number): void;
 	(event: "publishTemplate"): void;
+	(event: "duplicateForCompany"): void;
 }>();
 
 const store = useStore();

@@ -12,11 +12,12 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	resolve_layout_json_typst_blocks,
 )
 
-from .company_context import resolve_effective_company
+from .company_context import apply_effective_company_to_presentation_settings, resolve_effective_company
 from .security import ensure_doctype_read_permission
 
 EXPORT_SCHEMA_VERSION = 1
 ALLOWED_IMPORT_CONFLICT_ACTIONS = {"copy", "overwrite"}
+ALLOWED_DUPLICATE_NAME_STRATEGIES = {"copy", "replace"}
 MAX_IMPORT_FIELD_BYTES = {
 	"name": 140,
 	"crispy_format_type": 40,
@@ -605,6 +606,164 @@ def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict
 		"warnings": warnings,
 		"conflict_action": on_conflict_value,
 	}
+
+
+def duplicate_crispy_format_for_company(
+	source_name: str,
+	target_company: str,
+	set_default: int | bool = 0,
+	name: str | None = None,
+	name_strategy: str = "copy",
+) -> dict:
+	"""Clone a Crispy Format to another company, preserving render fields."""
+	if not source_name:
+		frappe.throw(_("Source Crispy Format is required."))
+
+	target_company = _require_target_company(target_company)
+	name_strategy = _normalize_duplicate_name_strategy(name_strategy)
+	source = frappe.get_doc("Crispy Format", source_name)
+	source.check_permission("read")
+	if _clean_company(source.get("company")) == target_company:
+		frappe.throw(_("Target company must be different from the source company."))
+
+	format_data = _format_data_from_doc(source)
+	doc, warnings = _insert_format_duplicate_for_company(
+		format_data,
+		target_company=target_company,
+		source_name=source.name,
+		set_default=set_default,
+		name=name,
+		name_strategy=name_strategy,
+	)
+	return _format_duplicate_payload(doc, source.name, warnings)
+
+
+def _format_data_from_doc(doc) -> dict:
+	data = {field: doc.get(field) for field in EXPORT_FIELDS}
+	if isinstance(data.get("report"), list):
+		data["report"] = [
+			{"report": row.get("report"), "disabled": row.get("disabled") or 0}
+			for row in data["report"]
+			if row.get("report")
+		]
+	return data
+
+
+def _insert_format_duplicate_for_company(
+	format_data: dict,
+	*,
+	target_company: str,
+	source_name: str,
+	set_default: int | bool = 0,
+	name: str | None = None,
+	name_strategy: str = "copy",
+) -> tuple["frappe.model.document.Document", list[str]]:
+	_ensure_create_permission()
+	target_company = _require_target_company(target_company)
+	name_strategy = _normalize_duplicate_name_strategy(name_strategy)
+	doc_data = {field: format_data.get(field) for field in EXPORT_FIELDS}
+	warnings: list[str] = []
+
+	base_name = (name or _get_company_duplicate_base_name(source_name, target_company)).strip()
+	doc_data["name"] = _resolve_duplicate_format_name(base_name, name_strategy=name_strategy)
+	doc_data["doctype"] = "Crispy Format"
+	doc_data["company"] = target_company
+	doc_data["is_default"] = 1 if _truthy(set_default) else 0
+	doc_data["presentation_settings"], settings_warnings = _retarget_presentation_settings(
+		doc_data.get("presentation_settings"),
+		target_company,
+	)
+	warnings.extend(settings_warnings)
+
+	doc = frappe.get_doc(doc_data)
+	doc.flags.from_copy = True
+	doc.insert(ignore_permissions=True)
+	if _truthy(set_default):
+		doc.is_default = 1
+		doc.save(ignore_permissions=True)
+	return doc, warnings
+
+
+def _format_duplicate_payload(doc, source_name: str, warnings: list[str]) -> dict:
+	return {
+		"success": True,
+		"name": doc.name,
+		"source_name": source_name,
+		"company": doc.get("company"),
+		"is_default": 1 if doc.get("is_default") else 0,
+		"warnings": warnings,
+	}
+
+
+def _require_target_company(company: str | None) -> str:
+	company = _clean_company(company)
+	if not company:
+		frappe.throw(_("Target company is required."))
+	if not frappe.db.exists("Company", company):
+		frappe.throw(_("Company {0} does not exist.").format(company))
+	return company
+
+
+def _normalize_duplicate_name_strategy(value: str | None) -> str:
+	strategy = (value or "copy").strip().lower()
+	if strategy not in ALLOWED_DUPLICATE_NAME_STRATEGIES:
+		frappe.throw(_("Invalid duplicate name strategy: {0}").format(value))
+	return strategy
+
+
+def _get_company_duplicate_base_name(source_name: str, target_company: str) -> str:
+	abbr = frappe.db.get_value("Company", target_company, "abbr") or target_company
+	return f"{source_name} - {abbr}"
+
+
+def _resolve_duplicate_format_name(base_name: str, *, name_strategy: str = "copy") -> str:
+	base_name = (base_name or "Duplicated Crispy Format").strip()[:120]
+	if name_strategy == "replace":
+		return base_name
+	if not frappe.db.exists("Crispy Format", base_name):
+		return base_name
+	index = 2
+	while True:
+		candidate = f"{base_name} {index}"
+		if not frappe.db.exists("Crispy Format", candidate):
+			return candidate
+		index += 1
+
+
+def _retarget_presentation_settings(
+	raw_settings: str | None, target_company: str
+) -> tuple[str | None, list[str]]:
+	if not raw_settings:
+		return raw_settings, []
+	try:
+		settings = json.loads(raw_settings)
+	except json.JSONDecodeError:
+		return raw_settings, [_("presentation_settings could not be parsed while retargeting company")]
+	if not isinstance(settings, dict):
+		return raw_settings, []
+
+	warnings: list[str] = []
+	settings = apply_effective_company_to_presentation_settings(settings, target_company)
+	branding = settings.get("branding") if isinstance(settings.get("branding"), dict) else {}
+	profile = (branding.get("profile") or "").strip()
+	if profile:
+		profile_company = _clean_company(frappe.db.get_value("Crispy Branding Profile", profile, "company"))
+		if profile_company and profile_company != target_company:
+			branding["profile"] = ""
+			settings["source"] = "custom"
+			warnings.append(
+				_("Cleared source Branding Profile {0} because it belongs to another company.").format(
+					profile
+				)
+			)
+
+	return json.dumps(settings, sort_keys=True, separators=(",", ":"), default=str), warnings
+
+
+def _truthy(value: int | bool | str | None) -> bool:
+	if isinstance(value, str):
+		return value.strip().lower() in {"1", "true", "yes", "on"}
+	return bool(value)
 
 
 def _parse_import_payload(payload: dict | str) -> dict:

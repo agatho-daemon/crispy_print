@@ -276,6 +276,47 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(template.presentation_settings_json, original_settings)
 		self.assertEqual(template.typst_code, original_typst_code)
 
+	def test_duplicate_template_for_company_preserves_frozen_snapshot(self):
+		from crispy_print.api.v1.templates import duplicate_crispy_template_for_company
+
+		other_company = self._get_other_company()
+		if not other_company:
+			self.skipTest("Need at least two Company records")
+		source = self._insert_format("CT Test Source Duplicate Snapshot")
+		result = publish_crispy_template(source.name, version_bump="minor", make_active=True)
+		template = frappe.get_doc("Crispy Template", result["name"])
+		original_layout = template.layout_json
+		original_settings = template.presentation_settings_json
+		original_typst_code = template.typst_code
+
+		source.layout_json = json.dumps({"sections": [{"label": "Changed", "columns": []}]})
+		source.presentation_settings = json.dumps({"page": {"size": "Letter"}})
+		source.typst_code = "#text[changed]"
+		source.save(ignore_permissions=True)
+
+		duplicate = duplicate_crispy_template_for_company(
+			template.name,
+			other_company,
+			clone_mode="snapshot",
+			make_active=0,
+		)
+		cloned_template = frappe.get_doc("Crispy Template", duplicate["template"]["name"])
+		cloned_format = frappe.get_doc("Crispy Format", duplicate["cloned_format"])
+		cloned_settings = json.loads(cloned_template.presentation_settings_json)
+		cloned_format_settings = json.loads(cloned_format.presentation_settings)
+
+		self.assertEqual(duplicate["clone_mode"], "snapshot")
+		self.assertEqual(cloned_template.company, other_company)
+		self.assertEqual(cloned_template.layout_json, original_layout)
+		self.assertEqual(cloned_settings["page"], json.loads(original_settings)["page"])
+		self.assertEqual(cloned_settings["branding"]["company"], other_company)
+		self.assertEqual(cloned_template.typst_code, original_typst_code)
+		self.assertEqual(cloned_format.company, other_company)
+		self.assertEqual(cloned_format.layout_json, original_layout)
+		self.assertEqual(cloned_format_settings["page"], json.loads(original_settings)["page"])
+		self.assertEqual(cloned_format_settings["branding"]["company"], other_company)
+		self.assertEqual(cloned_format.typst_code, original_typst_code)
+
 	def test_rejects_duplicate_active_template_scope(self):
 		source = self._insert_format("CT Test Source Active Unique")
 		self._insert_template(

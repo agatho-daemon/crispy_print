@@ -67,6 +67,12 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Args: `payload: dict | str`, `on_conflict: 'copy' | 'overwrite'`
 - Returns: import result dict
 
+### `duplicate_crispy_format_for_company(source_name, target_company, set_default=0, name=None, name_strategy='copy')`
+
+- Args: source Crispy Format, target Company, optional default flag/name/name strategy
+- Returns: duplicate result payload with `name`, `source_name`, `company`, `is_default`, and `warnings`
+- Notes: preserves render fields and retargets company-scoped presentation settings to the target company
+
 ## Reports
 
 ### `get_reports_without_custom_html(generic_report_type=None)`
@@ -176,6 +182,12 @@ templates to global templates.
 
 - Args: source Crispy Format, version bump, optional company
 - Returns: preview of the template that would be published (no write)
+
+### `duplicate_crispy_template_for_company(source_template, target_company, clone_mode='snapshot', make_active=0, version_bump='minor')`
+
+- Args: source Crispy Template, target Company, clone mode (`snapshot` or `current_format`), activation flag, and version bump
+- Returns: duplicate result payload with `source_template`, `cloned_format`, `clone_mode`, `template`, and `warnings`
+- Notes: `snapshot` mode preserves the frozen template snapshot by creating a target-company Crispy Format from immutable template fields before publishing; `current_format` mode clones the template's current source format before publishing
 
 ### `get_active_crispy_templates_for_document(source_doctype, source_docname=None, company=None)`
 
