@@ -85,27 +85,9 @@ frappe.ui.CrispyPrintView = class {
 		this.add_or_update_context_action_icon();
 		this.setup_menu(null);
 		this.status_el.text("");
-		this.print_wrapper.find("#crispy-preview-root").html(`
-			<div class="frappe-card" style="max-width: 760px; margin: 56px auto; padding: 32px; text-align: center;">
-				<div class="mb-3">
-					${frappe.utils.icon("printer", "lg")}
-				</div>
-				<h3 class="mb-2">${__("Choose what to preview")}</h3>
-				<p class="text-muted mb-4">
-					${__("Print Preview needs a document or report context before it can render output.")}
-				</p>
-				<div class="flex justify-center gap-3 flex-wrap">
-					<button class="btn btn-primary" data-action="select-document">${__("Select Document")}</button>
-					<button class="btn btn-default" data-action="select-report">${__("Select Report")}</button>
-				</div>
-			</div>
-		`);
-		this.print_wrapper
-			.find('[data-action="select-document"]')
-			.on("click", () => this.prompt_for_document_preview());
-		this.print_wrapper
-			.find('[data-action="select-report"]')
-			.on("click", () => this.prompt_for_report_preview());
+		this.print_wrapper.find("#crispy-preview-root").empty();
+
+		setTimeout(() => this.prompt_for_preview_context(), 0);
 	}
 
 	show_report(context) {
@@ -227,21 +209,57 @@ frappe.ui.CrispyPrintView = class {
 		}
 	}
 
-	prompt_for_document_preview() {
-		frappe.prompt(
-			[
+	prompt_for_preview_context() {
+		if (this._preview_context_dialog?.display) return;
+
+		const dialog = new frappe.ui.Dialog({
+			title: __("Choose Print Preview Context"),
+			fields: [
 				{
-					fieldname: "doctype",
+					fieldname: "format_type",
+					fieldtype: "Select",
+					label: __("Document Type"),
+					options: "\nDocType\nReport\nContract",
+					reqd: 1,
+					onchange: () => update_fields(),
+				},
+				{
+					fieldname: "source_doctype",
 					fieldtype: "Link",
 					label: __("DocType"),
 					options: "DocType",
+					depends_on: "eval:doc.format_type == 'DocType'",
 					reqd: 1,
 				},
 				{
-					fieldname: "docname",
+					fieldname: "report_notice",
+					fieldtype: "HTML",
+					depends_on: "eval:doc.format_type == 'Report'",
+					options: `
+						<div class="text-muted" style="line-height: 1.55; padding: 4px 0 8px;">
+							${__(
+								"Report previews need a live report context, including filters, selected columns, and generated result data."
+							)}
+							<br>
+							${__(
+								"Open the report first, configure the view you want, then launch Crispy Print Preview from that report."
+							)}
+						</div>
+					`,
+				},
+				{
+					fieldname: "source_contract",
+					fieldtype: "Data",
+					label: __("Contract"),
+					depends_on: "eval:doc.format_type == 'Contract'",
+					description: __("Contract preview is not available yet."),
+				},
+				{
+					fieldname: "source_document",
 					fieldtype: "Dynamic Link",
 					label: __("Document"),
-					options: "doctype",
+					options: "source_doctype",
+					depends_on: "eval:doc.format_type == 'DocType'",
 					reqd: 1,
 				},
 				{
@@ -249,40 +267,60 @@ frappe.ui.CrispyPrintView = class {
 					fieldtype: "Link",
 					label: __("Crispy Format"),
 					options: "Crispy Format",
+					depends_on: "eval:doc.format_type == 'DocType'",
 				},
 			],
-			(values) => {
-				const route = ["crispy-print-preview", values.doctype, values.docname];
-				if (values.format) route.push(values.format);
-				frappe.set_route(...route);
-			},
-			__("Select Document"),
-			__("Preview")
-		);
-	}
+			primary_action_label: __("Preview"),
+			primary_action: (values) => {
+				if (values.format_type === "DocType") {
+					const route = [
+						"crispy-print-preview",
+						values.source_doctype,
+						values.source_document,
+					];
+					if (values.format) route.push(values.format);
+					dialog.hide();
+					frappe.set_route(...route);
+					return;
+				}
 
-	prompt_for_report_preview() {
-		frappe.prompt(
-			[
-				{
-					fieldname: "report",
-					fieldtype: "Link",
-					label: __("Report"),
-					options: "Report",
-					reqd: 1,
-				},
-			],
-			(values) => {
-				frappe.set_route("crispy-print-preview", "report", values.report);
+				if (values.format_type === "Report") {
+					frappe.msgprint({
+						title: __("Open from a report"),
+						message: __(
+							"Report previews need filters, selected columns, and generated result data. Open the report first, configure the view you want, then launch Crispy Print Preview from that report."
+						),
+						indicator: "blue",
+					});
+					return;
+				}
+
+				frappe.msgprint(__("Contract preview is not available yet."));
 			},
-			__("Select Report"),
-			__("Preview")
-		);
+		});
+
+		const update_fields = () => {
+			const values = dialog.get_values(true) || {};
+			const is_report = values.format_type === "Report";
+			const is_contract = values.format_type === "Contract";
+			dialog.set_primary_action_label(
+				is_report ? __("How to Preview") : is_contract ? __("Coming Soon") : __("Preview")
+			);
+			dialog.fields_dict.source_contract.df.reqd = is_contract ? 1 : 0;
+			dialog.refresh();
+		};
+
+		dialog.$wrapper.on("hidden.bs.modal", () => {
+			this._preview_context_dialog = null;
+		});
+		this._preview_context_dialog = dialog;
+		dialog.show();
+		update_fields();
 	}
 
 	print_document() {
 		if (!this.current.doctype && !this.current.report) {
-			this.prompt_for_document_preview();
+			this.prompt_for_preview_context();
 			return;
 		}
 		frappe.msgprint({
@@ -294,7 +332,7 @@ frappe.ui.CrispyPrintView = class {
 
 	render_pdf() {
 		if (!this.current.doctype && !this.current.report) {
-			this.prompt_for_document_preview();
+			this.prompt_for_preview_context();
 			return;
 		}
 		frappe.show_alert({ message: __("Generating PDF..."), indicator: "blue" });
@@ -312,7 +350,7 @@ frappe.ui.CrispyPrintView = class {
 
 	download_pdf() {
 		if (!this.current.doctype && !this.current.report) {
-			this.prompt_for_document_preview();
+			this.prompt_for_preview_context();
 			return;
 		}
 		frappe.show_alert({ message: __("Generating PDF..."), indicator: "blue" });

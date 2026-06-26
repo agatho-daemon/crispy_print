@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
 import re
 
@@ -26,6 +25,27 @@ PUBLIC_FIELDS = [
 	"version",
 ]
 
+MAX_TYPST_BLOCK_ID_LENGTH = 140
+
+
+def build_typst_block_id(block_name: str | None) -> str:
+	base = slugify_typst_block_name(block_name)
+	if not frappe.db.exists("Crispy Typst Block", base):
+		return base
+
+	suffix = 2
+	while True:
+		candidate_suffix = f"-{suffix}"
+		candidate = f"{base[: MAX_TYPST_BLOCK_ID_LENGTH - len(candidate_suffix)]}{candidate_suffix}"
+		if not frappe.db.exists("Crispy Typst Block", candidate):
+			return candidate
+		suffix += 1
+
+
+def slugify_typst_block_name(block_name: str | None) -> str:
+	slug = re.sub(r"[^a-z0-9]+", "-", (block_name or "").strip().lower()).strip("-")
+	return (slug or "typst-block")[:MAX_TYPST_BLOCK_ID_LENGTH]
+
 
 class CrispyTypstBlock(Document):
 	def before_naming(self) -> None:
@@ -33,13 +53,7 @@ class CrispyTypstBlock(Document):
 
 	def autoname(self) -> None:
 		self.normalize_block_key()
-		company = (self.company or "").strip()
-		if not company:
-			self.name = self.block_key
-			return
-
-		company_hash = hashlib.sha1(company.encode()).hexdigest()[:8]
-		self.name = f"{self.block_key}__{company_hash}"
+		self.name = build_typst_block_id(self.get("block_name"))
 
 	def validate(self) -> None:
 		self.validate_block_key()

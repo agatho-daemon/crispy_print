@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Typst compile responses to include optional diagnostics metadata for preview troubleshooting.
 - Aligned license metadata and log formatting fallbacks.
 - Refined compact item table value metadata used by Typst rendering and field extraction.
+- Changed new Crispy Typst Block document IDs to use the slugified block name with numeric duplicate suffixes instead of random hexadecimal suffixes.
+- Changed direct Print Preview access to open a context-selection modal for DocType previews, with graceful guidance for report and contract preview states.
 
 ### Fixed
 
@@ -49,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Tightened the report button unit test to assert the exact `crispy-print-preview` route.
 - Added backend coverage for Crispy Print/Crispy Studio Desktop Icon and Workspace Sidebar lifecycle contracts.
+- Added Crispy Typst Block tests for slugified document IDs and numeric duplicate suffixes.
 - Added tests for PDF standards, company-scoped template/render behavior, frozen render contracts, Duplicate for Company format/template flows, render settings, Typst version validation, preview diagnostics metadata, and compact table label/metadata rendering.
 
 ## [0.1.0-alpha.3] - 2026-05-28

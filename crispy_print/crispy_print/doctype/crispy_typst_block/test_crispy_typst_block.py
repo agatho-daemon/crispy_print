@@ -26,6 +26,32 @@ class TestCrispyTypstBlock(FrappeTestCase):
 
 		self.assertRaises(frappe.ValidationError, doc.insert)
 
+	def test_autoname_uses_slugified_block_name(self):
+		doc = self._insert_block(
+			block_key="cp_test_typst_block_slug_name",
+			block_name="CP Test Invoice Header!",
+		)
+
+		self.assertEqual(doc.name, "cp-test-invoice-header")
+
+	def test_autoname_adds_numeric_suffix_for_duplicate_slug(self):
+		first = self._insert_block(
+			block_key="cp_test_typst_block_slug_duplicate_1",
+			block_name="CP Test Shared Header",
+		)
+		second = self._insert_block(
+			block_key="cp_test_typst_block_slug_duplicate_2",
+			block_name="CP Test Shared Header",
+		)
+		third = self._insert_block(
+			block_key="cp_test_typst_block_slug_duplicate_3",
+			block_name="CP Test Shared Header",
+		)
+
+		self.assertEqual(first.name, "cp-test-shared-header")
+		self.assertEqual(second.name, "cp-test-shared-header-2")
+		self.assertEqual(third.name, "cp-test-shared-header-3")
+
 	def test_rejects_duplicate_applicable_documents(self):
 		doc = self._new_block(
 			block_key="cp_test_typst_block_duplicate_docs",
