@@ -113,16 +113,25 @@ class TestNavigationLifecycle(unittest.TestCase):
 		app_icon_path = APP_ROOT / "desktop_icon" / "crispy_print.json"
 		studio_icon_path = APP_ROOT / "desktop_icon" / "crispy_studio.json"
 		studio_sidebar_path = APP_ROOT / "workspace_sidebar" / "crispy_studio.json"
+		workspace_path = APP_ROOT / "crispy_print" / "workspace" / "crispy_print" / "crispy_print.json"
 		old_sidebar_path = APP_ROOT / "workspace_sidebar" / "crispy_print.json"
+		studio_icon_asset_paths = [
+			APP_ROOT / "public" / "icons" / "desktop_icons" / variant / "crispy_studio.svg"
+			for variant in ("solid", "subtle")
+		]
 
 		app_icon = json.loads(app_icon_path.read_text())
 		studio_icon = json.loads(studio_icon_path.read_text())
 		studio_sidebar = json.loads(studio_sidebar_path.read_text())
+		workspace = json.loads(workspace_path.read_text())
 
 		self.assertFalse(old_sidebar_path.exists())
+		for asset_path in studio_icon_asset_paths:
+			self.assertTrue(asset_path.exists(), f"Missing desktop icon asset: {asset_path}")
 		self.assertEqual(app_icon_path.name, f"{scrub(app_icon['label'])}.json")
 		self.assertEqual(studio_icon_path.name, f"{scrub(studio_icon['label'])}.json")
 		self.assertEqual(studio_sidebar_path.name, f"{scrub(studio_sidebar['title'])}.json")
+		self.assertEqual(workspace_path.name, f"{scrub(workspace['label'])}.json")
 
 		self.assertEqual(app_icon["name"], "Crispy Print")
 		self.assertEqual(app_icon["icon_type"], "App")
@@ -141,6 +150,40 @@ class TestNavigationLifecycle(unittest.TestCase):
 		self.assertEqual(studio_sidebar["app"], "crispy_print")
 		self.assertEqual(studio_sidebar["standard"], 1)
 		self.assertEqual(studio_sidebar["header_icon"], "crispy-print-logo")
+
+		home_item = studio_sidebar["items"][0]
+		self.assertEqual(home_item["label"], "Home")
+		self.assertEqual(home_item["link_type"], "URL")
+		self.assertEqual(home_item["url"], "/desk/crispy-print?sidebar=Crispy%20Studio")
+
+		self.assertEqual(
+			[item["label"] for item in studio_sidebar["items"][:10]],
+			[
+				"Home",
+				"Formats",
+				"Branding Profiles",
+				"Crispy Formats",
+				"Templates",
+				"Typst Blocks",
+				"Builders",
+				"Branding Builder",
+				"Format Builder",
+				"Print Preview",
+			],
+		)
+		self.assertNotIn("Branding", [item["label"] for item in studio_sidebar["items"]])
+		issued_documents_section = next(
+			item
+			for item in studio_sidebar["items"]
+			if item["type"] == "Section Break" and item["label"] == "Issued Documents"
+		)
+		self.assertEqual(issued_documents_section["keep_closed"], 1)
+
+		workspace_content = json.loads(workspace["content"])
+		self.assertEqual(
+			[block["data"]["shortcut_name"] for block in workspace_content[:4]],
+			["Crispy Formats", "Format Builder", "Branding Profiles", "Branding Builder"],
+		)
 
 	def test_after_sync_removes_local_auto_generated_crispy_print_sidebar(self):
 		self._insert_workspace_sidebar("Test Crispy Auto Sidebar", app=None, standard=0)

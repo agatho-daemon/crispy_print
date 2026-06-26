@@ -13,53 +13,10 @@
       "indent": 0,
       "keep_closed": 0,
       "label": "Home",
-      "link_to": "Crispy Print",
-      "link_type": "Workspace",
+      "link_type": "URL",
       "show_arrow": 0,
-      "type": "Link"
-    },
-    {
-      "child": 0,
-      "collapsible": 1,
-      "icon": "layout-template",
-      "indent": 1,
-      "keep_closed": 0,
-      "label": "Builders",
-      "show_arrow": 0,
-      "type": "Section Break"
-    },
-    {
-      "child": 1,
-      "collapsible": 1,
-      "indent": 0,
-      "keep_closed": 0,
-      "label": "Format Builder",
-      "link_to": "crispy-format-builder",
-      "link_type": "Page",
-      "show_arrow": 0,
-      "type": "Link"
-    },
-    {
-      "child": 1,
-      "collapsible": 1,
-      "indent": 0,
-      "keep_closed": 0,
-      "label": "Branding Builder",
-      "link_to": "cbp-builder",
-      "link_type": "Page",
-      "show_arrow": 0,
-      "type": "Link"
-    },
-    {
-      "child": 1,
-      "collapsible": 1,
-      "indent": 0,
-      "keep_closed": 0,
-      "label": "Print Preview",
-      "link_to": "crispy-print-preview",
-      "link_type": "Page",
-      "show_arrow": 0,
-      "type": "Link"
+      "type": "Link",
+      "url": "/desk/crispy-print?sidebar=Crispy%20Studio"
     },
     {
       "child": 0,
@@ -70,6 +27,17 @@
       "label": "Formats",
       "show_arrow": 0,
       "type": "Section Break"
+    },
+    {
+      "child": 1,
+      "collapsible": 1,
+      "indent": 0,
+      "keep_closed": 0,
+      "label": "Branding Profiles",
+      "link_to": "Crispy Branding Profile",
+      "link_type": "DocType",
+      "show_arrow": 0,
+      "type": "Link"
     },
     {
       "child": 1,
@@ -107,6 +75,49 @@
     {
       "child": 0,
       "collapsible": 1,
+      "icon": "layout-template",
+      "indent": 1,
+      "keep_closed": 0,
+      "label": "Builders",
+      "show_arrow": 0,
+      "type": "Section Break"
+    },
+    {
+      "child": 1,
+      "collapsible": 1,
+      "indent": 0,
+      "keep_closed": 0,
+      "label": "Branding Builder",
+      "link_to": "cbp-builder",
+      "link_type": "Page",
+      "show_arrow": 0,
+      "type": "Link"
+    },
+    {
+      "child": 1,
+      "collapsible": 1,
+      "indent": 0,
+      "keep_closed": 0,
+      "label": "Format Builder",
+      "link_to": "crispy-format-builder",
+      "link_type": "Page",
+      "show_arrow": 0,
+      "type": "Link"
+    },
+    {
+      "child": 1,
+      "collapsible": 1,
+      "indent": 0,
+      "keep_closed": 0,
+      "label": "Print Preview",
+      "link_to": "crispy-print-preview",
+      "link_type": "Page",
+      "show_arrow": 0,
+      "type": "Link"
+    },
+    {
+      "child": 0,
+      "collapsible": 1,
       "icon": "table",
       "indent": 1,
       "keep_closed": 0,
@@ -128,30 +139,9 @@
     {
       "child": 0,
       "collapsible": 1,
-      "icon": "palette",
-      "indent": 1,
-      "keep_closed": 0,
-      "label": "Branding",
-      "show_arrow": 0,
-      "type": "Section Break"
-    },
-    {
-      "child": 1,
-      "collapsible": 1,
-      "indent": 0,
-      "keep_closed": 0,
-      "label": "Branding Profiles",
-      "link_to": "Crispy Branding Profile",
-      "link_type": "DocType",
-      "show_arrow": 0,
-      "type": "Link"
-    },
-    {
-      "child": 0,
-      "collapsible": 1,
       "icon": "file-check",
       "indent": 1,
-      "keep_closed": 0,
+      "keep_closed": 1,
       "label": "Issued Documents",
       "show_arrow": 0,
       "type": "Section Break"

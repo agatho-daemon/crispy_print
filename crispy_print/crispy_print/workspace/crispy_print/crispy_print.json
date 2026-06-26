@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"cp_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Crispy Print</b></span>\",\"col\":12}},{\"id\":\"cp_shortcut_format_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Format Builder\",\"col\":3}},{\"id\":\"cp_shortcut_branding_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Builder\",\"col\":3}},{\"id\":\"cp_shortcut_formats\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Crispy Formats\",\"col\":3}},{\"id\":\"cp_shortcut_branding\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Profiles\",\"col\":3}},{\"id\":\"cp_spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cp_header_documents\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Documents</b></span>\",\"col\":12}},{\"id\":\"cp_card_core\",\"type\":\"card\",\"data\":{\"card_name\":\"Core Documents\",\"col\":4}},{\"id\":\"cp_card_builders\",\"type\":\"card\",\"data\":{\"card_name\":\"Builders\",\"col\":4}},{\"id\":\"cp_card_library\",\"type\":\"card\",\"data\":{\"card_name\":\"Reusable Library\",\"col\":4}},{\"id\":\"cp_card_registry\",\"type\":\"card\",\"data\":{\"card_name\":\"Issued Documents\",\"col\":4}},{\"id\":\"cp_card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"cp_card_regulatory\",\"type\":\"card\",\"data\":{\"card_name\":\"Regulatory Setup\",\"col\":4}}]",
+ "content": "[{\"id\":\"cp_shortcut_formats\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Crispy Formats\",\"col\":3}},{\"id\":\"cp_shortcut_format_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Format Builder\",\"col\":3}},{\"id\":\"cp_shortcut_branding\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Profiles\",\"col\":3}},{\"id\":\"cp_shortcut_branding_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Builder\",\"col\":3}},{\"id\":\"cp_spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cp_header_documents\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Documents</b></span>\",\"col\":12}},{\"id\":\"cp_card_core\",\"type\":\"card\",\"data\":{\"card_name\":\"Core Documents\",\"col\":4}},{\"id\":\"cp_card_builders\",\"type\":\"card\",\"data\":{\"card_name\":\"Builders\",\"col\":4}},{\"id\":\"cp_card_library\",\"type\":\"card\",\"data\":{\"card_name\":\"Reusable Library\",\"col\":4}},{\"id\":\"cp_card_registry\",\"type\":\"card\",\"data\":{\"card_name\":\"Issued Documents\",\"col\":4}},{\"id\":\"cp_card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"cp_card_regulatory\",\"type\":\"card\",\"data\":{\"card_name\":\"Regulatory Setup\",\"col\":4}}]",
  "creation": "2026-05-30 13:54:38.372781",
  "custom_blocks": [],
  "docstatus": 0,
@@ -190,24 +190,6 @@
  "sequence_id": 40.0,
  "shortcuts": [
   {
-   "color": "Blue",
-   "doc_view": "",
-   "format": "",
-   "label": "Format Builder",
-   "link_to": "crispy-format-builder",
-   "stats_filter": "[]",
-   "type": "Page"
-  },
-  {
-   "color": "Green",
-   "doc_view": "",
-   "format": "",
-   "label": "Branding Builder",
-   "link_to": "cbp-builder",
-   "stats_filter": "[]",
-   "type": "Page"
-  },
-  {
    "color": "Cyan",
    "doc_view": "List",
    "format": "",
@@ -217,6 +199,15 @@
    "type": "DocType"
   },
   {
+   "color": "Blue",
+   "doc_view": "",
+   "format": "",
+   "label": "Format Builder",
+   "link_to": "crispy-format-builder",
+   "stats_filter": "[]",
+   "type": "Page"
+  },
+  {
    "color": "Purple",
    "doc_view": "List",
    "format": "",
@@ -224,6 +215,15 @@
    "link_to": "Crispy Branding Profile",
    "stats_filter": "[]",
    "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "format": "",
+   "label": "Branding Builder",
+   "link_to": "cbp-builder",
+   "stats_filter": "[]",
+   "type": "Page"
   }
  ],
  "title": "Crispy Print"
