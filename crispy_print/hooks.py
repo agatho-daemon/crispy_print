@@ -7,6 +7,7 @@ app_description = (
 app_email = "agatho_daemon@icloud.com"
 app_license = "MIT"
 app_logo_url = "/assets/crispy_print/icons/crispy-print-logo.svg"
+app_home = "/desk/crispy-print"
 
 # include js, css files in header of desk.html
 app_include_js = [
@@ -19,6 +20,8 @@ app_include_js = [
 fixtures = [{"dt": "Crispy Format"}]
 
 after_install = "crispy_print.install.after_install"
+after_sync = "crispy_print.install.after_sync"
+before_uninstall = "crispy_print.install.before_uninstall"
 
 doc_events = {
 	"Company": {
@@ -42,7 +45,7 @@ if frappe_major >= 16:
 			"name": app_name,
 			"logo": app_logo_url,
 			"title": app_title,
-			"route": "/desk/crispy-print",
+			"route": app_home,
 			"has_permission": "crispy_print.check_app_permission",
 		}
 	]

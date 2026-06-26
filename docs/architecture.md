@@ -84,9 +84,10 @@ crispy_print/
 │   │   └── workspace/
 │   │       └── crispy_print/                 # Crispy Print Desk workspace
 │   ├── workspace_sidebar/
-│   │   └── crispy_print.json             # Frappe v16 curated sidebar export
+│   │   └── crispy_studio.json            # Frappe v16 curated Crispy Studio sidebar export
 │   ├── desktop_icon/
-│   │   └── crispy_print.json             # Frappe v16 app/category icon export
+│   │   ├── crispy_print.json             # Frappe v16 Crispy Print app icon export
+│   │   └── crispy_studio.json            # Frappe v16 Crispy Studio sidebar link icon export
 │   ├── templates/
 │   │   └── pages/                        # Frappe website template package
 │   ├── translations/                     # App translation CSV files
