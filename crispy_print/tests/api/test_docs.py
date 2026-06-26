@@ -86,6 +86,7 @@ class TestFormattedDocAPI(FrappeTestCase):
 			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
 			mock.patch("crispy_print.api.v1.docs.frappe.format", return_value="<p>Hello</p>"),
 			mock.patch("crispy_print.api.v1.docs.frappe.utils.strip_html", return_value="Hello"),
+			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
 		):
 			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
 
@@ -127,6 +128,7 @@ class TestFormattedDocAPI(FrappeTestCase):
 			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
 			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", side_effect=mock_get_meta),
 			mock.patch("crispy_print.api.v1.docs.frappe.format", side_effect=mock_format),
+			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
 		):
 			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
 
@@ -148,6 +150,7 @@ class TestFormattedDocAPI(FrappeTestCase):
 		with (
 			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
 			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
+			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
 			mock.patch(
 				"crispy_print.api.v1.docs.get_preferred_document_code_for_doc",
 				return_value={

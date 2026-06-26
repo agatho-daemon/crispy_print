@@ -1,5 +1,6 @@
 # Copyright (c) 2025, Agathodaemon and Contributors
 # See license.txt
+# pyright: reportArgumentType=false, reportAttributeAccessIssue=false
 
 import json
 from unittest import mock
@@ -509,6 +510,15 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 
 	def test_get_default_doctypes_excludes_report_formats(self):
 		from crispy_print.api.v1 import get_default_doctypes
+
+		if not frappe.db.exists("Crispy Generic Report", "Grid"):
+			frappe.get_doc(
+				{
+					"doctype": "Crispy Generic Report",
+					"template_type": "Grid",
+					"description": "Grid report test fixture",
+				}
+			).insert(ignore_permissions=True)
 
 		format_report = frappe.get_doc(
 			{

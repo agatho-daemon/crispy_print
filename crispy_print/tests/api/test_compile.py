@@ -5,6 +5,7 @@ import base64
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any, cast
 from unittest.mock import ANY, MagicMock, Mock, patch
 
 import frappe
@@ -43,7 +44,7 @@ class TestTypstAPI(FrappeTestCase):
 	def setUp(self):
 		"""Set up test environment"""
 		frappe.set_user("Administrator")
-		frappe.cache().delete_value("crispy_print:typst_local_fonts:v3")
+		frappe.cache().delete_value("crispy_print:typst_local_fonts:v3")  # type: ignore[operator]
 		self.typst_version_patcher = patch("crispy_print.api.v1.compile._ensure_typst_minimum_version")
 		self.typst_version_patcher.start()
 		self.addCleanup(self.typst_version_patcher.stop)
@@ -135,6 +136,8 @@ This is a test.
 
 		result = compile_typst(typst_source, output_format="pdf")
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		self.assertEqual(result["format"], "pdf")
 		self.assertIn("pdf_data", result)
@@ -239,6 +242,8 @@ This is a test.
 
 		result = compile_typst(typst_source, output_format="svg")
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		self.assertEqual(result["format"], "svg")
 		self.assertIn("svg_pages", result)
@@ -306,6 +311,8 @@ This is a test.
 			asset_files=["/files/letterhead.png"],
 		)
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		mock_copy.assert_called_once()
 
@@ -357,6 +364,8 @@ This is a test.
 				asset_files='["/private/files/ManagerLogo.svg"]',
 			)
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		mock_copy.assert_called_once()
 
@@ -397,6 +406,8 @@ This is a test.
 			qr_filename="doc-qr.svg",
 		)
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		mock_qr.assert_called_once()
 		self.assertEqual(mock_qr.call_args.args[3], {})
@@ -422,6 +433,8 @@ This is a test.
 
 		result = compile_typst("= Test", output_format="svg")
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		cmd_args = mock_run.call_args.args[0]
 		self.assertIn("--font-path", cmd_args)
@@ -594,6 +607,8 @@ class TestAssetCopy(FrappeTestCase):
 			asset_files=["/files/logo.svg", "/files/image.png"],
 		)
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		mock_copy_assets.assert_called_once()
 
@@ -618,9 +633,7 @@ class TestAssetCopy(FrappeTestCase):
 
 		first = Mock()
 		first.returncode = 1
-		first.stderr = (
-			"error: file not found " "(searched at /private/var/folders/.../tmpabcd/wsqg_address.svg)"
-		)
+		first.stderr = "error: file not found (searched at /private/var/folders/.../tmpabcd/wsqg_address.svg)"
 		first.stdout = ""
 
 		second = Mock()
@@ -644,6 +657,8 @@ class TestAssetCopy(FrappeTestCase):
 
 		result = compile_typst("= Test", output_format="svg", asset_files=["/files/wsqg_address.svg"])
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		self.assertEqual(mock_run.call_count, 2)
 		mock_copy_file.assert_called_with("/files/wsqg_address.svg", ANY, "Asset file")
@@ -660,15 +675,16 @@ class TestQRCodeGeneration(FrappeTestCase):
 		with patch.dict("sys.modules", {"segno": MagicMock()}):
 			import sys
 
-			sys.modules["segno"].make = MagicMock()
+			segno = cast(Any, sys.modules["segno"])
+			segno.make = MagicMock()
 			qr_obj = MagicMock()
-			sys.modules["segno"].make.return_value = qr_obj
+			segno.make.return_value = qr_obj
 			qr_obj.save = MagicMock()
 
 			result = _write_qr_svg("total: د.ك 32,000.000", "test.svg", "/tmp")
 
 			self.assertEqual(result, "test.svg")
-			sys.modules["segno"].make.assert_called_once_with("total: د.ك 32,000.000", error="m")
+			segno.make.assert_called_once_with("total: د.ك 32,000.000", error="m")
 			qr_obj.save.assert_called_once()
 
 	def test_write_qr_svg_rejects_datamatrix_fallback(self):

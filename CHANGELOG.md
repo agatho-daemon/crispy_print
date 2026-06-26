@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-
 - Added a public **Crispy Print** Desk workspace with grouped shortcuts and cards for builders, core records, reusable library records, issued-document tracking, reports, and regulatory setup.
 - Added the Crispy Print workspace icon to the Desk icon sprite hook.
 - Added Frappe v16 Desktop Icon exports for the hidden Crispy Print app tile and visible Crispy Studio sidebar link.
@@ -27,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ignored local Zed editor and Pyright configuration files.
 
 ### Changed
-
 
 - Renamed the print preview Desk Page route from `/app/crispy-print` to `/app/crispy-print-preview` so `/app/crispy-print` can cleanly belong to the Crispy Print workspace.
 - Updated document and report preview buttons to route to `crispy-print-preview`.
@@ -49,20 +47,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 
-
 - Tightened the report button unit test to assert the exact `crispy-print-preview` route.
+- Added backend coverage for Crispy Print/Crispy Studio Desktop Icon and Workspace Sidebar lifecycle contracts.
 - Added tests for PDF standards, company-scoped template/render behavior, frozen render contracts, Duplicate for Company format/template flows, render settings, Typst version validation, preview diagnostics metadata, and compact table label/metadata rendering.
 
 ## [0.1.0-alpha.3] - 2026-05-28
 
 ### Alpha Release Warning
 
-
 - Feature work is frozen for alpha 3 so testers can focus on regressions, data migration issues, and workflow gaps before beta.
 - Report support is still WIP. Report preview and report PDF generation are available for testing, but behavior and templates may still change before beta.
 
 ### Added
-
 
 - Added **Crispy Branding Profile** for reusable company/page/typography/table/branding/QR presentation settings.
 - Added **Crispy Branding Profile Builder** page with visual controls for page setup, typography, tables, logo, letterhead, QR placement, and code-only Typst preview.
@@ -86,7 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-
 - Bumped app version to `0.1.0-alpha.3`.
 - Reworked presentation settings from page-specific settings into a broader normalized presentation-settings model.
 - Updated existing Crispy Format behavior to support Branding Profiles, report formats, Advanced/Basic report mode state, and Typst block resolution.
@@ -100,7 +95,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-
 - Added shared API security helpers for permission checks and rate limiting.
 - Added rate limits to compile, report, QR/document-code, format-list, and parity endpoints.
 - Hardened Typst compilation asset handling with path traversal checks, allowed asset roots, symlink rejection, external/data URL rejection, duplicate basename detection, and safer file copying.
@@ -111,7 +105,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 
-
 - Added short-lived Typst compile result caching keyed by source, output format, assets, chart SVG, QR data, Typst binary, and font context.
 - Combined report preview source generation and SVG compilation into one API request for report preview workflows.
 - Reduced global Desk page load weight by lazy-loading the heavy Crispy Vue bundles only when builder/preview pages are opened.
@@ -121,7 +114,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-
 - Fixed several raw Typst, Typst escaping, image asset, worker lifecycle, and preview race-condition edge cases.
 - Fixed report builder mode synchronization and report selector behavior.
 - Fixed format import/export and format-loader error handling edge cases.
@@ -130,7 +122,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 
-
 - Current frontend suite: 175 tests across 52 test files.
 - Current backend suite: 168 test methods across 16 test files.
 - Added module-level backend coverage for the new DocTypes and APIs.
@@ -138,14 +129,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Limitations
 
-
 - Reports remain WIP for alpha 3 and need focused tester feedback before beta.
 - Crispy Issued Document, issued-document artifacts, trust events, and regulatory submissions are foundation scaffolding only. Their field structure and usage are placeholders until feedback is collected from users in regulated tax/QR regions.
 - QR-related DocTypes and CID regulatory/trust fields need real-world validation from regulated regions before their structure, required fields, payload mapping, and usage guidance are finalized.
 - Full `bench --site <site> run-tests --app crispy_print` may depend on site/ERPNext test fixtures; module-level Crispy tests are the current reliable manual release check.
 
 ### Breaking / Migration Notes
-
 
 - This alpha changes the presentation settings and builder data model. Back up existing formats before updating.
 - Run `bench migrate` after updating so new DocTypes and backfill patches are applied.
@@ -155,18 +144,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-
 - Bumped app version to `0.1.0-alpha.2`.
 
 ## [0.1.0-alpha.1] - 2025-01-03
 
 ### ⚠️ Alpha Release Warning
 
-
 This is an early alpha release. Expect bugs and breaking changes. Not recommended for production use.
 
 ### Added
-
 
 - Visual layout builder with drag-and-drop interface (Vue 3)
 - Typst compilation engine for PDF/SVG generation
@@ -182,7 +168,6 @@ This is an early alpha release. Expect bugs and breaking changes. Not recommende
 
 ### System Requirements
 
-
 - Frappe Framework v15+
 - Typst CLI 0.11.0+
 - Python 3.10+
@@ -191,11 +176,9 @@ This is an early alpha release. Expect bugs and breaking changes. Not recommende
 
 ### Known Limitations
 
-
 See [README.md - Known Limitations](README.md#known-limitations) for full list.
 
 ### Dependencies
-
 
 - `@simonwep/pickr` ^1.9.1 (color picker)
 - Vue 3, Pinia (state management)

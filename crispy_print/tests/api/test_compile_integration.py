@@ -31,6 +31,8 @@ This is a Typst CLI integration test.
 
 		result = compile_typst(typst_source, output_format="pdf")
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		self.assertEqual(result["format"], "pdf")
 		pdf_bytes = base64.b64decode(result["pdf_data"])
@@ -48,7 +50,9 @@ This is a Typst CLI integration test.
 
 		result = compile_typst(typst_source, output_format="svg")
 
+		self.assertIsNotNone(result)
+		assert result is not None
 		self.assertTrue(result["success"])
 		self.assertEqual(result["format"], "svg")
 		self.assertGreaterEqual(result["page_count"], 1)
-		self.assertIn("<svg", result["svg_pages"][0])
+		self.assertIn("<svg", str(result["svg_pages"][0]))

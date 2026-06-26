@@ -106,8 +106,8 @@ class TestTemplateParityHarness(FrappeTestCase):
 		signals = extract_legacy_template_signals(source)
 
 		self.assertIn("show_future_payments", signals["filter_keys"])
-		self.assertIn("show_sales_person", signals["filter_keys"])
-		self.assertIn("credit_limit", signals["filter_keys"])
+		self.assertIn("show_remarks", signals["filter_keys"])
+		self.assertIn("report_date", signals["filter_keys"])
 		self.assertIn("party", signals["filter_keys"])
 
 	def test_extracts_financial_statements_filters_from_legacy_template(self):

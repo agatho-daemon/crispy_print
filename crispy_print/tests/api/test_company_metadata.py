@@ -25,5 +25,6 @@ class TestCompanyListMetadata(FrappeTestCase):
 			)
 
 			self.assertIsNotNone(company_field, doctype)
+			assert company_field is not None
 			self.assertEqual(company_field.get("in_list_view"), 1, doctype)
 			self.assertEqual(company_field.get("in_standard_filter"), 1, doctype)
