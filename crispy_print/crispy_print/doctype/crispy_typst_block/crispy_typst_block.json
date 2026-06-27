@@ -44,7 +44,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Reference Key",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "default": "1",
@@ -75,7 +75,7 @@
    "label": "Description"
   },
   {
-   "default": "1.0.0",
+   "default": "1.0",
    "fieldname": "version",
    "fieldtype": "Data",
    "label": "Version"

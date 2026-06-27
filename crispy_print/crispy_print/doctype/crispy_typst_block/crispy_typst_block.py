@@ -12,6 +12,9 @@ from frappe import _
 from frappe.model.document import Document
 
 BLOCK_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+VERSION_PATTERN = re.compile(r"^\d+\.\d+$")
+ZERO_PATCH_VERSION_PATTERN = re.compile(r"^(\d+)\.(\d+)\.0$")
+DEFAULT_TYPST_BLOCK_VERSION = "1.0"
 
 PUBLIC_FIELDS = [
 	"name",
@@ -28,8 +31,11 @@ PUBLIC_FIELDS = [
 MAX_TYPST_BLOCK_ID_LENGTH = 140
 
 
-def build_typst_block_id(block_name: str | None) -> str:
-	base = slugify_typst_block_name(block_name)
+def build_typst_block_id(block_key: str | None, version: str | None) -> str:
+	base = (
+		f"{normalize_typst_block_key(block_key) or 'typst_block'}-v{normalize_typst_block_version(version)}"
+	)
+	base = base[:MAX_TYPST_BLOCK_ID_LENGTH]
 	if not frappe.db.exists("Crispy Typst Block", base):
 		return base
 
@@ -42,26 +48,53 @@ def build_typst_block_id(block_name: str | None) -> str:
 		suffix += 1
 
 
-def slugify_typst_block_name(block_name: str | None) -> str:
-	slug = re.sub(r"[^a-z0-9]+", "-", (block_name or "").strip().lower()).strip("-")
-	return (slug or "typst-block")[:MAX_TYPST_BLOCK_ID_LENGTH]
+def build_typst_block_key(block_name: str | None) -> str:
+	block_key = re.sub(r"[^a-z0-9]+", "_", (block_name or "").strip().lower()).strip("_")
+	return block_key or "typst_block"
+
+
+def normalize_typst_block_key(block_key: str | None) -> str:
+	return (block_key or "").strip()
+
+
+def normalize_typst_block_version(version: str | None) -> str:
+	version = (version or DEFAULT_TYPST_BLOCK_VERSION).strip().lower()
+	if version.startswith("v"):
+		version = version[1:]
+	zero_patch_match = ZERO_PATCH_VERSION_PATTERN.match(version)
+	if zero_patch_match:
+		version = f"{zero_patch_match.group(1)}.{zero_patch_match.group(2)}"
+	return version or DEFAULT_TYPST_BLOCK_VERSION
 
 
 class CrispyTypstBlock(Document):
 	def before_naming(self) -> None:
+		self.set_default_block_key()
 		self.normalize_block_key()
+		self.normalize_version()
 
 	def autoname(self) -> None:
+		self.set_default_block_key()
 		self.normalize_block_key()
-		self.name = build_typst_block_id(self.get("block_name"))
+		self.normalize_version()
+		self.name = build_typst_block_id(self.get("block_key"), self.get("version"))
 
 	def validate(self) -> None:
+		self.set_default_block_key()
 		self.validate_block_key()
+		self.validate_version()
 		self.validate_unique_block_key_for_company()
 		self.validate_unique_applicable_documents()
 
+	def set_default_block_key(self) -> None:
+		if not self.block_key:
+			self.block_key = build_typst_block_key(self.block_name)
+
 	def normalize_block_key(self) -> None:
-		self.block_key = (self.block_key or "").strip()
+		self.block_key = normalize_typst_block_key(self.block_key)
+
+	def normalize_version(self) -> None:
+		self.version = normalize_typst_block_version(self.version)
 
 	def validate_block_key(self) -> None:
 		self.normalize_block_key()
@@ -75,6 +108,12 @@ class CrispyTypstBlock(Document):
 					"Reference Key must start with a lowercase letter and contain only lowercase letters, numbers, and single underscores."
 				)
 			)
+
+	def validate_version(self) -> None:
+		self.normalize_version()
+
+		if not VERSION_PATTERN.match(self.version):
+			frappe.throw(_("Version must use the format 1.0."))
 
 	def validate_unique_block_key_for_company(self) -> None:
 		company = (self.company or "").strip()

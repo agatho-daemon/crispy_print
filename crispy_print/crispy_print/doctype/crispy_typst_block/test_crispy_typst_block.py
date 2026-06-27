@@ -26,31 +26,72 @@ class TestCrispyTypstBlock(FrappeTestCase):
 
 		self.assertRaises(frappe.ValidationError, doc.insert)
 
-	def test_autoname_uses_slugified_block_name(self):
+	def test_autoname_uses_block_key_and_version(self):
 		doc = self._insert_block(
-			block_key="cp_test_typst_block_slug_name",
+			block_key="cp_test_typst_block_doc_name",
 			block_name="CP Test Invoice Header!",
 		)
 
-		self.assertEqual(doc.name, "cp-test-invoice-header")
+		self.assertEqual(doc.name, "cp_test_typst_block_doc_name-v1.0")
 
-	def test_autoname_adds_numeric_suffix_for_duplicate_slug(self):
+	def test_defaults_block_key_from_block_name(self):
+		doc = self._insert_block(
+			block_key="",
+			block_name="CP Test Invoice Header!",
+		)
+
+		self.assertEqual(doc.block_key, "cp_test_invoice_header")
+		self.assertEqual(doc.name, "cp_test_invoice_header-v1.0")
+
+	def test_defaults_version_to_1_0(self):
+		doc = self._insert_block(
+			block_key="cp_test_typst_block_default_version",
+			version="",
+		)
+
+		self.assertEqual(doc.version, "1.0")
+		self.assertEqual(doc.name, "cp_test_typst_block_default_version-v1.0")
+
+	def test_accepts_version_with_leading_v(self):
+		doc = self._insert_block(
+			block_key="cp_test_typst_block_leading_v_version",
+			version="v1.2",
+		)
+
+		self.assertEqual(doc.version, "1.2")
+		self.assertEqual(doc.name, "cp_test_typst_block_leading_v_version-v1.2")
+
+	def test_normalizes_zero_patch_version(self):
+		doc = self._insert_block(
+			block_key="cp_test_typst_block_zero_patch_version",
+			version="1.0.0",
+		)
+
+		self.assertEqual(doc.version, "1.0")
+		self.assertEqual(doc.name, "cp_test_typst_block_zero_patch_version-v1.0")
+
+	def test_rejects_invalid_version(self):
+		doc = self._new_block(
+			block_key="cp_test_typst_block_invalid_version",
+			version="1.0.1",
+		)
+
+		self.assertRaises(frappe.ValidationError, doc.insert)
+
+	def test_autoname_adds_numeric_suffix_for_duplicate_id(self):
+		company = self._ensure_company()
 		first = self._insert_block(
-			block_key="cp_test_typst_block_slug_duplicate_1",
-			block_name="CP Test Shared Header",
+			block_key="cp_test_typst_block_duplicate_id",
+			block_name="CP Test Global Shared Header",
 		)
 		second = self._insert_block(
-			block_key="cp_test_typst_block_slug_duplicate_2",
-			block_name="CP Test Shared Header",
-		)
-		third = self._insert_block(
-			block_key="cp_test_typst_block_slug_duplicate_3",
-			block_name="CP Test Shared Header",
+			block_key="cp_test_typst_block_duplicate_id",
+			block_name="CP Test Company Shared Header",
+			company=company,
 		)
 
-		self.assertEqual(first.name, "cp-test-shared-header")
-		self.assertEqual(second.name, "cp-test-shared-header-2")
-		self.assertEqual(third.name, "cp-test-shared-header-3")
+		self.assertEqual(first.name, "cp_test_typst_block_duplicate_id-v1.0")
+		self.assertEqual(second.name, "cp_test_typst_block_duplicate_id-v1.0-2")
 
 	def test_rejects_duplicate_applicable_documents(self):
 		doc = self._new_block(

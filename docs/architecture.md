@@ -141,7 +141,7 @@ Data model:
 - **`Crispy Template`** - Frozen, versioned approved render contract published from a Crispy Format.
 - **`Crispy Issued Document`** - Immutable issued-document registry (CID) with verification tokens and revocation/supersession state, plus artifact, trust-event, and regulatory-submission child tables.
 - **`Crispy Branding Profile`** - Reusable company presentation profile.
-- **`Crispy Typst Block`** - Governed reusable Typst snippet library.
+- **`Crispy Typst Block`** - Governed reusable Typst snippet library with generated snake_case reference keys, major/minor versions, and company-aware override support.
 - **`Crispy Generic Report`** - Generic report definition for report-type formats.
 - **`Crispy Print Settings`** - Single DocType for global font, rendering, and print-policy configuration.
 - **`Crispy QR Regulatory Profile`**, **`Crispy Fiscal Credential`**, **`Crispy Document Code Profile`**, and **`Crispy Document Code Rule`** - Compliance-oriented document identity and verification layer.

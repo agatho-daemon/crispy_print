@@ -30,6 +30,17 @@ Crispy Print is company-aware end to end:
 - A **Crispy Template** is a frozen, approved render contract published from a Crispy Format. It stores an immutable snapshot, snapshot-hash version, PDF standard, and Typst/Zebra/barcode facts, and supports company-specific templates with fallback to global templates.
 - A **Crispy Issued Document** (CID) records an immutable issued snapshot linked to a frozen template, exposing non-sensitive verification metadata and an opaque verification token, with revocation/supersession state.
 
+### Reusable Typst Blocks
+
+Use **Crispy Typst Block** records for governed Typst snippets that are reused across formats, such as dynamic headers, footers, signatures, payment sections, regulatory fragments, or other data-driven document components.
+
+- **Block Name** is the designer-facing label.
+- **Reference Key** is generated from Block Name using snake_case, for example `Invoice Header` becomes `invoice_header`.
+- **Version** defaults to `1.0` and uses a major/minor format.
+- The document ID combines the generated reference key and version, for example `invoice_header-v1.0`.
+
+Layouts continue to reference blocks by Reference Key so company-specific block overrides can share the same key as a global block.
+
 ### Duplicate For Company
 
 Use **Duplicate** in the builder preview pane when the same document design should be reused for another company without manually rebuilding layout, typography, tables, Typst code, or print behavior.
