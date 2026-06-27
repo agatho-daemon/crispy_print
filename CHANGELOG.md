@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed Crispy Typst Block versions to default to `1.0` and validate as major/minor values.
 - Changed Crispy Typst Block Builder dirty-state tracking so the page is marked unsaved only when Typst code changes; preview page settings remain authoring-only.
 - Changed direct Print Preview access to open a context-selection modal for DocType previews, with graceful guidance for report and contract preview states.
+- Simplified the Crispy Typst Block Builder to focus on page settings and Typst code editing, leaving identity metadata on the DocType form and letting editor/preview panes scroll independently.
 
 ### Fixed
 

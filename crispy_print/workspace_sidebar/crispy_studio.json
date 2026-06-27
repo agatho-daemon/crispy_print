@@ -109,6 +109,17 @@
       "collapsible": 1,
       "indent": 0,
       "keep_closed": 0,
+      "label": "Typst Block Builder",
+      "link_to": "ctb-builder",
+      "link_type": "Page",
+      "show_arrow": 0,
+      "type": "Link"
+    },
+    {
+      "child": 1,
+      "collapsible": 1,
+      "indent": 0,
+      "keep_closed": 0,
       "label": "Print Preview",
       "link_to": "crispy-print-preview",
       "link_type": "Page",

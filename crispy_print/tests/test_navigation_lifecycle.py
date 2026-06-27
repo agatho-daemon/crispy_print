@@ -157,7 +157,7 @@ class TestNavigationLifecycle(unittest.TestCase):
 		self.assertEqual(home_item["url"], "/desk/crispy-print?sidebar=Crispy%20Studio")
 
 		self.assertEqual(
-			[item["label"] for item in studio_sidebar["items"][:10]],
+			[item["label"] for item in studio_sidebar["items"][:11]],
 			[
 				"Home",
 				"Formats",
@@ -168,6 +168,7 @@ class TestNavigationLifecycle(unittest.TestCase):
 				"Builders",
 				"Branding Builder",
 				"Format Builder",
+				"Typst Block Builder",
 				"Print Preview",
 			],
 		)

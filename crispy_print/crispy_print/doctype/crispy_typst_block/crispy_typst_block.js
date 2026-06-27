@@ -6,6 +6,7 @@ frappe.ui.form.on("Crispy Typst Block", {
 		if (frm.is_new()) return;
 
 		frm.add_custom_button(__("Open Builder"), () => {
+			frappe.route_options = { sidebar: "Crispy Studio" };
 			frappe.set_route("ctb-builder", frm.doc.name);
 		});
 	},

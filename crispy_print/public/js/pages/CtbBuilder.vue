@@ -2,31 +2,7 @@
 	<div class="ctb-builder">
 		<aside class="ctb-builder__sidebar">
 			<section class="ctb-panel">
-				<h3>{{ __("Identity") }}</h3>
-				<div class="ctb-grid">
-					<label>
-						<span>{{ __("Block Name") }}</span>
-						<input v-model="doc.block_name" class="form-control" type="text" />
-					</label>
-					<label>
-						<span>{{ __("Reference Key") }}</span>
-						<input v-model="doc.block_key" class="form-control" type="text" readonly />
-					</label>
-				</div>
-				<div class="ctb-grid ctb-grid--two">
-					<label>
-						<span>{{ __("Version") }}</span>
-						<input v-model="doc.version" class="form-control" type="text" />
-					</label>
-					<label>
-						<span>{{ __("Category") }}</span>
-						<input v-model="doc.category" class="form-control" type="text" readonly />
-					</label>
-				</div>
-			</section>
-
-			<section class="ctb-panel">
-				<h3>{{ __("Preview Page") }}</h3>
+				<h3>{{ __("Page Settings") }}</h3>
 				<label class="ctb-check">
 					<input v-model="useDefaultPage" type="checkbox" />
 					<span>{{ __("Default page size and margins") }}</span>
@@ -354,12 +330,16 @@ defineExpose({ save, dirty });
 	grid-template-columns: minmax(380px, 42%) minmax(0, 1fr);
 	height: calc(100vh - 108px);
 	min-height: 620px;
+	overflow: hidden;
 	background: #f6f7f9;
 	border-top: 1px solid #e5e7eb;
 }
 
 .ctb-builder__sidebar {
+	display: flex;
+	min-height: 0;
 	overflow: auto;
+	flex-direction: column;
 	padding: 16px;
 	border-right: 1px solid #e5e7eb;
 	background: #fff;
@@ -428,8 +408,17 @@ defineExpose({ save, dirty });
 	line-height: 1.45;
 }
 
+.ctb-panel--code {
+	display: flex;
+	min-height: 420px;
+	flex: 1 1 auto;
+	flex-direction: column;
+}
+
 .ctb-code-editor {
-	min-height: 320px;
+	min-height: 360px;
+	flex: 1 1 auto;
+	overflow: auto;
 	resize: vertical;
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 	font-size: 12px;
@@ -440,6 +429,8 @@ defineExpose({ save, dirty });
 	display: grid;
 	grid-template-rows: auto minmax(0, 1fr);
 	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
 }
 
 .ctb-preview-toolbar {
@@ -460,6 +451,7 @@ defineExpose({ save, dirty });
 }
 
 .ctb-preview-scroll {
+	min-height: 0;
 	overflow: auto;
 	padding: 20px;
 	background: #eef1f5;
@@ -509,9 +501,11 @@ defineExpose({ save, dirty });
 	.ctb-builder {
 		grid-template-columns: 1fr;
 		height: auto;
+		overflow: visible;
 	}
 
 	.ctb-builder__sidebar {
+		overflow: visible;
 		border-right: 0;
 		border-bottom: 1px solid #e5e7eb;
 	}

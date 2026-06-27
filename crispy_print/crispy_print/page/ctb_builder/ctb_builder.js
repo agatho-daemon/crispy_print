@@ -12,6 +12,7 @@ frappe.pages["ctb-builder"].on_page_load = function (wrapper) {
 };
 
 frappe.pages["ctb-builder"].on_page_show = function (wrapper) {
+	show_crispy_studio_sidebar();
 	load_ctb_builder(wrapper);
 };
 
@@ -53,10 +54,12 @@ function load_ctb_builder(wrapper) {
 			});
 
 			page.add_button(__("Edit DocType Form"), () => {
+				frappe.route_options = { sidebar: "Crispy Studio" };
 				frappe.set_route("Form", "Crispy Typst Block", blockName);
 			});
 
 			page.add_menu_item(__("Change Block"), () => {
+				frappe.route_options = { sidebar: "Crispy Studio" };
 				frappe.set_route("ctb-builder");
 			});
 
@@ -108,8 +111,15 @@ function show_block_dialog() {
 		primary_action_label: __("Open Builder"),
 		primary_action(values) {
 			dialog.hide();
+			frappe.route_options = { sidebar: "Crispy Studio" };
 			frappe.set_route("ctb-builder", values.block_name);
 		},
 	});
 	dialog.show();
+}
+
+function show_crispy_studio_sidebar() {
+	if (frappe.app?.sidebar && frappe.app.sidebar.sidebar_title !== "Crispy Studio") {
+		frappe.app.sidebar.setup("Crispy Studio");
+	}
 }
