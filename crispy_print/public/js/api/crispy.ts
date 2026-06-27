@@ -202,6 +202,19 @@ export interface CrispyTypstBlockOption {
 	version?: string
 }
 
+export interface CrispyTypstBlockDoc extends CrispyTypstBlockOption {
+	notes?: string | null
+	preview_use_default_page_settings?: number
+	preview_page_size?: string | null
+	preview_orientation?: "portrait" | "landscape" | string | null
+	preview_margin_top?: string | null
+	preview_margin_bottom?: string | null
+	preview_margin_left?: string | null
+	preview_margin_right?: string | null
+	preview_page_width?: string | null
+	preview_page_height?: string | null
+}
+
 export interface CrispyTemplatePublishPreview {
 	template_name: string
 	template_id: string
@@ -887,6 +900,17 @@ export async function getApplicableTypstBlocks(args: {
 		args,
 	})
 	return res.message || []
+}
+
+export async function getCrispyTypstBlock(name: string): Promise<CrispyTypstBlockDoc> {
+	return await getDoc<CrispyTypstBlockDoc>("Crispy Typst Block", name)
+}
+
+export async function saveCrispyTypstBlock(
+	name: string,
+	values: Partial<CrispyTypstBlockDoc>
+): Promise<void> {
+	await setValue("Crispy Typst Block", name, values)
 }
 
 export async function getBrandingProfiles(args: {

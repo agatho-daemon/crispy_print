@@ -9,6 +9,7 @@
   "block_name",
   "company",
   "block_key",
+  "version",
   "enabled",
   "category",
   "applicability_section",
@@ -17,7 +18,15 @@
   "description",
   "typst_code",
   "metadata_section",
-  "version",
+  "preview_use_default_page_settings",
+  "preview_page_size",
+  "preview_orientation",
+  "preview_page_width",
+  "preview_page_height",
+  "preview_margin_top",
+  "preview_margin_bottom",
+  "preview_margin_left",
+  "preview_margin_right",
   "notes"
  ],
  "fields": [
@@ -78,13 +87,79 @@
    "default": "1.0",
    "fieldname": "version",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Version"
+  },
+  {
+   "default": "1",
+   "fieldname": "preview_use_default_page_settings",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Preview Use Default Page Settings"
+  },
+  {
+   "default": "A4",
+   "fieldname": "preview_page_size",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Preview Page Size",
+   "options": "A4\nLetter\nLegal\nA5\nCustom"
+  },
+  {
+   "default": "portrait",
+   "fieldname": "preview_orientation",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Preview Orientation",
+   "options": "portrait\nlandscape"
+  },
+  {
+   "default": "auto",
+   "fieldname": "preview_page_width",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Preview Page Width"
+  },
+  {
+   "default": "auto",
+   "fieldname": "preview_page_height",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Preview Page Height"
+  },
+  {
+   "default": "2.5cm",
+   "fieldname": "preview_margin_top",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Preview Margin Top"
+  },
+  {
+   "default": "2.5cm",
+   "fieldname": "preview_margin_bottom",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Preview Margin Bottom"
+  },
+  {
+   "default": "2.5cm",
+   "fieldname": "preview_margin_left",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Preview Margin Left"
+  },
+  {
+   "default": "2.5cm",
+   "fieldname": "preview_margin_right",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Preview Margin Right"
   },
   {
    "fieldname": "typst_code",
    "fieldtype": "Code",
    "label": "Typst Code",
-   "options": "Typst",
+   "options": "Markdown",
    "reqd": 1
   },
   {

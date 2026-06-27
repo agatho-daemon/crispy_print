@@ -63,7 +63,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Reusable Branding Profiles** - Centralized page, typography, table, logo, letterhead, QR, and spacing settings for consistent company-wide document output.
 - **Branding Profile Builder** - Dedicated visual builder for reusable presentation systems with generated Typst preview and controlled profile publication.
 - **Crispy Print Workspace** - Desk workspace with grouped shortcuts and cards for builders, core format records, reusable libraries, issued documents, reports, and regulatory setup.
-- **Reusable Typst Blocks** - Governed snippets for repeatable custom document fragments, scoped by category and linked DocType usage, with generated snake_case reference keys and explicit major/minor versions.
+- **Reusable Typst Blocks** - Governed snippets for repeatable custom document fragments, scoped by category and linked DocType usage, with generated snake_case reference keys, explicit major/minor versions, and a dedicated compile/preview builder.
 - **DocType-Aware Format Registry** - Crispy Format records link formats to target DocTypes, format types, branding profiles, custom builders, and generated Typst.
 - **Company-Scoped Rendering** - Format, template, branding profile, and Typst block resolution is company-aware, with company-scoped default selection and cache invalidation.
 - **Approved Render Contracts (Crispy Template)** - Publish frozen, versioned approved render snapshots from a Crispy Format with snapshot-hash versioning, PDF standard, and Typst/Zebra/barcode facts, including company-specific templates with fallback to global templates.
@@ -227,6 +227,7 @@ Recommended setup order:
 - Create **Crispy Typst Block** records for governed Typst snippets that should be reused across formats.
 - The **Reference Key** is generated from **Block Name** using snake_case, for example `Invoice Header` becomes `invoice_header`.
 - New blocks default to version `1.0`; document IDs include the reference key and version, for example `invoice_header-v1.0`.
+- Open **Crispy Typst Block Builder** from the block form to edit Typst code and refresh a live SVG preview. Preview page settings are authoring-only; only Typst Code changes mark the builder unsaved.
 
 5. **Save and test**
    - Click **Save**

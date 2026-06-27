@@ -41,6 +41,10 @@ Use **Crispy Typst Block** records for governed Typst snippets that are reused a
 
 Layouts continue to reference blocks by Reference Key so company-specific block overrides can share the same key as a global block.
 
+Open the **Crispy Typst Block Builder** from a block form to edit the Typst code with live SVG preview. Use **Refresh** to compile the current editor content. The builder keeps preview page controls separate from the reusable block contract: the default mode uses auto width, auto height, and `2.5cm` margins, while custom mode exposes page size, orientation, custom dimensions, and per-side margins for testing larger layout fragments.
+
+The builder's unsaved indicator tracks only **Typst Code** changes. Page size, margin, orientation, and default-preview toggles are authoring controls for the current preview and do not mark the reusable block as unsaved.
+
 ### Duplicate For Company
 
 Use **Duplicate** in the builder preview pane when the same document design should be reused for another company without manually rebuilding layout, typography, tables, Typst code, or print behavior.

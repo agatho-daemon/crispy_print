@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a collapsed builder Diagnostics section for missing format/DocType/company setup, default-format status, unsupported PDF standards, branding profile context, multiple default Branding Profile candidates, unavailable configured fonts, raw/report Typst source state, stale generated report Typst, unresolved Typst Blocks, and unsaved changes.
 - Added runtime preview diagnostics with resolved format/template, company, branding profile, PDF standard, Typst version, render time, page count, cache-hit metadata, and raw Typst mode.
 - Added automatic Crispy Typst Block reference-key generation from the block name using snake_case naming.
+- Added a **Crispy Typst Block Builder** page for editing reusable block Typst code with live SVG preview, preview-only page settings, and a dedicated lazy-loaded Desk bundle.
 - Ignored local Zed editor and Pyright configuration files.
 
 ### Changed
@@ -41,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refined compact item table value metadata used by Typst rendering and field extraction.
 - Changed new Crispy Typst Block document IDs to use the generated reference key and `v1.0`-style version suffixes, with numeric duplicate suffixes only for document ID collisions.
 - Changed Crispy Typst Block versions to default to `1.0` and validate as major/minor values.
+- Changed Crispy Typst Block Builder dirty-state tracking so the page is marked unsaved only when Typst code changes; preview page settings remain authoring-only.
 - Changed direct Print Preview access to open a context-selection modal for DocType previews, with graceful guidance for report and contract preview states.
 
 ### Fixed

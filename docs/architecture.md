@@ -8,6 +8,7 @@ This app uses **Frappe's native esbuild bundler** - no separate Vite or webpack 
 
 - **Main Builder Bundle:** `crispy_print/public/js/crispy_print.bundle.js`
 - **Preview Bundle:** `crispy_print/public/js/crispy_preview.bundle.js`
+- **Typst Block Builder Bundle:** `crispy_print/public/js/ctb_builder.bundle.js`
 - **Desk Button Bundle:** `crispy_print/public/js/report_button.bundle.js`
 - **Build Command:** `bench build --app crispy_print`
 - **Loading Model:** Lightweight desk hooks plus page-specific builder/preview bundles
@@ -41,6 +42,7 @@ crispy_print/
 │   │   ├── js/
 │   │   │   ├── crispy_print.bundle.js    # Format Builder entry
 │   │   │   ├── crispy_preview.bundle.js  # Print Preview entry
+│   │   │   ├── ctb_builder.bundle.js     # Typst Block Builder entry
 │   │   │   ├── report_button.bundle.js   # Desk integration entry
 │   │   │   ├── api/                      # Typed Frappe/Crispy API clients
 │   │   │   ├── components/               # Reusable Vue components
@@ -49,6 +51,7 @@ crispy_print/
 │   │   │   │   ├── CrispyPFB.vue         # Format Builder shell
 │   │   │   │   ├── CrispyPP.vue          # Print Preview shell
 │   │   │   │   ├── CbpBuilder.vue        # Branding Profile Builder shell
+│   │   │   │   ├── CtbBuilder.vue        # Typst Block Builder shell
 │   │   │   │   └── cbpBuilderTypst.ts    # Branding Typst generation
 │   │   │   ├── typst/
 │   │   │   │   ├── JSONToTypst.ts        # Layout-to-Typst translator
@@ -141,7 +144,7 @@ Data model:
 - **`Crispy Template`** - Frozen, versioned approved render contract published from a Crispy Format.
 - **`Crispy Issued Document`** - Immutable issued-document registry (CID) with verification tokens and revocation/supersession state, plus artifact, trust-event, and regulatory-submission child tables.
 - **`Crispy Branding Profile`** - Reusable company presentation profile.
-- **`Crispy Typst Block`** - Governed reusable Typst snippet library with generated snake_case reference keys, major/minor versions, and company-aware override support.
+- **`Crispy Typst Block`** - Governed reusable Typst snippet library with generated snake_case reference keys, major/minor versions, company-aware override support, and a preview-only authoring builder.
 - **`Crispy Generic Report`** - Generic report definition for report-type formats.
 - **`Crispy Print Settings`** - Single DocType for global font, rendering, and print-policy configuration.
 - **`Crispy QR Regulatory Profile`**, **`Crispy Fiscal Credential`**, **`Crispy Document Code Profile`**, and **`Crispy Document Code Rule`** - Compliance-oriented document identity and verification layer.
