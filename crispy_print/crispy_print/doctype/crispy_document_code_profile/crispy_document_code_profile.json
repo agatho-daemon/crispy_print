@@ -28,6 +28,7 @@
   "payload_section",
   "content_source",
   "payload_template",
+  "selected_fields",
   "selected_fields_json",
   "field_mapping_json",
   "encoder_key",
@@ -212,9 +213,18 @@
   },
   {
    "depends_on": "eval:doc.content_source == \"Selected Fields\"",
+   "fieldname": "selected_fields",
+   "fieldtype": "Table",
+   "label": "Selected Fields",
+   "options": "Crispy Document Code Field"
+  },
+  {
+   "depends_on": "eval:doc.content_source == \"Selected Fields\"",
    "fieldname": "selected_fields_json",
    "fieldtype": "JSON",
-   "label": "Selected Fields JSON"
+   "hidden": 1,
+   "label": "Selected Fields JSON",
+   "read_only": 1
   },
   {
    "fieldname": "field_mapping_json",

@@ -7,6 +7,7 @@ quick start, see the [project README](../README.md).
 
 - [Overview & Vision](overview.md) - Why Crispy Print exists, what makes it different, and the long-term direction.
 - [Usage](usage.md) - Print, report, branding, letterhead, document-code workflows, and layout recipes.
+- [QR Field Registry](qr-field-registry.md) - Backend field allow-list, selected field child rows, authority filtering, and migration notes.
 - [Font Configuration](fonts.md) - Bundled, system, uploaded, and custom fonts plus global Crispy Print Settings.
 - [Architecture](architecture.md) - Build system, product structure, key components, and data model.
 - [Known Limitations](limitations.md) - Current alpha constraints.

@@ -10,6 +10,7 @@ from crispy_print.json_utils import (
 	parse_json_list_or_object,
 	parse_json_object,
 )
+from crispy_print.qr_registry import get_qr_field_definition, validate_qr_field_selection
 
 REGULATORY_PROFILE_DOCTYPE = "Crispy QR Regulatory Profile"
 FISCAL_CREDENTIAL_DOCTYPE = "Crispy Fiscal Credential"
@@ -32,6 +33,8 @@ class CrispyDocumentCodeProfile(Document):
 		self.apply_fallback_output_defaults()
 		self.validate_required_fields()
 		self.validate_json_fields()
+		self.apply_selected_field_metadata()
+		self.validate_registered_selected_fields()
 		self.validate_dimensions()
 		self.validate_fiscal_credential_link()
 		self.normalize_child_rule_order()
@@ -114,8 +117,12 @@ class CrispyDocumentCodeProfile(Document):
 	def validate_required_fields(self) -> None:
 		if self.content_source == "Payload Template" and not (self.payload_template or "").strip():
 			frappe.throw(_("Payload Template is required when Content Source is Payload Template."))
-		if self.content_source == "Selected Fields" and not self.selected_fields_json:
-			frappe.throw(_("Selected Fields JSON is required when Content Source is Selected Fields."))
+		if (
+			self.content_source == "Selected Fields"
+			and not (self.selected_fields or [])
+			and not self.selected_fields_json
+		):
+			frappe.throw(_("At least one Selected Field is required when Content Source is Selected Fields."))
 		if self.content_source == "Verification URL" and not (self.verification_url_template or "").strip():
 			frappe.throw(_("Verification URL Template is required when Content Source is Verification URL."))
 		if self.requires_verification_url and not (self.verification_url_template or "").strip():
@@ -140,6 +147,104 @@ class CrispyDocumentCodeProfile(Document):
 		if self.encoder_settings_json:
 			parse_json_object(self.encoder_settings_json, _("Encoder Settings JSON"))
 
+	def apply_selected_field_metadata(self) -> None:
+		target_doctypes = self._target_doctypes()
+		if len(target_doctypes) == 1:
+			default_doctype = target_doctypes[0]
+		else:
+			default_doctype = None
+
+		for row in self.selected_fields or []:
+			if not row.source_doctype and default_doctype:
+				row.source_doctype = default_doctype
+			if not row.source_doctype or not row.field_key:
+				continue
+			definition = get_qr_field_definition(row.source_doctype, row.field_key)
+			row.label = definition.get("label")
+			row.source_path = definition.get("path")
+			row.source = definition.get("source")
+			row.datatype = definition.get("datatype")
+			row.purpose = definition.get("purpose")
+
+		if self.selected_fields:
+			self.selected_fields_json = self._selected_fields_as_legacy_json()
+
+	def validate_registered_selected_fields(self) -> None:
+		target_doctypes = self._target_doctypes()
+		authority_code = self._linked_authority_code()
+
+		if self.selected_fields:
+			self._validate_selected_field_rows(target_doctypes, authority_code)
+		elif self.selected_fields_json and target_doctypes:
+			selected_fields = parse_json_list_or_object(self.selected_fields_json, _("Selected Fields JSON"))
+			for doctype in target_doctypes:
+				validate_qr_field_selection(
+					doctype,
+					selected_fields,
+					authority_code=authority_code if self.code_purpose == "Regulatory" else None,
+				)
+
+		for rule in self.document_rules or []:
+			if not rule.selected_fields_json_override:
+				continue
+			selected_fields = parse_json_list_or_object(
+				rule.selected_fields_json_override,
+				_("Selected Fields JSON Override"),
+			)
+			validate_qr_field_selection(
+				rule.document_type,
+				selected_fields,
+				authority_code=authority_code if self.code_purpose == "Regulatory" else None,
+			)
+
+	def _validate_selected_field_rows(
+		self,
+		target_doctypes: list[str],
+		authority_code: str | None,
+	) -> None:
+		seen: set[tuple[str, str]] = set()
+		for row in self.selected_fields or []:
+			if not row.source_doctype:
+				frappe.throw(_("Source DocType is required for selected QR fields."))
+			if not row.field_key:
+				frappe.throw(_("Field Key is required for selected QR fields."))
+			if target_doctypes and row.source_doctype not in target_doctypes:
+				frappe.throw(
+					_("Selected QR field {0} uses DocType {1}, which is not in Document Rules.").format(
+						row.field_key,
+						row.source_doctype,
+					)
+				)
+			key = (row.source_doctype, row.field_key)
+			if key in seen:
+				frappe.throw(
+					_("Duplicate selected QR field for {0}: {1}").format(
+						row.source_doctype,
+						row.field_key,
+					)
+				)
+			seen.add(key)
+			validate_qr_field_selection(
+				row.source_doctype,
+				[row.field_key],
+				authority_code=authority_code if self.code_purpose == "Regulatory" else None,
+			)
+
+	def _selected_fields_as_legacy_json(self) -> str:
+		values: list[str] | dict[str, str]
+		rows = self.selected_fields or []
+		if any((row.output_key or "").strip() for row in rows):
+			values = {
+				(row.output_key or row.field_key.split(".")[-1]).strip(): row.field_key
+				for row in rows
+				if row.field_key
+			}
+		else:
+			values = [row.field_key for row in rows if row.field_key]
+		import json
+
+		return json.dumps(values, ensure_ascii=False, separators=(",", ":"))
+
 	def validate_dimensions(self) -> None:
 		for fieldname, label in (("width_mm", _("Width (mm)")), ("height_mm", _("Height (mm)"))):
 			value = self.get(fieldname)
@@ -149,7 +254,10 @@ class CrispyDocumentCodeProfile(Document):
 				numeric = float(value)
 			except (TypeError, ValueError):
 				frappe.throw(_("{0} must be a number.").format(label))
-			if numeric <= 0:
+			if numeric == 0:
+				self.set(fieldname, None)
+				continue
+			if numeric < 0:
 				frappe.throw(_("{0} must be greater than zero.").format(label))
 		for fieldname, label in (
 			("quiet_zone", _("Quiet Zone")),
@@ -202,6 +310,26 @@ class CrispyDocumentCodeProfile(Document):
 			row.priority = cint_or_default(row.priority, 100)
 		if rules:
 			self.document_rules = rules
+
+	def _target_doctypes(self) -> list[str]:
+		return sorted(
+			{
+				str(rule.document_type).strip()
+				for rule in self.document_rules or []
+				if str(rule.document_type or "").strip()
+			}
+		)
+
+	def _linked_authority_code(self) -> str | None:
+		if not self.regulatory_profile:
+			return None
+		if not frappe.db.exists(REGULATORY_PROFILE_DOCTYPE, self.regulatory_profile):
+			return None
+		return frappe.db.get_value(
+			REGULATORY_PROFILE_DOCTYPE,
+			self.regulatory_profile,
+			"authority_code",
+		)
 
 	def _default_symbology_for_code_format(self) -> str | None:
 		return {

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"cp_shortcut_formats\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Crispy Formats\",\"col\":3}},{\"id\":\"cp_shortcut_format_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Format Builder\",\"col\":3}},{\"id\":\"cp_shortcut_branding\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Profiles\",\"col\":3}},{\"id\":\"cp_shortcut_branding_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Builder\",\"col\":3}},{\"id\":\"cp_spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cp_header_documents\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Documents</b></span>\",\"col\":12}},{\"id\":\"cp_card_core\",\"type\":\"card\",\"data\":{\"card_name\":\"Core Documents\",\"col\":4}},{\"id\":\"cp_card_builders\",\"type\":\"card\",\"data\":{\"card_name\":\"Builders\",\"col\":4}},{\"id\":\"cp_card_library\",\"type\":\"card\",\"data\":{\"card_name\":\"Reusable Library\",\"col\":4}},{\"id\":\"cp_card_registry\",\"type\":\"card\",\"data\":{\"card_name\":\"Issued Documents\",\"col\":4}},{\"id\":\"cp_card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"cp_card_regulatory\",\"type\":\"card\",\"data\":{\"card_name\":\"Regulatory Setup\",\"col\":4}}]",
+ "content": "[{\"id\":\"cp_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Crispy Print</b></span>\",\"col\":12}},{\"id\":\"cp_shortcut_formats\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Crispy Formats\",\"col\":3}},{\"id\":\"cp_shortcut_format_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Format Builder\",\"col\":3}},{\"id\":\"cp_shortcut_branding\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Profiles\",\"col\":3}},{\"id\":\"cp_shortcut_branding_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Builder\",\"col\":3}},{\"id\":\"cp_spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cp_header_documents\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Documents</b></span>\",\"col\":12}},{\"id\":\"cp_card_core\",\"type\":\"card\",\"data\":{\"card_name\":\"Core Documents\",\"col\":4}},{\"id\":\"cp_card_builders\",\"type\":\"card\",\"data\":{\"card_name\":\"Builders\",\"col\":4}},{\"id\":\"cp_card_library\",\"type\":\"card\",\"data\":{\"card_name\":\"Reusable Library\",\"col\":4}},{\"id\":\"cp_card_registry\",\"type\":\"card\",\"data\":{\"card_name\":\"Issued Documents\",\"col\":4}},{\"id\":\"cp_card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"cp_card_regulatory\",\"type\":\"card\",\"data\":{\"card_name\":\"Regulatory Setup\",\"col\":4}}]",
  "creation": "2026-05-30 13:54:38.372781",
  "custom_blocks": [],
  "docstatus": 0,
@@ -95,6 +95,16 @@
    "type": "Link"
   },
   {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Block Builder",
+   "link_count": 0,
+   "link_to": "ctb-builder",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
    "description": "Trace generated and issued print artifacts",
    "hidden": 0,
    "is_query_report": 0,
@@ -177,7 +187,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-06 20:26:33.732746",
+ "modified": "2026-06-28 07:27:15.756290",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Print",

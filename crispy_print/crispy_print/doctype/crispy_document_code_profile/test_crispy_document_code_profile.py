@@ -83,6 +83,103 @@ class TestCrispyDocumentCodeProfile(FrappeTestCase):
 
 		self.assertRaises(frappe.ValidationError, doc.insert)
 
+	def test_zero_optional_dimensions_are_treated_as_unset(self):
+		doc = self._new_profile(width_mm=0, height_mm=0)
+		doc.insert()
+
+		self.assertIsNone(doc.width_mm)
+		self.assertIsNone(doc.height_mm)
+
+	def test_rejects_negative_optional_dimensions(self):
+		doc = self._new_profile(width_mm=-1)
+
+		self.assertRaises(frappe.ValidationError, doc.insert)
+
+	def test_rejects_selected_fields_outside_backend_registry(self):
+		doc = self._new_profile(
+			content_source="Selected Fields",
+			selected_fields_json='["company_name","owner.password"]',
+			regulatory_profile=None,
+			fiscal_credential=None,
+			code_purpose="Other",
+		)
+		doc.append(
+			"document_rules",
+			{
+				"document_type": "Company",
+				"document_role": "Other",
+				"priority": 100,
+				"condition_type": "Always",
+			},
+		)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Selected QR fields are not allowed for Company: owner.password",
+			doc.insert,
+		)
+
+	def test_accepts_selected_fields_from_backend_registry(self):
+		doc = self._new_profile(
+			content_source="Selected Fields",
+			regulatory_profile=None,
+			fiscal_credential=None,
+			code_purpose="Other",
+			selected_fields=[
+				{
+					"source_doctype": "Company",
+					"field_key": "company_name",
+				},
+				{
+					"source_doctype": "Company",
+					"field_key": "abbr",
+				},
+			],
+		)
+		doc.append(
+			"document_rules",
+			{
+				"document_type": "Company",
+				"document_role": "Other",
+				"priority": 100,
+				"condition_type": "Always",
+			},
+		)
+		doc.insert()
+
+		self.assertEqual(doc.name, doc.profile_name)
+		self.assertEqual(doc.selected_fields[0].label, "Company Name")
+		self.assertEqual(doc.selected_fields_json, '["company_name","abbr"]')
+
+	def test_rejects_child_selected_fields_outside_backend_registry(self):
+		doc = self._new_profile(
+			content_source="Selected Fields",
+			regulatory_profile=None,
+			fiscal_credential=None,
+			code_purpose="Other",
+			selected_fields=[
+				{
+					"source_doctype": "Company",
+					"field_key": "owner.password",
+				}
+			],
+		)
+		doc.append(
+			"document_rules",
+			{
+				"document_type": "Company",
+				"document_role": "Other",
+				"priority": 100,
+				"condition_type": "Always",
+			},
+		)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Selected QR fields are not allowed for Company: owner.password",
+			doc.insert,
+		)
+
 	def test_normalizes_child_rule_priority_order(self):
 		doc = self._new_profile(regulatory_profile=self.regulatory_profile)
 		doc.append(

@@ -10,6 +10,7 @@ frappe.ui.form.on("Crispy Document Code Profile", {
 	refresh(frm) {
 		setupQueries(frm);
 		syncProfileForm(frm);
+		addSelectedFieldsActions(frm);
 		addLinkedRecordButtons(frm);
 		refreshCredentialStatus(frm);
 	},
@@ -68,6 +69,21 @@ frappe.ui.form.on("Crispy Document Code Profile", {
 	},
 });
 
+frappe.ui.form.on("Crispy Document Code Field", {
+	form_render(frm, cdt, cdn) {
+		defaultSelectedFieldDoctype(frm, cdt, cdn);
+		loadSelectedFieldOptions(frm, cdt, cdn);
+	},
+
+	source_doctype(frm, cdt, cdn) {
+		loadSelectedFieldOptions(frm, cdt, cdn);
+	},
+
+	field_key(frm, cdt, cdn) {
+		applySelectedFieldMetadata(frm, cdt, cdn);
+	},
+});
+
 function setupQueries(frm) {
 	frm.set_query("regulatory_profile", () => ({
 		filters: { enabled: 1 },
@@ -84,6 +100,7 @@ function setupQueries(frm) {
 
 function syncProfileForm(frm) {
 	applySymbologyDefaults(frm);
+	updateSelectedFieldsControls(frm);
 	updateProfileIntro(frm);
 }
 
@@ -103,8 +120,14 @@ function clearIrrelevantFields(frm) {
 		frm.set_value("payload_template", "");
 	}
 
-	if (frm.doc.content_source !== "Selected Fields" && frm.doc.selected_fields_json) {
-		frm.set_value("selected_fields_json", null);
+	if (frm.doc.content_source !== "Selected Fields") {
+		if (frm.doc.selected_fields?.length) {
+			frm.clear_table("selected_fields");
+			frm.refresh_field("selected_fields");
+		}
+		if (frm.doc.selected_fields_json) {
+			frm.set_value("selected_fields_json", null);
+		}
 	}
 
 	if (
@@ -233,6 +256,243 @@ function addLinkedRecordButtons(frm) {
 			environment: frm.doc.environment || undefined,
 		});
 	});
+}
+
+function addSelectedFieldsActions(frm) {
+	if ((frm.doc.content_source || "") !== "Selected Fields") {
+		return;
+	}
+
+	frm.add_custom_button(
+		__("Business Field Set"),
+		() => openBusinessFieldSetDialog(frm),
+		__("Add Fields")
+	);
+
+	if (frm.doc.code_purpose === "Regulatory" && frm.doc.regulatory_profile) {
+		frm.add_custom_button(
+			__("Required Authority Fields"),
+			() => addRequiredAuthorityFields(frm),
+			__("Add Fields")
+		);
+	}
+}
+
+function updateSelectedFieldsControls(frm) {
+	const isSelectedFields = (frm.doc.content_source || "") === "Selected Fields";
+	frm.set_df_property("selected_fields", "hidden", isSelectedFields ? 0 : 1);
+	frm.set_df_property(
+		"selected_fields",
+		"description",
+		isSelectedFields
+			? __(
+					"Add rows from the backend QR field registry. Field metadata is filled automatically."
+			  )
+			: ""
+	);
+	frm.set_df_property("selected_fields_json", "hidden", 1);
+	frm.set_df_property("selected_fields_json", "read_only", 1);
+}
+
+async function loadSelectedFieldOptions(frm, cdt, cdn) {
+	const row = locals[cdt]?.[cdn];
+	if (!row?.source_doctype) {
+		return;
+	}
+	const authorityCode = await getAuthorityCode(frm);
+	const registry = await getQrRegistryFields(frm, row.source_doctype, authorityCode);
+	const options = (registry.fields || []).map((field) => field.key).join("\n");
+	frappe.meta.get_docfield(cdt, "field_key", cdn).options = options;
+	frm.fields_dict.selected_fields.grid.refresh();
+
+	if (row.field_key) {
+		applySelectedFieldMetadata(frm, cdt, cdn, registry);
+	}
+}
+
+async function applySelectedFieldMetadata(frm, cdt, cdn, registry) {
+	const row = locals[cdt]?.[cdn];
+	if (!row?.source_doctype || !row?.field_key) {
+		return;
+	}
+	registry =
+		registry ||
+		(await getQrRegistryFields(frm, row.source_doctype, await getAuthorityCode(frm)));
+	const field = (registry.fields || []).find((item) => item.key === row.field_key);
+	if (!field) {
+		return;
+	}
+	await frappe.model.set_value(cdt, cdn, "label", field.label || "");
+	await frappe.model.set_value(cdt, cdn, "source_path", field.path || "");
+	await frappe.model.set_value(cdt, cdn, "source", field.source || "");
+	await frappe.model.set_value(cdt, cdn, "datatype", field.datatype || "");
+	await frappe.model.set_value(cdt, cdn, "purpose", field.purpose || "");
+}
+
+function getTargetDoctypes(frm) {
+	const values = (frm.doc.document_rules || [])
+		.map((row) => String(row.document_type || "").trim())
+		.filter(Boolean);
+	return [...new Set(values)].sort();
+}
+
+function defaultSelectedFieldDoctype(frm, cdt, cdn) {
+	const row = locals[cdt]?.[cdn];
+	if (!row || row.source_doctype) {
+		return;
+	}
+	const doctypes = getTargetDoctypes(frm);
+	if (doctypes.length === 1) {
+		frappe.model.set_value(cdt, cdn, "source_doctype", doctypes[0]);
+	}
+}
+
+async function getQrRegistryFields(frm, doctype, authorityCode, includeBusinessFields = false) {
+	const cacheKey = [doctype, authorityCode || "", includeBusinessFields ? "business" : ""].join(
+		"::"
+	);
+	frm.__qrRegistryFieldCache = frm.__qrRegistryFieldCache || {};
+	if (frm.__qrRegistryFieldCache[cacheKey]) {
+		return frm.__qrRegistryFieldCache[cacheKey];
+	}
+	const response = await frappe.call({
+		method: "crispy_print.api.v1.get_qr_registry_fields",
+		args: {
+			doctype,
+			authority_code: frm.doc.code_purpose === "Regulatory" ? authorityCode : null,
+			include_business_fields: includeBusinessFields ? 1 : 0,
+		},
+	});
+	frm.__qrRegistryFieldCache[cacheKey] = response.message || {};
+	return frm.__qrRegistryFieldCache[cacheKey];
+}
+
+async function openBusinessFieldSetDialog(frm) {
+	const doctypes = getTargetDoctypes(frm);
+	if (!doctypes.length) {
+		frappe.msgprint({
+			title: __("Document Rule Required"),
+			indicator: "orange",
+			message: __("Add a Document Rule first so Crispy Print knows which registry to load."),
+		});
+		return;
+	}
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Add Business Field Set"),
+		fields: [
+			{
+				fieldname: "source_doctype",
+				fieldtype: "Select",
+				label: __("Source DocType"),
+				options: doctypes.join("\n"),
+				default: doctypes[0],
+				reqd: 1,
+				onchange: () => loadBusinessFieldSetOptions(frm, dialog),
+			},
+			{
+				fieldname: "business_field_set",
+				fieldtype: "Select",
+				label: __("Business Field Set"),
+				reqd: 1,
+			},
+		],
+		primary_action_label: __("Add Fields"),
+		primary_action: async () => {
+			const values = dialog.get_values();
+			if (!values) return;
+			const registry = await getQrRegistryFields(frm, values.source_doctype, null, true);
+			const fieldSet = (registry.business_field_sets || []).find(
+				(item) => item.key === values.business_field_set
+			);
+			if (!fieldSet) {
+				frappe.msgprint(__("Selected business field set is no longer available."));
+				return;
+			}
+			await addRegistryFields(frm, values.source_doctype, fieldSet.fields || []);
+			dialog.hide();
+		},
+	});
+
+	dialog.show();
+	loadBusinessFieldSetOptions(frm, dialog);
+}
+
+async function loadBusinessFieldSetOptions(frm, dialog) {
+	const sourceDoctype = dialog.get_value("source_doctype");
+	if (!sourceDoctype) return;
+	const registry = await getQrRegistryFields(frm, sourceDoctype, null, true);
+	const options = (registry.business_field_sets || [])
+		.map((fieldSet) => fieldSet.key)
+		.join("\n");
+	dialog.fields_dict.business_field_set.df.options = options;
+	dialog.fields_dict.business_field_set.refresh();
+	if (options && !dialog.get_value("business_field_set")) {
+		dialog.set_value("business_field_set", options.split("\n")[0]);
+	}
+}
+
+async function addRequiredAuthorityFields(frm) {
+	const doctypes = getTargetDoctypes(frm);
+	if (!doctypes.length) {
+		frappe.msgprint({
+			title: __("Document Rule Required"),
+			indicator: "orange",
+			message: __("Add a Document Rule first so Crispy Print knows which registry to load."),
+		});
+		return;
+	}
+	const authorityCode = await getAuthorityCode(frm);
+	let added = 0;
+	for (const doctype of doctypes) {
+		const registry = await getQrRegistryFields(frm, doctype, authorityCode);
+		const required = (registry.fields || [])
+			.filter((field) => field.required)
+			.map((field) => field.key);
+		added += await addRegistryFields(frm, doctype, required);
+	}
+	if (!added) {
+		frappe.show_alert({
+			message: __("No new required authority fields to add."),
+			indicator: "blue",
+		});
+	}
+}
+
+async function addRegistryFields(frm, sourceDoctype, fieldKeys) {
+	let added = 0;
+	const existing = new Set(
+		(frm.doc.selected_fields || []).map((row) => `${row.source_doctype}::${row.field_key}`)
+	);
+	for (const fieldKey of fieldKeys) {
+		const cacheKey = `${sourceDoctype}::${fieldKey}`;
+		if (existing.has(cacheKey)) {
+			continue;
+		}
+		const row = frm.add_child("selected_fields");
+		row.source_doctype = sourceDoctype;
+		row.field_key = fieldKey;
+		existing.add(cacheKey);
+		added += 1;
+		await applySelectedFieldMetadata(frm, row.doctype, row.name);
+	}
+	frm.refresh_field("selected_fields");
+	if (added) {
+		frappe.show_alert({ message: __("Added {0} QR fields.", [added]), indicator: "green" });
+	}
+	return added;
+}
+
+async function getAuthorityCode(frm) {
+	if (frm.doc.code_purpose !== "Regulatory" || !frm.doc.regulatory_profile) {
+		return null;
+	}
+	const response = await frappe.db.get_value(
+		"Crispy QR Regulatory Profile",
+		frm.doc.regulatory_profile,
+		"authority_code"
+	);
+	return response?.message?.authority_code || null;
 }
 
 function refreshCredentialStatus(frm) {

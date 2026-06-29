@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-28 07:45:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "source_doctype",
+  "field_key",
+  "output_key",
+  "label",
+  "source_path",
+  "datatype",
+  "source",
+  "purpose"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Source DocType",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "field_key",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Field Key",
+   "reqd": 1
+  },
+  {
+   "description": "Optional output key in the generated payload. If empty, the field key's last segment is used.",
+   "fieldname": "output_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Output Key"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_path",
+   "fieldtype": "Data",
+   "label": "Source Path",
+   "read_only": 1
+  },
+  {
+   "fieldname": "datatype",
+   "fieldtype": "Data",
+   "label": "Data Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "label": "Source",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Data",
+   "label": "Purpose",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-28 07:45:00.000000",
+ "modified_by": "Administrator",
+ "module": "Crispy Print",
+ "name": "Crispy Document Code Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

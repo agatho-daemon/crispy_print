@@ -81,6 +81,19 @@ bench --site your-site run-tests --doctype "Crispy Format"
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 
+### QR Field Registry Checks
+
+QR/document-code selected fields use a repo-owned backend registry and Frappe child rows. After registry or selected-field model changes, run:
+
+```bash
+bench --site your-site execute crispy_print.dev_utils.qr_registry_smoke.run
+bench --site your-site run-tests --app crispy_print --module crispy_print.tests.qr_registry.test_loader
+bench --site your-site run-tests --app crispy_print --module crispy_print.crispy_print.doctype.crispy_document_code_profile.test_crispy_document_code_profile
+bench --site your-site run-tests --app crispy_print --module crispy_print.tests.api.test_document_codes
+```
+
+Run `bench migrate` when DocType metadata or migration patches change. The selected-fields migration converts safe legacy `selected_fields_json` values into `Crispy Document Code Field` child rows when a single target DocType can be inferred.
+
 ### Vue Component Guidelines
 
 All Vue components use `<style scoped>` blocks. CSS is automatically extracted and inlined:

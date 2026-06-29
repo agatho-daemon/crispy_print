@@ -307,7 +307,7 @@ def _build_resolved_config(
 		"datamatrix_symbols": _datamatrix_symbols_value(profile.datamatrix_symbols),
 		"content_source": profile.content_source,
 		"payload_template": profile.payload_template,
-		"selected_fields": _normalize_selected_fields(profile.selected_fields_json),
+		"selected_fields": _normalize_profile_selected_fields(profile, doc),
 		"field_mapping": _normalize_json_dict(profile.field_mapping_json),
 		"encoder_key": (profile.encoder_key or "custom").strip() or "custom",
 		"encoder_settings": _normalize_json_dict(profile.encoder_settings_json),
@@ -609,6 +609,20 @@ def _normalize_selected_fields(value: Any) -> list[str] | JSONDict:
 	if isinstance(parsed, list):
 		return [str(item) for item in parsed]
 	frappe.throw(_("Selected fields must be a JSON array or object."))
+
+
+def _normalize_profile_selected_fields(profile: Any, doc: Any) -> list[str] | JSONDict:
+	rows = [
+		row
+		for row in (profile.selected_fields or [])
+		if row.field_key and (not row.source_doctype or row.source_doctype == doc.doctype)
+	]
+	if rows:
+		if any((row.output_key or "").strip() for row in rows):
+			return {(row.output_key or row.field_key.split(".")[-1]).strip(): row.field_key for row in rows}
+		return [row.field_key for row in rows]
+
+	return _normalize_selected_fields(profile.selected_fields_json)
 
 
 def _normalize_json_dict(value: Any) -> JSONDict:

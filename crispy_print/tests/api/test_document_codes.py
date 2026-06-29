@@ -81,6 +81,50 @@ class TestDocumentCodes(FrappeTestCase):
 		self.assertEqual(out["payload"], {"company": self.company, "code": "DCR"})
 		self.assertEqual(out["encoded_value"], '{"company":"DCR Test Company","code":"DCR"}')
 
+	def test_generate_document_code_builds_child_selected_fields_payload(self):
+		profile = self._make_profile(
+			profile_name="DCR Child Selected Fields",
+			code_purpose="Other",
+			regulatory_profile=None,
+			fiscal_credential=None,
+			content_source="Selected Fields",
+			payload_format="JSON",
+			output_encoding="Plain Text",
+			encoder_key="custom",
+			selected_fields=[
+				{
+					"source_doctype": "Company",
+					"field_key": "company_name",
+					"output_key": "company",
+				},
+				{
+					"source_doctype": "Company",
+					"field_key": "abbr",
+					"output_key": "code",
+				},
+			],
+			document_rules=[
+				{
+					"document_type": "Company",
+					"document_role": "Other",
+					"condition_type": "Filter JSON",
+					"condition_json": '{"abbr":"DCR"}',
+					"priority": 10,
+				}
+			],
+		)
+
+		out = generate_document_code(
+			doctype="Company",
+			name=self.company,
+			code_purpose="Other",
+			environment="Production",
+			profile_name=profile.name,
+		)
+
+		self.assertEqual(out["payload"], {"company": self.company, "code": "DCR"})
+		self.assertEqual(out["encoded_value"], '{"company":"DCR Test Company","code":"DCR"}')
+
 	def test_generate_document_code_renders_verification_url(self):
 		profile = self._make_profile(
 			profile_name="DCR Verification URL",

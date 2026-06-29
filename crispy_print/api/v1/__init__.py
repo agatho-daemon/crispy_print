@@ -44,6 +44,9 @@ from .issued_documents import revoke_issued_document as _revoke_issued_document
 from .issued_documents import supersede_issued_document as _supersede_issued_document
 from .issued_documents import verify_issued_document_token as _verify_issued_document_token
 from .parity import run_report_template_parity_check as _run_report_template_parity_check
+from .qr_field_registry import get_qr_business_field_set as _get_qr_business_field_set
+from .qr_field_registry import get_qr_field_registry_metadata as _get_qr_field_registry_metadata
+from .qr_field_registry import get_qr_registry_fields as _get_qr_registry_fields
 from .qr_regulatory_profiles import get_qr_regulatory_profile as _get_qr_regulatory_profile
 from .qr_regulatory_profiles import get_qr_regulatory_profiles as _get_qr_regulatory_profiles
 from .reports import compile_report_preview as _compile_report_preview
@@ -567,6 +570,32 @@ def get_qr_regulatory_profile(name: str) -> JSONDict:
 
 
 @frappe.whitelist()
+def get_qr_field_registry_metadata() -> JSONDict:
+	enforce_rate_limit("get_qr_field_registry_metadata", limit=120, window_seconds=60)
+	return _get_qr_field_registry_metadata()
+
+
+@frappe.whitelist()
+def get_qr_registry_fields(
+	doctype: str,
+	authority_code: str | None = None,
+	include_business_fields: int | bool = 1,
+) -> JSONDict:
+	enforce_rate_limit("get_qr_registry_fields", limit=120, window_seconds=60)
+	return _get_qr_registry_fields(
+		doctype=doctype,
+		authority_code=authority_code,
+		include_business_fields=include_business_fields,
+	)
+
+
+@frappe.whitelist()
+def get_qr_business_field_set(key: str) -> JSONDict:
+	enforce_rate_limit("get_qr_business_field_set", limit=120, window_seconds=60)
+	return _get_qr_business_field_set(key)
+
+
+@frappe.whitelist()
 def get_issued_document(name: str) -> JSONDict:
 	enforce_rate_limit("get_issued_document", limit=120, window_seconds=60)
 	return _get_issued_document(name)
@@ -720,6 +749,9 @@ __all__ = [
 	"get_issued_document_by_token",
 	"get_issued_documents",
 	"get_letterhead_options",
+	"get_qr_business_field_set",
+	"get_qr_field_registry_metadata",
+	"get_qr_registry_fields",
 	"get_qr_regulatory_profile",
 	"get_qr_regulatory_profiles",
 	"get_report_typst_source",

@@ -1,0 +1,470 @@
+{
+  "version": 1,
+  "description": "Backend-owned registry of document fields that may be used in Crispy Print document codes and regulatory QR payloads. User profiles store registry keys, not arbitrary field paths.",
+  "doctypes": {
+    "Company": {
+      "fields": {
+        "company_name": {
+          "label": "Company Name",
+          "path": "company_name",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "seller_identity"
+        },
+        "abbr": {
+          "label": "Company Abbreviation",
+          "path": "abbr",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "company_identifier"
+        },
+        "tax_id": {
+          "label": "Tax ID",
+          "path": "tax_id",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "tax_identifier"
+        },
+        "default_currency": {
+          "label": "Default Currency",
+          "path": "default_currency",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "currency"
+        }
+      }
+    },
+    "Sales Invoice": {
+      "fields": {
+        "company": {
+          "label": "Seller Company",
+          "path": "company",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "seller_identity"
+        },
+        "customer": {
+          "label": "Customer",
+          "path": "customer",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "buyer_identity"
+        },
+        "customer_name": {
+          "label": "Customer Name",
+          "path": "customer_name",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "buyer_identity"
+        },
+        "tax_id": {
+          "label": "Customer Tax ID",
+          "path": "tax_id",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "buyer_tax_identifier"
+        },
+        "name": {
+          "label": "Invoice Number",
+          "path": "name",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "document_identifier"
+        },
+        "posting_date": {
+          "label": "Posting Date",
+          "path": "posting_date",
+          "source": "document",
+          "datatype": "Date",
+          "purpose": "issue_date"
+        },
+        "posting_time": {
+          "label": "Posting Time",
+          "path": "posting_time",
+          "source": "document",
+          "datatype": "Time",
+          "purpose": "issue_time"
+        },
+        "currency": {
+          "label": "Currency",
+          "path": "currency",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "currency"
+        },
+        "net_total": {
+          "label": "Net Total",
+          "path": "net_total",
+          "source": "document",
+          "datatype": "Currency",
+          "purpose": "net_total"
+        },
+        "total_taxes_and_charges": {
+          "label": "Tax Total",
+          "path": "total_taxes_and_charges",
+          "source": "document",
+          "datatype": "Currency",
+          "purpose": "tax_total"
+        },
+        "grand_total": {
+          "label": "Grand Total",
+          "path": "grand_total",
+          "source": "document",
+          "datatype": "Currency",
+          "purpose": "invoice_total"
+        },
+        "rounded_total": {
+          "label": "Rounded Total",
+          "path": "rounded_total",
+          "source": "document",
+          "datatype": "Currency",
+          "purpose": "invoice_total"
+        },
+        "items.item_code": {
+          "label": "Item Code",
+          "path": "items[].item_code",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "inventory_traceability"
+        },
+        "items.item_name": {
+          "label": "Item Name",
+          "path": "items[].item_name",
+          "source": "child_table",
+          "datatype": "Data",
+          "purpose": "item_identity"
+        },
+        "items.qty": {
+          "label": "Quantity",
+          "path": "items[].qty",
+          "source": "child_table",
+          "datatype": "Float",
+          "purpose": "quantity"
+        },
+        "items.serial_no": {
+          "label": "Serial Numbers",
+          "path": "items[].serial_no",
+          "source": "child_table",
+          "datatype": "Text",
+          "purpose": "serial_tracking"
+        },
+        "items.batch_no": {
+          "label": "Batch Number",
+          "path": "items[].batch_no",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "batch_tracking"
+        }
+      }
+    },
+    "Delivery Note": {
+      "fields": {
+        "company": {
+          "label": "Company",
+          "path": "company",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "seller_identity"
+        },
+        "customer": {
+          "label": "Customer",
+          "path": "customer",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "buyer_identity"
+        },
+        "name": {
+          "label": "Delivery Note Number",
+          "path": "name",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "document_identifier"
+        },
+        "posting_date": {
+          "label": "Posting Date",
+          "path": "posting_date",
+          "source": "document",
+          "datatype": "Date",
+          "purpose": "issue_date"
+        },
+        "items.item_code": {
+          "label": "Item Code",
+          "path": "items[].item_code",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "inventory_traceability"
+        },
+        "items.serial_no": {
+          "label": "Serial Numbers",
+          "path": "items[].serial_no",
+          "source": "child_table",
+          "datatype": "Text",
+          "purpose": "serial_tracking"
+        },
+        "items.batch_no": {
+          "label": "Batch Number",
+          "path": "items[].batch_no",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "batch_tracking"
+        }
+      }
+    },
+    "Purchase Invoice": {
+      "fields": {
+        "company": {
+          "label": "Company",
+          "path": "company",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "buyer_identity"
+        },
+        "supplier": {
+          "label": "Supplier",
+          "path": "supplier",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "seller_identity"
+        },
+        "supplier_name": {
+          "label": "Supplier Name",
+          "path": "supplier_name",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "seller_identity"
+        },
+        "bill_no": {
+          "label": "Supplier Invoice Number",
+          "path": "bill_no",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "document_identifier"
+        },
+        "posting_date": {
+          "label": "Posting Date",
+          "path": "posting_date",
+          "source": "document",
+          "datatype": "Date",
+          "purpose": "issue_date"
+        },
+        "grand_total": {
+          "label": "Grand Total",
+          "path": "grand_total",
+          "source": "document",
+          "datatype": "Currency",
+          "purpose": "invoice_total"
+        },
+        "items.item_code": {
+          "label": "Item Code",
+          "path": "items[].item_code",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "inventory_traceability"
+        },
+        "items.batch_no": {
+          "label": "Batch Number",
+          "path": "items[].batch_no",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "batch_tracking"
+        }
+      }
+    },
+    "Stock Entry": {
+      "fields": {
+        "company": {
+          "label": "Company",
+          "path": "company",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "company_identity"
+        },
+        "name": {
+          "label": "Stock Entry Number",
+          "path": "name",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "document_identifier"
+        },
+        "posting_date": {
+          "label": "Posting Date",
+          "path": "posting_date",
+          "source": "document",
+          "datatype": "Date",
+          "purpose": "issue_date"
+        },
+        "stock_entry_type": {
+          "label": "Stock Entry Type",
+          "path": "stock_entry_type",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "movement_type"
+        },
+        "items.item_code": {
+          "label": "Item Code",
+          "path": "items[].item_code",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "inventory_traceability"
+        },
+        "items.s_warehouse": {
+          "label": "Source Warehouse",
+          "path": "items[].s_warehouse",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "source_location"
+        },
+        "items.t_warehouse": {
+          "label": "Target Warehouse",
+          "path": "items[].t_warehouse",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "target_location"
+        },
+        "items.serial_no": {
+          "label": "Serial Numbers",
+          "path": "items[].serial_no",
+          "source": "child_table",
+          "datatype": "Text",
+          "purpose": "serial_tracking"
+        },
+        "items.batch_no": {
+          "label": "Batch Number",
+          "path": "items[].batch_no",
+          "source": "child_table",
+          "datatype": "Link",
+          "purpose": "batch_tracking"
+        }
+      }
+    },
+    "Payment Entry": {
+      "fields": {
+        "company": {
+          "label": "Company",
+          "path": "company",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "company_identity"
+        },
+        "name": {
+          "label": "Payment Entry Number",
+          "path": "name",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "document_identifier"
+        },
+        "posting_date": {
+          "label": "Posting Date",
+          "path": "posting_date",
+          "source": "document",
+          "datatype": "Date",
+          "purpose": "issue_date"
+        },
+        "payment_type": {
+          "label": "Payment Type",
+          "path": "payment_type",
+          "source": "document",
+          "datatype": "Select",
+          "purpose": "payment_type"
+        },
+        "party_type": {
+          "label": "Party Type",
+          "path": "party_type",
+          "source": "document",
+          "datatype": "Link",
+          "purpose": "party_type"
+        },
+        "party": {
+          "label": "Party",
+          "path": "party",
+          "source": "document",
+          "datatype": "Dynamic Link",
+          "purpose": "party_identity"
+        },
+        "paid_amount": {
+          "label": "Paid Amount",
+          "path": "paid_amount",
+          "source": "document",
+          "datatype": "Currency",
+          "purpose": "payment_amount"
+        },
+        "received_amount": {
+          "label": "Received Amount",
+          "path": "received_amount",
+          "source": "document",
+          "datatype": "Currency",
+          "purpose": "payment_amount"
+        },
+        "reference_no": {
+          "label": "Reference Number",
+          "path": "reference_no",
+          "source": "document",
+          "datatype": "Data",
+          "purpose": "payment_reference"
+        }
+      }
+    }
+  },
+  "authorities": {
+    "ZATCA": {
+      "country": "SA",
+      "doctype": "Sales Invoice",
+      "required_fields": [
+        "company",
+        "posting_date",
+        "posting_time",
+        "grand_total",
+        "total_taxes_and_charges"
+      ],
+      "optional_fields": [
+        "name",
+        "customer_name",
+        "tax_id",
+        "currency",
+        "items.item_code",
+        "items.serial_no",
+        "items.batch_no"
+      ]
+    },
+    "UAE_FTA": {
+      "country": "AE",
+      "doctype": "Sales Invoice",
+      "required_fields": [
+        "company",
+        "posting_date",
+        "grand_total",
+        "total_taxes_and_charges"
+      ],
+      "optional_fields": [
+        "name",
+        "customer_name",
+        "tax_id",
+        "currency"
+      ]
+    }
+  },
+  "business_field_sets": {
+    "inventory_traceability": {
+      "label": "Inventory Traceability",
+      "doctype": "Sales Invoice",
+      "fields": [
+        "items.item_code",
+        "items.serial_no",
+        "items.batch_no"
+      ]
+    },
+    "payment_receipt": {
+      "label": "Payment Receipt",
+      "doctype": "Payment Entry",
+      "fields": [
+        "company",
+        "posting_date",
+        "payment_type",
+        "party",
+        "paid_amount",
+        "received_amount",
+        "reference_no"
+      ]
+    }
+  }
+}
