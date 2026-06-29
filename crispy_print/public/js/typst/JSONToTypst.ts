@@ -3,6 +3,7 @@
 
 import type { CrispyLayout, LayoutSection, LayoutField, TableColumn } from "../utils/layout"
 import { buildForegroundPlacements, getLetterheadFilename, resolveBrandingMode } from "./branding"
+import { resolveTypstPaper } from "./page"
 import { typstLength, typstQuoted } from "./typstEscaping"
 import { buildTableStyleConstants, buildTypographyStyleDefs } from "./textStyles"
 import {
@@ -292,7 +293,7 @@ class JSONTypstTranslator {
 
 		lines.push("// Page setup")
 		lines.push("#set page(")
-		lines.push(`  paper: ${typstQuoted(page_size.toLowerCase())},`)
+		lines.push(`  paper: ${typstQuoted(resolveTypstPaper(page_size))},`)
 		if (orientation === "landscape") {
 			lines.push("  flipped: true,")
 		}

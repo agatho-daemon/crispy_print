@@ -204,15 +204,6 @@ export interface CrispyTypstBlockOption {
 
 export interface CrispyTypstBlockDoc extends CrispyTypstBlockOption {
 	notes?: string | null
-	preview_use_default_page_settings?: number
-	preview_page_size?: string | null
-	preview_orientation?: "portrait" | "landscape" | string | null
-	preview_margin_top?: string | null
-	preview_margin_bottom?: string | null
-	preview_margin_left?: string | null
-	preview_margin_right?: string | null
-	preview_page_width?: string | null
-	preview_page_height?: string | null
 }
 
 export interface CrispyTemplatePublishPreview {

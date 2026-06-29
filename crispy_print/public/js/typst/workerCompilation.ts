@@ -10,6 +10,7 @@ import {
 	getLetterheadFilename,
 	resolveBrandingMode,
 } from "./branding"
+import { resolveTypstPaper } from "./page"
 import { typstQuoted } from "./typstEscaping"
 import { buildTableStyleConstants, buildTypographyStyleDefs } from "./textStyles"
 
@@ -113,7 +114,7 @@ export function buildPresentationSettingsBlock(options: {
 		options.presentation_settings || {}
 	)
 	const margins = presentation_settings.page.margins || {}
-	const page_size = String(presentation_settings.page.size || "A4").toLowerCase()
+	const page_size = resolveTypstPaper(presentation_settings.page.size || "A4")
 	const orientation = String(presentation_settings.page.orientation || "portrait")
 	const marginValue = (value: any, fallback: number) => {
 		const num = Number(value)

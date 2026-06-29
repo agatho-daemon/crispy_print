@@ -4,17 +4,28 @@
 			<section class="ctb-panel">
 				<h3>{{ __("Page Settings") }}</h3>
 				<label class="ctb-check">
-					<input v-model="useDefaultPage" type="checkbox" />
-					<span>{{ __("Default page size and margins") }}</span>
+					<input v-model="useAutoSizePreview" type="checkbox" />
+					<span>{{ __("Auto-size preview page") }}</span>
 				</label>
-				<div v-if="useDefaultPage" class="ctb-preview-note">
-					{{ __("Preview uses auto width, auto height, and 2.5cm margins.") }}
+				<div class="ctb-preview-note">
+					{{
+						useAutoSizePreview
+							? __(
+									"Preview shrinks to content with 2.5cm margins. Use for compact self-sizing blocks, not tables, grids, or long text."
+							  )
+							: __(
+									"Preview uses A4 with 2.5cm margins. Best for document blocks, tables, grids, and long text."
+							  )
+					}}
 				</div>
-				<div v-else>
+				<div class="ctb-preview-note">
+					{{ __("Click Refresh or Command/Ctrl-Enter to compile after every change.") }}
+				</div>
+				<div v-if="!useAutoSizePreview">
 					<div class="ctb-grid ctb-grid--two">
 						<label>
 							<span>{{ __("Size") }}</span>
-							<select v-model="doc.preview_page_size" class="form-control">
+							<select v-model="preview.page_size" class="form-control">
 								<option v-for="size in pageSizes" :key="size" :value="size">
 									{{ size }}
 								</option>
@@ -22,25 +33,21 @@
 						</label>
 						<label>
 							<span>{{ __("Orientation") }}</span>
-							<select v-model="doc.preview_orientation" class="form-control">
+							<select v-model="preview.orientation" class="form-control">
 								<option value="portrait">{{ __("Portrait") }}</option>
 								<option value="landscape">{{ __("Landscape") }}</option>
 							</select>
 						</label>
 					</div>
-					<div v-if="doc.preview_page_size === 'Custom'" class="ctb-grid ctb-grid--two">
+					<div v-if="preview.page_size === 'Custom'" class="ctb-grid ctb-grid--two">
 						<label>
 							<span>{{ __("Width") }}</span>
-							<input
-								v-model="doc.preview_page_width"
-								class="form-control"
-								type="text"
-							/>
+							<input v-model="preview.page_width" class="form-control" type="text" />
 						</label>
 						<label>
 							<span>{{ __("Height") }}</span>
 							<input
-								v-model="doc.preview_page_height"
+								v-model="preview.page_height"
 								class="form-control"
 								type="text"
 							/>
@@ -49,16 +56,12 @@
 					<div class="ctb-grid ctb-grid--four">
 						<label>
 							<span>{{ __("Top") }}</span>
-							<input
-								v-model="doc.preview_margin_top"
-								class="form-control"
-								type="text"
-							/>
+							<input v-model="preview.margin_top" class="form-control" type="text" />
 						</label>
 						<label>
 							<span>{{ __("Bottom") }}</span>
 							<input
-								v-model="doc.preview_margin_bottom"
+								v-model="preview.margin_bottom"
 								class="form-control"
 								type="text"
 							/>
@@ -66,7 +69,7 @@
 						<label>
 							<span>{{ __("Left") }}</span>
 							<input
-								v-model="doc.preview_margin_left"
+								v-model="preview.margin_left"
 								class="form-control"
 								type="text"
 							/>
@@ -74,7 +77,7 @@
 						<label>
 							<span>{{ __("Right") }}</span>
 							<input
-								v-model="doc.preview_margin_right"
+								v-model="preview.margin_right"
 								class="form-control"
 								type="text"
 							/>
@@ -89,7 +92,6 @@
 					v-model="doc.typst_code"
 					class="form-control ctb-code-editor"
 					spellcheck="false"
-					@keydown="onEditorKeydown"
 				></textarea>
 			</section>
 		</aside>
@@ -104,7 +106,12 @@
 					<button class="btn btn-default btn-sm" type="button" @click="load">
 						{{ __("Reload") }}
 					</button>
-					<button class="btn btn-primary btn-sm" type="button" @click="compilePreview">
+					<button
+						class="btn btn-primary btn-sm"
+						type="button"
+						:title="__('Command/Ctrl-Enter')"
+						@click="compilePreview"
+					>
 						{{ __("Refresh") }}
 					</button>
 				</div>
@@ -129,13 +136,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import {
 	compileTypstSvg,
 	getCrispyTypstBlock,
 	saveCrispyTypstBlock,
 	type CrispyTypstBlockDoc,
 } from "../api/crispy";
+import { resolveTypstPaper } from "../typst/page";
 import { __ } from "../utils/i18n";
 import { sanitizeSvg } from "../utils/safeSvg";
 
@@ -149,6 +157,18 @@ const errorMessage = ref("");
 const svgPages = ref<string[]>([]);
 const baselineTypstCode = ref("");
 
+interface PreviewSettings {
+	auto_size: number;
+	page_size: string;
+	orientation: "portrait" | "landscape";
+	page_width: string;
+	page_height: string;
+	margin_top: string;
+	margin_bottom: string;
+	margin_left: string;
+	margin_right: string;
+}
+
 const doc = reactive<CrispyTypstBlockDoc>({
 	name: props.blockName,
 	block_name: "",
@@ -157,21 +177,24 @@ const doc = reactive<CrispyTypstBlockDoc>({
 	version: "1.0",
 	enabled: 1,
 	category: "",
-	preview_use_default_page_settings: 1,
-	preview_page_size: "A4",
-	preview_orientation: "portrait",
-	preview_page_width: "auto",
-	preview_page_height: "auto",
-	preview_margin_top: "2.5cm",
-	preview_margin_bottom: "2.5cm",
-	preview_margin_left: "2.5cm",
-	preview_margin_right: "2.5cm",
 });
 
-const useDefaultPage = computed({
-	get: () => Boolean(doc.preview_use_default_page_settings),
+const preview = reactive<PreviewSettings>({
+	auto_size: 0,
+	page_size: "A4",
+	orientation: "portrait",
+	page_width: "auto",
+	page_height: "auto",
+	margin_top: "2.5cm",
+	margin_bottom: "2.5cm",
+	margin_left: "2.5cm",
+	margin_right: "2.5cm",
+});
+
+const useAutoSizePreview = computed({
+	get: () => Boolean(preview.auto_size),
 	set: (value: boolean) => {
-		doc.preview_use_default_page_settings = value ? 1 : 0;
+		preview.auto_size = value ? 1 : 0;
 		if (value) applyDefaultPreviewPage();
 	},
 });
@@ -194,16 +217,21 @@ watch(
 );
 
 onMounted(() => {
+	window.addEventListener("keydown", onPreviewShortcutKeydown);
 	void load();
 });
 
+onBeforeUnmount(() => {
+	window.removeEventListener("keydown", onPreviewShortcutKeydown);
+});
+
 function applyDefaultPreviewPage() {
-	doc.preview_page_width = "auto";
-	doc.preview_page_height = "auto";
-	doc.preview_margin_top = "2.5cm";
-	doc.preview_margin_bottom = "2.5cm";
-	doc.preview_margin_left = "2.5cm";
-	doc.preview_margin_right = "2.5cm";
+	preview.page_width = "auto";
+	preview.page_height = "auto";
+	preview.margin_top = "2.5cm";
+	preview.margin_bottom = "2.5cm";
+	preview.margin_left = "2.5cm";
+	preview.margin_right = "2.5cm";
 }
 
 async function load() {
@@ -261,47 +289,35 @@ function previewSource(): string {
 }
 
 function renderPageSettings(): string {
-	const margins = `margin: (top: ${valueOr(doc.preview_margin_top, "2.5cm")}, bottom: ${valueOr(
-		doc.preview_margin_bottom,
+	const margins = `margin: (top: ${valueOr(preview.margin_top, "2.5cm")}, bottom: ${valueOr(
+		preview.margin_bottom,
 		"2.5cm"
-	)}, left: ${valueOr(doc.preview_margin_left, "2.5cm")}, right: ${valueOr(
-		doc.preview_margin_right,
+	)}, left: ${valueOr(preview.margin_left, "2.5cm")}, right: ${valueOr(
+		preview.margin_right,
 		"2.5cm"
 	)})`;
-	if (useDefaultPage.value) {
+	if (useAutoSizePreview.value) {
 		return `#set page(width: auto, height: auto, ${margins})`;
 	}
-	if (doc.preview_page_size === "Custom") {
-		return `#set page(width: ${valueOr(doc.preview_page_width, "auto")}, height: ${valueOr(
-			doc.preview_page_height,
+	if (preview.page_size === "Custom") {
+		return `#set page(width: ${valueOr(preview.page_width, "auto")}, height: ${valueOr(
+			preview.page_height,
 			"auto"
 		)}, ${margins})`;
 	}
-	const paper = String(doc.preview_page_size || "A4").toLowerCase();
-	const flipped = doc.preview_orientation === "landscape" ? "true" : "false";
+	const paper = resolveTypstPaper(preview.page_size);
+	const flipped = preview.orientation === "landscape" ? "true" : "false";
 	return `#set page(paper: "${paper}", flipped: ${flipped}, ${margins})`;
 }
 
 function normalizeLoadedBlock(block: CrispyTypstBlockDoc): CrispyTypstBlockDoc {
-	return {
-		...block,
-		preview_use_default_page_settings: block.preview_use_default_page_settings ?? 1,
-		preview_page_size: block.preview_page_size || "A4",
-		preview_orientation: block.preview_orientation || "portrait",
-		preview_page_width: block.preview_page_width || "auto",
-		preview_page_height: block.preview_page_height || "auto",
-		preview_margin_top: block.preview_margin_top || "2.5cm",
-		preview_margin_bottom: block.preview_margin_bottom || "2.5cm",
-		preview_margin_left: block.preview_margin_left || "2.5cm",
-		preview_margin_right: block.preview_margin_right || "2.5cm",
-	};
+	return { ...block };
 }
 
-function onEditorKeydown(event: KeyboardEvent) {
-	if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-		event.preventDefault();
-		void compilePreview();
-	}
+function onPreviewShortcutKeydown(event: KeyboardEvent) {
+	if ((!event.metaKey && !event.ctrlKey) || event.key !== "Enter") return;
+	event.preventDefault();
+	void compilePreview();
 }
 
 function normalizeCode(value: string | null | undefined): string {

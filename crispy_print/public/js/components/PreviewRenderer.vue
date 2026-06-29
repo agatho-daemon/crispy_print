@@ -100,6 +100,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { resolveTypstPaper } from "../typst/page";
 import { setupWorker } from "../typst/setupWorker";
 import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
 import { sanitizeSvg } from "../utils/safeSvg";
@@ -282,7 +283,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function getPageWidthPx(presentation_settings: any): number {
-	const page_size = String(presentation_settings?.page?.size || "A4").toLowerCase();
+	const page_size = resolveTypstPaper(presentation_settings?.page?.size || "A4");
 	const orientation = String(
 		presentation_settings?.page?.orientation || "portrait"
 	).toLowerCase();
@@ -290,10 +291,10 @@ function getPageWidthPx(presentation_settings: any): number {
 		a3: { width: 297, height: 420, unit: "mm" },
 		a4: { width: 210, height: 297, unit: "mm" },
 		a5: { width: 148, height: 210, unit: "mm" },
-		letter: { width: 8.5, height: 11, unit: "in" },
-		legal: { width: 8.5, height: 14, unit: "in" },
-		tabloid: { width: 11, height: 17, unit: "in" },
-		executive: { width: 7.25, height: 10.5, unit: "in" },
+		"us-letter": { width: 8.5, height: 11, unit: "in" },
+		"us-legal": { width: 8.5, height: 14, unit: "in" },
+		"us-tabloid": { width: 11, height: 17, unit: "in" },
+		"us-executive": { width: 7.25, height: 10.5, unit: "in" },
 	};
 	const size = sizes[page_size] || sizes.a4;
 	const width = orientation === "landscape" ? size.height : size.width;

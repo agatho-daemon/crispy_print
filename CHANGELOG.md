@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Avoided using the app icon hook on Frappe 16 and newer.
 - Added Crispy Print app tile permission checks so the app tile is only shown to users with access.
 - Fixed compact item print output to collapse item columns in compact table layouts.
+- Fixed a caught Typst page-size bug where UI labels such as `Letter` compiled to invalid paper names like `letter` instead of Typst identifiers such as `us-letter`; US paper aliases now resolve consistently across block previews, document generation, preview workers, and preview sizing.
 
 ### Tests
 
