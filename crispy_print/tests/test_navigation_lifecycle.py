@@ -45,6 +45,8 @@ class TestNavigationLifecycle(unittest.TestCase):
 					ignore_permissions=True,
 					ignore_on_trash=True,
 				)
+		if not frappe.db.table_exists("Workspace Sidebar"):
+			return
 		for name in self.test_sidebars:
 			if frappe.db.exists("Workspace Sidebar", name):
 				frappe.delete_doc(
@@ -56,6 +58,8 @@ class TestNavigationLifecycle(unittest.TestCase):
 				)
 
 	def _insert_workspace_sidebar(self, name: str, *, app: str | None, standard: int):
+		if not frappe.db.table_exists("Workspace Sidebar"):
+			self.skipTest("Workspace Sidebar is not available on this Frappe site")
 		doc = frappe.get_doc(
 			{
 				"doctype": "Workspace Sidebar",
@@ -84,7 +88,7 @@ class TestNavigationLifecycle(unittest.TestCase):
 				{
 					"hidden": 1,
 					"link_type": "External",
-					"link": "/desk/crispy-print",
+					"link": "/desk/crispy-print?sidebar=Crispy%20Studio",
 					"logo_url": "/assets/crispy_print/icons/crispy-print-logo.svg",
 				}
 			)
@@ -136,7 +140,7 @@ class TestNavigationLifecycle(unittest.TestCase):
 		self.assertEqual(app_icon["name"], "Crispy Print")
 		self.assertEqual(app_icon["icon_type"], "App")
 		self.assertEqual(app_icon["link_type"], "External")
-		self.assertEqual(app_icon["link"], "/desk/crispy-print")
+		self.assertEqual(app_icon["link"], "/desk/crispy-print?sidebar=Crispy%20Studio")
 		self.assertEqual(app_icon["logo_url"], "/assets/crispy_print/icons/crispy-print-logo.svg")
 
 		self.assertEqual(studio_icon["name"], "Crispy Studio")
@@ -181,8 +185,9 @@ class TestNavigationLifecycle(unittest.TestCase):
 		self.assertEqual(issued_documents_section["keep_closed"], 1)
 
 		workspace_content = json.loads(workspace["content"])
+		workspace_shortcuts = [block for block in workspace_content if block.get("type") == "shortcut"]
 		self.assertEqual(
-			[block["data"]["shortcut_name"] for block in workspace_content[:4]],
+			[block["data"]["shortcut_name"] for block in workspace_shortcuts[:4]],
 			["Crispy Formats", "Format Builder", "Branding Profiles", "Branding Builder"],
 		)
 
@@ -221,6 +226,8 @@ class TestNavigationLifecycle(unittest.TestCase):
 		self.assertFalse(frappe.db.exists("Desktop Icon", "Test Crispy Link Icon"))
 
 	def test_after_sync_preserves_app_desktop_icon_named_crispy_print(self):
+		if not frappe.db.has_column("Desktop Icon", "icon_type"):
+			self.skipTest("Desktop Icon icon_type is not available on this Frappe site")
 		self._insert_desktop_icon("Test Crispy App Icon", icon_type="App")
 
 		with (

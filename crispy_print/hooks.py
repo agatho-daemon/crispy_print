@@ -7,7 +7,7 @@ app_description = (
 app_email = "agatho_daemon@icloud.com"
 app_license = "MIT"
 app_logo_url = "/assets/crispy_print/icons/crispy-print-logo.svg"
-app_home = "/desk/crispy-print"
+app_home = "/desk/crispy-print?sidebar=Crispy%20Studio"
 
 # include js, css files in header of desk.html
 app_include_js = [

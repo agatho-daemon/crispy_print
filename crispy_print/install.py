@@ -56,6 +56,8 @@ def cleanup_crispy_print_navigation_records() -> None:
 
 
 def _delete_workspace_sidebar_if_local(name: str) -> None:
+	if not frappe.db.table_exists("Workspace Sidebar"):
+		return
 	if not frappe.db.exists("Workspace Sidebar", name):
 		return
 	app = frappe.db.get_value("Workspace Sidebar", name, "app")
@@ -66,6 +68,8 @@ def _delete_workspace_sidebar_if_local(name: str) -> None:
 
 def _delete_desktop_icon_if_not_app(name: str) -> None:
 	if not frappe.db.exists("Desktop Icon", name):
+		return
+	if not frappe.db.has_column("Desktop Icon", "icon_type"):
 		return
 	icon_type = frappe.db.get_value("Desktop Icon", name, "icon_type")
 	if icon_type != "App":

@@ -7,7 +7,7 @@
   "icon_type": "App",
   "idx": 100,
   "label": "Crispy Print",
-  "link": "/desk/crispy-print",
+  "link": "/desk/crispy-print?sidebar=Crispy%20Studio",
   "link_type": "External",
   "logo_url": "/assets/crispy_print/icons/crispy-print-logo.svg",
   "modified": "2026-06-07 00:00:00.000000",
