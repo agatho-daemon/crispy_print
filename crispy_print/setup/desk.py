@@ -20,13 +20,8 @@ def set_workspace_hidden(workspace: str, hidden: bool) -> None:
 def setup_desk_compatibility() -> None:
 	frappe_major = get_frappe_major()
 
-	if frappe_major >= 16:
-		# v16+ uses Desktop + Workspace Sidebar.
-		set_workspace_hidden("Crispy", True)
-		set_workspace_hidden("Crispy Studio", False)
-	else:
+	if frappe_major < 16:
 		# v15 uses classic Workspace sidebar.
 		set_workspace_hidden("Crispy", False)
 		set_workspace_hidden("Crispy Studio", True)
-
-	frappe.clear_cache()
+		frappe.clear_cache()

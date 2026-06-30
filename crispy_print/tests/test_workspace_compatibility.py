@@ -13,7 +13,7 @@ from crispy_print.setup import desk
 APP_ROOT = Path(__file__).resolve().parents[1]
 
 
-class TestNavigationCompatibility(unittest.TestCase):
+class TestWorkspaceCompatibility(unittest.TestCase):
 	def test_workspace_exports_have_expected_visibility_defaults(self):
 		classic_workspace_path = APP_ROOT / "crispy_print" / "workspace" / "crispy" / "crispy.json"
 		studio_workspace_path = (
@@ -40,14 +40,16 @@ class TestNavigationCompatibility(unittest.TestCase):
 			},
 		)
 
-	def test_setup_desk_compatibility_sets_v16_workspace_visibility(self):
-		self._assert_setup_desk_compatibility(
-			frappe_major=16,
-			expected={
-				"Crispy": 1,
-				"Crispy Studio": 0,
-			},
-		)
+	def test_setup_desk_compatibility_leaves_v16_workspace_visibility_unchanged(self):
+		with (
+			patch.object(desk, "get_frappe_major", return_value=16),
+			patch.object(desk, "set_workspace_hidden") as set_workspace_hidden,
+			patch.object(desk.frappe, "clear_cache") as clear_cache,
+		):
+			desk.setup_desk_compatibility()
+
+		set_workspace_hidden.assert_not_called()
+		clear_cache.assert_not_called()
 
 	def _assert_setup_desk_compatibility(self, frappe_major: int, expected: dict[str, int]):
 		original_values = self._get_workspace_visibility(expected)
