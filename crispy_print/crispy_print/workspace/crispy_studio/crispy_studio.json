@@ -1,4 +1,5 @@
 {
+ "app": "crispy_print",
  "charts": [],
  "content": "[{\"id\":\"8cp5jCtOjS\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Crispy Studio</span>\",\"col\":12}},{\"id\":\"JbM5drA5KU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Crispy Formats\",\"col\":3}},{\"id\":\"LZL4bGcctY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Format Builder\",\"col\":3}},{\"id\":\"MejNRm9H7W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Profiles\",\"col\":3}},{\"id\":\"B4qk-t-p8T\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Builder\",\"col\":3}},{\"id\":\"k0FuDQgc8O\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"2bjPCgcJXT\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Documents</b></span>\",\"col\":12}},{\"id\":\"aBmMaBsL7t\",\"type\":\"card\",\"data\":{\"card_name\":\"Core Documents\",\"col\":4}},{\"id\":\"QqMzFg9ElK\",\"type\":\"card\",\"data\":{\"card_name\":\"Builders\",\"col\":4}},{\"id\":\"TqoEP7okJe\",\"type\":\"card\",\"data\":{\"card_name\":\"Reusable Library\",\"col\":4}},{\"id\":\"eVLgZQfd75\",\"type\":\"card\",\"data\":{\"card_name\":\"Issued Documents\",\"col\":4}},{\"id\":\"UWag7Gngnh\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"VRdbDlgH0w\",\"type\":\"card\",\"data\":{\"card_name\":\"Regulatory Setup\",\"col\":4}}]",
  "creation": "2026-06-30 13:25:35.415451",
@@ -294,7 +295,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-30 13:51:19.309852",
+ "modified": "2026-06-30 16:13:31.532761",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Studio",
@@ -337,5 +338,6 @@
    "type": "Page"
   }
  ],
- "title": "Crispy Studio"
+ "title": "Crispy Studio",
+ "type": "Workspace"
 }
