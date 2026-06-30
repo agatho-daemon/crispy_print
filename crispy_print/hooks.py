@@ -50,6 +50,9 @@ fixtures = [{"dt": "Crispy Format"}]
 
 after_install = "crispy_print.install.after_install"
 after_sync = "crispy_print.install.after_sync"
+after_migrate = [
+	"crispy_print.setup.desk.setup_desk_compatibility",
+]
 before_uninstall = "crispy_print.install.before_uninstall"
 
 doc_events = {
