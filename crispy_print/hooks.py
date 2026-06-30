@@ -7,7 +7,36 @@ app_description = (
 app_email = "agatho_daemon@icloud.com"
 app_license = "MIT"
 app_logo_url = "/assets/crispy_print/icons/crispy-print-logo.svg"
-app_home = "/desk/crispy-print?sidebar=Crispy%20Studio"
+
+# START VERSION COMPATIBILITY
+# Version compatibility for Frappe Desk routes and icon loading.
+
+from frappe import __version__ as frappe_version
+
+frappe_major = int(frappe_version.lstrip("v").split(".", 1)[0])
+
+if frappe_major >= 16:
+	app_home = "/desk/crispy-studio"
+	app_include_icons = [
+		"/assets/crispy_print/icons/sprite-crispy-print-logo.svg",
+	]
+else:
+	app_home = "/app/crispy"
+	app_include_icons = [
+		"crispy_print/icons/sprite-crispy-print-logo.svg",
+	]
+
+add_to_apps_screen = [
+	{
+		"name": app_name,
+		"logo": app_logo_url,
+		"title": app_title,
+		"route": app_home,
+		"has_permission": "crispy_print.check_app_permission",
+	}
+]
+# END VERSION COMPATIBILITY
+
 
 # include js, css files in header of desk.html
 app_include_js = [
@@ -31,25 +60,3 @@ doc_events = {
 		"validate": "crispy_print.letterhead_lifecycle.on_letterhead_validate",
 	},
 }
-
-from frappe import __version__ as frappe_version
-
-frappe_major = int(frappe_version.lstrip("v").split(".", 1)[0])
-
-if frappe_major >= 16:
-	app_include_icons = [
-		"/assets/crispy_print/icons/crispy-print-logo.svg",
-	]
-	add_to_apps_screen = [
-		{
-			"name": app_name,
-			"logo": app_logo_url,
-			"title": app_title,
-			"route": app_home,
-			"has_permission": "crispy_print.check_app_permission",
-		}
-	]
-else:
-	app_include_icons = [
-		"crispy_print/icons/crispy-print-logo.svg",
-	]
