@@ -1,7 +1,7 @@
 {
  "charts": [],
- "content": "[{\"id\":\"cp_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Crispy Print</b></span>\",\"col\":12}},{\"id\":\"cp_shortcut_formats\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Crispy Formats\",\"col\":3}},{\"id\":\"cp_shortcut_format_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Format Builder\",\"col\":3}},{\"id\":\"cp_shortcut_branding\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Profiles\",\"col\":3}},{\"id\":\"cp_shortcut_branding_builder\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Builder\",\"col\":3}},{\"id\":\"cp_spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cp_header_documents\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Documents</b></span>\",\"col\":12}},{\"id\":\"cp_card_core\",\"type\":\"card\",\"data\":{\"card_name\":\"Core Documents\",\"col\":4}},{\"id\":\"cp_card_builders\",\"type\":\"card\",\"data\":{\"card_name\":\"Builders\",\"col\":4}},{\"id\":\"cp_card_library\",\"type\":\"card\",\"data\":{\"card_name\":\"Reusable Library\",\"col\":4}},{\"id\":\"cp_card_registry\",\"type\":\"card\",\"data\":{\"card_name\":\"Issued Documents\",\"col\":4}},{\"id\":\"cp_card_reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"cp_card_regulatory\",\"type\":\"card\",\"data\":{\"card_name\":\"Regulatory Setup\",\"col\":4}}]",
- "creation": "2026-05-30 13:54:38.372781",
+ "content": "[{\"id\":\"8cp5jCtOjS\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Crispy Studio</span>\",\"col\":12}},{\"id\":\"JbM5drA5KU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Crispy Formats\",\"col\":3}},{\"id\":\"LZL4bGcctY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Format Builder\",\"col\":3}},{\"id\":\"MejNRm9H7W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Profiles\",\"col\":3}},{\"id\":\"B4qk-t-p8T\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branding Builder\",\"col\":3}},{\"id\":\"k0FuDQgc8O\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"2bjPCgcJXT\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Documents</b></span>\",\"col\":12}},{\"id\":\"aBmMaBsL7t\",\"type\":\"card\",\"data\":{\"card_name\":\"Core Documents\",\"col\":4}},{\"id\":\"QqMzFg9ElK\",\"type\":\"card\",\"data\":{\"card_name\":\"Builders\",\"col\":4}},{\"id\":\"TqoEP7okJe\",\"type\":\"card\",\"data\":{\"card_name\":\"Reusable Library\",\"col\":4}},{\"id\":\"eVLgZQfd75\",\"type\":\"card\",\"data\":{\"card_name\":\"Issued Documents\",\"col\":4}},{\"id\":\"UWag7Gngnh\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"VRdbDlgH0w\",\"type\":\"card\",\"data\":{\"card_name\":\"Regulatory Setup\",\"col\":4}}]",
+ "creation": "2026-06-30 13:25:35.415451",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -9,20 +9,11 @@
  "hide_custom": 0,
  "icon": "crispy-print-logo",
  "idx": 0,
+ "indicator_color": "green",
  "is_hidden": 0,
- "label": "Crispy Print",
+ "label": "Crispy Studio",
  "links": [
   {
-   "description": "Primary records used to define and manage document output",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Core Documents",
-   "link_count": 2,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Crispy Formats",
@@ -33,7 +24,126 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branding Profiles",
+   "link_count": 0,
+   "link_to": "Crispy Branding Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Format Builder",
+   "link_count": 0,
+   "link_to": "crispy-format-builder",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branding Builder",
+   "link_count": 0,
+   "link_to": "cbp-builder",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Typst Blocks",
+   "link_count": 0,
+   "link_to": "Crispy Typst Block",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Block Builder",
+   "link_count": 0,
+   "link_to": "ctb-builder",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Issued Documents",
+   "link_count": 0,
+   "link_to": "Crispy Issued Document",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Generic Report Templates",
+   "link_count": 0,
+   "link_to": "Crispy Generic Report",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "QR Regulatory Profiles",
+   "link_count": 0,
+   "link_to": "Crispy QR Regulatory Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Document Code Profiles",
+   "link_count": 0,
+   "link_to": "Crispy Document Code Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Fiscal Credentials",
+   "link_count": 0,
+   "link_to": "Crispy Fiscal Credential",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "description": "Primary records used to define and manage document output",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Core Documents",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Crispy Formats",
+   "link_count": 0,
+   "link_to": "Crispy Format",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
    "hidden": 0,
    "is_query_report": 0,
    "label": "Branding Profiles",
@@ -49,11 +159,11 @@
    "is_query_report": 0,
    "label": "Builders",
    "link_count": 2,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Format Builder",
@@ -64,7 +174,6 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Branding Builder",
@@ -79,12 +188,12 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reusable Library",
-   "link_count": 1,
+   "link_count": 2,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Typst Blocks",
@@ -110,11 +219,11 @@
    "is_query_report": 0,
    "label": "Issued Documents",
    "link_count": 1,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Issued Documents",
@@ -130,11 +239,11 @@
    "is_query_report": 0,
    "label": "Reports",
    "link_count": 1,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Generic Report Templates",
@@ -150,11 +259,11 @@
    "is_query_report": 0,
    "label": "Regulatory Setup",
    "link_count": 3,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "QR Regulatory Profiles",
@@ -165,7 +274,6 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Document Code Profiles",
@@ -176,7 +284,6 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
    "label": "Fiscal Credentials",
@@ -187,54 +294,48 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-28 07:27:15.756290",
+ "modified": "2026-06-30 13:51:19.309852",
  "modified_by": "Administrator",
  "module": "Crispy Print",
- "name": "Crispy Print",
+ "name": "Crispy Studio",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 40.0,
+ "sequence_id": 41.0,
  "shortcuts": [
   {
    "color": "Cyan",
    "doc_view": "List",
-   "format": "",
    "label": "Crispy Formats",
    "link_to": "Crispy Format",
    "stats_filter": "[]",
    "type": "DocType"
   },
   {
-   "color": "Blue",
-   "doc_view": "",
-   "format": "",
+   "color": "Grey",
+   "doc_view": "List",
    "label": "Format Builder",
    "link_to": "crispy-format-builder",
-   "stats_filter": "[]",
    "type": "Page"
   },
   {
-   "color": "Purple",
+   "color": "Pink",
    "doc_view": "List",
-   "format": "",
    "label": "Branding Profiles",
    "link_to": "Crispy Branding Profile",
    "stats_filter": "[]",
    "type": "DocType"
   },
   {
-   "color": "Green",
-   "doc_view": "",
-   "format": "",
+   "color": "Grey",
+   "doc_view": "List",
    "label": "Branding Builder",
    "link_to": "cbp-builder",
-   "stats_filter": "[]",
    "type": "Page"
   }
  ],
- "title": "Crispy Print"
+ "title": "Crispy Studio"
 }
