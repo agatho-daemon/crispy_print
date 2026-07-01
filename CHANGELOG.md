@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0-beta.1] - 2026-07-01
+
+### Beta Release Notes
+
+- First beta release for Frappe v15, Frappe v16, and current dev-17 as tested on 2026-07-01.
+- Typst CLI `0.15.0` or newer is required.
+- Report support is available for beta testing, with Basic and Advanced report format flows still subject to refinement.
+- Contract format support remains foundation-level and is not yet a final contract-authoring workflow.
+
 ### Added
 
 - Added a public **Crispy Print** Desk workspace with grouped shortcuts and cards for builders, core records, reusable library records, issued-document tracking, reports, and regulatory setup.
@@ -29,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bumped app version to `0.2.0-beta.1`.
 - Renamed the print preview Desk Page route from `/app/crispy-print` to `/app/crispy-print-preview` so `/app/crispy-print` can cleanly belong to the Crispy Print workspace.
 - Updated document and report preview buttons to route to `crispy-print-preview`.
 - Updated README route references and component documentation for the new workspace and preview page route.
@@ -59,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added backend coverage for Crispy Print/Crispy Studio Desktop Icon and Workspace Sidebar lifecycle contracts.
 - Added Crispy Typst Block tests for generated reference keys, `1.0` version normalization, versioned document IDs, and numeric duplicate suffixes.
 - Added tests for PDF standards, company-scoped template/render behavior, frozen render contracts, Duplicate for Company format/template flows, render settings, Typst version validation, preview diagnostics metadata, and compact table label/metadata rendering.
+- Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 277 tests with 2 skipped.
 
 ## [0.1.0-alpha.3] - 2026-05-28
 
@@ -193,6 +204,7 @@ See [README.md - Known Limitations](README.md#known-limitations) for full list.
 - Vue 3, Pinia (state management)
 - Vite, Vitest (testing)
 
+[0.2.0-beta.1]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.2.0-beta.1
 [0.1.0-alpha.3]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.1.0-alpha.1

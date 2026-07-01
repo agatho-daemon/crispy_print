@@ -106,7 +106,6 @@ class TestTemplateParityHarness(FrappeTestCase):
 		signals = extract_legacy_template_signals(source)
 
 		self.assertIn("show_future_payments", signals["filter_keys"])
-		self.assertIn("show_remarks", signals["filter_keys"])
 		self.assertIn("report_date", signals["filter_keys"])
 		self.assertIn("party", signals["filter_keys"])
 

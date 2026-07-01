@@ -2,12 +2,12 @@
 
 _Part of the [Crispy Print documentation](README.md)._
 
-As an **alpha release**, Crispy Print has several known limitations:
+As a **beta release**, Crispy Print has several known limitations:
 
 ### System & Dependencies
 
 - **Typst CLI Required**: Must be installed separately; document rendering will not work without it.
-- **Frappe v15+ Only**: Older Frappe versions are not supported.
+- **Frappe v15/v16/current dev-17 Only**: Older Frappe versions are not supported. dev-17 compatibility reflects the development branch tested for this beta and should be retested before production use.
 - **Server-Side Rendering**: PDF and SVG compilation happen on the server through Typst CLI.
 - **Font Discovery**: Depends on system font configuration, bundled fonts, and `TYPST_FONT_PATHS`.
 
@@ -16,7 +16,7 @@ As an **alpha release**, Crispy Print has several known limitations:
 - **Field Coverage**: Standard document fields and child tables are the main target; complex custom fields may require Raw Typst.
 - **Grid Model**: The visual builder uses a constrained column layout to keep output predictable.
 - **Conditional Logic**: Visual conditional visibility is not implemented yet.
-- **Report Scope**: Report support is WIP; Basic mode covers common report patterns while complex report logic still requires Advanced Raw Typst.
+- **Report Scope**: Report support is in beta stabilization; Basic mode covers common report patterns while complex report logic still requires Advanced Raw Typst.
 - **Contract Scope**: Contract format type exists as a foundation, but contract authoring workflows are WIP.
 
 ### Typst Integration
@@ -46,7 +46,7 @@ As an **alpha release**, Crispy Print has several known limitations:
 - **LTR Languages Only**: Builder UI and text direction currently support left-to-right languages only (English, Spanish, French, etc.). RTL support (Arabic, Hebrew) not yet implemented. Multi-language content is possible via Raw Typst Mode if document fields contain the target language data.
 - **No Jinja Support**: Crispy Print uses structured layouts and Typst, not Frappe Print Format Jinja templates.
 - **No Python Scripts**: Formats do not execute custom Python code.
-- **Import/Export Scope**: Format import/export exists, but cross-site migration should still be tested carefully in alpha.
+- **Import/Export Scope**: Format import/export exists, but cross-site migration should still be tested carefully in beta.
 - **Draft Format Versioning**: The builder does not keep a history of draft format edits, but published **Crispy Templates** are versioned, frozen render snapshots.
 
 ### Performance

@@ -10,7 +10,7 @@ quick start, see the [project README](../README.md).
 - [QR Field Registry](qr-field-registry.md) - Backend field allow-list, selected field child rows, authority filtering, and migration notes.
 - [Font Configuration](fonts.md) - Bundled, system, uploaded, and custom fonts plus global Crispy Print Settings.
 - [Architecture](architecture.md) - Build system, product structure, key components, and data model.
-- [Known Limitations](limitations.md) - Current alpha constraints.
+- [Known Limitations](limitations.md) - Current beta constraints.
 - [Roadmap](roadmap.md) - Recently added features and planned work.
 - [Troubleshooting & FAQ](troubleshooting.md) - Common issues, fixes, and frequently asked questions.
 - [Development & Testing](development.md) - Local setup, building, running tests, and component guidelines.

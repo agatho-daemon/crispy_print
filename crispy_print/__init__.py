@@ -3,7 +3,7 @@
 import frappe
 from frappe.utils.user import is_website_user
 
-__version__ = "0.1.0-alpha.3"
+__version__ = "0.2.0-beta.1"
 
 # API methods for bench console convenience
 from crispy_print.api.v1 import (

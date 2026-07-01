@@ -1,15 +1,15 @@
 # Crispy Print
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status](https://img.shields.io/badge/status-alpha-orange)]()
+[![Status](https://img.shields.io/badge/status-beta-blue)]()
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Frappe](https://img.shields.io/badge/frappe-v15+-orange.svg)](https://frappeframework.com/)
+[![Frappe](https://img.shields.io/badge/frappe-v15%2Fv16%2Fdev--17-orange.svg)](https://frappeframework.com/)
 
 > [!CAUTION]
 >
 > # MAJOR UPDATE
 >
-> ## This commit will break existing formats.
+> ## This release will break existing formats.
 >
 > This is due to changes in fields representation in the backend and exchange of that data between Python and TS/JS parts along with Typst translation logic. Please backup your formats before pulling this update.
 >
@@ -19,24 +19,24 @@
 >
 > After update run `bench migrate` to apply database changes and data migration. Then open each format in the builder and verify that the layout is correct. Some fields may need to be re-dragged or reconfigured due to changes in field properties and layout structure.
 
-## Alpha 3 Testing Request
+## Beta 1 Testing Request
 
-Feature work is frozen for alpha 3. Please test existing workflows and report bugs, regressions, confusing behavior, and documentation gaps.
+Crispy Print `0.2.0-beta.1` is the first beta release, tested against Frappe v15, Frappe v16, and current dev-17 as of 2026-07-01. Please test existing workflows and report bugs, regressions, confusing behavior, and documentation gaps.
 
 - Test DocType print preview and PDF generation with real documents.
 - Test the visual format builder: drag fields, configure tables, save, reload, reset, and export/import formats.
 - Test Branding Profile Builder, including logo, letterhead, typography, margins, and QR placement.
 - Test Raw Typst mode and reusable Typst blocks.
 - Test QR and document-code flows where applicable. Regulatory QR support especially needs feedback from users in tax-regulated regions because the maintainer cannot validate real-world tax QR requirements locally; the maintainer's country does not currently have tax-related document QR regulations. Please test whether QR Regulatory Profiles, Fiscal Credentials, Document Code Profiles, and generated payloads can model your local authority requirements, invoice fields, environment rules, and verification expectations. If your region requires additional fields for QR generation, please report the required field names, data types, source documents, validation rules, and example payload structure where possible.
-- Test report preview and report PDF generation, but treat reports as **WIP**. Report support is still being stabilized and may change before beta. Contract support is also **WIP**.
+- Test report preview and report PDF generation, but treat report support as a beta stabilization area. Contract support is still foundation-level and remains **WIP**.
 - Include Frappe version, Typst version, browser, console errors, server traceback, and reproduction steps when opening issues.
 
 > [!NOTE]
-> This README describes the current alpha architecture at a high level. For exact migration details and edge-case behavior, prefer the checked-in patches and tests as the source of truth.
+> This README describes the current beta architecture at a high level. For exact migration details and edge-case behavior, prefer the checked-in patches and tests as the source of truth.
 
 ## Project Status
 
-**Alpha / Work in progress.** Expect frequent changes while features are still settling.
+**Beta / stabilization.** Core document-format workflows are ready for broader testing, while report and contract workflows are still being refined.
 
 Crispy Print is a next-generation document publishing engine for ERPNext built around deterministic rendering, structured document composition, and publication-grade PDF generation. Instead of treating business documents as browser pages exported to PDF, Crispy Print treats them as formal documents with stable pagination, precise layout control, reusable branding systems, and machine-verifiable document workflows. Built on [Typst](https://typst.app/), Crispy Print moves ERP printing beyond fragile HTML print pipelines into a modern, regulation-ready publishing architecture designed for invoices, quotations, vouchers, contracts, compliance documents, technical reports, and future digital business-document ecosystems.
 
@@ -71,7 +71,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Crispy Issued Document Registry (CID)** - Immutable issued-document snapshots linked to frozen templates, with opaque verification tokens, render-hash facts, artifact tracking, trust-event and regulatory-submission child tables, and revocation/supersession state.
 - **Per-Format PDF Standard** - Output standard selection with a PDF/A-2u default plus PDF/A-3u, PDF/A-4, PDF 1.7, and PDF 2.0.
 - **Global Print Settings** - Crispy Print Settings DocType for font configuration (uploaded/system fonts, search paths), render timeout, and draft/cancelled print policy.
-- **Report Format Infrastructure (WIP)** - Report-linked formats with Basic/Advanced modes, column selection, filters, chart assets, and guarded raw Typst overrides.
+- **Report Format Infrastructure (Beta)** - Report-linked formats with Basic/Advanced modes, column selection, filters, chart assets, and guarded raw Typst overrides.
 - **Contract Format Foundation (WIP)** - Contract format support is reserved for future structured contract publishing workflows.
 - **Regulatory QR Layer** - QR Regulatory Profiles, Fiscal Credentials, and helper APIs for building machine-verifiable fiscal and compliance QR payloads.
 - **Document Code Infrastructure** - Document Code Profiles and Rules for deterministic reference codes, naming patterns, and compliance-oriented document identifiers.
@@ -117,8 +117,10 @@ Crispy Print ships variable fonts to avoid maintaining separate font files for e
 
 ### Frappe Compatibility
 
-- **Frappe:** v15 or later (all Python/Node.js dependencies already satisfied)
-- **Frappe v16:** Ships a curated **Crispy Studio** Workspace Sidebar so v16 renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of relying on the auto-generated sidebar. The v16+ **Crispy Print** app tile uses Frappe's native `add_to_apps_screen` `has_permission` parameter to hide the tile from website-only users and show it only to users with read access to user-facing Crispy Print records.
+- **Frappe:** v15, v16, and current dev-17 as tested on 2026-07-01 (all Python/Node.js dependencies already satisfied)
+- **Frappe v15:** Uses the classic `/app/crispy` workspace route and v15-compatible Desk assets.
+- **Frappe v16/dev-17:** Ships a curated **Crispy Studio** Workspace Sidebar so newer Desk renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of relying on the auto-generated sidebar. The v16+ **Crispy Print** app tile uses Frappe's native `add_to_apps_screen` `has_permission` parameter to hide the tile from website-only users and show it only to users with read access to user-facing Crispy Print records.
+- **Frappe dev-17:** Supported on the current development branch tested for this beta; retest before production use because dev-17 is still moving.
 - **Python dependency:** `segno` (installed with the app; used as the QR-only SVG generator)
 - **Typst barcode package:** Zebra `0.1.0` is vendored with the app and used for DataMatrix rendering through Typst.
 
@@ -132,7 +134,7 @@ See [Requirements](#requirements) above - Typst must be installed first.
 
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/agatho-daemon/crispy_print --branch develop
+bench get-app https://github.com/agatho-daemon/crispy_print --branch v0.2.0-beta.1
 bench --site your-site install-app crispy_print
 bench restart
 ```
@@ -168,19 +170,19 @@ bench build --app crispy_print
 
 ### Workspace
 
-After installation, open the **Crispy Print** app from Desk. It opens the **Crispy Print** workspace through the curated **Crispy Studio** sidebar. You can also visit:
+After installation, open the **Crispy Print** app from Desk. It opens the **Crispy Studio** workspace/sidebar on supported Frappe versions. You can also visit:
 
 ```text
-/desk/crispy-print
+/desk/crispy-studio
 ```
 
-On Frappe v15, the legacy workspace route may also resolve as `/app/crispy-print`.
+On Frappe v15, the legacy workspace route is `/app/crispy`.
 
 The workspace groups the main builder pages, format records, templates, branding profiles, reusable Typst blocks, issued-document tracking, report templates, regulatory setup records, and settings. On Frappe v16+, the **Crispy Studio** sidebar also exposes the Print Preview page for direct access, although normal document previews are usually opened from the document or report route context.
 
 ### Creating Your First Print Format
 
-> ⚠️ **CRITICAL:** You must set at least one format as **Default** for a DocType. The Typst print button appears on document forms **only when a default format exists** for that DocType.
+> ⚠️ **Required:** Set one **Crispy Format** as **Default** for the DocType so the document form can show the **Typst** button. Then publish an **Approved** and **Active** **Crispy Template** from that format; runtime preview and PDF output use the frozen template snapshot.
 
 Recommended setup order:
 
@@ -201,7 +203,7 @@ Recommended setup order:
    - Optionally set **PDF Standard** (defaults to PDF/A-2u)
    - **Save**
 
-2. **Set as default** ⚠️ **(Required for button to appear!)**
+2. **Set as default** ⚠️ **(Required for the document button)**
    - Check the **"Set as Default"** checkbox
    - **Save** again
 
@@ -229,13 +231,17 @@ Recommended setup order:
 - New blocks default to version `1.0`; document IDs include the reference key and version, for example `invoice_header-v1.0`.
 - Open **Crispy Typst Block Builder** from the block form to edit Typst code and refresh a live SVG preview. Preview page settings are authoring-only; only Typst Code changes mark the builder unsaved.
 
-5. **Save and test**
+5. **Save and publish a template**
    - Click **Save**
+   - In the builder, publish a **Crispy Template** from the format
+   - Mark the template **Approved** and **Active** for the target company/document context
+
+6. **Test document preview**
    - Open any document of that DocType (e.g., Sales Invoice)
    - Look for **Typst** button in toolbar (top-right)
    - Click to preview and download PDF
 
-6. **Reuse across companies when needed**
+7. **Reuse across companies when needed**
    - In the builder preview pane, click **Duplicate**.
    - Choose **Current Format** to clone the saved format layout/settings to another company.
    - Choose **Template Snapshot** to preserve an approved frozen Crispy Template snapshot, create a target-company format from that snapshot, and publish a target-company template.
@@ -248,7 +254,7 @@ Recommended setup order:
 
 ### Using Your Print Format
 
-Once a default format exists, the **Typst** button appears automatically on all documents of that DocType.
+Once a default format exists, the **Typst** button appears automatically on saved documents of that DocType. The preview itself requires an approved active **Crispy Template** for the document's company/context; without one, the preview page reports that no approved template is available.
 
 The document preview is fully **template-driven**: it renders from the active resolved template/format for the document's company. Manual preview overrides, the approved-snapshot toggle, and the standalone print-settings header/reset action have been removed; help now lives in the Template section, and the template selector displays canonical template IDs.
 
@@ -256,7 +262,7 @@ The document preview is fully **template-driven**: it renders from the active re
 
 1. Open document (e.g., SI-2024-001)
 2. Click **Typst** button in toolbar
-3. Preview opens with your default format
+3. Preview opens with the resolved active template for that document context
 4. Click **Download PDF**
 
 **Direct URL:**
@@ -273,7 +279,7 @@ Detailed guides live in the [`docs/`](docs/README.md) directory:
 - [Usage](docs/usage.md) - Print, report, branding, letterhead, document-code workflows, and layout recipes.
 - [Font Configuration](docs/fonts.md) - Bundled, system, uploaded, and custom fonts plus global Crispy Print Settings.
 - [Architecture](docs/architecture.md) - Build system, product structure, key components, and data model.
-- [Known Limitations](docs/limitations.md) - Current alpha constraints.
+- [Known Limitations](docs/limitations.md) - Current beta constraints.
 - [Roadmap](docs/roadmap.md) - Recently added features and planned work.
 - [Troubleshooting & FAQ](docs/troubleshooting.md) - Common issues, fixes, and frequently asked questions.
 - [Development & Testing](docs/development.md) - Local setup, building, running tests, and component guidelines.
@@ -303,7 +309,7 @@ Configured quality tools:
 
 GitHub Actions workflows are present in the repository but are not used for release gating yet. Tests are currently run manually using `yarn test:unit`, `bench run-tests`, and `pre-commit run --all-files`.
 
-Keep feature changes small during the alpha 3 freeze unless they directly fix release-blocking bugs.
+Keep feature changes small during the beta 1 stabilization period unless they directly fix release-blocking bugs.
 
 ## License
 

@@ -71,7 +71,7 @@ Key behavior:
 
 This keeps report editing accessible while protecting advanced customizations.
 
-Reports are still **WIP** in alpha 3. Treat the current report flow as a stabilization target for testing, not as a final report publishing contract.
+Reports are in beta stabilization. Treat the current report flow as a testing target for real report layouts, while expecting refinements before a stable report publishing contract.
 
 ### Branding Profile Workflow
 

@@ -16,7 +16,7 @@ This app uses **Frappe's native esbuild bundler** - no separate Vite or webpack 
 
 ### Current Product Structure
 
-This alpha structure is documented here for orientation only. It is expected to keep evolving before beta.
+This beta structure is documented here for orientation only. It is expected to keep evolving during beta stabilization.
 
 ```
 crispy_print/
@@ -85,12 +85,13 @@ crispy_print/
 │   │   │   ├── crispy_print_preview/         # Print Preview Desk page
 │   │   │   └── cbp_builder/                  # Branding Profile Builder page
 │   │   └── workspace/
-│   │       └── crispy_print/                 # Crispy Print Desk workspace
+│   │       ├── crispy/                       # Frappe v15 Crispy Desk workspace
+│   │       └── crispy_studio/                # Frappe v16+/dev-17 Crispy Studio workspace
 │   ├── workspace_sidebar/
-│   │   └── crispy_studio.json            # Frappe v16 curated Crispy Studio sidebar export
+│   │   └── crispy_studio.json            # Frappe v16+/dev-17 curated Crispy Studio sidebar export
 │   ├── desktop_icon/
-│   │   ├── crispy_print.json             # Frappe v16 Crispy Print app icon export
-│   │   └── crispy_studio.json            # Frappe v16 Crispy Studio sidebar link icon export
+│   │   ├── crispy_print.json             # Frappe v16+/dev-17 Crispy Print app icon export
+│   │   └── crispy_studio.json            # Frappe v16+/dev-17 Crispy Studio sidebar link icon export
 │   ├── templates/
 │   │   └── pages/                        # Frappe website template package
 │   ├── translations/                     # App translation CSV files
@@ -108,13 +109,13 @@ crispy_print/
 
 **Pages:**
 
-- **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType, Report (WIP), and Contract (WIP) formats.
+- **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType, Report (beta), and Contract (WIP) formats.
 - **Crispy Print Preview** (`/app/crispy-print-preview/{doctype}/{docname}/{format}`) - Server-rendered document preview and PDF workflow.
 - **Crispy Branding Profile Builder** (`/app/cbp-builder`) - Dedicated builder for reusable page, typography, branding, table, and QR presentation profiles.
 
 **Workspace:**
 
-- **Crispy Print** (`/desk/crispy-print` on v16+, `/app/crispy-print` on v15) - Desk workspace for builder shortcuts, core records, reusable libraries, issued-document tracking, reports, regulatory setup, and settings.
+- **Crispy Studio** (`/desk/crispy-studio` on v16+, `/app/crispy` on v15) - Desk workspace for builder shortcuts, core records, reusable libraries, issued-document tracking, reports, regulatory setup, and settings.
 
 **Core Files:**
 

@@ -133,7 +133,7 @@ A: Yes. It is designed for ERPNext/Frappe document workflows such as invoices, q
 A: Users need access to the Frappe server. Typst runs server-side and fonts should be installed locally on that server or bundled with the app.
 
 **Q: Can I export formats between sites?**  
-A: Yes, format import/export exists. In alpha, verify imported formats carefully because related assets, branding profiles, and compliance records may need site-specific setup.
+A: Yes, format import/export exists. In beta, verify imported formats carefully because related assets, branding profiles, and compliance records may need site-specific setup.
 
 **Q: How do I customize fonts?**  
 A: Add fonts to system, set `TYPST_FONT_PATHS` environment variable, then restart bench. See [Font Configuration](fonts.md).
@@ -148,7 +148,7 @@ A: Print Designer uses HTML/CSS/Jinja browser-oriented rendering. Crispy Print u
 A: No. Crispy Print uses JSON layouts, not Jinja templates.
 
 **Q: Is it production-ready?**  
-A: It is in alpha. Use it for testing and non-critical workflows until the beta readiness criteria are met.
+A: It is in beta. Use it for testing and controlled non-critical workflows until the stable release criteria are met.
 
 **Q: How do I report bugs?**  
 A: Open an issue on GitHub with Frappe version, Typst version, and error logs.
