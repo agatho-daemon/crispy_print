@@ -6,6 +6,7 @@ frappe.ui.form.on("Crispy Issued Document", {
 		lockIssuedDocumentForm(frm);
 		setStatusHeadline(frm);
 		addVerificationActions(frm);
+		addPdfActions(frm);
 		addLifecycleActions(frm);
 	},
 });
@@ -28,6 +29,7 @@ const READ_ONLY_FIELDS = [
 	"canonical_payload_json",
 	"canonical_payload_hash",
 	"typst_source",
+	"typst_source_hash",
 	"typst_version",
 	"artifacts",
 	"trust_events",
@@ -86,6 +88,35 @@ function addVerificationActions(frm) {
 			});
 		});
 	}
+}
+
+function addPdfActions(frm) {
+	if (frm.is_new() || !frm.doc.typst_source) return;
+
+	frm.add_custom_button(
+		__("View PDF"),
+		async () => {
+			const pdf = await fetchIssuedDocumentPdf(frm);
+			openPdf(pdf);
+		},
+		__("PDF")
+	);
+	frm.add_custom_button(
+		__("Download PDF"),
+		async () => {
+			const pdf = await fetchIssuedDocumentPdf(frm);
+			downloadPdf(pdf);
+		},
+		__("PDF")
+	);
+	frm.add_custom_button(
+		__("Print PDF"),
+		async () => {
+			const pdf = await fetchIssuedDocumentPdf(frm);
+			printPdf(pdf);
+		},
+		__("PDF")
+	);
 }
 
 function addLifecycleActions(frm) {
@@ -217,6 +248,68 @@ function promptIntegrityCheckAndCall(frm) {
 		__("Record Integrity Check"),
 		__("Record")
 	);
+}
+
+async function fetchIssuedDocumentPdf(frm) {
+	const result = await frappe.call({
+		method: "crispy_print.api.v1.render_issued_document_pdf",
+		args: { name: frm.doc.name },
+		freeze: true,
+		freeze_message: __("Compiling issued PDF..."),
+	});
+	const pdf = result.message || {};
+	if (!pdf.pdf_data) {
+		frappe.throw(__("Issued PDF could not be generated."));
+	}
+	return pdf;
+}
+
+function pdfBlobUrl(pdf) {
+	const binary = atob(pdf.pdf_data);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i += 1) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	const blob = new Blob([bytes], { type: "application/pdf" });
+	return URL.createObjectURL(blob);
+}
+
+function openPdf(pdf) {
+	const url = pdfBlobUrl(pdf);
+	window.open(url, "_blank", "noopener,noreferrer");
+	setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+function downloadPdf(pdf) {
+	const url = pdfBlobUrl(pdf);
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = pdf.filename || `${pdf.name || "crispy-issued-document"}.pdf`;
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	setTimeout(() => URL.revokeObjectURL(url), 5_000);
+}
+
+function printPdf(pdf) {
+	const url = pdfBlobUrl(pdf);
+	const iframe = document.createElement("iframe");
+	iframe.style.position = "fixed";
+	iframe.style.right = "0";
+	iframe.style.bottom = "0";
+	iframe.style.width = "0";
+	iframe.style.height = "0";
+	iframe.style.border = "0";
+	iframe.src = url;
+	iframe.onload = () => {
+		iframe.contentWindow?.focus();
+		iframe.contentWindow?.print();
+		setTimeout(() => {
+			iframe.remove();
+			URL.revokeObjectURL(url);
+		}, 60_000);
+	};
+	document.body.appendChild(iframe);
 }
 
 async function callCidAction(frm, method, args) {

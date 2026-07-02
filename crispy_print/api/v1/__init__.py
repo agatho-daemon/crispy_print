@@ -40,6 +40,7 @@ from .issued_documents import get_issued_documents as _get_issued_documents
 from .issued_documents import (
 	record_issued_document_integrity_check as _record_issued_document_integrity_check,
 )
+from .issued_documents import render_issued_document_pdf as _render_issued_document_pdf
 from .issued_documents import revoke_issued_document as _revoke_issued_document
 from .issued_documents import supersede_issued_document as _supersede_issued_document
 from .issued_documents import verify_issued_document_token as _verify_issued_document_token
@@ -653,6 +654,7 @@ def create_issued_document_snapshot(
 	source_docname: str,
 	crispy_format: str | None = None,
 	crispy_template: str | None = None,
+	typst_source: str | None = None,
 ) -> JSONDict:
 	enforce_rate_limit("create_issued_document_snapshot", limit=20, window_seconds=60)
 	return _create_issued_document_snapshot(
@@ -660,7 +662,14 @@ def create_issued_document_snapshot(
 		source_docname=source_docname,
 		crispy_format=crispy_format,
 		crispy_template=crispy_template,
+		typst_source=typst_source,
 	)
+
+
+@frappe.whitelist()
+def render_issued_document_pdf(name: str) -> JSONDict:
+	enforce_rate_limit("render_issued_document_pdf", limit=30, window_seconds=60)
+	return _render_issued_document_pdf(name)
 
 
 @frappe.whitelist()
@@ -762,6 +771,7 @@ __all__ = [
 	"get_typst_local_fonts",
 	"import_crispy_format",
 	"record_issued_document_integrity_check",
+	"render_issued_document_pdf",
 	"resolve_document_code",
 	"revoke_issued_document",
 	"run_report_template_parity_check",

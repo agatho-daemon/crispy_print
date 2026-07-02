@@ -406,6 +406,7 @@
 			:presentation_settings="presentation_settings_computed"
 			:change-key="changeKey"
 			:watch-data-changes="true"
+			:issue-pdf-snapshot="recordIssuedDocumentSnapshot"
 		>
 			<template #toolbar-actions>
 				<div class="preview-diagnostics-action">
@@ -457,11 +458,13 @@ import { __ } from "../utils/i18n";
 import {
 	compileReportPreview,
 	compileTypst,
+	createIssuedDocumentSnapshot,
 	getActiveCrispyTemplatesForDocument,
 	getResolvedCrispyTemplateForDocument,
 	type ActiveCrispyTemplateOption,
 	type ResolvedCrispyTemplate,
 } from "../api/crispy";
+import type { TypstPdfReadyContext } from "../typst/setupWorker";
 
 interface Props {
 	doctype?: string;
@@ -491,6 +494,7 @@ const selectedTemplate = ref("");
 const templatesLoading = ref(false);
 const activeTemplateLoading = ref(false);
 const activeTemplateSnapshot = ref<ResolvedCrispyTemplate | null>(null);
+const issuedSnapshotKeys = new Set<string>();
 const diagnosticsOpen = ref(false);
 const previewStatus = ref<CrispyPreviewStatusDetail>({ status: "fetching" });
 const isReportMode = computed(() => props.source === "report");
@@ -616,8 +620,7 @@ const runtimeTemplateMessage = computed(() => {
 
 function templateOptionLabel(template: ActiveCrispyTemplateOption): string {
 	if (template.template_id) return template.template_id;
-	const scope = template.company_abbr || template.company || template.scope;
-	return `${template.template_name} - ${scope} - v${template.version}`;
+	return template.template_name || template.name || "";
 }
 
 const layout = ref<any>(null);
@@ -1392,6 +1395,45 @@ function onPreviewStatus(event: Event) {
 	const detail = (event as CustomEvent<CrispyPreviewStatusDetail>).detail;
 	if (!detail) return;
 	previewStatus.value = detail;
+}
+
+function hashTypstSource(source: string): string {
+	let hash = 5381;
+	for (let i = 0; i < source.length; i += 1) {
+		hash = (hash * 33) ^ source.charCodeAt(i);
+	}
+	return (hash >>> 0).toString(16);
+}
+
+async function recordIssuedDocumentSnapshot(context: TypstPdfReadyContext) {
+	if (isReportMode.value) return;
+	if (!props.doctype || !props.docname || !context.typstSource) return;
+
+	const templateName = activeTemplateSnapshot.value?.name || selectedTemplate.value;
+	if (!templateName) return;
+
+	const snapshotKey = [
+		props.doctype,
+		props.docname,
+		templateName,
+		hashTypstSource(context.typstSource),
+	].join("\u001f");
+	if (issuedSnapshotKeys.has(snapshotKey)) return;
+
+	const issuedDocument = await createIssuedDocumentSnapshot({
+		source_doctype: props.doctype,
+		source_docname: props.docname,
+		crispy_format:
+			activeTemplateSnapshot.value?.source_crispy_format || previewFormatName.value,
+		crispy_template: templateName,
+		typst_source: context.typstSource,
+	});
+	issuedSnapshotKeys.add(snapshotKey);
+
+	frappe.show_alert({
+		message: __("Issued document snapshot recorded: {0}", [issuedDocument.name]),
+		indicator: "green",
+	});
 }
 
 // Generate and open PDF in new tab

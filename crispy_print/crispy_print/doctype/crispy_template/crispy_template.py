@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 from typing import Any
 
@@ -103,11 +104,25 @@ class CrispyTemplate(Document):
 			self.company,
 			self.version,
 		)
+		self.template_name = self.name
 
 	def before_insert(self) -> None:
 		self.set_source_snapshot()
 		self.set_version()
+		if self.name:
+			self.template_name = self.name
 		self.set_snapshot_hash()
+
+	def on_trash(self) -> None:
+		if frappe.flags.allow_crispy_template_delete:
+			return
+		frappe.throw(
+			_(
+				"Crispy Templates are immutable historical print snapshots and cannot be deleted. "
+				"Retire or supersede the template instead."
+			),
+			frappe.PermissionError,
+		)
 
 	def validate(self) -> None:
 		self.set_defaults()
@@ -212,7 +227,7 @@ class CrispyTemplate(Document):
 		latest_major = 0
 		latest_minor = -1
 		filters = {
-			"template_name": self.template_name,
+			"source_crispy_format": self.source_crispy_format,
 			"crispy_format_type": self.crispy_format_type,
 			"source_doctype": self.source_doctype,
 			"source_report": self.source_report,
@@ -323,7 +338,7 @@ class CrispyTemplate(Document):
 			return
 
 		filters = {
-			"template_name": self.template_name,
+			"source_crispy_format": self.source_crispy_format,
 			"crispy_format_type": self.crispy_format_type,
 			"source_doctype": self.source_doctype,
 			"source_report": self.source_report,
@@ -474,16 +489,17 @@ def get_publish_preview(
 	next_version = template.get_next_version(version_bump)
 
 	current_version = _get_latest_version(
-		template.template_name,
+		template.source_crispy_format,
 		template.company,
 		template.crispy_format_type,
 		template.source_doctype,
 		template.source_report,
 		template.source_contract,
 	)
+	template_id = build_template_id(template.template_name, template.company, next_version)
 	return {
-		"template_name": template.template_name,
-		"template_id": build_template_id(template.template_name, template.company, next_version),
+		"template_name": template_id,
+		"template_id": template_id,
 		"company": template.company,
 		"company_abbr": get_company_abbr(template.company),
 		"source_branding_profile": template.source_branding_profile,
@@ -638,7 +654,7 @@ def _template_resolution_payload(
 	return {
 		"name": doc.name,
 		"template_name": doc.template_name,
-		"template_id": build_template_id(doc.template_name, doc.company, doc.version),
+		"template_id": doc.name,
 		"company": doc.company,
 		"company_abbr": get_company_abbr(doc.company),
 		"effective_company": effective_company,
@@ -694,8 +710,8 @@ def _template_resolution_payload(
 
 
 def build_template_id(template_name: str, company: str | None, version: str) -> str:
-	scope = get_company_abbr(company) or "Global"
-	return f"{_clean(template_name)} - {scope} - v{_clean(version)}"
+	scope = get_company_abbr(company) or "global"
+	return f"{_slug_part(template_name)}-{_slug_part(scope)}-v{_slug_version(version)}"
 
 
 def get_template_key_for_format(source: Document) -> str:
@@ -743,7 +759,7 @@ def _get_source_branding_profile(presentation_settings_json: str | None) -> str 
 
 
 def _get_latest_version(
-	template_name: str,
+	source_crispy_format: str,
 	company: str | None,
 	crispy_format_type: str | None,
 	source_doctype: str | None,
@@ -751,7 +767,7 @@ def _get_latest_version(
 	source_contract: str | None,
 ) -> str | None:
 	filters = {
-		"template_name": template_name,
+		"source_crispy_format": source_crispy_format,
 		"company": company,
 		"crispy_format_type": crispy_format_type,
 		"source_doctype": source_doctype,
@@ -781,7 +797,7 @@ def _supersede_previous_active_templates(template: CrispyTemplate) -> None:
 	rows = frappe.get_all(
 		"Crispy Template",
 		filters={
-			"template_name": template.template_name,
+			"source_crispy_format": template.source_crispy_format,
 			"crispy_format_type": template.crispy_format_type,
 			"source_doctype": template.source_doctype,
 			"source_report": template.source_report,
@@ -805,6 +821,16 @@ def _supersede_previous_active_templates(template: CrispyTemplate) -> None:
 
 def _clean(value: Any) -> str:
 	return str(value or "").strip()
+
+
+def _slug_part(value: Any) -> str:
+	slug = re.sub(r"[^a-z0-9]+", "_", _clean(value).lower()).strip("_")
+	return slug or "template"
+
+
+def _slug_version(value: Any) -> str:
+	slug = re.sub(r"[^a-z0-9.]+", "_", _clean(value).lower()).strip("_.")
+	return slug or "0.0"
 
 
 def _normalize_barcode_symbology(value: Any) -> str:

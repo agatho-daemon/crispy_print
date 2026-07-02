@@ -49,8 +49,16 @@ export interface TypstAdapter {
 	getDoctype?: () => string | null | undefined
 	getDocname?: () => string | null | undefined
 	get_presentation_settings?: () => any
+	onPdfReady?: (context: TypstPdfReadyContext) => Promise<void> | void
 	hookDataChanges?: (callback: () => void) => () => void
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
+}
+
+export interface TypstPdfReadyContext {
+	action: PdfAction
+	typstSource: string
+	pdfBlob: Blob
+	pdfStandard?: string | null
 }
 
 function buildPrintBehaviorBlock(printBehavior: Record<string, any> = {}) {
@@ -307,8 +315,24 @@ export function setupWorker(
 	}
 	window.addEventListener(CrispyPreviewEvents.Source, handleSourceUpdate)
 
+	async function notifyPdfReady(action: PdfAction, pdfBlob: Blob) {
+		if (typeof adapter.onPdfReady !== "function" || !lastTypstCode) {
+			return
+		}
+		const pdfStandard =
+			adapter && typeof adapter.getPdfStandard === "function"
+				? adapter.getPdfStandard() || "PDF/A-2u"
+				: "PDF/A-2u"
+		await adapter.onPdfReady({
+			action,
+			typstSource: lastTypstCode,
+			pdfBlob,
+			pdfStandard,
+		})
+	}
+
 	// PDF generation request (used by crispy-print toolbar and any other UI)
-	const handlePdfRequest = (event: any) => {
+	const handlePdfRequest = async (event: any) => {
 		if (!shouldHandleEvent(event)) return
 		const action = (event?.detail?.action || "view") as PdfAction
 		logger.info("PDF request received", {
@@ -319,6 +343,16 @@ export function setupWorker(
 		})
 
 		if (currentPdfBlob) {
+			try {
+				await notifyPdfReady(action, currentPdfBlob)
+			} catch (err) {
+				logger.error("Failed to record issued document snapshot", err)
+				frappe?.show_alert({
+					message: __("Could not record issued document snapshot."),
+					indicator: "red",
+				})
+				return
+			}
 			if (action === "download") {
 				logger.info("Using cached PDF for download")
 				triggerPdfDownload()
@@ -818,7 +852,7 @@ export function setupWorker(
 		}
 	}
 
-	const handleWorkerMessage = (e: MessageEvent) => {
+	const handleWorkerMessage = async (e: MessageEvent) => {
 		if (disposed) {
 			return
 		}
@@ -948,6 +982,22 @@ export function setupWorker(
 			currentPdfBlob = new Blob([pdfArray], { type: "application/pdf" })
 
 			if (isViewPdf) {
+				try {
+					await notifyPdfReady("view", currentPdfBlob)
+				} catch (err) {
+					logger.error("Failed to record issued document snapshot", err)
+					frappe?.show_alert({
+						message: __("Could not record issued document snapshot."),
+						indicator: "red",
+					})
+					if (statusEl) {
+						statusEl.textContent = __("snapshot error")
+						statusEl.style.color = "#e74c3c"
+					}
+					if (viewPdfBtn) viewPdfBtn.disabled = false
+					if (downloadBtn) downloadBtn.disabled = false
+					return
+				}
 				openPdfBlob(currentPdfBlob)
 
 				if (statusEl) {
@@ -960,6 +1010,21 @@ export function setupWorker(
 			}
 
 			if (isDownload) {
+				try {
+					await notifyPdfReady("download", currentPdfBlob)
+				} catch (err) {
+					logger.error("Failed to record issued document snapshot", err)
+					frappe?.show_alert({
+						message: __("Could not record issued document snapshot."),
+						indicator: "red",
+					})
+					if (statusEl) {
+						statusEl.textContent = __("snapshot error")
+						statusEl.style.color = "#e74c3c"
+					}
+					if (downloadBtn) downloadBtn.disabled = false
+					return
+				}
 				if (statusEl) {
 					statusEl.textContent = __("pdf ready ✓")
 					statusEl.style.color = "#27ae60"
@@ -982,8 +1047,18 @@ export function setupWorker(
 	worker.addEventListener("message", handleWorkerMessage)
 
 	viewPdfBtn &&
-		(viewPdfBtn.onclick = () => {
+		(viewPdfBtn.onclick = async () => {
 			if (currentPdfBlob) {
+				try {
+					await notifyPdfReady("view", currentPdfBlob)
+				} catch (err) {
+					logger.error("Failed to record issued document snapshot", err)
+					frappe?.show_alert({
+						message: __("Could not record issued document snapshot."),
+						indicator: "red",
+					})
+					return
+				}
 				openPdfBlob(currentPdfBlob)
 				return
 			}
@@ -1025,8 +1100,18 @@ export function setupWorker(
 		})
 
 	downloadBtn &&
-		(downloadBtn.onclick = () => {
+		(downloadBtn.onclick = async () => {
 			if (currentPdfBlob) {
+				try {
+					await notifyPdfReady("download", currentPdfBlob)
+				} catch (err) {
+					logger.error("Failed to record issued document snapshot", err)
+					frappe?.show_alert({
+						message: __("Could not record issued document snapshot."),
+						indicator: "red",
+					})
+					return
+				}
 				triggerPdfDownload()
 				return
 			}

@@ -34,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added runtime preview diagnostics with resolved format/template, company, branding profile, PDF standard, Typst version, render time, page count, cache-hit metadata, and raw Typst mode.
 - Added automatic Crispy Typst Block reference-key generation from the block name using snake_case naming.
 - Added a **Crispy Typst Block Builder** page for editing reusable block Typst code with live SVG preview, preview-only page settings, and a dedicated lazy-loaded Desk bundle.
+- Added canonical lowercase Crispy Template IDs and a migration patch to rename existing templates so template document names and runtime template keys match.
+- Added immutable Crispy Template delete protection through DocType permissions and a backend delete guard.
+- Added issued-document creation from successful runtime PDF actions, storing final generated Typst source and a persisted SHA-256 `typst_source_hash`.
+- Added backend CID idempotency so repeated issuance of the same source document, frozen template, and Typst source hash returns the existing CID.
+- Added CID PDF reprint actions that compile the stored Typst source directly for view, download, and print without resolving templates or creating another CID.
 - Ignored local Zed editor and Pyright configuration files.
 
 ### Changed
@@ -55,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed Crispy Typst Block Builder dirty-state tracking so the page is marked unsaved only when Typst code changes; preview page settings remain authoring-only.
 - Changed direct Print Preview access to open a context-selection modal for DocType previews, with graceful guidance for report and contract preview states.
 - Simplified the Crispy Typst Block Builder to focus on page settings and Typst code editing, leaving identity metadata on the DocType form and letting editor/preview panes scroll independently.
+- Changed Crispy Issued Document snapshot creation to create issued records with `Issued` issuance status, `Valid` integrity status, and `issued_at` instead of draft registry entries.
+- Changed Crispy Issued Document snapshot creation to rely on source-document read permission instead of requiring Crispy Print Manager permission.
 
 ### Fixed
 
@@ -63,12 +70,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed compact item print output to collapse item columns in compact table layouts.
 - Fixed a caught Typst page-size bug where UI labels such as `Letter` compiled to invalid paper names like `letter` instead of Typst identifiers such as `us-letter`; US paper aliases now resolve consistently across block previews, document generation, preview workers, and preview sizing.
 
+### Known Limitations
+
+- CID historical reprints compile the stored Typst source. Crispy Print does not snapshot every referenced binary asset into the database; operators should retain mutable referenced files, especially company logos and image assets, when exact historical visual replay is required.
+
 ### Tests
 
 - Tightened the report button unit test to assert the exact `crispy-print-preview` route.
 - Added backend coverage for Crispy Print/Crispy Studio Desktop Icon and Workspace Sidebar lifecycle contracts.
 - Added Crispy Typst Block tests for generated reference keys, `1.0` version normalization, versioned document IDs, and numeric duplicate suffixes.
 - Added tests for PDF standards, company-scoped template/render behavior, frozen render contracts, Duplicate for Company format/template flows, render settings, Typst version validation, preview diagnostics metadata, and compact table label/metadata rendering.
+- Added tests for canonical Crispy Template IDs, template delete protection, CID issued snapshot creation, Typst source hashing, CID idempotency, and CID stored-source PDF rendering.
 - Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 277 tests with 2 skipped.
 
 ## [0.1.0-alpha.3] - 2026-05-28

@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Agathodaemon and Contributors
 # See license.txt
 
+import hashlib
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -10,6 +12,7 @@ from crispy_print.api.v1.issued_documents import (
 	get_issued_document_audit_events,
 	get_issued_documents,
 	record_issued_document_integrity_check,
+	render_issued_document_pdf,
 	revoke_issued_document,
 	supersede_issued_document,
 	verify_issued_document_token,
@@ -154,7 +157,7 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 
 		self.assertEqual(result["verification_status"], "Valid")
 		self.assertEqual(result["crispy_template"], template.name)
-		self.assertEqual(result["crispy_template_name"], "CID Test Template")
+		self.assertEqual(result["crispy_template_name"], template.template_name)
 		self.assertEqual(result["crispy_template_version"], template.version)
 		self.assertEqual(result["source_crispy_format"], self.format_name)
 		self.assertEqual(result["source_target_identity"]["crispy_format_type"], "DocType")
@@ -174,7 +177,13 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		)
 		template.insert(ignore_permissions=True)
 
-		result = create_issued_document_snapshot("DocType", "DocType", crispy_template=template.name)
+		final_typst_source = '#set document(title: "CID")\nRendered DocType value'
+		result = create_issued_document_snapshot(
+			"DocType",
+			"DocType",
+			crispy_template=template.name,
+			typst_source=final_typst_source,
+		)
 		doc = frappe.get_doc("Crispy Issued Document", result["name"])
 
 		self.assertEqual(doc.crispy_template, template.name)
@@ -183,11 +192,19 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(doc.pdf_standard, template.pdf_standard)
 		self.assertEqual(doc.zebra_version, template.zebra_version)
 		self.assertEqual(doc.barcode_symbology, template.barcode_symbology)
-		self.assertEqual(doc.typst_source, template.typst_code)
+		self.assertEqual(doc.typst_source, final_typst_source)
+		self.assertEqual(
+			doc.typst_source_hash,
+			hashlib.sha256(final_typst_source.encode("utf-8")).hexdigest(),
+		)
+		self.assertEqual(doc.issuance_status, "Issued")
+		self.assertEqual(doc.integrity_status, "Valid")
+		self.assertTrue(doc.issued_at)
 		self.assertTrue(doc.canonical_payload_hash)
 		canonical_payload = frappe.parse_json(doc.canonical_payload_json)
 		self.assertIn("render_payload_hashes", canonical_payload)
 		self.assertIn("typst_code", canonical_payload["render_payload_hashes"])
+		self.assertEqual(canonical_payload["typst_source_hash"], doc.typst_source_hash)
 		self.assertEqual(doc.pdfa_validation_status, "Generated")
 		self.assertIn("producer-asserted by Typst", doc.pdfa_validation_result)
 		events = {row.event_type: row for row in doc.trust_events}
@@ -197,6 +214,76 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertIn("Render contract", events["Other"].validation_message)
 		self.assertEqual(events["Validation"].validation_status, "Valid")
 		self.assertIn("producer-asserted by Typst", events["Validation"].validation_message)
+
+	def test_create_snapshot_returns_existing_document_for_same_typst_hash(self):
+		template = frappe.get_doc(
+			{
+				"doctype": "Crispy Template",
+				"template_name": "CID Test Idempotent Template",
+				"source_crispy_format": self.format_name,
+				"company": self.company,
+				"status": "Approved",
+				"is_active": 1,
+			}
+		)
+		template.insert(ignore_permissions=True)
+
+		final_typst_source = "same generated typst"
+		first = create_issued_document_snapshot(
+			"DocType",
+			"DocType",
+			crispy_template=template.name,
+			typst_source=final_typst_source,
+		)
+		second = create_issued_document_snapshot(
+			"DocType",
+			"DocType",
+			crispy_template=template.name,
+			typst_source=final_typst_source,
+		)
+
+		self.assertEqual(second["name"], first["name"])
+		self.assertEqual(
+			frappe.db.count(
+				"Crispy Issued Document",
+				{
+					"source_doctype": "DocType",
+					"source_docname": "DocType",
+					"crispy_template": template.name,
+					"typst_source_hash": first["typst_source_hash"],
+				},
+			),
+			1,
+		)
+
+	def test_render_issued_document_pdf_uses_stored_typst_source_without_new_cid(self):
+		template = frappe.get_doc(
+			{
+				"doctype": "Crispy Template",
+				"template_name": "CID Test Render Template",
+				"source_crispy_format": self.format_name,
+				"company": self.company,
+				"status": "Approved",
+				"is_active": 1,
+			}
+		)
+		template.insert(ignore_permissions=True)
+		result = create_issued_document_snapshot(
+			"DocType",
+			"DocType",
+			crispy_template=template.name,
+			typst_source="#set page(width: 120pt, height: 80pt)\nCID reprint",
+		)
+		before_count = frappe.db.count("Crispy Issued Document")
+
+		pdf = render_issued_document_pdf(result["name"])
+
+		self.assertEqual(pdf["format"], "pdf")
+		self.assertTrue(pdf["pdf_data"])
+		self.assertEqual(pdf["name"], result["name"])
+		self.assertEqual(pdf["filename"], f"{result['name']}.pdf")
+		self.assertEqual(pdf["typst_source_hash"], result["typst_source_hash"])
+		self.assertEqual(frappe.db.count("Crispy Issued Document"), before_count)
 
 	def test_issued_document_lists_filter_by_company_without_source_docname(self):
 		other_company = self._ensure_company(name="CID List Other Company", abbr="CIDLO")

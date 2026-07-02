@@ -13,6 +13,7 @@ from crispy_print.crispy_print.doctype.crispy_template.crispy_template import (
 )
 from crispy_print.json_utils import loads_dict_or_empty
 
+from .compile import compile_typst
 from .security import ensure_crispy_print_manager_permission, ensure_doctype_read_permission
 
 DOCTYPE = "Crispy Issued Document"
@@ -151,15 +152,15 @@ def create_issued_document_snapshot(
 	source_docname: str,
 	crispy_format: str | None = None,
 	crispy_template: str | None = None,
+	typst_source: str | None = None,
 ) -> JSONDict:
-	"""Create an additive draft issued-document registry entry.
+	"""Create an issued-document registry entry for a generated PDF.
 
 	This records the resolved frozen template/version while keeping the legacy
-	Crispy Format link for compatibility. Artifact rendering/signing remains a
-	later step.
+	Crispy Format link for compatibility. When provided, typst_source is the
+	final generated source for the concrete document, after data substitution.
+	Artifact persistence/signing remains a later step.
 	"""
-	ensure_crispy_print_manager_permission()
-
 	source_doc = frappe.get_doc(source_doctype, source_docname)
 	source_doc.check_permission("read")
 	resolved_template = resolve_active_crispy_template(
@@ -175,6 +176,19 @@ def create_issued_document_snapshot(
 	render_payload = resolved_template.get("render_payload") or {}
 	frozen_render_hashes = _get_frozen_render_hashes(render_payload)
 	pdfa_conformance = _get_pdfa_conformance_record(resolved_template)
+	final_typst_source = (
+		typst_source or render_payload.get("typst_code") or resolved_template.get("typst_code") or ""
+	)
+	typst_source_hash = hashlib.sha256(final_typst_source.encode("utf-8")).hexdigest()
+	existing = _get_existing_issued_document(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		crispy_template=resolved_template.get("name"),
+		typst_source_hash=typst_source_hash,
+	)
+	if existing:
+		return frappe.get_doc(DOCTYPE, existing).as_verification_summary()
+
 	canonical_payload = {
 		"source_doctype": source_doctype,
 		"source_docname": source_docname,
@@ -187,6 +201,7 @@ def create_issued_document_snapshot(
 		"zebra_version": resolved_template.get("zebra_version"),
 		"barcode_symbology": resolved_template.get("barcode_symbology"),
 		"render_payload_hashes": frozen_render_hashes,
+		"typst_source_hash": typst_source_hash,
 	}
 	canonical_payload_json = json.dumps(
 		canonical_payload,
@@ -206,7 +221,8 @@ def create_issued_document_snapshot(
 			"canonical_payload_json": canonical_payload_json,
 			"canonical_payload_hash": hashlib.sha256(canonical_payload_json.encode("utf-8")).hexdigest(),
 			"template_hash": resolved_template.get("snapshot_hash"),
-			"typst_source": render_payload.get("typst_code") or resolved_template.get("typst_code") or "",
+			"typst_source": final_typst_source,
+			"typst_source_hash": typst_source_hash,
 			"typst_version": resolved_template.get("typst_version"),
 			"pdf_standard": resolved_template.get("pdf_standard"),
 			"zebra_version": resolved_template.get("zebra_version"),
@@ -214,15 +230,63 @@ def create_issued_document_snapshot(
 			"barcode_settings_json": _get_template_barcode_settings_json(resolved_template),
 			"pdfa_validation_status": pdfa_conformance["status"],
 			"pdfa_validation_result": pdfa_conformance["message"],
-			"issuance_status": "Draft",
+			"issuance_status": "Issued",
 			"business_status": "Active",
-			"integrity_status": "Pending",
+			"integrity_status": "Valid",
+			"issued_at": now_datetime(),
 		}
 	)
 	_append_snapshot_trust_events(doc, resolved_template)
 	doc.flags.allow_cid_backend_insert = True
 	doc.insert(ignore_permissions=True)
 	return doc.as_verification_summary()
+
+
+def render_issued_document_pdf(name: str) -> JSONDict:
+	"""Compile the stored CID Typst source without creating a new CID."""
+	ensure_doctype_read_permission(DOCTYPE)
+	doc = frappe.get_doc(DOCTYPE, name)
+	doc.check_permission("read")
+	if doc.source_doctype and doc.source_docname:
+		source_doc = frappe.get_doc(doc.source_doctype, doc.source_docname)
+		source_doc.check_permission("read")
+	if not doc.typst_source:
+		frappe.throw(_("Crispy Issued Document {0} has no stored Typst source.").format(name))
+
+	result = compile_typst(
+		doc.typst_source,
+		output_format="pdf",
+		pdf_standard=doc.pdf_standard,
+	)
+	return {
+		**result,
+		"name": doc.name,
+		"filename": f"{doc.name}.pdf",
+		"source_doctype": doc.source_doctype,
+		"source_docname": doc.source_docname,
+		"crispy_template": doc.crispy_template,
+		"crispy_template_version": doc.crispy_template_version,
+		"typst_source_hash": doc.typst_source_hash,
+	}
+
+
+def _get_existing_issued_document(
+	source_doctype: str,
+	source_docname: str,
+	crispy_template: str | None,
+	typst_source_hash: str,
+) -> str | None:
+	return frappe.db.get_value(
+		DOCTYPE,
+		{
+			"source_doctype": source_doctype,
+			"source_docname": source_docname,
+			"crispy_template": crispy_template,
+			"typst_source_hash": typst_source_hash,
+		},
+		"name",
+		order_by="creation asc",
+	)
 
 
 def _append_snapshot_trust_events(doc, resolved_template: JSONDict) -> None:

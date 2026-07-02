@@ -751,12 +751,16 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 
 	def setUp(self):
 		frappe.set_user("Administrator")
+		frappe.db.delete("Crispy Template", {"source_crispy_format": ["like", "Test ImportExport%"]})
 		frappe.db.delete("Crispy Template", {"template_name": ["like", "Test ImportExport%"]})
+		frappe.db.delete("Crispy Template", {"name": ["like", "test_importexport_%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test ImportExport%"]})
 		frappe.db.commit()
 
 	def tearDown(self):
+		frappe.db.delete("Crispy Template", {"source_crispy_format": ["like", "Test ImportExport%"]})
 		frappe.db.delete("Crispy Template", {"template_name": ["like", "Test ImportExport%"]})
+		frappe.db.delete("Crispy Template", {"name": ["like", "test_importexport_%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test ImportExport%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Generic Report - Test ImportExport%"]})
 		frappe.db.commit()
@@ -818,7 +822,7 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		templates = payload["metadata"]["templates"]
 
 		self.assertEqual(templates[0]["name"], template.name)
-		self.assertEqual(templates[0]["template_name"], "Test ImportExport Template")
+		self.assertEqual(templates[0]["template_name"], template.template_name)
 		self.assertEqual(templates[0]["company"], source.company)
 
 	def test_import_new_format_success(self):

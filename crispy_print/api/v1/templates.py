@@ -6,7 +6,6 @@ from frappe.utils import now_datetime
 
 from crispy_print.crispy_print.doctype.crispy_template.crispy_template import (
 	_supersede_previous_active_templates,
-	build_template_id,
 	get_company_abbr,
 	get_publish_preview,
 	publish_crispy_template,
@@ -145,11 +144,7 @@ def _get_active_templates(target_filters: dict[str, Any], effective_company: str
 			{
 				"name": row.get("name"),
 				"template_name": row.get("template_name"),
-				"template_id": build_template_id(
-					row.get("template_name") or "",
-					row.get("company"),
-					row.get("version") or "",
-				),
+				"template_id": row.get("name"),
 				"company": row.get("company"),
 				"company_abbr": get_company_abbr(row.get("company")),
 				"version": row.get("version"),

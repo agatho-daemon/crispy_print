@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { resolveTypstPaper } from "../typst/page";
-import { setupWorker } from "../typst/setupWorker";
+import { setupWorker, type TypstPdfReadyContext } from "../typst/setupWorker";
 import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
 import { sanitizeSvg } from "../utils/safeSvg";
 import { getLogger } from "../logger";
@@ -126,6 +126,7 @@ interface Props {
 	watchDataChanges?: boolean;
 	zoomMode?: "fit" | "manual";
 	zoomPercent?: number;
+	issuePdfSnapshot?: (context: TypstPdfReadyContext) => Promise<void> | void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -198,6 +199,7 @@ function createAdapter() {
 		getDoctype: () => props.docType,
 		getDocname: () => props.docName,
 		get_presentation_settings: () => props.presentation_settings,
+		onPdfReady: props.issuePdfSnapshot,
 		hookDataChanges: enableDataWatch
 			? (callback: () => void) => {
 					// Prefer explicit invalidation via changeKey to avoid expensive deep watches.

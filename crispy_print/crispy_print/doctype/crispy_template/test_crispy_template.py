@@ -2,6 +2,7 @@
 # See license.txt
 
 import json
+import re
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -37,8 +38,9 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(template.version, "1.0")
 		self.assertEqual(
 			template.name,
-			f"CT Test Template - {self._company_abbr(self.company)} - v1.0",
+			self._template_id("CT Test Template", "1.0"),
 		)
+		self.assertEqual(template.template_name, template.name)
 		self.assertEqual(template.crispy_format_type, "DocType")
 		self.assertEqual(template.source_doctype, "Sales Invoice")
 		self.assertEqual(template.company, self.company)
@@ -110,8 +112,22 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(second.version, "1.1")
 		self.assertEqual(
 			second.name,
-			f"CT Test Versioned Template - {self._company_abbr(self.company)} - v1.1",
+			self._template_id("CT Test Versioned Template", "1.1"),
 		)
+		self.assertEqual(second.template_name, second.name)
+
+	def test_template_cannot_be_deleted_through_document_api(self):
+		source = self._insert_format("CT Test Source Delete Guard")
+		template = self._insert_template(
+			template_name="CT Test Delete Guard",
+			source_crispy_format=source.name,
+			company=self.company,
+		)
+
+		with self.assertRaises(frappe.PermissionError):
+			frappe.delete_doc("Crispy Template", template.name, ignore_permissions=True)
+
+		self.assertTrue(frappe.db.exists("Crispy Template", template.name))
 
 	def test_major_version_bump_resets_minor_version(self):
 		source = self._insert_format("CT Test Source Major")
@@ -136,12 +152,9 @@ class TestCrispyTemplate(FrappeTestCase):
 
 		preview = get_publish_preview(source.name, version_bump="minor")
 
-		self.assertEqual(preview["template_name"], source.name)
 		self.assertEqual(preview["next_version"], "1.0")
-		self.assertEqual(
-			preview["template_id"],
-			f"{source.name} - {self._company_abbr(self.company)} - v1.0",
-		)
+		self.assertEqual(preview["template_name"], self._template_id(source.name, "1.0"))
+		self.assertEqual(preview["template_id"], self._template_id(source.name, "1.0"))
 
 	def test_publish_preview_rejects_mismatched_explicit_company(self):
 		other_company = self._get_other_company()
@@ -339,6 +352,7 @@ class TestCrispyTemplate(FrappeTestCase):
 
 	def test_resolver_prefers_explicit_template(self):
 		source = self._insert_format("CT Test Source Explicit")
+		other_source = self._insert_format("CT Test Source Explicit Other")
 		first = self._insert_template(
 			template_name="CT Test Explicit",
 			source_crispy_format=source.name,
@@ -348,7 +362,7 @@ class TestCrispyTemplate(FrappeTestCase):
 		)
 		second = self._insert_template(
 			template_name="CT Test Explicit Other",
-			source_crispy_format=source.name,
+			source_crispy_format=other_source.name,
 			company=self.company,
 			status="Approved",
 			is_active=1,
@@ -384,7 +398,7 @@ class TestCrispyTemplate(FrappeTestCase):
 		resolved = resolve_active_crispy_template(
 			source_doctype="Sales Invoice",
 			company=self.company,
-			template_name="CT Test Company Resolve",
+			template_name=company_template.name,
 		)
 
 		self.assertEqual(resolved["name"], company_template.name)
@@ -404,7 +418,7 @@ class TestCrispyTemplate(FrappeTestCase):
 		resolved = resolve_active_crispy_template(
 			source_doctype="Sales Invoice",
 			company=self.company,
-			template_name="CT Test Global Resolve",
+			template_name=global_template.name,
 		)
 
 		self.assertEqual(resolved["name"], global_template.name)
@@ -543,8 +557,18 @@ class TestCrispyTemplate(FrappeTestCase):
 	def _company_abbr(self, company: str) -> str:
 		return frappe.db.get_value("Company", company, "abbr") or company
 
+	def _template_id(self, template_name: str, version: str, company: str | None = None) -> str:
+		template_key = re.sub(r"[^a-z0-9]+", "_", template_name.lower()).strip("_")
+		company_abbr = re.sub(
+			r"[^a-z0-9]+",
+			"_",
+			self._company_abbr(company or self.company).lower(),
+		).strip("_")
+		return f"{template_key}-{company_abbr}-v{version}"
+
 	def _delete_test_records(self):
-		frappe.db.delete("Crispy Template", {"template_name": ["like", "CT Test%"]})
+		frappe.db.delete("Crispy Template", {"source_crispy_format": ["like", "CT Test Source%"]})
+		frappe.db.delete("Crispy Template", {"name": ["like", "ct_test_%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "CT Test Source%"]})
 		frappe.db.delete("Crispy Typst Block", {"block_key": ["like", "ct_test_%"]})
 		frappe.db.delete("Crispy Branding Profile", {"profile_name": ["like", "CT Test%"]})

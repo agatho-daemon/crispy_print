@@ -500,6 +500,7 @@ export interface CrispyIssuedDocument {
 	canonical_payload_hash?: string
 	template_hash?: string
 	typst_source?: string
+	typst_source_hash?: string
 	typst_version?: string
 	pdf_standard?: string
 	zebra_version?: string
@@ -524,6 +525,7 @@ export interface CrispyIssuedDocumentVerification {
 	crispy_template_name?: string | null
 	crispy_template_version?: string | null
 	template_hash?: string | null
+	typst_source_hash?: string | null
 	pdf_standard?: string | null
 	typst_version?: string | null
 	zebra_version?: string | null
@@ -1105,6 +1107,7 @@ export async function createIssuedDocumentSnapshot(args: {
 	source_docname: string
 	crispy_format?: string | null
 	crispy_template?: string | null
+	typst_source?: string | null
 }): Promise<CrispyIssuedDocument> {
 	const res = await call<CrispyIssuedDocument>({
 		method: "crispy_print.api.v1.create_issued_document_snapshot",

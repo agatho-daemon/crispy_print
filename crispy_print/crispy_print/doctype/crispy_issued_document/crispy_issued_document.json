@@ -29,6 +29,7 @@
   "canonical_payload_hash",
   "template_hash",
   "typst_source",
+  "typst_source_hash",
   "typst_version",
   "pdf_standard",
   "zebra_version",
@@ -208,6 +209,13 @@
    "fieldtype": "Code",
    "label": "Typst Source",
    "options": "Typst"
+  },
+  {
+   "fieldname": "typst_source_hash",
+   "fieldtype": "Data",
+   "label": "Typst Source Hash",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "typst_version",

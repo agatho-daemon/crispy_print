@@ -265,6 +265,16 @@ The document preview is fully **template-driven**: it renders from the active re
 3. Preview opens with the resolved active template for that document context
 4. Click **Download PDF**
 
+### Issued Documents and Historical Reprints
+
+Runtime PDF actions create or reuse a **Crispy Issued Document** (CID) entry for the generated business document. Preview rendering alone does not create a CID; CID creation happens only when a PDF action such as view, download, or print succeeds.
+
+- CID entries are issued records, not drafts. They store the final generated Typst source, a persisted SHA-256 `typst_source_hash`, the frozen template reference, and canonical render metadata.
+- Duplicate issuance is guarded by the backend using source document, frozen template, and `typst_source_hash`. Repeating the same PDF action for the same generated Typst source returns the existing CID instead of creating a duplicate.
+- Historical reprints should be performed from the **Crispy Issued Document** form using the CID PDF actions. CID reprint compiles the stored Typst source directly and does not resolve the latest template or create another CID.
+- Published **Crispy Templates** freeze the layout, Typst, branding settings, letterhead/template text, PDF standard, Typst/Zebra/barcode facts, and snapshot hash. CID freezes the final document-specific Typst source used at issuance time.
+- Crispy Print intentionally does not snapshot every referenced file into the database. Site operators should retain mutable referenced assets, especially company logos and image assets, if exact historical visual replay is required. Letterhead/template text should be stored in the template fields before publishing; binary logo retention remains an operational responsibility in this beta.
+
 **Direct URL:**
 
 ```
