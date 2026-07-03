@@ -12,6 +12,19 @@ The typical workflow for using Crispy Print:
 4. **Save and set default** -> enable the Typst button for that DocType
 5. **Open document** -> click `Typst` -> preview and download PDF
 
+### Frappe Print Engine Integration
+
+Crispy Print includes an optional adapter for the proposed Frappe Print Engine extension. That upstream change is intended to loosen Frappe's hardcoded native print flow by letting apps register client-renderer print engines.
+
+When the Frappe extension is present:
+
+1. Crispy Print creates or repairs a `crispy_print` **Print Engine** record during install/sync.
+2. The engine points to `/assets/crispy_print/js/crispy_print_engine.js`.
+3. The client script registers `crispy_print` with `frappe.ui.form.register_print_engine`.
+4. If **Print Settings → Default Print Engine** is set to **Crispy Print**, Frappe's native **Print** action routes the document to `crispy-print-preview`.
+
+The existing **Typst** document button is unchanged and remains the supported entry point on standard Frappe installations where the Print Engine extension is not available.
+
 ### Output Settings: PDF Standard And Print Policy
 
 Each Crispy Format exposes a **PDF Standard** control. It defaults to **PDF/A-2u** for archival business documents; **PDF/A-3u** suits embedded machine-readable payloads (XML/JSON), and **PDF 1.7**, **PDF 2.0**, and **PDF/A-4** are available for non-archival or authority-specific needs. PDF/A embeds fonts, so selected fonts must permit embedding/subsetting.
@@ -140,6 +153,7 @@ Use this layer only when documents need deterministic identifiers or machine-ver
 You can create multiple formats for the same DocType without setting them as default:
 
 - Access via direct URL: `/app/crispy-print-preview/{doctype}/{docname}/{format_name}`
+- Open through the optional Frappe Print Engine handoff when the site is running the proposed Frappe print-engine extension and Crispy Print is selected as the default engine.
 - Or programmatically via API (see [API Reference](api-reference.md))
 
 ### Common Layout Recipes

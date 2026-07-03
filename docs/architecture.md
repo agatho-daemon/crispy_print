@@ -10,6 +10,7 @@ This app uses **Frappe's native esbuild bundler** - no separate Vite or webpack 
 - **Preview Bundle:** `crispy_print/public/js/crispy_preview.bundle.js`
 - **Typst Block Builder Bundle:** `crispy_print/public/js/ctb_builder.bundle.js`
 - **Desk Button Bundle:** `crispy_print/public/js/report_button.bundle.js`
+- **Print Engine Adapter:** `crispy_print/public/js/crispy_print_engine.js`
 - **Build Command:** `bench build --app crispy_print`
 - **Loading Model:** Lightweight desk hooks plus page-specific builder/preview bundles
 - **Plugin:** Uses `frappe-vue-style` to automatically inline Vue SFC styles
@@ -42,6 +43,7 @@ crispy_print/
 │   │   ├── js/
 │   │   │   ├── crispy_print.bundle.js    # Format Builder entry
 │   │   │   ├── crispy_preview.bundle.js  # Print Preview entry
+│   │   │   ├── crispy_print_engine.js    # Frappe Print Engine adapter
 │   │   │   ├── ctb_builder.bundle.js     # Typst Block Builder entry
 │   │   │   ├── report_button.bundle.js   # Desk integration entry
 │   │   │   ├── api/                      # Typed Frappe/Crispy API clients
@@ -113,6 +115,12 @@ crispy_print/
 - **Crispy Print Preview** (`/app/crispy-print-preview/{doctype}/{docname}/{format}`) - Server-rendered document preview and PDF workflow.
 - **Crispy Branding Profile Builder** (`/app/cbp-builder`) - Dedicated builder for reusable page, typography, branding, table, and QR presentation profiles.
 
+**Frappe Print Engine adapter:**
+
+- **`crispy_print_engine.js`** registers `crispy_print` with `frappe.ui.form.register_print_engine` when the proposed Frappe Print Engine extension is present.
+- The adapter passes document route context through `frappe.route_options` and opens `crispy-print-preview` directly.
+- `install.ensure_print_engine()` creates or repairs the `crispy_print` Print Engine record only when the Frappe Print Engine DocType exists, so standard Frappe installations continue using the existing Typst button path.
+
 **Workspace:**
 
 - **Crispy Studio** (`/desk/crispy-studio` on v16+, `/app/crispy` on v15) - Desk workspace for builder shortcuts, core records, reusable libraries, issued-document tracking, reports, regulatory setup, and settings.
@@ -135,6 +143,7 @@ Frontend:
 - **`CrispyPFB.vue`** - Main format builder shell with visual layout, raw Typst, report, and settings surfaces.
 - **`CbpBuilder.vue`** - Branding Profile Builder shell for presentation-system authoring.
 - **`CrispyPP.vue`** - Preview shell with format selection and compile/download controls.
+- **`crispy_print_engine.js`** - Lightweight optional adapter for Frappe's proposed pluggable print engine handoff.
 - **`useStore.ts`, `useReportStore.ts`, `useSettingsStore.ts`** - State modules for document layout, report modes, and presentation settings.
 - **`JSONToTypst.ts`, `branding.ts`, `cbpBuilderTypst.ts`** - Typst generation paths for formats and branding profile specimens.
 - **`safeSvg.ts`** - Browser-side SVG sanitization before preview injection.

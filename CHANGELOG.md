@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added an optional Frappe Print Engine adapter in preparation for a Frappe PR that loosens the hardcoded native print flow and allows apps to register print engine entry points.
+- Added `crispy_print/public/js/crispy_print_engine.js` to register `crispy_print` through `frappe.ui.form.register_print_engine` and route document print handoffs directly to `crispy-print-preview`.
+- Added install/sync setup that creates or repairs the `crispy_print` Print Engine record when the Frappe Print Engine DocType is available.
+
+### Changed
+
+- Updated Crispy Print Preview to consume document context from `frappe.route_options` when opened through the optional Frappe print-engine handoff, while preserving direct route segment fallback.
+- Updated preview lifecycle handling to unmount the existing Vue preview before mounting a new document preview.
+
+### Fixed
+
+- Fixed stale preview reuse when opening multiple documents in the same Desk session by clearing consumed `frappe.route_options` and remounting the preview for each new document/format context.
+
 ## [0.2.0-beta.1] - 2026-07-01
 
 ### Beta Release Notes

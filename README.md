@@ -60,6 +60,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Visual Document Composition Builder** - Drag-and-drop builder for DocType print formats with sections, columns, fields, tables, images, QR elements, and custom Typst blocks.
 - **Native PDF Generation** - Uses the Typst CLI for publication-grade PDF generation instead of browser printing or wkhtmltopdf.
 - **Live SVG Preview** - Server-rendered preview flow for format design, document previews, and report previews without relying on browser print layout.
+- **Frappe Print Engine Adapter** - Registers Crispy Print as a client-renderer print engine when the proposed Frappe Print Engine extension is available, allowing Frappe's Print button to hand document printing directly to the Typst preview route.
 - **Reusable Branding Profiles** - Centralized page, typography, table, logo, letterhead, QR, and spacing settings for consistent company-wide document output.
 - **Branding Profile Builder** - Dedicated visual builder for reusable presentation systems with generated Typst preview and controlled profile publication.
 - **Crispy Print Workspace** - Desk workspace with grouped shortcuts and cards for builders, core format records, reusable libraries, issued documents, reports, and regulatory setup.
@@ -121,6 +122,7 @@ Crispy Print ships variable fonts to avoid maintaining separate font files for e
 - **Frappe v15:** Uses the classic `/app/crispy` workspace route and v15-compatible Desk assets.
 - **Frappe v16/dev-17:** Ships a curated **Crispy Studio** Workspace Sidebar so newer Desk renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of relying on the auto-generated sidebar. The v16+ **Crispy Print** app tile uses Frappe's native `add_to_apps_screen` `has_permission` parameter to hide the tile from website-only users and show it only to users with read access to user-facing Crispy Print records.
 - **Frappe dev-17:** Supported on the current development branch tested for this beta; retest before production use because dev-17 is still moving.
+- **Frappe Print Engine integration:** Crispy Print includes a guarded adapter for the proposed Frappe Print Engine DocType and `Print Settings.default_print_engine` flow. On sites where that Frappe PR is installed, Crispy Print creates a `crispy_print` engine record and Frappe's Print button can route directly to `crispy-print-preview`. On standard Frappe sites without that PR, the adapter is skipped and the existing Typst button remains the supported entry point.
 - **Python dependency:** `segno` (installed with the app; used as the QR-only SVG generator)
 - **Typst barcode package:** Zebra `0.1.0` is vendored with the app and used for DataMatrix rendering through Typst.
 
@@ -255,6 +257,8 @@ Recommended setup order:
 ### Using Your Print Format
 
 Once a default format exists, the **Typst** button appears automatically on saved documents of that DocType. The preview itself requires an approved active **Crispy Template** for the document's company/context; without one, the preview page reports that no approved template is available.
+
+When the proposed Frappe Print Engine extension is present and **Print Settings → Default Print Engine** is set to **Crispy Print**, Frappe's native **Print** action can also open the same Crispy preview route. This integration is intentionally additive: the existing **Typst** button still works and remains the compatibility path for standard Frappe installations.
 
 The document preview is fully **template-driven**: it renders from the active resolved template/format for the document's company. Manual preview overrides, the approved-snapshot toggle, and the standalone print-settings header/reset action have been removed; help now lives in the Template section, and the template selector displays canonical template IDs.
 
