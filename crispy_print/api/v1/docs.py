@@ -6,6 +6,7 @@ from crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settin
 )
 
 from .document_codes import get_preferred_document_code_for_doc
+from .text import normalize_html_text
 
 
 def get_formatted_doc(
@@ -51,12 +52,10 @@ def get_formatted_doc(
 						continue
 					try:
 						formatted_value = frappe.format(value, cdf, doc=doc, translated=False)
-						if cdf.fieldtype in ("Text Editor", "HTML") and isinstance(formatted_value, str):
-							formatted_value = frappe.utils.strip_html(formatted_value)
-						formatted_row[key] = formatted_value
+						formatted_row[key] = normalize_html_text(formatted_value)
 					except Exception:
 						_log_format_fallback(doctype, name, f"{fieldname}.{key}")
-						formatted_row[key] = value
+						formatted_row[key] = normalize_html_text(value)
 				formatted_rows.append(formatted_row)
 			data[fieldname] = formatted_rows
 			continue
@@ -66,11 +65,10 @@ def get_formatted_doc(
 			continue
 		try:
 			formatted_value = frappe.format(data.get(fieldname), df_for_field, doc=doc, translated=False)
-			if df_for_field.fieldtype in ("Text Editor", "HTML") and isinstance(formatted_value, str):
-				formatted_value = frappe.utils.strip_html(formatted_value)
-			data[fieldname] = formatted_value
+			data[fieldname] = normalize_html_text(formatted_value)
 		except Exception:
 			_log_format_fallback(doctype, name, fieldname)
+			data[fieldname] = normalize_html_text(data.get(fieldname))
 
 	document_code = _build_document_code_preview(doc, qr_source_mode=qr_source_mode)
 	if document_code:

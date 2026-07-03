@@ -67,30 +67,32 @@ class TestFormattedDocAPI(FrappeTestCase):
 		with self.assertRaises(Exception):
 			get_formatted_doc("User", "")
 
-	def test_get_formatted_doc_strips_html_for_html_and_text_editor_fields(self):
-		"""Top-level HTML/Text Editor fields should be plain text in Typst payload."""
+	def test_get_formatted_doc_normalizes_html_for_all_string_fields(self):
+		"""Any formatted string field should be plain text in Typst payload."""
 		from types import SimpleNamespace
 
 		from crispy_print.api.v1.docs import get_formatted_doc
 
 		mock_doc = SimpleNamespace(
 			check_permission=mock.Mock(),
-			as_dict=lambda: {"name": "DOC-1", "notes": "<p>Hello</p>"},
+			as_dict=lambda: {"name": "DOC-1", "address_display": "&lt;p&gt;Line 1&lt;br&gt;Line 2&lt;/p&gt;"},
 		)
 		mock_meta = SimpleNamespace(
-			fields=[SimpleNamespace(fieldname="notes", fieldtype="HTML", options=None)]
+			fields=[SimpleNamespace(fieldname="address_display", fieldtype="Text", options=None)]
 		)
 
 		with (
 			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
 			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
-			mock.patch("crispy_print.api.v1.docs.frappe.format", return_value="<p>Hello</p>"),
-			mock.patch("crispy_print.api.v1.docs.frappe.utils.strip_html", return_value="Hello"),
+			mock.patch(
+				"crispy_print.api.v1.docs.frappe.format",
+				return_value="&lt;p&gt;Line 1&lt;br&gt;&lt;br /&gt;Line 2&lt;/p&gt;",
+			),
 			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
 		):
 			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
 
-		self.assertEqual(out["notes"], "Hello")
+		self.assertEqual(out["address_display"], "Line 1\nLine 2")
 		mock_doc.check_permission.assert_called_once_with("read")
 
 	def test_get_formatted_doc_keeps_raw_value_when_child_format_fails(self):

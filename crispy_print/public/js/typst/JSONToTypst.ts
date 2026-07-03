@@ -14,12 +14,18 @@ import {
 	type PresentationSettings,
 } from "../utils/presentation_settings"
 import { deepClone } from "../utils/json"
+import { normalizeHtmlText } from "../utils/htmlText"
+import { escapeTypstString } from "../utils/typstEscape"
 
 export type LayoutWithOptionalSections = Omit<CrispyLayout, "sections"> & {
 	sections?: LayoutSection[]
 }
 
 export type RealDocData = Record<string, any> | null
+
+function typstStringLiteral(value: unknown): string {
+	return `"${escapeTypstString(normalizeHtmlText(value))}"`
+}
 
 export function translateJSONToTypst(
 	layoutData: LayoutWithOptionalSections | null | undefined,
@@ -56,28 +62,20 @@ export function buildDocDictionary(realDocData: RealDocData, doctype = "Document
 					if (typeof row === "object" && row !== null) {
 						lines.push(`    (`)
 						Object.entries(row).forEach(([colKey, colVal]) => {
-							const escapedVal = String(colVal || "").replace(/"/g, '\\"')
-							lines.push(`      ${colKey}: "${escapedVal}",`)
+							lines.push(`      ${colKey}: ${typstStringLiteral(colVal)},`)
 						})
 						lines.push(`    ),`)
 					}
 				})
 				lines.push(`  ),`)
 			} else if (typeof value === "string") {
-				let cleanValue = value
-					.replace(/(<br\s*\/?>\s*)+/gi, "\n") // Consecutive <br> → single \n
-					.replace(/<[^>]+>/g, "") // Strip HTML tags
-					.replace(/\n{2,}/g, "\n") // Collapse consecutive newlines
-					.trim()
-					.replace(/"/g, '\\"')
-					.replace(/\n/g, "\\n")
-				lines.push(`  ${key}: "${cleanValue}",`)
+				lines.push(`  ${key}: ${typstStringLiteral(value)},`)
 			} else if (typeof value === "number") {
 				lines.push(`  ${key}: ${value},`)
 			} else if (typeof value === "boolean") {
 				lines.push(`  ${key}: ${value ? "true" : "false"},`)
 			} else {
-				lines.push(`  ${key}: "${String(value)}",`)
+				lines.push(`  ${key}: ${typstStringLiteral(value)},`)
 			}
 		})
 
@@ -368,28 +366,20 @@ class JSONTypstTranslator {
 							if (typeof row === "object" && row !== null) {
 								lines.push(`    (`)
 								Object.entries(row).forEach(([colKey, colVal]) => {
-									const escapedVal = String(colVal || "").replace(/"/g, '\\"')
-									lines.push(`      ${colKey}: "${escapedVal}",`)
+									lines.push(`      ${colKey}: ${typstStringLiteral(colVal)},`)
 								})
 								lines.push(`    ),`)
 							}
 						})
 						lines.push(`  ),`)
 					} else if (typeof value === "string") {
-						let cleanValue = value
-							.replace(/(<br\s*\/?>\s*)+/gi, "\n") // Consecutive <br> → single \n
-							.replace(/<[^>]+>/g, "") // Strip HTML tags
-							.replace(/\n{2,}/g, "\n") // Collapse consecutive newlines
-							.trim()
-							.replace(/"/g, '\\"')
-							.replace(/\n/g, "\\n")
-						lines.push(`  ${key}: "${cleanValue}",`)
+						lines.push(`  ${key}: ${typstStringLiteral(value)},`)
 					} else if (typeof value === "number") {
 						lines.push(`  ${key}: ${value},`)
 					} else if (typeof value === "boolean") {
 						lines.push(`  ${key}: ${value ? "true" : "false"},`)
 					} else {
-						lines.push(`  ${key}: "${String(value)}",`)
+						lines.push(`  ${key}: ${typstStringLiteral(value)},`)
 					}
 				})
 

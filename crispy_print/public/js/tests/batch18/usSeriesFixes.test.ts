@@ -34,6 +34,22 @@ describe("US1: escapeTypstString / quoteTypstString", () => {
 	})
 })
 
+describe("US1b: normalizeHtmlText", () => {
+	it("converts literal and escaped HTML line breaks into plain text", async () => {
+		const { normalizeHtmlText } = await import("../../utils/htmlText")
+		expect(normalizeHtmlText("Line 1<br>Line 2")).toBe("Line 1\nLine 2")
+		expect(normalizeHtmlText("Line 1&lt;br&gt;Line 2")).toBe("Line 1\nLine 2")
+		expect(normalizeHtmlText("Line 1<br><br>Line 2")).toBe("Line 1\nLine 2")
+		expect(normalizeHtmlText("Line 1&lt;br&gt;&lt;br /&gt;Line 2")).toBe("Line 1\nLine 2")
+	})
+
+	it("strips literal and escaped HTML tags from any string field", async () => {
+		const { normalizeHtmlText } = await import("../../utils/htmlText")
+		expect(normalizeHtmlText("&lt;p&gt;Hello &amp; welcome&lt;/p&gt;")).toBe("Hello & welcome")
+		expect(normalizeHtmlText("<div>Hello</div><script>alert(1)</script>")).toBe("Hello\nalert(1)")
+	})
+})
+
 // ───────────────────────────────────────────────────────────────────────────
 // US2: reportBuilder uses the escape utility for font fields
 // ───────────────────────────────────────────────────────────────────────────
