@@ -5,10 +5,11 @@ frappe.pages["crispy-print-preview"].on_page_load = function (wrapper) {
 
 frappe.pages["crispy-print-preview"].on_page_show = function () {
 	const route = frappe.get_route();
-	const doctype = route[1];
-	const docname = route.slice(2, 3).join(""); // keep simple join for performance
-	const format = route[3];
 	const routeOptions = frappe.route_options || {};
+	frappe.route_options = null;
+	const doctype = routeOptions.doctype || route[1];
+	const docname = routeOptions.name || routeOptions.docname || route.slice(2, 3).join("");
+	const format = routeOptions.format || route[3];
 	const isReportRoute = route[1] === "report";
 	const routeReportName = isReportRoute ? route.slice(2).join("/") : null;
 
@@ -23,7 +24,6 @@ frappe.pages["crispy-print-preview"].on_page_show = function () {
 			columns: routeOptions.columns || [],
 			chartSvg: routeOptions.chartSvg || "",
 		});
-		frappe.route_options = null;
 		return;
 	}
 
@@ -80,7 +80,7 @@ frappe.ui.CrispyPrintView = class {
 
 	show_empty_state() {
 		this.current = {};
-		this.vue_instance = null;
+		this.unmount_preview();
 		this.page.set_title(__("Crispy Print Preview"));
 		this.add_or_update_context_action_icon();
 		this.setup_menu(null);
@@ -106,7 +106,7 @@ frappe.ui.CrispyPrintView = class {
 		this.setup_menu(null);
 
 		if (!same_report) {
-			this.vue_instance = null;
+			this.unmount_preview();
 			this.render_preview({ doctype: null, docname: null }, null, {
 				source: context.source || "report",
 				report: context.report || null,
@@ -119,6 +119,7 @@ frappe.ui.CrispyPrintView = class {
 
 	render_preview(frm, format, extraProps = {}) {
 		this.status_el.text(__("Loading preview..."));
+		this.unmount_preview();
 
 		// Remove existing listener before adding new one
 		if (this._remove_refresh_listener) {
@@ -127,15 +128,12 @@ frappe.ui.CrispyPrintView = class {
 		}
 
 		load_crispy_preview_bundle(() => {
-			// Mount Vue component if not already mounted
-			if (!this.vue_instance) {
-				this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
-					doctype: frm.doctype,
-					docname: frm.docname,
-					format,
-					...extraProps,
-				});
-			}
+			this.vue_instance = window.mountCrispyPreview("#crispy-preview-root", {
+				doctype: frm.doctype,
+				docname: frm.docname,
+				format,
+				...extraProps,
+			});
 
 			this.status_el.text(__("")); // clear after mount
 		});
@@ -143,7 +141,15 @@ frappe.ui.CrispyPrintView = class {
 
 	// Optional: call this when tearing down the page to avoid lingering listeners
 	destroy() {
+		this.unmount_preview();
+	}
+
+	unmount_preview() {
+		if (this.vue_instance?.app?.unmount) {
+			this.vue_instance.app.unmount();
+		}
 		this.vue_instance = null;
+		this.print_wrapper?.find("#crispy-preview-root").empty();
 	}
 
 	setup_toolbar() {
@@ -378,7 +384,7 @@ frappe.ui.CrispyPrintView = class {
 			this.vue_instance.component.triggerRefresh();
 		} else {
 			// Fallback: remount
-			this.vue_instance = null;
+			this.unmount_preview();
 			this.render_preview(this.current.frm, this.current.format);
 		}
 	}
