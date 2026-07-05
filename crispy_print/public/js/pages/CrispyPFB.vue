@@ -111,6 +111,7 @@
 				:presentation_settings="presentation_settings"
 				:mark-dirty="store.markDirty"
 				:available-fonts="availableFonts"
+				:font-faces="fontFaces"
 				:loading-fonts="loadingFonts"
 				@branding-profiles-change="brandingProfiles = $event"
 			>
@@ -177,10 +178,10 @@ import { useStore } from "../composables/useStore";
 import type { CrispyTemplatePublishPreview } from "../api/crispy";
 import { getCrispyBuilderFormatName } from "../utils/routes";
 import { __ } from "../utils/i18n";
-import { fetchTypstFonts } from "../utils/typstTypography";
+import { fetchTypstFontFaces, fetchTypstFonts } from "../utils/typstTypography";
 import { buildReportTypstFromConfig } from "../utils/reportBuilder";
 import { getLogger } from "../logger";
-import type { CrispyBrandingProfileOption } from "../api/crispy";
+import type { CrispyBrandingProfileOption, TypstFontFamilyFaces } from "../api/crispy";
 
 const store = useStore();
 const presentation_settings = store.presentation_settings;
@@ -220,6 +221,7 @@ const duplicateDialogOpen = ref(false);
 const duplicateSubmitting = ref(false);
 const isDiagnosticsExpanded = ref(false);
 const availableFonts = ref<string[]>([]);
+const fontFaces = ref<TypstFontFamilyFaces[]>([]);
 const loadingFonts = ref(false);
 const brandingProfiles = ref<CrispyBrandingProfileOption[]>([]);
 let resizeCleanup: (() => void) | null = null;
@@ -355,7 +357,12 @@ onMounted(async () => {
 async function fetchFonts() {
 	loadingFonts.value = true;
 	try {
-		availableFonts.value = await fetchTypstFonts({ logger });
+		const [families, faces] = await Promise.all([
+			fetchTypstFonts({ logger }),
+			fetchTypstFontFaces({ logger }),
+		]);
+		availableFonts.value = families;
+		fontFaces.value = faces;
 	} finally {
 		loadingFonts.value = false;
 	}

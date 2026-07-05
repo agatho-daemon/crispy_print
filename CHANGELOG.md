@@ -7,20 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Working Beta Changes
+
+- Raw Typst document authoring is now a working beta path for authors who want full Typst control: builder-owned presentation controls are hidden, raw code refresh is explicit, and compile helpers are constrained to the author-facing raw API.
+- Regular builder image insertion, private uploaded image lookup, font-face-aware typography controls, and menu layering fixes are working beta changes intended for real template testing during stabilization.
+
 ### Added
 
 - Added an optional Frappe Print Engine adapter in preparation for a Frappe PR that loosens the hardcoded native print flow and allows apps to register print engine entry points.
 - Added `crispy_print/public/js/crispy_print_engine.js` to register `crispy_print` through `frappe.ui.form.register_print_engine` and route document print handoffs directly to `crispy-print-preview`.
-- Added install/sync setup that creates or repairs the `crispy_print` Print Engine record when the Frappe Print Engine DocType is available.
+- Added install/sync setup that creates or repairs the `crispy_print` Print Engine record when the Frappe Print Engine DocType and controller are available.
+- Added raw Typst authoring helpers for private images and reusable Typst blocks, including `crispy_image("filename")` and `crispy_block("block-document-id")`.
+- Added a Crispy Image picker for regular builder mode with private image search, upload, and size controls.
+- Added font-face discovery metadata so typography controls can show only the styles and weights available for the selected font family.
 
 ### Changed
 
 - Updated Crispy Print Preview to consume document context from `frappe.route_options` when opened through the optional Frappe print-engine handoff, while preserving direct route segment fallback.
 - Updated preview lifecycle handling to unmount the existing Vue preview before mounting a new document preview.
+- Changed Raw Typst mode to be author-controlled: presentation/page/table/typography controls are hidden in the builder, raw code changes no longer auto-compile, and refresh happens through the Refresh button or Command/Ctrl-Enter.
+- Changed raw Typst block helper generation so only blocks referenced by `crispy_block("...")` are inlined into the compile source.
+- Changed the field palette to separate Crispy Fields from document fields and keep generic Crispy Typst Block and Crispy Image entries above the document metadata fields.
+- Changed builder menus to render through a shared floating-menu path so nested menus stay above layout content.
+- Changed bundled font organization so Inter lives under `public/vendor/fonts/Inter/` instead of duplicate parent-folder copies.
 
 ### Fixed
 
 - Fixed stale preview reuse when opening multiple documents in the same Desk session by clearing consumed `frappe.route_options` and remounting the preview for each new document/format context.
+- Fixed uploaded site font discovery by passing absolute private font directories to Typst.
+- Fixed duplicate font-family entries caused by combining Typst-reported family names with filename-derived fallback names.
+- Fixed typography fallback caused by selecting unavailable weights or styles for a chosen font family.
+- Fixed regular-mode preview refresh behavior around keystroke-heavy controls by keeping invalid intermediate values from compiling until they become valid.
+- Fixed Raw Typst helper source generation so reusable block bodies are not injected unless referenced by `crispy_block("...")`.
+- Fixed raw private image handling so `crispy_image()` resolves only approved private uploaded filenames and rejects public paths, traversal, nested paths, URLs, unsupported extensions, and missing files.
+- Fixed optional Print Engine setup and tests so sites without the future Print Engine controller skip that integration path instead of failing.
+
+### Tests
+
+- Current frontend gate: `yarn test:unit` passed 223 tests across 57 test files.
+- Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 289 tests with 2 skipped.
 
 ## [0.2.0-beta.1] - 2026-07-01
 

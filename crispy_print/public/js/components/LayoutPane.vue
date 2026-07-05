@@ -121,7 +121,7 @@
 								>
 									&#8943;
 								</button>
-								<teleport :to="menuPortalTarget">
+								<teleport to="body">
 									<div
 										v-if="
 											openSectionMenuId ===
@@ -265,7 +265,8 @@
 															{
 																'field-card__label-input--with-status':
 																	field.fieldtype ===
-																	'Crispy Typst Block',
+																		'Crispy Typst Block' ||
+																	isCrispyImageField(field),
 															},
 														]"
 														:placeholder="field.fieldname"
@@ -275,14 +276,23 @@
 													<span
 														v-if="
 															field.fieldtype ===
-															'Crispy Typst Block'
+																'Crispy Typst Block' ||
+															isCrispyImageField(field)
 														"
 														class="field-card__inline-status"
 														:class="{
 															'field-card__inline-status--empty':
-																!field.crispy_typst_block,
+																field.fieldtype ===
+																'Crispy Typst Block'
+																	? !field.crispy_typst_block
+																	: !field.crispy_image,
 														}"
-														:title="getTypstBlockStatus(field)"
+														:title="
+															field.fieldtype ===
+															'Crispy Typst Block'
+																? getTypstBlockStatus(field)
+																: getImageStatus(field)
+														"
 													>
 														<span
 															class="field-card__inline-separator"
@@ -292,7 +302,12 @@
 														<span
 															class="field-card__inline-status-text"
 														>
-															{{ getTypstBlockStatus(field) }}
+															{{
+																field.fieldtype ===
+																"Crispy Typst Block"
+																	? getTypstBlockStatus(field)
+																	: getImageStatus(field)
+															}}
 														</span>
 													</span>
 												</div>
@@ -331,7 +346,7 @@
 													>
 														&#8943;
 													</button>
-													<teleport :to="menuPortalTarget">
+													<teleport to="body">
 														<div
 															v-if="
 																openFieldMenuId ===
@@ -376,6 +391,7 @@
 															<div
 																v-if="openFieldSubmenu === 'align'"
 																class="field-card__submenu"
+																:style="alignSubmenuStyle"
 																@click.stop
 																:ref="setAlignSubmenuRef"
 																role="menu"
@@ -516,6 +532,16 @@
 															</button>
 
 															<button
+																v-if="isCrispyImageField(field)"
+																type="button"
+																class="field-card__menu-item"
+																@click="onChooseImage(field)"
+																role="menuitem"
+															>
+																{{ __("Choose image") }}
+															</button>
+
+															<button
 																v-if="
 																	(
 																		field.fieldtype || ''
@@ -600,7 +626,6 @@
 				</template>
 			</draggable>
 		</div>
-		<div ref="menuPortalRef" class="layout-pane__menu-portal"></div>
 		<TableColumnsDialog
 			v-if="columnEditor"
 			:model-value="editingColumns"
@@ -617,6 +642,13 @@
 			@select="onTypstBlockSelected"
 			@close="closeBlockEditor"
 		/>
+		<CrispyImageDialog
+			v-if="imageEditor"
+			:selected-filename="imageEditor.crispy_image"
+			:settings="getImageEditorSettings(imageEditor)"
+			@select="onImageSelected"
+			@close="closeImageEditor"
+		/>
 	</div>
 </template>
 
@@ -626,6 +658,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useStore } from "../composables/useStore";
 import TableColumnsDialog from "../components/TableColumnsDialog.vue";
 import CrispyTypstBlockDialog from "../components/CrispyTypstBlockDialog.vue";
+import CrispyImageDialog, { type CrispyImageSettings } from "../components/CrispyImageDialog.vue";
 import { getLogger } from "../logger";
 import type { CrispyTypstBlockOption } from "../api/crispy";
 import type {
@@ -658,13 +691,15 @@ const editingColumns = ref<TableColumn[]>([]);
 const blockEditor = ref<Field | null>(null);
 const blockOptions = ref<CrispyTypstBlockOption[]>([]);
 const blockOptionsLoading = ref(false);
+const imageEditor = ref<Field | null>(null);
 const logger = getLogger({ component: "LayoutPane" });
 const layoutPaneRef = ref<HTMLElement | null>(null);
-const menuPortalRef = ref<HTMLElement | null>(null);
 const sectionMenuEl = ref<HTMLElement | null>(null);
 const fieldMenuEl = ref<HTMLElement | null>(null);
 const alignMenuItemEl = ref<HTMLElement | null>(null);
 const alignSubmenuEl = ref<HTMLElement | null>(null);
+const sectionMenuAnchorEl = ref<HTMLElement | null>(null);
+const fieldMenuAnchorEl = ref<HTMLElement | null>(null);
 
 const setSectionMenuRef = (el: HTMLElement | null) => {
 	if (el) sectionMenuEl.value = el;
@@ -673,10 +708,6 @@ const setSectionMenuRef = (el: HTMLElement | null) => {
 const setFieldMenuRef = (el: HTMLElement | null) => {
 	if (el) fieldMenuEl.value = el;
 };
-
-const menuPortalTarget = computed(() => {
-	return menuPortalRef.value || layoutPaneRef.value || "body";
-});
 
 const setAlignMenuItemRef = (el: HTMLElement | null) => {
 	if (el) alignMenuItemEl.value = el;
@@ -691,6 +722,7 @@ const sectionMenuStyle = ref<Record<string, string>>({});
 
 const openFieldMenuId = ref<string | null>(null);
 const fieldMenuStyle = ref<Record<string, string>>({});
+const alignSubmenuStyle = ref<Record<string, string>>({});
 const openFieldSubmenu = ref<"align" | null>(null);
 const currentFormat = computed(() => store.crispyFormat?.value || null);
 const showGenericReportTypeBadge = computed(() => {
@@ -744,45 +776,66 @@ function clamp(value: number, min: number, max: number) {
 	return Math.min(Math.max(value, min), max);
 }
 
-function getMenuPosition(anchor: HTMLElement, menu: HTMLElement) {
-	const container = layoutPaneRef.value;
-	if (!container) {
-		return {
-			position: "absolute",
-			top: "0px",
-			left: "0px",
-			zIndex: "1000",
-		};
-	}
+type FloatingPlacement = "bottom-end" | "right-start";
 
-	const containerRect = container.getBoundingClientRect();
+function getFloatingMenuPosition(
+	anchor: HTMLElement,
+	menu: HTMLElement,
+	placement: FloatingPlacement = "bottom-end"
+) {
 	const anchorRect = anchor.getBoundingClientRect();
 	const menuRect = menu.getBoundingClientRect();
 	const padding = 8;
 	const gap = 6;
-	const scrollTop = container.scrollTop;
-	const scrollLeft = container.scrollLeft;
+	const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+	const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+	const maxLeft = viewportWidth - menuRect.width - padding;
+	const maxTop = viewportHeight - menuRect.height - padding;
+	let left = 0;
+	let top = 0;
 
-	let left = anchorRect.right - containerRect.left + scrollLeft - menuRect.width;
-	let top = anchorRect.bottom - containerRect.top + scrollTop + gap;
-
-	const maxLeft = scrollLeft + container.clientWidth - menuRect.width - padding;
-	const minLeft = scrollLeft + padding;
-	left = clamp(left, minLeft, Math.max(minLeft, maxLeft));
-
-	const maxTop = scrollTop + container.clientHeight - menuRect.height - padding;
-	const minTop = scrollTop + padding;
-	if (top > maxTop) {
-		top = anchorRect.top - containerRect.top + scrollTop - menuRect.height - gap;
+	if (placement === "right-start") {
+		left = anchorRect.right + gap;
+		top = anchorRect.top;
+		if (left > maxLeft) {
+			left = anchorRect.left - menuRect.width - gap;
+		}
+	} else {
+		left = anchorRect.right - menuRect.width;
+		top = anchorRect.bottom + gap;
+		if (top > maxTop) {
+			top = anchorRect.top - menuRect.height - gap;
+		}
 	}
-	top = clamp(top, minTop, Math.max(minTop, maxTop));
+
+	left = clamp(left, padding, Math.max(padding, maxLeft));
+	top = clamp(top, padding, Math.max(padding, maxTop));
 
 	return {
-		position: "absolute",
+		position: "fixed",
 		top: `${top}px`,
 		left: `${left}px`,
-		zIndex: "1000",
+		zIndex: "1200",
 	};
+}
+
+function updateFloatingMenuPositions() {
+	if (openSectionMenuId.value && sectionMenuAnchorEl.value && sectionMenuEl.value) {
+		sectionMenuStyle.value = getFloatingMenuPosition(
+			sectionMenuAnchorEl.value,
+			sectionMenuEl.value
+		);
+	}
+	if (openFieldMenuId.value && fieldMenuAnchorEl.value && fieldMenuEl.value) {
+		fieldMenuStyle.value = getFloatingMenuPosition(fieldMenuAnchorEl.value, fieldMenuEl.value);
+	}
+	if (openFieldSubmenu.value === "align" && alignMenuItemEl.value && alignSubmenuEl.value) {
+		alignSubmenuStyle.value = getFloatingMenuPosition(
+			alignMenuItemEl.value,
+			alignSubmenuEl.value,
+			"right-start"
+		);
+	}
 }
 
 function getMenuItems(menuEl: HTMLElement, includeSubmenu = true) {
@@ -900,6 +953,7 @@ function getSectionMenuId(section: Section, index: number) {
 function closeSectionMenu() {
 	openSectionMenuId.value = null;
 	sectionMenuStyle.value = {};
+	sectionMenuAnchorEl.value = null;
 }
 
 function getFieldMenuId(
@@ -918,6 +972,8 @@ function closeFieldMenu() {
 	openFieldMenuId.value = null;
 	openFieldSubmenu.value = null;
 	fieldMenuStyle.value = {};
+	alignSubmenuStyle.value = {};
+	fieldMenuAnchorEl.value = null;
 }
 
 function onSectionMenuKeydown(event: KeyboardEvent) {
@@ -941,6 +997,7 @@ function onFieldMenuKeydown(event: KeyboardEvent) {
 		if (openFieldSubmenu.value !== "align") {
 			openFieldSubmenu.value = "align";
 			nextTick(() => {
+				updateFloatingMenuPositions();
 				const submenu = alignSubmenuEl.value;
 				if (submenu) focusFirstMenuItem(submenu, true);
 			});
@@ -961,6 +1018,7 @@ function onAlignSubmenuKeydown(event: KeyboardEvent) {
 	if (event.key === "ArrowLeft") {
 		event.preventDefault();
 		openFieldSubmenu.value = null;
+		alignSubmenuStyle.value = {};
 		nextTick(() => alignMenuItemEl.value?.focus());
 		return;
 	}
@@ -969,6 +1027,7 @@ function onAlignSubmenuKeydown(event: KeyboardEvent) {
 		includeSubmenu: true,
 		onEscape: () => {
 			openFieldSubmenu.value = null;
+			alignSubmenuStyle.value = {};
 			nextTick(() => alignMenuItemEl.value?.focus());
 		},
 	});
@@ -981,15 +1040,17 @@ function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
 		return;
 	}
 
+	closeFieldMenu();
 	openSectionMenuId.value = id;
 
 	const target = event.currentTarget as HTMLElement | null;
 	if (!target) return;
+	sectionMenuAnchorEl.value = target;
 
 	nextTick(() => {
 		const menu = sectionMenuEl.value;
 		if (!menu) return;
-		sectionMenuStyle.value = getMenuPosition(target, menu);
+		updateFloatingMenuPositions();
 		focusFirstMenuItem(menu, false);
 	});
 }
@@ -1010,11 +1071,12 @@ function toggleFieldMenu(id: string, event: MouseEvent) {
 			".field-card__menu-btn"
 		) as HTMLElement | null);
 	if (!target) return;
+	fieldMenuAnchorEl.value = target;
 
 	nextTick(() => {
 		const menu = fieldMenuEl.value;
 		if (!menu) return;
-		fieldMenuStyle.value = getMenuPosition(target, menu);
+		updateFloatingMenuPositions();
 		focusFirstMenuItem(menu, false);
 	});
 }
@@ -1057,18 +1119,50 @@ const onPaneKeyDown = (e: KeyboardEvent) => {
 	}
 };
 
+function isMenuEventTarget(target: EventTarget | null) {
+	if (!(target instanceof Element)) return false;
+	return Boolean(
+		target.closest(
+			".section-card__menu, .field-card__menu, .field-card__submenu, .section-card__menu-btn, .field-card__menu-btn"
+		)
+	);
+}
+
+const onDocumentPointerDown = (event: PointerEvent) => {
+	if (isMenuEventTarget(event.target)) return;
+	closeSectionMenu();
+	closeFieldMenu();
+};
+
+const onDocumentKeyDown = (event: KeyboardEvent) => {
+	if (event.key !== "Escape") return;
+	closeSectionMenu();
+	closeFieldMenu();
+};
+
+const onFloatingBoundaryChange = () => {
+	if (!openSectionMenuId.value && !openFieldMenuId.value) return;
+	updateFloatingMenuPositions();
+};
+
 onMounted(() => {
 	const pane = layoutPaneRef.value;
-	if (!pane) return;
-	pane.addEventListener("click", onPaneClick);
-	pane.addEventListener("keydown", onPaneKeyDown);
+	pane?.addEventListener("click", onPaneClick);
+	pane?.addEventListener("keydown", onPaneKeyDown);
+	document.addEventListener("pointerdown", onDocumentPointerDown);
+	document.addEventListener("keydown", onDocumentKeyDown);
+	window.addEventListener("resize", onFloatingBoundaryChange);
+	window.addEventListener("scroll", onFloatingBoundaryChange, true);
 });
 
 onBeforeUnmount(() => {
 	const pane = layoutPaneRef.value;
-	if (!pane) return;
-	pane.removeEventListener("click", onPaneClick);
-	pane.removeEventListener("keydown", onPaneKeyDown);
+	pane?.removeEventListener("click", onPaneClick);
+	pane?.removeEventListener("keydown", onPaneKeyDown);
+	document.removeEventListener("pointerdown", onDocumentPointerDown);
+	document.removeEventListener("keydown", onDocumentKeyDown);
+	window.removeEventListener("resize", onFloatingBoundaryChange);
+	window.removeEventListener("scroll", onFloatingBoundaryChange, true);
 });
 
 watch(
@@ -1224,10 +1318,12 @@ function toggleAlignSubmenu() {
 	openFieldSubmenu.value = openFieldSubmenu.value === "align" ? null : "align";
 	if (openFieldSubmenu.value === "align") {
 		nextTick(() => {
+			updateFloatingMenuPositions();
 			const submenu = alignSubmenuEl.value;
 			if (submenu) focusFirstMenuItem(submenu, true);
 		});
 	} else {
+		alignSubmenuStyle.value = {};
 		alignMenuItemEl.value?.focus();
 	}
 }
@@ -1382,6 +1478,13 @@ async function onDropField(event: DragEvent, column: Column) {
 			field.crispy_typst_block_name = "";
 		}
 
+		if (isCrispyImageField(parsed as Field)) {
+			field.crispy_image = "";
+			field.crispy_image_width = "100%";
+			field.crispy_image_height = "";
+			field.crispy_image_fit = "";
+		}
+
 		column.fields.push(field);
 		store.markDirty();
 	} catch (e) {
@@ -1459,6 +1562,14 @@ function getTypstBlockStatus(field: Field): string {
 	return field.crispy_typst_block_name || field.crispy_typst_block || __("No block selected");
 }
 
+function isCrispyImageField(field: Pick<Field, "fieldname" | "fieldtype">): boolean {
+	return field.fieldtype === "Crispy Image" || field.fieldname === "_crispy_image";
+}
+
+function getImageStatus(field: Field): string {
+	return field.crispy_image || __("No image selected");
+}
+
 async function chooseTypstBlock(field: Field) {
 	blockEditor.value = field;
 	blockOptionsLoading.value = true;
@@ -1494,6 +1605,34 @@ function onTypstBlockSelected(block: CrispyTypstBlockOption) {
 
 function closeBlockEditor() {
 	blockEditor.value = null;
+}
+
+function onChooseImage(field: Field) {
+	imageEditor.value = field;
+	closeFieldMenu();
+}
+
+function getImageEditorSettings(field: Field): CrispyImageSettings {
+	return {
+		filename: field.crispy_image || "",
+		width: field.crispy_image_width ?? "100%",
+		height: field.crispy_image_height ?? "",
+		fit: field.crispy_image_fit ?? "",
+	};
+}
+
+function onImageSelected(settings: CrispyImageSettings) {
+	if (!imageEditor.value) return;
+	imageEditor.value.crispy_image = settings.filename;
+	imageEditor.value.crispy_image_width = settings.width;
+	imageEditor.value.crispy_image_height = settings.height;
+	imageEditor.value.crispy_image_fit = settings.fit;
+	store.markDirty();
+	closeImageEditor();
+}
+
+function closeImageEditor() {
+	imageEditor.value = null;
 }
 
 function markDirty() {
@@ -1768,20 +1907,6 @@ function onEditDivider(field: Field) {
 	background: #fff;
 }
 
-.layout-pane__menu-portal {
-	position: absolute;
-	inset: 0;
-	overflow: visible;
-	z-index: 1200;
-	pointer-events: none;
-}
-
-.layout-pane__menu-portal .section-card__menu,
-.layout-pane__menu-portal .field-card__menu,
-.layout-pane__menu-portal .field-card__submenu {
-	pointer-events: auto;
-}
-
 .layout-pane__header {
 	margin: 12px 16px 0;
 	padding: 0;
@@ -1977,6 +2102,7 @@ function onEditDivider(field: Field) {
 	padding: 6px;
 	width: 260px;
 	max-width: calc(100vw - 32px);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
 }
 
 .section-card__menu-item {
@@ -2162,6 +2288,7 @@ function onEditDivider(field: Field) {
 	padding: 6px;
 	width: 220px;
 	max-width: calc(100vw - 32px);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
 }
 
 .field-card__menu-item {
@@ -2192,14 +2319,13 @@ function onEditDivider(field: Field) {
 }
 
 .field-card__submenu {
-	position: absolute;
-	top: 6px;
-	left: calc(100% + 6px);
 	border-radius: 12px;
 	border: 1px solid var(--border-color, #e2e8f0);
 	background: var(--card-bg, #fff);
 	padding: 6px;
 	width: 180px;
+	max-width: calc(100vw - 32px);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
 }
 
 .field-card__menu-check {

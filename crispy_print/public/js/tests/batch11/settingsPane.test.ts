@@ -1,7 +1,8 @@
 import { flushPromises, mount } from "@vue/test-utils";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick, reactive, ref } from "vue";
 import SettingsPane from "../../components/SettingsPane.vue";
+import TypographyStyleEditor from "../../components/TypographyStyleEditor.vue";
 
 const hoisted = vi.hoisted(() => ({
   storeMock: {
@@ -9,10 +10,11 @@ const hoisted = vi.hoisted(() => ({
     loading: { value: false },
     initializing: { value: false },
     isReportMode: { value: false },
+    rawTypst: { value: false },
     reportBuilderConfig: {
       value: {
         preset: "grid",
-        font_family: "Inter 18pt",
+        font_family: "Inter",
         font_size_pt: 9,
         show_filters: true,
         show_summary: true,
@@ -26,11 +28,13 @@ const hoisted = vi.hoisted(() => ({
       },
     },
     reportBasicReadOnly: { value: false },
+    updateReportBuilderConfig: vi.fn(),
   },
 }));
 
 vi.mock("../../api/crispy", () => ({
-  getTypstLocalFonts: vi.fn(async () => ["Inter 18pt", "Serif"]),
+  getTypstLocalFonts: vi.fn(async () => ["Inter", "Serif"]),
+  getTypstFontFaces: vi.fn(async () => []),
   getBrandingProfiles: vi.fn(async () => [
     {
       name: "CBP-1",
@@ -59,6 +63,12 @@ vi.mock("../../composables/useStore", () => ({
 }));
 
 describe("SettingsPane", () => {
+  beforeEach(() => {
+    hoisted.storeMock.isReportMode.value = false;
+    hoisted.storeMock.rawTypst.value = false;
+    hoisted.storeMock.updateReportBuilderConfig.mockClear();
+  });
+
   it("updates logo image when company changes", async () => {
     const presentation_settings = reactive({
       page: {
@@ -141,14 +151,14 @@ describe("SettingsPane", () => {
         stripe: { enabled: false, color: "#f8fafc" },
         typography: {
           header: {
-            fontFamily: "Inter 18pt",
+            fontFamily: "Inter",
             fontSize: "9pt",
             fontStyle: "normal",
             fontWeight: "semibold",
             color: "#0f172a",
           },
           body: {
-            fontFamily: "Inter 18pt",
+            fontFamily: "Inter",
             fontSize: "9pt",
             fontStyle: "normal",
             fontWeight: "regular",
@@ -246,6 +256,107 @@ describe("SettingsPane", () => {
     expect(markDirty).toHaveBeenCalled();
   });
 
+  it("uses debounced preview policy for numeric settings input", async () => {
+    const presentation_settings = reactive({
+      source: "custom",
+      page: {
+        size: "A4",
+        orientation: "portrait",
+        margins: { top: 10, bottom: 10, left: 10, right: 10 },
+      },
+      branding: {
+        profile: "",
+        mode: "none",
+        letterhead: "",
+        letterhead_image: "",
+        logo: { company: "", image: "", size: 20, dx: 0, dy: 0 },
+      },
+      typography: {},
+      qr: {},
+    }) as any;
+    const markDirty = vi.fn();
+
+    const wrapper = mount(SettingsPane, {
+      props: { presentation_settings, markDirty },
+      global: {
+        stubs: {
+          ColorInput: true,
+          QrFieldsDialog: true,
+        },
+      },
+    });
+
+    const pageHeader = wrapper
+      .findAll("button.settings-pane__section-header")
+      .find((btn) => btn.text().includes("Page Settings"));
+    expect(pageHeader).toBeTruthy();
+    await pageHeader!.trigger("click");
+    await nextTick();
+    markDirty.mockClear();
+
+    const marginInput = wrapper.find(".box-sides-editor__control");
+    expect(marginInput.exists()).toBe(true);
+    await marginInput.trigger("input");
+    expect(markDirty).toHaveBeenCalledWith({ preview: "debounce" });
+  });
+
+  it("routes report settings through explicit store actions", async () => {
+    hoisted.storeMock.isReportMode.value = true;
+    const presentation_settings = reactive({
+      source: "custom",
+      page: {
+        size: "A4",
+        orientation: "portrait",
+        margins: { top: 10, bottom: 10, left: 10, right: 10 },
+      },
+      branding: {
+        profile: "",
+        mode: "none",
+        letterhead: "",
+        letterhead_image: "",
+        logo: { company: "", image: "", size: 20, dx: 0, dy: 0 },
+      },
+      typography: {},
+      qr: {},
+    }) as any;
+
+    const wrapper = mount(SettingsPane, {
+      props: { presentation_settings, markDirty: vi.fn() },
+      global: {
+        stubs: {
+          ColorInput: true,
+          QrFieldsDialog: true,
+        },
+      },
+    });
+
+    const pageHeader = wrapper
+      .findAll("button.settings-pane__section-header")
+      .find((btn) => btn.text().includes("Report Template"));
+    expect(pageHeader).toBeTruthy();
+    await pageHeader!.trigger("click");
+    await nextTick();
+
+    const preset = wrapper.find('select option[value="summary"]').element
+      .parentElement as HTMLSelectElement;
+    await wrapper
+      .findAll("select")
+      .find((select) => select.element === preset)!
+      .setValue("summary");
+    expect(hoisted.storeMock.updateReportBuilderConfig).toHaveBeenCalledWith(
+      { preset: "summary" },
+      { preview: "live" },
+    );
+
+    hoisted.storeMock.updateReportBuilderConfig.mockClear();
+    const fontSizeInput = wrapper.find('input[min="1"][step="1"]');
+    await fontSizeInput.setValue("11");
+    expect(hoisted.storeMock.updateReportBuilderConfig).toHaveBeenCalledWith(
+      { font_size_pt: 11 },
+      { preview: "debounce" },
+    );
+  });
+
   it("renders typography controls when saved typography is partially empty", async () => {
     const presentation_settings = reactive({
       source: "custom",
@@ -285,7 +396,48 @@ describe("SettingsPane", () => {
     expect(wrapper.text()).toContain("Section Labels");
     expect(wrapper.text()).toContain("Field Labels");
     expect(wrapper.text()).toContain("Field Values");
-    expect(presentation_settings.typography.sectionLabel.fontFamily).toBe("Inter 18pt");
+    expect(presentation_settings.typography.sectionLabel.fontFamily).toBe(
+      "Inter",
+    );
+  });
+
+  it("hides only raw-owned presentation sections in raw typst mode", async () => {
+    hoisted.storeMock.rawTypst.value = true;
+    const presentation_settings = reactive({
+      source: "custom",
+      page: {
+        size: "A4",
+        orientation: "portrait",
+        margins: { top: 10, bottom: 10, left: 10, right: 10 },
+      },
+      branding: {
+        profile: "",
+        mode: "none",
+        letterhead: "",
+        letterhead_image: "",
+        logo: { company: "", image: "", size: 20, dx: 0, dy: 0 },
+      },
+      typography: {},
+      qr: {},
+      table: {},
+    }) as any;
+
+    const wrapper = mount(SettingsPane, {
+      props: { presentation_settings, markDirty: vi.fn() },
+      global: {
+        stubs: {
+          ColorInput: true,
+          QrFieldsDialog: true,
+        },
+      },
+    });
+
+    expect(wrapper.text()).not.toContain("Print Behavior");
+    expect(wrapper.text()).not.toContain("Page Settings");
+    expect(wrapper.text()).not.toContain("Typography");
+    expect(wrapper.text()).not.toContain("Table Settings");
+    expect(wrapper.text()).toContain("Branding");
+    expect(wrapper.text()).toContain("Enable QR Code");
   });
 
   it("auto-selects the default branding profile for fresh undecided settings", async () => {
@@ -323,5 +475,52 @@ describe("SettingsPane", () => {
     expect(presentation_settings.source).toBe("branding_profile");
     expect(presentation_settings.branding.profile).toBe("CBP-1");
     expect(markDirty).toHaveBeenCalled();
+  });
+
+  it("restricts typography weight and style options to the selected font faces", async () => {
+    const wrapper = mount(TypographyStyleEditor, {
+      props: {
+        title: "Section Labels",
+        availableFonts: ["Rajdhani"],
+        fontFaces: [
+          {
+            family: "Rajdhani",
+            styles: ["normal"],
+            weights: ["light", "regular", "medium", "semibold", "bold"],
+            faces: [],
+          },
+        ],
+        modelValue: {
+          fontFamily: "Rajdhani",
+          fontSize: "12pt",
+          fontStyle: "italic",
+          fontWeight: "black",
+          color: "#1e293b",
+        },
+      },
+    });
+    await nextTick();
+
+    const selects = wrapper.findAll("select");
+    const styleOptions = selects[1]
+      .findAll("option")
+      .map((option) => option.text());
+    const weightOptions = selects[2]
+      .findAll("option")
+      .map((option) => option.text());
+
+    expect(styleOptions).toEqual(["Normal"]);
+    expect(weightOptions).toEqual([
+      "Light",
+      "Regular",
+      "Medium",
+      "Semibold",
+      "Bold",
+    ]);
+    expect(weightOptions).not.toContain("Black");
+    expect(wrapper.emitted("update:modelValue")?.[0]?.[0]).toMatchObject({
+      fontStyle: "normal",
+      fontWeight: "bold",
+    });
   });
 });

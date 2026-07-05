@@ -24,13 +24,21 @@ From Frappe:
 
 ```bash
 bench --site your-site execute crispy_print.api.v1.get_typst_local_fonts
+bench --site your-site execute crispy_print.api.v1.get_typst_font_faces
 ```
 
 If expected fonts are missing:
 
-1. Verify the font is installed on the server running the bench.
-2. Check `TYPST_FONT_PATHS` if fonts are stored outside system font directories.
-3. Restart the bench after changing font paths.
+1. If the font was uploaded through Crispy Print Settings, verify **Enable Uploaded Fonts** is on.
+2. Click **Refresh Font List** after uploading or replacing font files.
+3. Verify the font is installed on the server running the bench when using system fonts.
+4. Check `TYPST_FONT_PATHS` if fonts are stored outside bundled, uploaded, or system font directories.
+5. Restart the bench after changing font paths.
+
+If a selected font family appears but a weight or style renders with a fallback
+font, check `get_typst_font_faces`. The builder only offers weights/styles Typst
+reports for the selected family; unusual internal font naming may still require
+choosing the closest available face and verifying the preview.
 
 ### Format Not Appearing in Document
 
@@ -136,7 +144,7 @@ A: Users need access to the Frappe server. Typst runs server-side and fonts shou
 A: Yes, format import/export exists. In beta, verify imported formats carefully because related assets, branding profiles, and compliance records may need site-specific setup.
 
 **Q: How do I customize fonts?**  
-A: Add fonts to system, set `TYPST_FONT_PATHS` environment variable, then restart bench. See [Font Configuration](fonts.md).
+A: Prefer uploading fonts through Crispy Print Settings for site-scoped fonts. For server-wide fonts, install them on the system or set `TYPST_FONT_PATHS`, then restart bench. See [Font Configuration](fonts.md).
 
 **Q: Can I use custom Typst functions?**  
 A: Yes, in Raw Typst mode or reusable Typst blocks. Syntax errors surface during compilation.

@@ -15,9 +15,6 @@ import { getLogger } from "../logger"
 import { sanitizeSvg } from "../utils/safeSvg"
 import { createSampleDocAutocomplete } from "./workerAutocomplete"
 import {
-	buildDefaultStyleDefs,
-	buildHeaderFooterBlock,
-	buildPresentationSettingsBlock,
 	normalizeDocImageAssets,
 	parseTypstError,
 } from "./workerCompilation"
@@ -31,6 +28,11 @@ import {
 	postPdfCompile,
 	type PdfAction,
 } from "./workerPdf"
+import {
+	buildRawTypstHelperBlock,
+	extractCrispyBlockIds,
+	extractCrispyImageAssetFiles,
+} from "./rawTypstHelpers"
 
 const logger = getLogger({ module: "TypstPreview" })
 export { parseTypstError } from "./workerCompilation"
@@ -49,6 +51,7 @@ export interface TypstAdapter {
 	getDoctype?: () => string | null | undefined
 	getDocname?: () => string | null | undefined
 	get_presentation_settings?: () => any
+	getTypstBlocks?: () => any[] | null | undefined
 	onPdfReady?: (context: TypstPdfReadyContext) => Promise<void> | void
 	hookDataChanges?: (callback: () => void) => () => void
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
@@ -61,18 +64,15 @@ export interface TypstPdfReadyContext {
 	pdfStandard?: string | null
 }
 
-function buildPrintBehaviorBlock(printBehavior: Record<string, any> = {}) {
-	const compactItemPrint = Boolean(printBehavior.compact_item_print)
-	const printUomAfterQuantity = Boolean(printBehavior.print_uom_after_quantity)
-	const printTaxesWithZeroAmount = Boolean(printBehavior.print_taxes_with_zero_amount)
-	return [
-		"// Crispy Print format behavior",
-		"#let crispy_print_behavior = (",
-		`  compact_item_print: ${compactItemPrint ? "true" : "false"},`,
-		`  print_uom_after_quantity: ${printUomAfterQuantity ? "true" : "false"},`,
-		`  print_taxes_with_zero_amount: ${printTaxesWithZeroAmount ? "true" : "false"},`,
-		")",
-	].join("\n")
+function getCurrentSiteName(): string {
+	const frappeAny = frappe as any
+	return String(
+		frappeAny?.boot?.sitename ||
+			frappeAny?.boot?.site_name ||
+			frappeAny?.boot?.site ||
+			frappeAny?.site_name ||
+			""
+	).trim()
 }
 
 export function setupWorker(
@@ -727,7 +727,24 @@ export function setupWorker(
 				adapter && typeof adapter.getPrintBehavior === "function"
 					? adapter.getPrintBehavior() || {}
 					: {}
-			const typstFieldSource = [docHeader, docFooter, typstPreamble, typstCode]
+			const typstBlocks =
+				adapter && typeof adapter.getTypstBlocks === "function"
+					? adapter.getTypstBlocks() || []
+					: []
+			const referencedBlockIds = rawTypst ? extractCrispyBlockIds(typstCode) : new Set<string>()
+			const typstBlockFieldSource = rawTypst
+				? typstBlocks
+						.filter((block: any) => referencedBlockIds.has(String(block?.name || "").trim()))
+						.map((block: any) => block?.typst_code || "")
+						.join("\n")
+				: ""
+			const typstFieldSource = [
+				docHeader,
+				docFooter,
+				typstPreamble,
+				typstCode,
+				typstBlockFieldSource,
+			]
 				.filter(Boolean)
 				.join("\n")
 			const usedFields = rawTypst
@@ -755,26 +772,7 @@ export function setupWorker(
 			if (rawTypst) {
 				const parts: string[] = []
 				parts.push(buildDocDictionary(normalizedDoc, printFormatName))
-				parts.push(buildPrintBehaviorBlock(printBehavior))
-				parts.push(buildDefaultStyleDefs(presentation_settings))
-				const headerFooterBlock = buildHeaderFooterBlock({ docHeader, docFooter })
-				if (headerFooterBlock) {
-					parts.push(headerFooterBlock)
-				}
-				const presentation_settingsBlock = buildPresentationSettingsBlock({
-					presentation_settings,
-					letterheadData,
-					qrEnabled,
-					qrData: docNameForQr,
-					qrFilename,
-					qrSettings: qrPayload.qrSettings,
-				})
-				if (presentation_settingsBlock) {
-					parts.push(presentation_settingsBlock)
-				}
-				if (typstPreamble && typstPreamble.trim()) {
-					parts.push(typstPreamble.trim())
-				}
+				parts.push(buildRawTypstHelperBlock(typstBlocks, typstCode))
 				if (typstCode && typstCode.trim()) {
 					parts.push(typstCode.trim())
 				}
@@ -825,7 +823,10 @@ export function setupWorker(
 				: {}
 		const letterheadData =
 			adapter && typeof adapter.getLetterhead === "function" ? adapter.getLetterhead() : null
-		assetFiles.push(...resolveBrandingImages(presentation_settings, letterheadData))
+		if (!rawTypst) {
+			assetFiles.push(...resolveBrandingImages(presentation_settings, letterheadData))
+		}
+		assetFiles.push(...extractCrispyImageAssetFiles(typst, getCurrentSiteName()))
 		assetFiles = Array.from(new Set(assetFiles))
 		lastCompileAssetFiles = assetFiles
 

@@ -66,7 +66,7 @@ crispy_print/
 │   │   │       ├── presentation_settings.ts
 │   │   │       └── safeSvg.ts            # Preview SVG sanitization
 │   │   └── vendor/
-│   │       ├── fonts/                    # Bundled fonts (optional)
+│   │       ├── fonts/                    # Bundled fonts
 │   │       └── typst/                    # Bundled Typst packages
 │   ├── crispy_print/                     # Inner Frappe module package
 │   │   ├── doctype/
@@ -119,7 +119,7 @@ crispy_print/
 
 - **`crispy_print_engine.js`** registers `crispy_print` with `frappe.ui.form.register_print_engine` when the proposed Frappe Print Engine extension is present.
 - The adapter passes document route context through `frappe.route_options` and opens `crispy-print-preview` directly.
-- `install.ensure_print_engine()` creates or repairs the `crispy_print` Print Engine record only when the Frappe Print Engine DocType exists, so standard Frappe installations continue using the existing Typst button path.
+- `install.ensure_print_engine()` creates or repairs the `crispy_print` Print Engine record only when the Frappe Print Engine DocType and controller are available, so standard Frappe installations continue using the existing Typst button path.
 
 **Workspace:**
 
@@ -131,6 +131,7 @@ Backend:
 
 - **`api/v1/__init__.py`** - Whitelisted v1 RPC facade used by Frappe clients.
 - **`api/v1/compile.py`** - Server-side Typst compile flow, short-lived cache, asset resolution, and preview/PDF output.
+- **`api/v1/images.py`** - Private image listing helpers for builder image fields.
 - **`api/v1/docs.py`** - Permission-aware document fetch and formatted-value preparation.
 - **`api/v1/formats.py`** - Format listing, import/export, conflict detection, builder mode, and report-format lookup.
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.

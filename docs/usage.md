@@ -8,7 +8,7 @@ The typical workflow for using Crispy Print:
 
 1. **Create or select Branding Profile** -> define reusable page, typography, table, logo, letterhead, and QR defaults
 2. **Create Crispy Format** -> select format type and target DocType/report
-3. **Design in builder** -> compose sections, fields, tables, assets, QR elements, and Typst blocks
+3. **Design in builder** -> compose sections, fields, tables, private images, QR elements, and Typst blocks
 4. **Save and set default** -> enable the Typst button for that DocType
 5. **Open document** -> click `Typst` -> preview and download PDF
 
@@ -16,7 +16,7 @@ The typical workflow for using Crispy Print:
 
 Crispy Print includes an optional adapter for the proposed Frappe Print Engine extension. That upstream change is intended to loosen Frappe's hardcoded native print flow by letting apps register client-renderer print engines.
 
-When the Frappe extension is present:
+When the Frappe extension and its controller are present:
 
 1. Crispy Print creates or repairs a `crispy_print` **Print Engine** record during install/sync.
 2. The engine points to `/assets/crispy_print/js/crispy_print_engine.js`.
@@ -54,9 +54,47 @@ Use **Crispy Typst Block** records for governed Typst snippets that are reused a
 
 Layouts continue to reference blocks by Reference Key so company-specific block overrides can share the same key as a global block.
 
+Raw Typst authors reference a reusable block by its Crispy Typst Block document ID, for example `#crispy_block("invoice_header-v1.0")`. Raw compile source only inlines block bodies that are actually referenced by `crispy_block("...")`.
+
 Open the **Crispy Typst Block Builder** from a block form to edit the Typst code with live SVG preview. Click **Refresh** or press **Command/Ctrl-Enter** to compile after every change. The builder keeps preview page controls separate from the reusable block contract: the default preview uses A4 with `2.5cm` margins so document blocks, tables, grids, and long text render in a realistic page width. Turn on auto-size preview only for compact self-sizing blocks; Typst containers without explicit widths can stretch poorly on an auto-width page.
 
 The builder's unsaved indicator tracks only **Typst Code** changes. Page size, margin, orientation, and default-preview toggles are authoring controls for the current preview and do not mark the reusable block as unsaved.
+
+### Raw Typst Document Formats
+
+Raw Typst mode is intended for authors who want to own the Typst source directly.
+In this mode, builder presentation controls that would inject print behavior, page
+settings, typography, or table settings are hidden. The preview compiles only when
+the author clicks **Refresh** or presses **Command/Ctrl-Enter**.
+
+The code editor still provides document data and small helpers:
+
+- Dropping a document field inserts `#doc.fieldname`.
+- Dropping **Crispy Typst Block** inserts `#crispy_block("")`.
+- Dropping **Crispy Image** inserts `#crispy_image("")`.
+- `crispy_block("block-document-id")` resolves reusable blocks by the Crispy Typst Block document ID.
+- `crispy_image("filename.svg", width: 20mm)` resolves uploaded private files by filename.
+
+Raw image filenames are resolved only from the site's private file directory. Public
+paths, absolute paths, nested paths, URLs, traversal, unsupported extensions, and
+missing files are rejected.
+
+This is a working beta authoring path. Crispy Print still injects the document data
+dictionary and the minimal helper definitions required for `crispy_block()` and
+`crispy_image()`, but page setup, placement, typography, tables, headers, and
+footers belong to the raw Typst source.
+
+### Regular Builder Images And Typography
+
+In regular builder mode, **Crispy Image** opens a panel for selecting or uploading a
+private image and setting the rendered size. Placement remains part of the visual
+layout, header/footer, preamble, or Raw Typst source depending on where the image is
+used.
+
+Typography controls use Typst-discovered font metadata. The family dropdown uses
+Typst's canonical family names, while the style and weight dropdowns are restricted
+to the faces available for that selected family. This avoids selecting a weight or
+style that would compile with a fallback font.
 
 ### Duplicate For Company
 

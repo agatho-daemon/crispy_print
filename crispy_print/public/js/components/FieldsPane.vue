@@ -42,7 +42,7 @@
 				<input
 					v-model="searchQuery"
 					type="text"
-					:placeholder="__('Search {0} fields...', [filteredFields.length])"
+					:placeholder="__('Search {0} fields...', [filteredFieldCount])"
 					class="form-control search-input"
 				/>
 			</div>
@@ -51,28 +51,33 @@
 			</div>
 		</div>
 		<div class="fields-list">
-			<div v-if="filteredFields.length === 0" class="empty-state">
+			<div v-if="filteredFieldCount === 0" class="empty-state">
 				<p v-if="searchQuery" class="empty-message">
 					{{ __("No fields match {0}!", [searchQuery]) }}
 				</p>
 				<p v-else class="empty-message">{{ __("No fields available yet!") }}</p>
 			</div>
 
-			<div
-				v-for="field in filteredFields"
-				:key="field.fieldname"
-				class="field-item"
-				draggable="true"
-				@dragstart="onFieldDragStart($event, field)"
-				:title="`(${field.fieldname} — ${field.fieldtype || __('Unknown')})`"
-			>
-				<div class="field-label">
-					{{ field.label }}
+			<template v-for="group in groupedFields" :key="group.title || 'fields'">
+				<div v-if="group.title && group.fields.length" class="fields-list__subtitle">
+					{{ group.title }}
 				</div>
-				<div v-if="isReportMode && field.fieldtype" class="field-type-badge">
-					{{ field.fieldtype }}
+				<div
+					v-for="field in group.fields"
+					:key="field.name || field.fieldname"
+					class="field-item"
+					draggable="true"
+					@dragstart="onFieldDragStart($event, field)"
+					:title="`(${field.fieldname} — ${field.fieldtype || __('Unknown')})`"
+				>
+					<div class="field-label">
+						{{ field.label }}
+					</div>
+					<div v-if="isReportMode && field.fieldtype" class="field-type-badge">
+						{{ field.fieldtype }}
+					</div>
 				</div>
-			</div>
+			</template>
 		</div>
 	</div>
 </template>
@@ -98,13 +103,24 @@ const props = withDefaults(defineProps<Props>(), {
 const searchQuery = ref("");
 const loading = computed(() => unref(props.loading));
 const isReportMode = computed(() => unref(props.isReportMode));
+const crispyFieldnames = new Set([
+	"doctype",
+	"name",
+	"_crispy_typst_block",
+	"_crispy_image",
+	"_typst_snippet",
+	"empty",
+	"spacer",
+	"divider",
+]);
 
 // Combine fields and report columns based on mode
 const allFields = computed(() => {
 	if (isReportMode.value) {
 		return unref(props.reportFields) || [];
 	}
-	return unref(props.fields);
+	const fields = unref(props.fields) || [];
+	return fields;
 });
 
 const filteredFields = computed(() => {
@@ -118,6 +134,23 @@ const filteredFields = computed(() => {
 		const type = field.fieldtype?.toLowerCase() || "";
 		return label.includes(query) || name.includes(query) || type.includes(query);
 	});
+});
+
+const filteredFieldCount = computed(() => filteredFields.value.length);
+
+const groupedFields = computed(() => {
+	const fields = filteredFields.value;
+	if (isReportMode.value) {
+		return [{ title: "", fields }];
+	}
+
+	const crispyFields = fields.filter((field) => crispyFieldnames.has(field.fieldname));
+	const documentFields = fields.filter((field) => !crispyFieldnames.has(field.fieldname));
+
+	return [
+		{ title: __("Crispy Fields"), fields: crispyFields },
+		{ title: __("Document Fields"), fields: documentFields },
+	];
 });
 
 function onFieldDragStart(event: DragEvent, field: DocField) {
@@ -224,7 +257,15 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	padding: 12px 16px 16px;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 10px;
+}
+
+.fields-list__subtitle {
+	margin: 4px 2px 0;
+	color: #64748b;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
 }
 
 .empty-state {

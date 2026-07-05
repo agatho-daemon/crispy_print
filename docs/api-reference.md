@@ -11,6 +11,29 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Args: none
 - Returns: `list[str]`
 - Shape: `['Inter', 'Noto Sans', ...]`
+- Notes: returns canonical Typst family names with bundled/uploaded filename fallbacks merged into matching families
+
+### `get_typst_font_faces()`
+
+- Args: none
+- Returns: `list[dict]`
+- Shape:
+
+```json
+[
+  {
+    "family": "Rajdhani",
+    "styles": ["normal"],
+    "weights": ["light", "regular", "medium", "semibold", "bold"],
+    "faces": [
+      { "label": "Regular", "style": "normal", "weight": "regular" },
+      { "label": "Bold", "style": "normal", "weight": "bold" }
+    ]
+  }
+]
+```
+
+- Notes: used by builder typography controls to restrict style/weight choices to faces Typst can resolve for the selected family
 
 ### `compile_typst(typst_source, output_format='svg', pdf_standard=None, asset_files=None, chart_svg=None, qr_data=None, qr_filename=None, barcode_options=None, output_filename=None, return_url=0)`
 
@@ -24,6 +47,13 @@ Use method path: `crispy_print.api.v1.<endpoint>`
   - `{ success, format: 'svg', svg_pages: string[], page_count: number }`
 - Returns (pdf):
   - `{ success, format: 'pdf', pdf_data: string }`
+- Notes: Raw Typst `crispy_image("filename.svg", ...)` resolves only supported uploaded private image filenames. Public paths, nested paths, traversal, URLs, unsupported extensions, and missing files are rejected.
+
+### `get_private_image_files(query=None, limit=100)`
+
+- Args: optional search query and result limit
+- Returns: private uploaded image metadata usable by Crispy Image fields
+- Notes: only supported image files in the site's private files directory are listed; uploads use Frappe's normal private File upload flow
 
 ## Doc & Formats
 

@@ -230,6 +230,8 @@ class JSONTypstTranslator {
 		lines.push("  }")
 		lines.push("}")
 		lines.push("")
+		lines.push("#let crispy_image(filename, ..args) = image(filename, ..args)")
+		lines.push("")
 
 		lines.push("#let header_block = []")
 		lines.push("#let footer_block = []")
@@ -563,6 +565,13 @@ class JSONTypstTranslator {
 		const fieldname = field.fieldname || "unknown"
 		const label = this.escapeTypstText((field.label ?? "").trim())
 
+		if (this.isCrispyImageField(field)) {
+			const filename = String(field.crispy_image || "").trim()
+			return filename
+				? `[${this.renderCrispyImage(field, { hash: true })}]`
+				: `[] // Missing Crispy Image`
+		}
+
 		switch (fieldtype) {
 			case "Section Break":
 				return `[] // Section Break: ${label || fieldname}`
@@ -650,6 +659,13 @@ class JSONTypstTranslator {
 		const fieldname = field.fieldname || "unknown"
 		const label = this.escapeTypstText((field.label ?? "").trim())
 
+		if (this.isCrispyImageField(field)) {
+			const filename = String(field.crispy_image || "").trim()
+			return filename
+				? `${this.renderCrispyImage(field, { hash: true })}#parbreak()`
+				: `// Missing Crispy Image`
+		}
+
 		switch (fieldtype) {
 			case "Section Break":
 				return `// Section Break: ${label || fieldname}`
@@ -716,6 +732,24 @@ class JSONTypstTranslator {
 		// Numeric fields default to right alignment, like Frappe
 		const numericTypes = ["Int", "Float", "Currency", "Percent"]
 		return numericTypes.includes(fieldtype) ? "right" : "left"
+	}
+
+	private isCrispyImageField(field: LayoutField): boolean {
+		return field.fieldtype === "Crispy Image" || field.fieldname === "_crispy_image"
+	}
+
+	private renderCrispyImage(field: LayoutField, options: { hash: boolean }): string {
+		const filename = String(field.crispy_image || "").trim()
+		const args = [typstQuoted(filename)]
+		const width = String(field.crispy_image_width ?? "100%").trim()
+		const height = String(field.crispy_image_height ?? "").trim()
+		const fit = String(field.crispy_image_fit ?? "").trim()
+
+		if (width) args.push(`width: ${width}`)
+		if (height) args.push(`height: ${height}`)
+		if (fit) args.push(`fit: ${typstQuoted(fit)}`)
+
+		return `${options.hash ? "#" : ""}crispy_image(${args.join(", ")})`
 	}
 
 	translateTable(field: LayoutField, options: { includeComment?: boolean } = {}) {

@@ -3,6 +3,34 @@ import { describe, expect, it, beforeEach, vi } from "vitest"
 import { defineComponent, h, nextTick, ref } from "vue"
 import LayoutPane from "../../components/LayoutPane.vue"
 
+const hoisted = vi.hoisted(() => ({
+	layout: {
+		__v_isRef: true,
+		value: {
+		sections: [
+			{
+				id: "section-1",
+				label: "Section",
+				columns: [
+					{
+						id: "col-1",
+						label: "",
+						fields: [
+							{
+								id: "field-1",
+								fieldname: "customer",
+								label: "Customer",
+								fieldtype: "Data",
+							},
+						],
+					},
+				],
+			},
+		],
+		},
+	},
+}))
+
 const DraggableStub = defineComponent({
 	name: "DraggableStub",
 	props: {
@@ -24,32 +52,9 @@ const DraggableStub = defineComponent({
 })
 
 vi.mock("../../composables/useStore", () => {
-	const layout = ref({
-		sections: [
-			{
-				id: "section-1",
-				label: "Section",
-				columns: [
-					{
-						id: "col-1",
-						label: "",
-						fields: [
-							{
-								id: "field-1",
-								fieldname: "customer",
-								label: "Customer",
-								fieldtype: "Data",
-							},
-						],
-					},
-				],
-			},
-		],
-	})
-
 	return {
 		useStore: () => ({
-			layout,
+			layout: hoisted.layout,
 			crispyFormat: ref({
 				crispy_format_type: "DocType",
 				is_generic: 0,
@@ -72,6 +77,28 @@ vi.mock("../../composables/useStore", () => {
 describe("LayoutPane accessibility", () => {
 	beforeEach(() => {
 		;(globalThis as any).frappe = { msgprint: vi.fn() }
+		hoisted.layout.value = {
+			sections: [
+				{
+					id: "section-1",
+					label: "Section",
+					columns: [
+						{
+							id: "col-1",
+							label: "",
+							fields: [
+								{
+									id: "field-1",
+									fieldname: "customer",
+									label: "Customer",
+									fieldtype: "Data",
+								},
+							],
+						},
+					],
+				},
+			],
+		}
 	})
 
 	it("opens section menu and supports keyboard navigation", async () => {
@@ -141,6 +168,36 @@ describe("LayoutPane accessibility", () => {
 
 		const focused = document.activeElement as HTMLElement | null
 		expect(focused?.textContent || "").toContain("Left")
+		wrapper.unmount()
+	})
+
+	it("shows image picker menu for persisted Crispy Image fields", async () => {
+		hoisted.layout.value.sections[0].columns[0].fields = [
+			{
+				id: "field-image",
+				fieldname: "_crispy_image",
+				label: "Crispy Image",
+				fieldtype: "Data",
+			},
+		]
+		const wrapper = mount(LayoutPane, {
+			attachTo: document.body,
+			global: {
+				stubs: {
+					draggable: DraggableStub,
+					TableColumnsDialog: true,
+					CrispyImageDialog: true,
+				},
+			},
+		})
+
+		await wrapper.find(".field-card__menu-btn").trigger("click")
+		await nextTick()
+		await nextTick()
+
+		const menu = document.querySelector(".field-card__menu") as HTMLElement | null
+		expect(menu?.textContent || "").toContain("Choose image")
+		expect(wrapper.text()).toContain("No image selected")
 		wrapper.unmount()
 	})
 })

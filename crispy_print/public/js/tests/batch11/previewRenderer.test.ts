@@ -46,7 +46,7 @@ describe("PreviewRenderer", () => {
     expect(args[1]).toBe(wrapper.element);
   });
 
-  it("invalidates preview when effective presentation settings are replaced", async () => {
+  it("invalidates preview only when previewRevision changes", async () => {
     const { setupWorker } = await import("../../typst/setupWorker");
     const presentationSettings = {
       page: {
@@ -74,7 +74,7 @@ describe("PreviewRenderer", () => {
         presentation_settings: presentationSettings,
         letterhead: null,
         docType: "Invoice",
-        changeKey: 1,
+        previewRevision: 1,
         watchDataChanges: true,
       },
     });
@@ -94,7 +94,56 @@ describe("PreviewRenderer", () => {
       },
     });
 
+    expect(callback).not.toHaveBeenCalled();
+
+    await wrapper.setProps({ previewRevision: 2 });
+
     expect(callback).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
+  it("does not invalidate preview when only Typst code changes", async () => {
+    const { setupWorker } = await import("../../typst/setupWorker");
+    const wrapper = mount(PreviewRenderer, {
+      props: {
+        formatName: "Format-1",
+        layout: { sections: [] },
+        docHeader: "",
+        docFooter: "",
+        typstPreamble: "",
+        typstCode: "#text[Before]",
+        qrEnabled: false,
+        presentation_settings: {
+          page: {
+            size: "A4",
+            orientation: "portrait",
+            margins: { top: 10, bottom: 10, left: 10, right: 10 },
+          },
+          branding: {
+            mode: "none",
+            letterhead: "",
+            letterhead_image: "",
+            logo: { company: "", image: "", size: 25, dx: 0, dy: 0 },
+          },
+          language: "en",
+        },
+        letterhead: null,
+        docType: "Invoice",
+        previewRevision: 1,
+        watchDataChanges: true,
+      },
+    });
+    await nextTick();
+
+    const adapter = (setupWorker as any).mock.calls
+      .at(-1)
+      .find((arg: any) => arg && typeof arg.hookDataChanges === "function");
+    const callback = vi.fn();
+    const stop = adapter.hookDataChanges(callback);
+
+    await wrapper.setProps({ typstCode: "#text[After]" });
+
+    expect(callback).not.toHaveBeenCalled();
     stop();
   });
 

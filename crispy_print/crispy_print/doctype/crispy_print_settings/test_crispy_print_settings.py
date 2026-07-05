@@ -10,6 +10,7 @@ from crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settin
 	get_font_search_paths_display,
 	get_render_timeout_seconds,
 	get_typst_font_dirs,
+	get_uploaded_font_directory,
 	validate_document_print_policy,
 )
 
@@ -35,6 +36,16 @@ class TestCrispyPrintSettings(FrappeTestCase):
 		self.assertIn("Bundled fonts:\ncrispy_print/public/vendor/fonts", display)
 		self.assertIn("Uploaded fonts:\nDisabled", display)
 		self.assertNotIn(str(get_bundled_font_directory()), display)
+
+	def test_uploaded_font_directory_is_absolute_for_typst_cli(self):
+		settings = frappe._dict({"enable_uploaded_fonts": 1, "enable_system_fonts": 0})
+
+		dirs = get_typst_font_dirs(settings, existing_only=False)
+
+		self.assertTrue(get_uploaded_font_directory().is_absolute())
+		self.assertIn(get_uploaded_font_directory(), dirs)
+		for font_dir in dirs:
+			self.assertTrue(font_dir.is_absolute())
 
 	def test_draft_and_cancelled_policy(self):
 		settings = frappe.get_single("Crispy Print Settings")

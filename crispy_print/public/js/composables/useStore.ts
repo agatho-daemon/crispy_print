@@ -54,6 +54,7 @@ let storeInstance: ReturnType<typeof buildStore> | null = null;
 const MAX_HISTORY_ENTRIES = 100;
 const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
 const HISTORY_DEBOUNCE_MS = 250;
+const PREVIEW_DEBOUNCE_MS = 350;
 
 const logger = getLogger({ module: "Store" });
 
@@ -80,7 +81,13 @@ interface CrispyFormat {
   compact_item_print?: number;
   print_uom_after_quantity?: number;
   print_taxes_with_zero_amount?: number;
-    __onload?: any;
+  __onload?: any;
+}
+
+export type PreviewRefreshPolicy = "auto" | "live" | "debounce" | "none";
+
+export interface MarkDirtyOptions {
+  preview?: PreviewRefreshPolicy;
 }
 
 function buildStore() {
@@ -107,7 +114,7 @@ function buildStore() {
   const dirty = ref(false);
   const loading = ref(false);
   const initializing = ref(false); // Prevents dirty marking during init
-  const changeKey = ref(0);
+  const previewRevision = ref(0);
   const rawTypst = ref(false);
   const typstCode = ref("");
   const reportBuilderConfig = ref<ReportBuilderConfig>(
@@ -115,7 +122,9 @@ function buildStore() {
   );
   const reportBasicReadOnly = ref(false);
   const reportModeNotice = ref("");
-  const presentation_settings = ref<PresentationSettings>(merge_presentation_settings(default_presentation_settings, {}));
+  const presentation_settings = ref<PresentationSettings>(
+    merge_presentation_settings(default_presentation_settings, {}),
+  );
   const effective_presentation_settings = ref<PresentationSettings>(
     merge_presentation_settings(default_presentation_settings, {}),
   );
@@ -133,9 +142,9 @@ function buildStore() {
     loading,
     initializing,
     dirty,
-    changeKey,
     letterhead,
     builderContext,
+    requestPreviewRefresh,
   });
 
   // Computed
@@ -145,6 +154,9 @@ function buildStore() {
     () => crispyFormat.value?.crispy_format_type || "DocType",
   );
   const isReportMode = computed(() => formatType.value === "Report");
+  const previewTriggerMode = computed<"manual" | "live">(() =>
+    rawTypst.value ? "manual" : "live",
+  );
   const reportCandidates = computed(() => sampleReports.value || []);
   const reportBaseFields = computed<DocField[]>(() => {
     if (!isReportMode.value) return [];
@@ -169,22 +181,20 @@ function buildStore() {
       },
     ];
   });
-  const reportBuilderFields = computed<DocField[]>(() => [...reportBaseFields.value]);
+  const reportBuilderFields = computed<DocField[]>(() => [
+    ...reportBaseFields.value,
+  ]);
   const reportBuilderMode = computed<ReportBuilderMode>({
     get: () => reportBuilderConfig.value.mode,
     set: (nextMode) => {
-      reportBuilderConfig.value.mode = nextMode;
+      updateReportBuilderConfig({ mode: nextMode }, { preview: "live" });
       if (!isReportMode.value) return;
-      if (nextMode === "basic") {
-        syncReportBasicTypst();
-      }
       reportBasicReadOnly.value = false;
       reportModeNotice.value = "";
       rawTypst.value = nextMode === "advanced";
       if (crispyFormat.value) {
         crispyFormat.value.is_advanced = nextMode === "advanced" ? 1 : 0;
       }
-      markDirty();
     },
   });
   const docHeader = computed(() => crispyFormat.value?.doc_header || "");
@@ -216,6 +226,39 @@ function buildStore() {
     presentation_settings.value.report = { ...reportBuilderConfig.value };
   }
 
+  function normalizeReportBuilderConfigLinks(
+    config: ReportBuilderConfig,
+    patch: Partial<ReportBuilderConfig>,
+  ) {
+    if (
+      Object.prototype.hasOwnProperty.call(patch, "include_total_row") &&
+      !Object.prototype.hasOwnProperty.call(patch, "show_footer_total")
+    ) {
+      config.show_footer_total = config.include_total_row;
+    }
+  }
+
+  function updateReportBuilderConfig(
+    patch: Partial<ReportBuilderConfig>,
+    options: MarkDirtyOptions = {},
+  ) {
+    const nextConfig = {
+      ...reportBuilderConfig.value,
+      ...patch,
+    };
+    normalizeReportBuilderConfigLinks(nextConfig, patch);
+    reportBuilderConfig.value = nextConfig;
+    assignReportBuilderConfigToPresentationSettings();
+    if (
+      isReportMode.value &&
+      reportBuilderConfig.value.mode === "basic" &&
+      !reportBasicReadOnly.value
+    ) {
+      syncReportBasicTypst();
+    }
+    markDirty({ preview: options.preview || "auto" });
+  }
+
   function buildHistorySnapshot(): string {
     return JSON.stringify({
       layout: layout.value || null,
@@ -225,8 +268,12 @@ function buildStore() {
       reportBuilderConfig: reportBuilderConfig.value || null,
       printBehavior: {
         compact_item_print: Number(crispyFormat.value?.compact_item_print || 0),
-        print_uom_after_quantity: Number(crispyFormat.value?.print_uom_after_quantity || 0),
-        print_taxes_with_zero_amount: Number(crispyFormat.value?.print_taxes_with_zero_amount || 0),
+        print_uom_after_quantity: Number(
+          crispyFormat.value?.print_uom_after_quantity || 0,
+        ),
+        print_taxes_with_zero_amount: Number(
+          crispyFormat.value?.print_taxes_with_zero_amount || 0,
+        ),
       },
     });
   }
@@ -237,20 +284,33 @@ function buildStore() {
     applyingHistory.value = true;
     try {
       layout.value = parsed.layout || null;
-      presentation_settings.value = merge_presentation_settings(default_presentation_settings, parsed.presentation_settings || {});
+      presentation_settings.value = merge_presentation_settings(
+        default_presentation_settings,
+        parsed.presentation_settings || {},
+      );
       typstCode.value = String(parsed.typstCode || "");
       rawTypst.value = Boolean(parsed.rawTypst);
       if (parsed.reportBuilderConfig) {
         reportBuilderConfig.value = parsed.reportBuilderConfig;
+        assignReportBuilderConfigToPresentationSettings();
       }
       if (crispyFormat.value && parsed.printBehavior) {
-        crispyFormat.value.compact_item_print = parsed.printBehavior.compact_item_print ? 1 : 0;
-        crispyFormat.value.print_uom_after_quantity = parsed.printBehavior.print_uom_after_quantity ? 1 : 0;
-        crispyFormat.value.print_taxes_with_zero_amount = parsed.printBehavior.print_taxes_with_zero_amount ? 1 : 0;
+        crispyFormat.value.compact_item_print = parsed.printBehavior
+          .compact_item_print
+          ? 1
+          : 0;
+        crispyFormat.value.print_uom_after_quantity = parsed.printBehavior
+          .print_uom_after_quantity
+          ? 1
+          : 0;
+        crispyFormat.value.print_taxes_with_zero_amount = parsed.printBehavior
+          .print_taxes_with_zero_amount
+          ? 1
+          : 0;
       }
       assignReportBuilderConfigToPresentationSettings();
       dirty.value = snapshotHash !== savedSnapshotHash;
-      changeKey.value++;
+      requestPreviewRefresh();
     } finally {
       applyingHistory.value = false;
     }
@@ -260,7 +320,8 @@ function buildStore() {
     if (loading.value || initializing.value || applyingHistory.value) return;
     const snapshot = buildHistorySnapshot();
     const snapshotHash = hashSnapshot(snapshot);
-    const lastHash = historyPastHashes.value[historyPastHashes.value.length - 1];
+    const lastHash =
+      historyPastHashes.value[historyPastHashes.value.length - 1];
     if (snapshotHash === lastHash) return;
 
     historyPast.value.push(snapshot);
@@ -269,7 +330,11 @@ function buildStore() {
       historyPast.value.shift();
       historyPastHashes.value.shift();
     }
-    while (historyPast.value.length > 1 && historyPast.value.reduce((total, item) => total + item.length, 0) > MAX_HISTORY_BYTES) {
+    while (
+      historyPast.value.length > 1 &&
+      historyPast.value.reduce((total, item) => total + item.length, 0) >
+        MAX_HISTORY_BYTES
+    ) {
       historyPast.value.shift();
       historyPastHashes.value.shift();
     }
@@ -287,6 +352,7 @@ function buildStore() {
   let historyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   let historyDebounceResetFuture = true;
   let historyDebouncePendingTrailing = false;
+  let previewDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   function scheduleHistoryCheckpoint(resetFuture = true) {
     if (loading.value || initializing.value || applyingHistory.value) return;
     if (resetFuture) historyDebounceResetFuture = true;
@@ -326,6 +392,10 @@ function buildStore() {
     if (historyDebounceTimer !== null) {
       clearTimeout(historyDebounceTimer);
       historyDebounceTimer = null;
+    }
+    if (previewDebounceTimer !== null) {
+      clearTimeout(previewDebounceTimer);
+      previewDebounceTimer = null;
     }
     historyDebouncePendingTrailing = false;
     pendingHistoryCheckpoint.value = false;
@@ -397,20 +467,83 @@ function buildStore() {
     savedSnapshot.value = "";
     savedSnapshotHash = "";
     dirty.value = false;
-    changeKey.value = 0;
+    previewRevision.value = 0;
   }
 
-  function markDirty() {
+  function markDirty(options: MarkDirtyOptions = {}) {
     settingsStore.markDirty();
     scheduleHistoryCheckpoint(true);
     if (!applyingHistory.value) {
       dirty.value = true;
     }
+    syncEffectivePresentationSettingsNow();
+    applyPreviewRefreshPolicy(options.preview || "auto");
+  }
+
+  function markCodeDirty() {
+    scheduleHistoryCheckpoint(true);
+    if (!loading.value && !initializing.value && !applyingHistory.value) {
+      dirty.value = true;
+    }
+  }
+
+  function requestPreviewRefresh() {
+    if (previewDebounceTimer !== null) {
+      clearTimeout(previewDebounceTimer);
+      previewDebounceTimer = null;
+    }
+    syncEffectivePresentationSettingsNow();
+    previewRevision.value++;
+  }
+
+  function setTypstCode(value: string) {
+    if (typstCode.value === value) return;
+    typstCode.value = value;
+    markDirty({ preview: "none" });
+  }
+
+  function applyPreviewRefreshPolicy(policy: PreviewRefreshPolicy) {
+    if (policy === "none") return;
+    if (previewTriggerMode.value === "manual") return;
+    if (policy === "debounce") {
+      schedulePreviewRefresh();
+      return;
+    }
+    requestPreviewRefresh();
+  }
+
+  function schedulePreviewRefresh() {
+    if (previewDebounceTimer !== null) {
+      clearTimeout(previewDebounceTimer);
+    }
+    previewDebounceTimer = setTimeout(() => {
+      previewDebounceTimer = null;
+      requestPreviewRefresh();
+    }, PREVIEW_DEBOUNCE_MS);
   }
 
   let effectiveSettingsRequestSeq = 0;
 
+  function canResolveEffectivePresentationSettingsSynchronously() {
+    const source = presentation_settings.value?.source || "";
+    const profile = String(
+      presentation_settings.value?.branding?.profile || "",
+    ).trim();
+    return source !== "branding_profile" || !profile;
+  }
+
+  function syncEffectivePresentationSettingsNow() {
+    if (!canResolveEffectivePresentationSettingsSynchronously()) return false;
+    effectiveSettingsRequestSeq++;
+    effective_presentation_settings.value = merge_presentation_settings(
+      default_presentation_settings,
+      presentation_settings.value || {},
+    );
+    return true;
+  }
+
   async function refreshEffectivePresentationSettings() {
+    if (syncEffectivePresentationSettingsNow()) return;
     const requestSeq = ++effectiveSettingsRequestSeq;
     const resolved = await resolve_effective_presentation_settings(
       presentation_settings.value,
@@ -429,7 +562,10 @@ function buildStore() {
     );
   }
 
-  async function compileReportPreview(reportName: string, columnConfig: any[] = []) {
+  async function compileReportPreview(
+    reportName: string,
+    columnConfig: any[] = [],
+  ) {
     await refreshEffectivePresentationSettings();
     return reportStore.compileReportPreview(reportName, columnConfig);
   }
@@ -461,7 +597,9 @@ function buildStore() {
   }
 
   function isNumericFieldtype(fieldtype: string | undefined): boolean {
-    return ["Int", "Float", "Currency", "Percent"].includes(String(fieldtype || ""));
+    return ["Int", "Float", "Currency", "Percent"].includes(
+      String(fieldtype || ""),
+    );
   }
 
   function normalizeTypstColumnWidth(rawWidth: unknown): string {
@@ -569,7 +707,9 @@ function buildStore() {
     return [];
   }
 
-  function computeColumnsSignature(columns: TableColumn[] | undefined | null): string {
+  function computeColumnsSignature(
+    columns: TableColumn[] | undefined | null,
+  ): string {
     const normalized = (columns || []).map((col) => ({
       fieldname: col.fieldname || "",
       label: col.label || col.fieldname || "",
@@ -581,9 +721,7 @@ function buildStore() {
     return JSON.stringify(normalized);
   }
 
-  function sync_report_table_styles(
-    report_settings: Record<string, any>,
-  ) {
+  function sync_report_table_styles(report_settings: Record<string, any>) {
     if (!isReportMode.value) return;
     const tableSettings = ensure_table_settings(presentation_settings.value);
     const has_report_header = Object.prototype.hasOwnProperty.call(
@@ -626,7 +764,9 @@ function buildStore() {
 
     if (has_report_striping) {
       const report_striping = Boolean(report_settings.row_striping);
-      if (tableSettings.stripe.enabled === defaultTableSettings.stripe.enabled) {
+      if (
+        tableSettings.stripe.enabled === defaultTableSettings.stripe.enabled
+      ) {
         tableSettings.stripe.enabled = report_striping;
       }
     }
@@ -666,7 +806,10 @@ function buildStore() {
     };
   }
 
-  function getReportColumnConfigFromLayout(): Array<{ fieldname: string; width: string }> {
+  function getReportColumnConfigFromLayout(): Array<{
+    fieldname: string;
+    width: string;
+  }> {
     const tableField = layoutStore.findReportTableField();
     const columns = Array.isArray(tableField?.table_columns)
       ? tableField.table_columns
@@ -735,7 +878,11 @@ function buildStore() {
       );
     }
 
-    if (fieldname === "fiscal_year" || fieldname === "year" || options === "Fiscal Year") {
+    if (
+      fieldname === "fiscal_year" ||
+      fieldname === "year" ||
+      options === "Fiscal Year"
+    ) {
       return (
         frappe?.defaults?.get_user_default?.("fiscal_year") ||
         frappe?.defaults?.get_global_default?.("fiscal_year") ||
@@ -745,7 +892,8 @@ function buildStore() {
 
     if (fieldtype === "Date" || fieldtype === "Datetime") {
       const today =
-        frappe?.datetime?.get_today?.() || new Date().toISOString().slice(0, 10);
+        frappe?.datetime?.get_today?.() ||
+        new Date().toISOString().slice(0, 10);
       const addDays = frappe?.datetime?.add_days;
       if (fieldname.includes("from") || fieldname.endsWith("_from")) {
         return addDays ? addDays(today, -30) : today;
@@ -762,7 +910,8 @@ function buildStore() {
       return options
         .map((opt: any) => {
           if (typeof opt === "string") return opt;
-          if (opt && typeof opt === "object") return String(opt.value || opt.label || "");
+          if (opt && typeof opt === "object")
+            return String(opt.value || opt.label || "");
           return "";
         })
         .filter(Boolean)
@@ -771,7 +920,9 @@ function buildStore() {
     return typeof options === "string" ? options : "";
   }
 
-  function buildAutoFilledReportFilters(baseFilters: Record<string, any>): Record<string, any> {
+  function buildAutoFilledReportFilters(
+    baseFilters: Record<string, any>,
+  ): Record<string, any> {
     const merged = { ...(baseFilters || {}) };
     for (const def of reportFilterFields.value || []) {
       if (!def?.fieldname) continue;
@@ -789,7 +940,9 @@ function buildStore() {
     return merged;
   }
 
-  function getMissingRequiredFilterDefs(selectedFilters: Record<string, any>): any[] {
+  function getMissingRequiredFilterDefs(
+    selectedFilters: Record<string, any>,
+  ): any[] {
     return (reportFilterFields.value || [])
       .filter((df: any) => Boolean(df?.reqd))
       .filter((df: any) => !hasValue(selectedFilters?.[df.fieldname]));
@@ -803,12 +956,19 @@ function buildStore() {
 
     const promptFields = missingDefs.map((def: any) => {
       const fieldtype = String(def.fieldtype || "Data");
-      const normalizedType =
-        ["Data", "Int", "Float", "Date", "Datetime", "Link", "Select", "Check", "MultiSelectList"].includes(
-          fieldtype,
-        )
-          ? fieldtype
-          : "Data";
+      const normalizedType = [
+        "Data",
+        "Int",
+        "Float",
+        "Date",
+        "Datetime",
+        "Link",
+        "Select",
+        "Check",
+        "MultiSelectList",
+      ].includes(fieldtype)
+        ? fieldtype
+        : "Data";
 
       return {
         fieldname: def.fieldname,
@@ -843,7 +1003,9 @@ function buildStore() {
     });
   }
 
-  async function resolveReportFiltersForCompile(reportName: string): Promise<Record<string, any>> {
+  async function resolveReportFiltersForCompile(
+    reportName: string,
+  ): Promise<Record<string, any>> {
     const autoFilled = buildAutoFilledReportFilters(reportFilters.value || {});
     const missingRequired = getMissingRequiredFilterDefs(autoFilled);
 
@@ -884,7 +1046,10 @@ function buildStore() {
     if (typeof window === "undefined" || typeof console === "undefined") return;
     const defs = reportFilterFields.value || [];
     const defaults = defs
-      .filter((df: any) => df.default !== undefined && df.default !== null && df.default !== "")
+      .filter(
+        (df: any) =>
+          df.default !== undefined && df.default !== null && df.default !== "",
+      )
       .map((df: any) => ({
         fieldname: df.fieldname,
         default: df.default,
@@ -901,34 +1066,34 @@ function buildStore() {
 
     console.groupCollapsed(
       `%c[Crispy Builder Report Debug] ${reportName}`,
-      "background:#111827;color:#f9fafb;padding:4px 8px;border-radius:4px;font-weight:700;"
+      "background:#111827;color:#f9fafb;padding:4px 8px;border-radius:4px;font-weight:700;",
     );
     console.log(
       "%cSelected filters (sent):",
       "color:#2563eb;font-weight:700;",
-      selectedFilters || {}
+      selectedFilters || {},
     );
     console.log(
       "%cFilter defaults (report definition):",
       "color:#16a34a;font-weight:700;",
-      defaults
+      defaults,
     );
     console.log(
       "%cInclude filters flag:",
       "color:#7c3aed;font-weight:700;",
-      includeFilters
+      includeFilters,
     );
     if (missingRequired.length) {
       console.warn(
         "%cMissing required filters (no selected value, no default):",
         "color:#dc2626;font-weight:700;",
-        missingRequired
+        missingRequired,
       );
     } else {
       console.log(
         "%cMissing required filters:",
         "color:#16a34a;font-weight:700;",
-        "none"
+        "none",
       );
     }
     console.table(
@@ -938,7 +1103,7 @@ function buildStore() {
         fieldtype: df.fieldtype,
         reqd: df.reqd,
         default: df.default,
-      }))
+      })),
     );
     console.groupEnd();
   }
@@ -946,10 +1111,7 @@ function buildStore() {
   async function askToRebindReportTableColumns(): Promise<boolean> {
     const message =
       "Report table columns were customized. Rebind to the selected report columns?";
-    if (
-      typeof frappe !== "undefined" &&
-      typeof frappe.confirm === "function"
-    ) {
+    if (typeof frappe !== "undefined" && typeof frappe.confirm === "function") {
       return await new Promise<boolean>((resolve) => {
         frappe.confirm(
           __(message),
@@ -992,7 +1154,10 @@ function buildStore() {
     return found;
   }
 
-  async function loadApplicableTypstBlocks(query = "", category: string | null = null) {
+  async function loadApplicableTypstBlocks(
+    query = "",
+    category: string | null = null,
+  ) {
     if (!docType.value) {
       typstBlocks.value = [];
       return [];
@@ -1008,7 +1173,9 @@ function buildStore() {
     return rows;
   }
 
-  function resolveLayoutTypstBlocks(rows: CrispyTypstBlockOption[] = typstBlocks.value) {
+  function resolveLayoutTypstBlocks(
+    rows: CrispyTypstBlockOption[] = typstBlocks.value,
+  ) {
     const byKey = new Map(rows.map((block) => [block.block_key, block]));
     getLayoutTypstBlockFields().forEach((field: any) => {
       const key = String(field.crispy_typst_block || "").trim();
@@ -1039,7 +1206,8 @@ function buildStore() {
     reportFilterFields,
     reportFilters,
     getReportColumnConfigFromLayout,
-    getReportTableColumnsForPreview: layoutStore.getReportTableColumnsForPreview,
+    getReportTableColumnsForPreview:
+      layoutStore.getReportTableColumnsForPreview,
   });
 
   /**
@@ -1049,7 +1217,7 @@ function buildStore() {
     reset();
     loading.value = true;
     initializing.value = true;
-    changeKey.value = 0;
+    previewRevision.value = 0;
     dirty.value = false; // Set clean state BEFORE triggering any reactive updates
 
     try {
@@ -1114,14 +1282,19 @@ function buildStore() {
           { label: __("DocType"), fieldname: "doctype", fieldtype: "Data" },
           { label: __("ID (name)"), fieldname: "name", fieldtype: "Data" },
           {
-            label: __("Custom Typst"),
-            fieldname: "_typst_snippet",
-            fieldtype: "Typst",
-          },
-          {
             label: __("Crispy Typst Block"),
             fieldname: "_crispy_typst_block",
             fieldtype: "Crispy Typst Block",
+          },
+          {
+            label: __("Crispy Image"),
+            fieldname: "_crispy_image",
+            fieldtype: "Crispy Image",
+          },
+          {
+            label: __("Custom Typst"),
+            fieldname: "_typst_snippet",
+            fieldtype: "Typst",
           },
           { label: __("Empty Field"), fieldname: "empty", fieldtype: "Empty" },
           { label: __("Spacer"), fieldname: "spacer", fieldtype: "Spacer" },
@@ -1176,7 +1349,10 @@ function buildStore() {
           : persistedLayout || layoutStore.getDefaultLayout();
 
       // Load page settings (already merged with defaults by parser)
-      presentation_settings.value = merge_presentation_settings(default_presentation_settings, parsed.presentation_settings || {});
+      presentation_settings.value = merge_presentation_settings(
+        default_presentation_settings,
+        parsed.presentation_settings || {},
+      );
       if (doc.company && !presentation_settings.value.branding.company) {
         presentation_settings.value.branding.company = doc.company;
       }
@@ -1215,7 +1391,9 @@ function buildStore() {
       // Set mode before assigning into reactive state so the deep watcher
       // doesn't generate basic Typst over advanced raw Typst during fetch.
       if (formatType === "Report") {
-        normalizedReportBuilder.mode = reportAdvancedMode ? "advanced" : "basic";
+        normalizedReportBuilder.mode = reportAdvancedMode
+          ? "advanced"
+          : "basic";
       }
       reportBuilderConfig.value = normalizedReportBuilder;
       assignReportBuilderConfigToPresentationSettings();
@@ -1228,15 +1406,18 @@ function buildStore() {
         }
       }
       const qrSettings = ensure_qr_settings(presentation_settings.value);
-      const parsedQrEnabled = (parsed.presentation_settings as PresentationSettings | undefined)
-        ?.qr?.enabled;
+      const parsedQrEnabled = (
+        parsed.presentation_settings as PresentationSettings | undefined
+      )?.qr?.enabled;
       if (typeof parsedQrEnabled !== "boolean") {
         qrSettings.enabled = false;
       }
 
       // Load letterhead if specified
       if (effective_presentation_settings.value.branding.letterhead) {
-        await settingsStore.fetchLetterhead(effective_presentation_settings.value.branding.letterhead);
+        await settingsStore.fetchLetterhead(
+          effective_presentation_settings.value.branding.letterhead,
+        );
       }
 
       // Auto-save if this was the first time (no layout_json in DB)
@@ -1289,8 +1470,13 @@ function buildStore() {
             : 0
           : 0,
         compact_item_print: crispyFormat.value.compact_item_print ? 1 : 0,
-        print_uom_after_quantity: crispyFormat.value.print_uom_after_quantity ? 1 : 0,
-        print_taxes_with_zero_amount: crispyFormat.value.print_taxes_with_zero_amount ? 1 : 0,
+        print_uom_after_quantity: crispyFormat.value.print_uom_after_quantity
+          ? 1
+          : 0,
+        print_taxes_with_zero_amount: crispyFormat.value
+          .print_taxes_with_zero_amount
+          ? 1
+          : 0,
       };
 
       await saveCrispyFormat(crispyFormat.value.name, updateData);
@@ -1507,31 +1693,6 @@ function buildStore() {
     { deep: true },
   );
 
-  watch(
-    reportBuilderConfig,
-    () => {
-      if (
-        reportBuilderConfig.value.show_footer_total !==
-        reportBuilderConfig.value.include_total_row
-      ) {
-        reportBuilderConfig.value.show_footer_total =
-          reportBuilderConfig.value.include_total_row;
-      }
-      assignReportBuilderConfigToPresentationSettings();
-      if (
-        isReportMode.value &&
-        reportBuilderConfig.value.mode === "basic" &&
-        !reportBasicReadOnly.value
-      ) {
-        syncReportBasicTypst();
-      }
-      if (!loading.value && !initializing.value) {
-        markDirty();
-      }
-    },
-    { deep: true },
-  );
-
   const store = {
     // State
     crispyFormat,
@@ -1554,7 +1715,7 @@ function buildStore() {
     dirty,
     loading,
     initializing,
-    changeKey,
+    previewRevision,
 
     // History (exposed for diagnostics & tests)
     historyPast,
@@ -1565,6 +1726,7 @@ function buildStore() {
     docType,
     formatType,
     isReportMode,
+    previewTriggerMode,
     docHeader,
     docFooter,
     qrEnabled,
@@ -1586,6 +1748,10 @@ function buildStore() {
     loadApplicableTypstBlocks,
     resolveLayoutTypstBlocks,
     markDirty,
+    markCodeDirty,
+    requestPreviewRefresh,
+    setTypstCode,
+    updateReportBuilderConfig,
     undo,
     redo,
     canUndo,

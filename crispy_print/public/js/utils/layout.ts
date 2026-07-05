@@ -7,11 +7,24 @@ import { deepClone, safeJsonParse } from "./json"
 const logger = getLogger({ module: "Layout" })
 
 export interface DocField {
+	name?: string
 	fieldname: string
 	label: string
 	fieldtype?: string
 	options?: string
 	print_hide?: number
+	raw_typst_field?: string
+	crispy_typst_block?: string
+	crispy_typst_block_name?: string
+	crispy_typst_block_code?: string
+	crispy_image?: string
+	crispy_image_width?: string
+	crispy_image_height?: string
+	crispy_image_fit?: string
+	spacer_value?: string
+	divider_length?: string
+	divider_stroke?: string
+	divider_color?: string
 }
 
 export interface TableColumn {
@@ -35,6 +48,10 @@ export interface LayoutField {
 	crispy_typst_block?: string
 	crispy_typst_block_name?: string
 	crispy_typst_block_code?: string
+	crispy_image?: string
+	crispy_image_width?: string
+	crispy_image_height?: string
+	crispy_image_fit?: string
 	// Spacer configuration
 	spacer_value?: string // e.g., "1em", "2cm", "10pt"
 	// Divider configuration

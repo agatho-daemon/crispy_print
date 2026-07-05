@@ -8,13 +8,20 @@ interface CreateSettingsStoreOptions {
   loading: Ref<boolean>;
   initializing: Ref<boolean>;
   dirty: Ref<boolean>;
-  changeKey: Ref<number>;
   letterhead: Ref<any>;
   builderContext: Ref<Record<string, any>>;
+  requestPreviewRefresh?: () => void;
 }
 
 export function createSettingsStore(options: CreateSettingsStoreOptions) {
-  const { loading, initializing, dirty, changeKey, letterhead, builderContext } = options;
+  const {
+    loading,
+    initializing,
+    dirty,
+    letterhead,
+    builderContext,
+    requestPreviewRefresh,
+  } = options;
   let letterheadRequestSeq = 0;
 
   function markDirty() {
@@ -22,7 +29,6 @@ export function createSettingsStore(options: CreateSettingsStoreOptions) {
       return;
     }
     dirty.value = true;
-    changeKey.value++;
   }
 
   async function fetchLetterhead(letterheadName: string) {
@@ -34,7 +40,7 @@ export function createSettingsStore(options: CreateSettingsStoreOptions) {
 
     if (!letterheadName) {
       letterhead.value = null;
-      changeKey.value++;
+      requestPreviewRefresh?.();
       return;
     }
 
@@ -43,12 +49,12 @@ export function createSettingsStore(options: CreateSettingsStoreOptions) {
       const resolved = await resolveLetterheadDoc(letterheadName);
       if (requestSeq !== letterheadRequestSeq) return;
       letterhead.value = resolved;
-      changeKey.value++;
+      requestPreviewRefresh?.();
     } catch (error) {
       if (requestSeq !== letterheadRequestSeq) return;
       logger.warn("Failed to resolve letterhead", { letterheadName, error });
       letterhead.value = null;
-      changeKey.value++;
+      requestPreviewRefresh?.();
     }
   }
 
@@ -71,4 +77,3 @@ export function createSettingsStore(options: CreateSettingsStoreOptions) {
     reset,
   };
 }
-

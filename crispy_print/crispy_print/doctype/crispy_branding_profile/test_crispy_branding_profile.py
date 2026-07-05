@@ -2,6 +2,7 @@
 # See license.txt
 
 from pathlib import Path
+from unittest import mock
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -17,7 +18,12 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 	on_company_after_insert,
 	resolve_effective_presentation_settings,
 )
-from crispy_print.install import after_install, get_site_font_directory
+from crispy_print.install import (
+	after_install,
+	ensure_print_engine,
+	get_site_font_directory,
+	has_print_engine_doctype,
+)
 from crispy_print.letterhead_lifecycle import (
 	APPROVED_AT_FIELD,
 	APPROVED_BY_FIELD,
@@ -52,7 +58,7 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 			margin_bottom_mm=12,
 			margin_left_mm=13,
 			margin_right_mm=14,
-			section_label_font_family="Inter 18pt",
+			section_label_font_family="Inter",
 			section_label_font_size_pt=15,
 			section_label_font_weight="Extrabold",
 			enable_qr_code=1,
@@ -68,7 +74,7 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(settings["page"]["margins"]["top"], 11)
 		self.assertEqual(settings["page"]["margins"]["right"], 14)
 		self.assertEqual(settings["branding"]["logo"]["image"], "/files/cbp-logo.png")
-		self.assertEqual(settings["typography"]["sectionLabel"]["fontFamily"], "Inter 18pt")
+		self.assertEqual(settings["typography"]["sectionLabel"]["fontFamily"], "Inter")
 		self.assertEqual(settings["typography"]["sectionLabel"]["fontSize"], "15.0pt")
 		self.assertEqual(settings["typography"]["sectionLabel"]["fontWeight"], "extrabold")
 		self.assertTrue(settings["qr"]["enabled"])
@@ -436,6 +442,22 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 				},
 			)
 		)
+
+	def test_print_engine_doctype_is_unavailable_when_controller_is_missing(self):
+		with (
+			mock.patch("crispy_print.install.frappe.db.exists", return_value=True),
+			mock.patch("crispy_print.install.get_controller", side_effect=ImportError("missing")),
+		):
+			self.assertFalse(has_print_engine_doctype())
+
+	def test_ensure_print_engine_skips_when_doctype_is_unavailable(self):
+		with (
+			mock.patch("crispy_print.install.has_print_engine_doctype", return_value=False),
+			mock.patch("crispy_print.install.frappe.get_doc") as get_doc,
+		):
+			ensure_print_engine()
+
+		get_doc.assert_not_called()
 
 	def test_backfill_patch_provisions_defaults_for_all_existing_companies(self):
 		second_company = self._ensure_company(name="CBP Patch Company", abbr="CBPP")

@@ -375,7 +375,7 @@ class CrispyBrandingProfile(Document):
 
 	def get_typography_style(self, prefix: str) -> dict:
 		return {
-			"fontFamily": self.get(f"{prefix}_font_family") or "Inter 18pt",
+			"fontFamily": self.get(f"{prefix}_font_family") or "Inter",
 			"fontSize": f"{flt(self.get(f'{prefix}_font_size_pt'))}pt",
 			"fontStyle": (self.get(f"{prefix}_font_style") or "Normal").lower(),
 			"fontWeight": (self.get(f"{prefix}_font_weight") or "Regular").lower(),

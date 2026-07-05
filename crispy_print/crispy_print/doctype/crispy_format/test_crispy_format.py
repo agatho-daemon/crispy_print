@@ -118,6 +118,22 @@ class TestCrispyFormat(FrappeTestCase):
 		# Clean up
 		doc.delete()
 
+	def test_raw_typst_hides_author_owned_form_fields(self):
+		json_path = frappe.get_app_path(
+			"crispy_print",
+			"crispy_print",
+			"doctype",
+			"crispy_format",
+			"crispy_format.json",
+		)
+		with open(json_path, encoding="utf-8") as handle:
+			meta = json.load(handle)
+		fields = {field["fieldname"]: field for field in meta["fields"]}
+		self.assertEqual(fields["print_behavior_section"].get("depends_on"), "eval:!doc.raw_typst")
+		self.assertEqual(fields["typst_preamble"].get("depends_on"), "eval:!doc.raw_typst")
+		self.assertEqual(fields["doc_header"].get("depends_on"), "eval:!doc.raw_typst")
+		self.assertEqual(fields["doc_footer"].get("depends_on"), "eval:!doc.raw_typst")
+
 	def test_company_is_required_when_no_default_can_be_resolved(self):
 		"""Test server validation blocks company-less formats without a configured default."""
 		doc = frappe.get_doc(

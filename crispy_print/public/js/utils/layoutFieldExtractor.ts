@@ -89,7 +89,7 @@ function extractFieldsFromColumn(column: LayoutColumn, usedFields: Set<string>):
 
 function isBuilderOnlyField(field: { fieldname?: string; fieldtype?: string }): boolean {
 	if (field.fieldname?.startsWith("_")) return true
-	return ["Typst", "Spacer", "Divider", "Empty", "Crispy Typst Block"].includes(
+	return ["Typst", "Spacer", "Divider", "Empty", "Crispy Typst Block", "Crispy Image"].includes(
 		field.fieldtype || ""
 	)
 }

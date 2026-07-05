@@ -45,6 +45,9 @@ class TestTypstAPI(FrappeTestCase):
 		"""Set up test environment"""
 		frappe.set_user("Administrator")
 		frappe.cache().delete_value("crispy_print:typst_local_fonts:v3")  # type: ignore[operator]
+		frappe.cache().delete_value("crispy_print:typst_local_fonts:v4")  # type: ignore[operator]
+		frappe.cache().delete_value("crispy_print:typst_font_faces:v1")  # type: ignore[operator]
+		frappe.cache().delete_value("crispy_print:typst_font_faces:v2")  # type: ignore[operator]
 		self.typst_version_patcher = patch("crispy_print.api.v1.compile._ensure_typst_minimum_version")
 		self.typst_version_patcher.start()
 		self.addCleanup(self.typst_version_patcher.stop)
@@ -99,6 +102,81 @@ Liberation Sans
 		# Should include both CLI fonts and potentially bundled fonts
 		self.assertIsInstance(fonts, list)
 		self.assertTrue(len(fonts) >= 1)
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_get_typst_local_fonts_uses_typst_family_names_for_file_fallbacks(self, mock_run):
+		from crispy_print.api.v1 import get_typst_local_fonts
+
+		mock_result = Mock()
+		mock_result.stdout = """
+Libre Baskerville (Regular)
+Noto Naskh Arabic (Regular)
+Shippori Mincho (Regular)
+Eurostile (Regular, Bold)
+"""
+		mock_result.returncode = 0
+		mock_run.return_value = mock_result
+
+		fonts = get_typst_local_fonts()
+
+		self.assertIn("Libre Baskerville", fonts)
+		self.assertIn("Noto Naskh Arabic", fonts)
+		self.assertIn("Shippori Mincho", fonts)
+		self.assertIn("Eurostile", fonts)
+		self.assertNotIn("LibreBaskerville", fonts)
+		self.assertNotIn("NotoNaskhArabic", fonts)
+		self.assertNotIn("ShipporiMincho", fonts)
+		self.assertNotIn("EurostileBold", fonts)
+
+	def test_parse_typst_font_faces(self):
+		from crispy_print.api.v1.compile import _parse_typst_font_faces
+
+		faces = _parse_typst_font_faces(
+			"""
+Rajdhani (Light, Regular, Medium, SemiBold, Bold)
+Inter (Regular, Italic)
+"""
+		)
+
+		by_family = {entry["family"]: entry for entry in faces}
+		self.assertEqual(
+			by_family["Rajdhani"]["weights"],
+			["light", "regular", "medium", "semibold", "bold"],
+		)
+		self.assertEqual(by_family["Rajdhani"]["styles"], ["normal"])
+		self.assertEqual(by_family["Inter"]["styles"], ["normal", "italic"])
+
+	def test_add_font_face_merges_filename_family_into_typst_family(self):
+		from crispy_print.api.v1.compile import _add_font_face, _font_face_from_label
+
+		families: dict[str, dict[str, object]] = {}
+		_add_font_face(families, "Noto Naskh Arabic", _font_face_from_label("Regular"))
+		_add_font_face(families, "NotoNaskhArabic", _font_face_from_label("Bold"))
+
+		self.assertIn("Noto Naskh Arabic", families)
+		self.assertNotIn("NotoNaskhArabic", families)
+		faces = families["Noto Naskh Arabic"]["faces"]
+		self.assertEqual(
+			{face["weight"] for face in faces if isinstance(face, dict)},
+			{"regular", "bold"},
+		)
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_get_typst_font_faces(self, mock_run):
+		from crispy_print.api.v1 import get_typst_font_faces
+
+		mock_result = Mock()
+		mock_result.stdout = "Rajdhani (Light, Regular, Medium, SemiBold, Bold)\n"
+		mock_result.returncode = 0
+		mock_run.return_value = mock_result
+
+		faces = get_typst_font_faces()
+		rajdhani = next(entry for entry in faces if entry["family"] == "Rajdhani")
+
+		self.assertIn("bold", rajdhani["weights"])
+		self.assertIn("semibold", rajdhani["weights"])
+		self.assertNotIn("black", rajdhani["weights"])
+		self.assertEqual(rajdhani["styles"], ["normal"])
 
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_compile_typst_to_pdf(self, mock_run):
@@ -336,6 +414,53 @@ This is a test.
 
 		with self.assertRaises(Exception):
 			compile_typst("= Test", asset_files=["logo.svg"])
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_compile_typst_accepts_crispy_private_image_helper(self, mock_run):
+		from crispy_print.api.v1 import compile_typst
+
+		filename = "crispy_private_image_test.svg"
+		private_file = Path(frappe.get_site_path("private", "files", filename))
+		private_file.parent.mkdir(parents=True, exist_ok=True)
+		private_file.write_text(
+			'<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>',
+			encoding="utf-8",
+		)
+		self.addCleanup(lambda: private_file.exists() and private_file.unlink())
+
+		mock_result = MagicMock(returncode=0, stderr="", stdout="")
+
+		def mock_run_side_effect(*args, **kwargs):
+			cmd_args = args[0]
+			output_template = Path(cmd_args[-1])
+			output_dir = output_template.parent
+			base_name = output_template.stem.replace("-{p}", "")
+			(output_dir / f"{base_name}-1.svg").write_text("<svg/>", encoding="utf-8")
+			document_source = output_dir / "document.typ"
+			self.assertIn("#let crispy_image", document_source.read_text(encoding="utf-8"))
+			self.assertTrue((output_dir / filename).exists())
+			return mock_result
+
+		mock_run.side_effect = mock_run_side_effect
+
+		result = compile_typst(f'#crispy_image("{filename}")', output_format="svg")
+
+		self.assertIsNotNone(result)
+		assert result is not None
+		self.assertTrue(result["success"])
+
+	def test_compile_typst_rejects_invalid_crispy_image_helper_paths(self):
+		from crispy_print.api.v1 import compile_typst
+
+		for source in [
+			'#crispy_image("../secret.png")',
+			'#crispy_image("/private/files/logo.png")',
+			'#crispy_image("https://example.com/logo.png")',
+			'#crispy_image("nested/logo.png")',
+			'#crispy_image("missing.png")',
+		]:
+			with self.subTest(source=source), self.assertRaises(Exception):
+				compile_typst(source, output_format="svg")
 
 	@patch("crispy_print.api.v1.compile._copy_asset_files_to_temp")
 	@patch("crispy_print.api.v1.compile.subprocess.run")

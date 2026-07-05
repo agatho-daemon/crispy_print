@@ -3,6 +3,10 @@ from datetime import date, datetime
 
 import frappe
 
+from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block import (
+	get_applicable_typst_blocks,
+)
+
 
 def _build_typst_document(
 	format_doc,
@@ -31,35 +35,39 @@ def _build_typst_document(
 	sections: list[str] = []
 
 	typst_data = _python_to_typst_dict(data_dict)
+	is_raw_typst = _is_raw_typst_format(format_doc)
 
 	# 1. Preamble (set rules, imports, helper functions)
-	if preamble_override:
+	if preamble_override and not is_raw_typst:
 		sections.append(f"// Preamble override\n{preamble_override}")
-	if format_doc.typst_preamble:
+	if format_doc.typst_preamble and not is_raw_typst:
 		sections.append(f"// Preamble\n{format_doc.typst_preamble}")
 
 	# 2. Data variable definition
 	sections.append(f"\n// Data injection\n#let {variable_name} = {typst_data}")
 
-	# 3. Default header/footer blocks (safe no-op)
-	sections.append("\n#let header_block = []")
-	sections.append("#let footer_block = []")
+	if is_raw_typst:
+		sections.append(f"\n{_build_raw_typst_helpers(format_doc, format_doc.typst_code or '')}")
+	else:
+		# 3. Default header/footer blocks (safe no-op)
+		sections.append("\n#let header_block = []")
+		sections.append("#let footer_block = []")
 
-	# 4. Header block (can be overridden for letterhead)
-	if header_block:
-		sections.append(f"\n// Header (with letterhead)\n{header_block}")
-	elif format_doc.doc_header:
-		sections.append(f"\n// Header\n{format_doc.doc_header}")
+		# 4. Header block (can be overridden for letterhead)
+		if header_block:
+			sections.append(f"\n// Header (with letterhead)\n{header_block}")
+		elif format_doc.doc_header:
+			sections.append(f"\n// Header\n{format_doc.doc_header}")
 
-	# 5. Footer block (can be overridden)
-	if footer_block:
-		sections.append(f"\n// Footer (custom)\n{footer_block}")
-	elif format_doc.doc_footer:
-		sections.append(f"\n// Footer\n{format_doc.doc_footer}")
+		# 5. Footer block (can be overridden)
+		if footer_block:
+			sections.append(f"\n// Footer (custom)\n{footer_block}")
+		elif format_doc.doc_footer:
+			sections.append(f"\n// Footer\n{format_doc.doc_footer}")
 
-	# 6. Presentation settings block (optional)
-	if presentation_settings_block:
-		sections.append(f"\n// Presentation settings\n{presentation_settings_block}")
+		# 6. Presentation settings block (optional)
+		if presentation_settings_block:
+			sections.append(f"\n// Presentation settings\n{presentation_settings_block}")
 
 	# 7. Main template code
 	sections.append(f"\n// Main template\n{format_doc.typst_code}")
@@ -68,6 +76,11 @@ def _build_typst_document(
 
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_CRISPY_BLOCK_RE = re.compile(r'crispy_block\(\s*"([^"\n]+)"')
+
+
+def _is_raw_typst_format(format_doc) -> bool:
+	return bool(getattr(format_doc, "raw_typst", 0) or getattr(format_doc, "is_advanced", 0))
 
 
 def _quote_typst_string(value: str) -> str:
@@ -89,6 +102,53 @@ def _quote_typst_string(value: str) -> str:
 		else:
 			out.append(char)
 	return f'"{"".join(out)}"'
+
+
+def _extract_crispy_block_ids(typst_source: str) -> set[str]:
+	return {
+		str(match.group(1) or "").strip()
+		for match in _CRISPY_BLOCK_RE.finditer(typst_source or "")
+		if str(match.group(1) or "").strip()
+	}
+
+
+def _build_raw_typst_helpers(format_doc, typst_source: str = "") -> str:
+	referenced_block_ids = _extract_crispy_block_ids(typst_source)
+	blocks = []
+	doctype = getattr(format_doc, "doc_type", None)
+	if doctype:
+		blocks = get_applicable_typst_blocks(
+			doctype,
+			enabled_only=True,
+			company=getattr(format_doc, "company", None),
+		)
+
+	lines = [
+		"// Crispy Raw Typst helpers",
+		"#let crispy_image(filename, ..args) = image(filename, ..args)",
+		"#let crispy_blocks = (",
+	]
+	for block in blocks:
+		name = str(block.get("name") or "").strip()
+		code = str(block.get("typst_code") or "").strip()
+		if not referenced_block_ids or name not in referenced_block_ids:
+			continue
+		if not name or not code:
+			continue
+		lines.append(f"  {_quote_typst_string(name)}: [")
+		lines.append(code)
+		lines.append("  ],")
+	lines.extend(
+		[
+			")",
+			"#let crispy_block(id) = {",
+			"  let block = crispy_blocks.at(id, default: none)",
+			'  if block == none { panic("Crispy Typst Block not found: " + str(id)) }',
+			"  block",
+			"}",
+		]
+	)
+	return "\n".join(lines)
 
 
 def _format_typst_key(key: str) -> str:

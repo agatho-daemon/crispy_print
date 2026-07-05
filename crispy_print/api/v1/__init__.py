@@ -14,6 +14,7 @@ from .branding_profiles import (
 from .branding_profiles import get_branding_profiles as _get_branding_profiles
 from .branding_profiles import get_letterhead_options as _get_letterhead_options
 from .compile import compile_typst as _compile_typst
+from .compile import get_typst_font_faces as _get_typst_font_faces
 from .compile import get_typst_local_fonts as _get_typst_local_fonts
 from .docs import get_formatted_doc as _get_formatted_doc
 from .document_codes import generate_document_code as _generate_document_code
@@ -30,6 +31,7 @@ from .formats import get_default_doctypes as _get_default_doctypes
 from .formats import get_default_report_builder_config as _get_default_report_builder_config
 from .formats import get_reports_without_custom_html as _get_reports_without_custom_html
 from .formats import import_crispy_format as _import_crispy_format
+from .images import get_private_image_files as _get_private_image_files
 from .issued_documents import add_issued_document_trust_event as _add_issued_document_trust_event
 from .issued_documents import cancel_issued_document as _cancel_issued_document
 from .issued_documents import create_issued_document_snapshot as _create_issued_document_snapshot
@@ -86,6 +88,11 @@ def get_typst_local_fonts() -> list[str]:
 
 
 @frappe.whitelist()
+def get_typst_font_faces() -> list[JSONDict]:
+	return _get_typst_font_faces()
+
+
+@frappe.whitelist()
 def get_applicable_typst_blocks(
 	doctype: str,
 	query: str | None = None,
@@ -116,6 +123,11 @@ def get_applicable_typst_blocks(
 		return any(search in str(value or "").lower() for value in values)
 
 	return [row for row in rows if matches(row)]
+
+
+@frappe.whitelist()
+def get_private_image_files(query: str | None = None, limit: int | None = 100) -> list[JSONDict]:
+	return _get_private_image_files(query=query, limit=limit)
 
 
 @frappe.whitelist()
@@ -768,6 +780,7 @@ __all__ = [
 	"get_resolved_crispy_template_for_document",
 	"get_resolved_crispy_template_for_render",
 	"get_sample_report_data",
+	"get_typst_font_faces",
 	"get_typst_local_fonts",
 	"import_crispy_format",
 	"record_issued_document_integrity_check",

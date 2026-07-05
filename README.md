@@ -26,7 +26,7 @@ Crispy Print `0.2.0-beta.1` is the first beta release, tested against Frappe v15
 - Test DocType print preview and PDF generation with real documents.
 - Test the visual format builder: drag fields, configure tables, save, reload, reset, and export/import formats.
 - Test Branding Profile Builder, including logo, letterhead, typography, margins, and QR placement.
-- Test Raw Typst mode and reusable Typst blocks.
+- Test Raw Typst mode, private image helpers, reusable Typst blocks, regular-mode image insertion, and font/typography controls.
 - Test QR and document-code flows where applicable. Regulatory QR support especially needs feedback from users in tax-regulated regions because the maintainer cannot validate real-world tax QR requirements locally; the maintainer's country does not currently have tax-related document QR regulations. Please test whether QR Regulatory Profiles, Fiscal Credentials, Document Code Profiles, and generated payloads can model your local authority requirements, invoice fields, environment rules, and verification expectations. If your region requires additional fields for QR generation, please report the required field names, data types, source documents, validation rules, and example payload structure where possible.
 - Test report preview and report PDF generation, but treat report support as a beta stabilization area. Contract support is still foundation-level and remains **WIP**.
 - Include Frappe version, Typst version, browser, console errors, server traceback, and reproduction steps when opening issues.
@@ -57,7 +57,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 ## Features
 
 - **Deterministic Typst Rendering Pipeline** - Converts Frappe documents into structured Typst sources and server-rendered PDF/SVG output.
-- **Visual Document Composition Builder** - Drag-and-drop builder for DocType print formats with sections, columns, fields, tables, images, QR elements, and custom Typst blocks.
+- **Visual Document Composition Builder** - Drag-and-drop builder for DocType print formats with sections, columns, fields, tables, private images, QR elements, and custom Typst blocks.
 - **Native PDF Generation** - Uses the Typst CLI for publication-grade PDF generation instead of browser printing or wkhtmltopdf.
 - **Live SVG Preview** - Server-rendered preview flow for format design, document previews, and report previews without relying on browser print layout.
 - **Frappe Print Engine Adapter** - Registers Crispy Print as a client-renderer print engine when the proposed Frappe Print Engine extension is available, allowing Frappe's Print button to hand document printing directly to the Typst preview route.
@@ -71,13 +71,13 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Duplicate for Company** - Clone a Crispy Format or frozen Crispy Template snapshot to another company while preserving layout/content, retargeting company-scoped presentation settings, and optionally publishing a target-company template from the frozen snapshot.
 - **Crispy Issued Document Registry (CID)** - Immutable issued-document snapshots linked to frozen templates, with opaque verification tokens, render-hash facts, artifact tracking, trust-event and regulatory-submission child tables, and revocation/supersession state.
 - **Per-Format PDF Standard** - Output standard selection with a PDF/A-2u default plus PDF/A-3u, PDF/A-4, PDF 1.7, and PDF 2.0.
-- **Global Print Settings** - Crispy Print Settings DocType for font configuration (uploaded/system fonts, search paths), render timeout, and draft/cancelled print policy.
+- **Global Print Settings** - Crispy Print Settings DocType for font configuration (uploaded/system fonts, search paths, font discovery refresh), render timeout, and draft/cancelled print policy.
 - **Report Format Infrastructure (Beta)** - Report-linked formats with Basic/Advanced modes, column selection, filters, chart assets, and guarded raw Typst overrides.
 - **Contract Format Foundation (WIP)** - Contract format support is reserved for future structured contract publishing workflows.
 - **Regulatory QR Layer** - QR Regulatory Profiles, Fiscal Credentials, and helper APIs for building machine-verifiable fiscal and compliance QR payloads.
 - **Document Code Infrastructure** - Document Code Profiles and Rules for deterministic reference codes, naming patterns, and compliance-oriented document identifiers.
 - **Permission-Aware API Surface** - Versioned Frappe APIs with read/write permission checks, manager-only operations, and rate limits around expensive compile paths.
-- **Controlled Asset Resolution** - Typst image assets resolve through approved site/app roots with traversal, symlink, external URL, and duplicate-basename protections.
+- **Controlled Asset Resolution** - Typst image assets resolve through approved site/app roots with traversal, symlink, external URL, and duplicate-basename protections; Raw Typst `crispy_image()` intentionally resolves private uploaded image filenames only.
 - **Compile Caching and Preview Optimizations** - Short-lived Typst compile cache, document fetch cache, report preview consolidation, lazy page bundles, SVG rerender avoidance, and bounded undo snapshots.
 - **Builder and Preview Diagnostics** - Collapsed builder checks plus runtime preview diagnostics for resolved format/template context, Typst version, render timing, page count, and cache state.
 - **Import, Export, and Migration Support** - Structured format import/export, schema validation, backfill patches, and compatibility tests for evolving format data.
@@ -122,7 +122,7 @@ Crispy Print ships variable fonts to avoid maintaining separate font files for e
 - **Frappe v15:** Uses the classic `/app/crispy` workspace route and v15-compatible Desk assets.
 - **Frappe v16/dev-17:** Ships a curated **Crispy Studio** Workspace Sidebar so newer Desk renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of relying on the auto-generated sidebar. The v16+ **Crispy Print** app tile uses Frappe's native `add_to_apps_screen` `has_permission` parameter to hide the tile from website-only users and show it only to users with read access to user-facing Crispy Print records.
 - **Frappe dev-17:** Supported on the current development branch tested for this beta; retest before production use because dev-17 is still moving.
-- **Frappe Print Engine integration:** Crispy Print includes a guarded adapter for the proposed Frappe Print Engine DocType and `Print Settings.default_print_engine` flow. On sites where that Frappe PR is installed, Crispy Print creates a `crispy_print` engine record and Frappe's Print button can route directly to `crispy-print-preview`. On standard Frappe sites without that PR, the adapter is skipped and the existing Typst button remains the supported entry point.
+- **Frappe Print Engine integration:** Crispy Print includes a guarded adapter for the proposed Frappe Print Engine DocType and `Print Settings.default_print_engine` flow. On sites where that Frappe PR is installed and the Print Engine controller is available, Crispy Print creates a `crispy_print` engine record and Frappe's Print button can route directly to `crispy-print-preview`. On standard Frappe sites without that PR, the adapter is skipped and the existing Typst button remains the supported entry point.
 - **Python dependency:** `segno` (installed with the app; used as the QR-only SVG generator)
 - **Typst barcode package:** Zebra `0.1.0` is vendored with the app and used for DataMatrix rendering through Typst.
 
@@ -221,7 +221,7 @@ Recommended setup order:
 4. **Configure page settings** (left sidebar)
    - **Paper Size:** A4, Letter, etc.
    - **Margins:** Adjust spacing
-   - **Fonts:** Select font family
+   - **Fonts:** Select font family, style, and weight. Weight/style menus are limited to the faces Typst reports for the selected family.
    - **Branding Profile:** Apply reusable company presentation settings
    - **Letterhead / Logo:** Use Frappe Letter Head, uploaded assets, or branding profile defaults
    - **QR / Document Code:** Enable only when the target workflow requires verification or compliance metadata
@@ -232,6 +232,16 @@ Recommended setup order:
 - The **Reference Key** is generated from **Block Name** using snake_case, for example `Invoice Header` becomes `invoice_header`.
 - New blocks default to version `1.0`; document IDs include the reference key and version, for example `invoice_header-v1.0`.
 - Open **Crispy Typst Block Builder** from the block form to edit Typst code and refresh a live SVG preview. Preview page settings are authoring-only; only Typst Code changes mark the builder unsaved.
+
+**Raw Typst Mode:**
+
+- Raw Typst mode gives the author control of the Typst source and hides builder presentation controls that would otherwise generate page, print behavior, typography, or table code.
+- Document fields dropped into the code editor insert `#doc.fieldname`; Crispy fields insert code snippets such as `#crispy_block("")` and `#crispy_image("")`.
+- Reusable blocks are referenced by document ID, for example `#crispy_block("invoice_header-v1.0")`; only referenced block code is injected into the compile source.
+- Private uploaded images can be referenced with `#crispy_image("logo.svg", width: 20mm)`.
+- Raw code changes compile only when clicking **Refresh** or pressing **Command/Ctrl-Enter**.
+
+These are working beta behaviors. Treat Raw Typst as the author-owned path: Crispy Print still injects document data and helper definitions needed to compile, but page setup, placement, typography, tables, headers, and footers are owned by the raw source.
 
 5. **Save and publish a template**
    - Click **Save**

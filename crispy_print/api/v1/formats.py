@@ -381,7 +381,7 @@ def get_default_report_builder_config(generic_report_type: str | None = None) ->
 		"chart_spacing_bottom_pt": 12,
 		"header_fill": "#B3D7FF",
 		"header_text_weight": "bold",
-		"font_family": "Inter 18pt",
+		"font_family": "Inter",
 		"font_size_pt": 9,
 		"row_striping": False,
 		"row_stripe_fill": "#F8FBFF",

@@ -77,7 +77,7 @@
 				</div>
 
 				<SettingsSection
-					v-if="!isReportMode"
+					v-if="!isReportMode && !isRawTypst"
 					v-model="isPrintBehaviorExpanded"
 					:title="__('Print Behavior')"
 				>
@@ -130,12 +130,17 @@
 
 				<template v-if="is_custom_profile">
 					<SettingsSection
+						v-if="!isRawTypst"
 						v-model="isPresentationSettingsExpanded"
 						:title="__('Page Settings')"
 					>
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">{{ __("Size") }}</label>
-							<select v-model="presentation_settings.page.size" class="form-control">
+							<select
+								v-model="presentation_settings.page.size"
+								class="form-control"
+								@change="markSettingsDirty('live')"
+							>
 								<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
 								<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
 								<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
@@ -157,6 +162,7 @@
 							<select
 								v-model="presentation_settings.page.orientation"
 								class="form-control"
+								@change="markSettingsDirty('live')"
 							>
 								<option value="portrait">{{ __("Portrait") }}</option>
 								<option value="landscape">{{ __("Landscape") }}</option>
@@ -166,6 +172,7 @@
 						<BoxSidesEditor
 							v-model="presentation_settings.page.margins"
 							:label="__('Margins (mm)')"
+							@update:model-value="markSettingsDirty('debounce')"
 						/>
 					</SettingsSection>
 					<SettingsSection
@@ -176,9 +183,10 @@
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">{{ __("Preset") }}</label>
 							<select
-								v-model="reportBuilderConfig.preset"
+								:value="reportBuilderConfig.preset"
 								class="form-control"
 								:disabled="reportBasicReadOnly"
+								@change="updateReportSettingFromEvent('preset', $event)"
 							>
 								<option value="grid">{{ __("Grid") }}</option>
 								<option value="tree">{{ __("Tree") }}</option>
@@ -192,9 +200,10 @@
 									__("Font Family")
 								}}</label>
 								<select
-									v-model="reportBuilderConfig.font_family"
+									:value="reportBuilderConfig.font_family"
 									class="form-control"
 									:disabled="reportBasicReadOnly"
+									@change="updateReportSettingFromEvent('font_family', $event)"
 								>
 									<option
 										v-for="font in availableFonts"
@@ -210,12 +219,15 @@
 									__("Font Size (pt)")
 								}}</label>
 								<input
-									v-model.number="reportBuilderConfig.font_size_pt"
+									:value="reportBuilderConfig.font_size_pt"
 									type="number"
 									min="1"
 									step="1"
 									class="form-control"
 									:disabled="reportBasicReadOnly"
+									@input="
+										updateReportNumberSettingFromEvent('font_size_pt', $event)
+									"
 								/>
 							</div>
 						</div>
@@ -226,10 +238,16 @@
 								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
-										v-model="reportBuilderConfig.show_filters"
+										:checked="reportBuilderConfig.show_filters"
 										type="checkbox"
 										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
 										:disabled="reportBasicReadOnly"
+										@change="
+											updateReportCheckedSettingFromEvent(
+												'show_filters',
+												$event
+											)
+										"
 									/>
 								</div>
 							</div>
@@ -239,10 +257,16 @@
 								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
-										v-model="reportBuilderConfig.show_summary"
+										:checked="reportBuilderConfig.show_summary"
 										type="checkbox"
 										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
 										:disabled="reportBasicReadOnly"
+										@change="
+											updateReportCheckedSettingFromEvent(
+												'show_summary',
+												$event
+											)
+										"
 									/>
 								</div>
 							</div>
@@ -252,10 +276,16 @@
 								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
-										v-model="reportBuilderConfig.include_total_row"
+										:checked="reportBuilderConfig.include_total_row"
 										type="checkbox"
 										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
 										:disabled="reportBasicReadOnly"
+										@change="
+											updateReportCheckedSettingFromEvent(
+												'include_total_row',
+												$event
+											)
+										"
 									/>
 								</div>
 							</div>
@@ -273,10 +303,16 @@
 								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
-										v-model="reportBuilderConfig.chart_enabled"
+										:checked="reportBuilderConfig.chart_enabled"
 										type="checkbox"
 										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
 										:disabled="reportBasicReadOnly"
+										@change="
+											updateReportCheckedSettingFromEvent(
+												'chart_enabled',
+												$event
+											)
+										"
 									/>
 								</div>
 							</div>
@@ -286,12 +322,18 @@
 								}}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
-										v-model="reportBuilderConfig.chart_card_border"
+										:checked="reportBuilderConfig.chart_card_border"
 										type="checkbox"
 										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
 										:disabled="
 											reportBasicReadOnly ||
 											!reportBuilderConfig.chart_enabled
+										"
+										@change="
+											updateReportCheckedSettingFromEvent(
+												'chart_card_border',
+												$event
+											)
 										"
 									/>
 								</div>
@@ -301,7 +343,7 @@
 									__("Chart Width (%)")
 								}}</label>
 								<input
-									v-model.number="reportBuilderConfig.chart_width_percent"
+									:value="reportBuilderConfig.chart_width_percent"
 									type="number"
 									min="10"
 									max="100"
@@ -310,6 +352,12 @@
 									:disabled="
 										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
 									"
+									@input="
+										updateReportNumberSettingFromEvent(
+											'chart_width_percent',
+											$event
+										)
+									"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -317,7 +365,7 @@
 									__("Max Height (pt)")
 								}}</label>
 								<input
-									v-model.number="reportBuilderConfig.chart_max_height_pt"
+									:value="reportBuilderConfig.chart_max_height_pt"
 									type="number"
 									min="60"
 									max="600"
@@ -326,6 +374,12 @@
 									:disabled="
 										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
 									"
+									@input="
+										updateReportNumberSettingFromEvent(
+											'chart_max_height_pt',
+											$event
+										)
+									"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -333,7 +387,7 @@
 									__("Spacing Top (pt)")
 								}}</label>
 								<input
-									v-model.number="reportBuilderConfig.chart_spacing_top_pt"
+									:value="reportBuilderConfig.chart_spacing_top_pt"
 									type="number"
 									min="0"
 									max="120"
@@ -341,6 +395,12 @@
 									class="form-control"
 									:disabled="
 										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+									"
+									@input="
+										updateReportNumberSettingFromEvent(
+											'chart_spacing_top_pt',
+											$event
+										)
 									"
 								/>
 							</div>
@@ -349,7 +409,7 @@
 									__("Spacing Bottom (pt)")
 								}}</label>
 								<input
-									v-model.number="reportBuilderConfig.chart_spacing_bottom_pt"
+									:value="reportBuilderConfig.chart_spacing_bottom_pt"
 									type="number"
 									min="0"
 									max="120"
@@ -358,12 +418,18 @@
 									:disabled="
 										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
 									"
+									@input="
+										updateReportNumberSettingFromEvent(
+											'chart_spacing_bottom_pt',
+											$event
+										)
+									"
 								/>
 							</div>
 						</div>
 					</SettingsSection>
 					<SettingsSection
-						v-if="!isReportMode"
+						v-if="!isReportMode && !isRawTypst"
 						v-model="isTypographyExpanded"
 						:title="__('Typography')"
 					>
@@ -371,23 +437,34 @@
 							v-model="typography.sectionLabel"
 							:title="__('Section Labels')"
 							:available-fonts="availableFonts"
+							:font-faces="fontFaces"
+							@update:model-value="markSettingsDirty('debounce')"
 						/>
 						<TypographyStyleEditor
 							v-model="typography.fieldLabel"
 							:title="__('Field Labels')"
 							:available-fonts="availableFonts"
+							:font-faces="fontFaces"
+							@update:model-value="markSettingsDirty('debounce')"
 						/>
 						<TypographyStyleEditor
 							v-model="typography.fieldValue"
 							:title="__('Field Values')"
 							:available-fonts="availableFonts"
+							:font-faces="fontFaces"
+							@update:model-value="markSettingsDirty('debounce')"
 						/>
 					</SettingsSection>
-					<SettingsSection v-model="isTableExpanded" :title="__('Table Settings')">
+					<SettingsSection
+						v-if="!isRawTypst"
+						v-model="isTableExpanded"
+						:title="__('Table Settings')"
+					>
 						<div class="settings-pane__subsection">
 							<BoxSidesEditor
 								v-model="tableSettings.inset"
 								:label="__('Spacing (pt)')"
+								@update:model-value="markSettingsDirty('debounce')"
 							/>
 						</div>
 
@@ -404,13 +481,17 @@
 										min="0"
 										step="0.1"
 										class="form-control"
+										@input="markSettingsDirty('debounce')"
 									/>
 								</div>
 								<div class="settings-pane__field">
 									<label class="settings-pane__sublabel">{{
 										__("Color")
 									}}</label>
-									<ColorInput v-model="tableSettings.stroke.color" />
+									<ColorInput
+										v-model="tableSettings.stroke.color"
+										@update:model-value="markSettingsDirty('live')"
+									/>
 								</div>
 							</div>
 						</div>
@@ -422,7 +503,10 @@
 									<label class="settings-pane__sublabel">{{
 										__("Header Background")
 									}}</label>
-									<ColorInput v-model="tableSettings.header.backgroundColor" />
+									<ColorInput
+										v-model="tableSettings.header.backgroundColor"
+										@update:model-value="markSettingsDirty('live')"
+									/>
 								</div>
 							</div>
 							<div class="settings-pane__grid settings-pane__grid--stripe">
@@ -435,6 +519,7 @@
 											v-model="tableSettings.stripe.enabled"
 											type="checkbox"
 											class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+											@change="markSettingsDirty('live')"
 										/>
 									</div>
 								</div>
@@ -445,6 +530,7 @@
 									<ColorInput
 										v-model="tableSettings.stripe.color"
 										:disabled="!tableSettings.stripe.enabled"
+										@update:model-value="markSettingsDirty('live')"
 									/>
 								</div>
 							</div>
@@ -464,6 +550,7 @@
 											v-model="tableSettings.cellLabel.enabled"
 											type="checkbox"
 											class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+											@change="markSettingsDirty('live')"
 										/>
 									</div>
 								</div>
@@ -476,6 +563,7 @@
 										type="text"
 										class="form-control"
 										:disabled="!tableSettings.cellLabel.enabled"
+										@input="markSettingsDirty('debounce')"
 									/>
 								</div>
 							</div>
@@ -488,6 +576,7 @@
 										v-model="tableSettings.cellLabel.fontWeight"
 										class="form-control"
 										:disabled="!tableSettings.cellLabel.enabled"
+										@change="markSettingsDirty('live')"
 									>
 										<option
 											v-for="option in weightOptions"
@@ -510,6 +599,7 @@
 										step="0.5"
 										class="form-control"
 										:disabled="!tableSettings.cellLabel.enabled"
+										@input="markSettingsDirty('debounce')"
 									/>
 								</div>
 							</div>
@@ -518,6 +608,7 @@
 								<ColorInput
 									v-model="tableSettings.cellLabel.color"
 									:disabled="!tableSettings.cellLabel.enabled"
+									@update:model-value="markSettingsDirty('live')"
 								/>
 							</div>
 						</div>
@@ -526,29 +617,37 @@
 							v-model="tableSettings.typography.header"
 							:title="__('Header Typography')"
 							:available-fonts="availableFonts"
+							:font-faces="fontFaces"
 							:family-label="__('Header Family')"
 							:size-label="__('Header Size (pt)')"
 							:style-label="__('Header Style')"
 							:weight-label="__('Header Weight')"
 							:color-label="__('Header Color')"
+							@update:model-value="markSettingsDirty('debounce')"
 						/>
 
 						<TypographyStyleEditor
 							v-model="tableSettings.typography.body"
 							:title="__('Body Typography')"
 							:available-fonts="availableFonts"
+							:font-faces="fontFaces"
 							:family-label="__('Body Family')"
 							:size-label="__('Body Size (pt)')"
 							:style-label="__('Body Style')"
 							:weight-label="__('Body Weight')"
 							:color-label="__('Body Color')"
+							@update:model-value="markSettingsDirty('debounce')"
 						/>
 					</SettingsSection>
 
 					<SettingsSection v-model="isBrandingExpanded" :title="__('Branding')">
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">{{ __("Type") }}</label>
-							<select v-model="branding_mode" class="form-control">
+							<select
+								v-model="branding_mode"
+								class="form-control"
+								@change="markSettingsDirty('live')"
+							>
 								<option value="none">{{ __("None") }}</option>
 								<option value="letterhead">{{ __("Letterhead") }}</option>
 								<option value="logo">{{ __("Logo") }}</option>
@@ -560,6 +659,7 @@
 							<select
 								v-model="presentation_settings.branding.letterhead"
 								class="form-control"
+								@change="markSettingsDirty('live')"
 							>
 								<option value="">{{ __("None") }}</option>
 								<option v-if="loadingLetterheads" disabled>
@@ -594,6 +694,7 @@
 										v-model.number="logo_settings.size"
 										type="number"
 										class="form-control"
+										@input="markSettingsDirty('debounce')"
 									/>
 								</div>
 								<div class="settings-pane__field">
@@ -604,6 +705,7 @@
 										v-model.number="logo_settings.dx"
 										type="number"
 										class="form-control"
+										@input="markSettingsDirty('debounce')"
 									/>
 								</div>
 								<div class="settings-pane__field">
@@ -614,6 +716,7 @@
 										v-model.number="logo_settings.dy"
 										type="number"
 										class="form-control"
+										@input="markSettingsDirty('debounce')"
 									/>
 								</div>
 							</div>
@@ -629,6 +732,7 @@
 								class="input-with-feedback"
 								data-fieldtype="Check"
 								data-fieldname="qr_enabled"
+								@change="markSettingsDirty('live')"
 							/>
 						</span>
 						<span class="disp-area" style="display: none">
@@ -649,7 +753,11 @@
 								<label class="settings-pane__sublabel">{{
 									__("Symbology")
 								}}</label>
-								<select v-model="qrSettings.symbology" class="form-control">
+								<select
+									v-model="qrSettings.symbology"
+									class="form-control"
+									@change="markSettingsDirty('live')"
+								>
 									<option value="QR Code">{{ __("QR Code") }}</option>
 									<option value="DataMatrix">{{ __("DataMatrix") }}</option>
 								</select>
@@ -661,7 +769,11 @@
 								<label class="settings-pane__sublabel">{{
 									__("Error correction")
 								}}</label>
-								<select v-model="qrSettings.errorCorrection" class="form-control">
+								<select
+									v-model="qrSettings.errorCorrection"
+									class="form-control"
+									@change="markSettingsDirty('live')"
+								>
 									<option value="Low">{{ __("Low") }}</option>
 									<option value="Medium">{{ __("Medium") }}</option>
 									<option value="Quartile">{{ __("Quartile") }}</option>
@@ -678,6 +790,7 @@
 								<select
 									v-model="qrSettings.datamatrixEncodation"
 									class="form-control"
+									@change="markSettingsDirty('live')"
 								>
 									<option value="">{{ __("Auto") }}</option>
 									<option value="ascii">ASCII</option>
@@ -698,6 +811,7 @@
 								<select
 									v-model="qrSettings.datamatrixSymbols"
 									class="form-control"
+									@change="markSettingsDirty('live')"
 								>
 									<option value="">{{ __("Square") }}</option>
 									<option value="rect">{{ __("Rectangular") }}</option>
@@ -712,6 +826,7 @@
 									v-model.number="qrSettings.size"
 									type="number"
 									class="form-control"
+									@input="markSettingsDirty('debounce')"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -723,6 +838,7 @@
 									type="number"
 									min="0"
 									class="form-control"
+									@input="markSettingsDirty('debounce')"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -734,6 +850,7 @@
 									type="number"
 									min="0"
 									class="form-control"
+									@input="markSettingsDirty('debounce')"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -742,6 +859,7 @@
 									v-model.number="qrSettings.dx"
 									type="number"
 									class="form-control"
+									@input="markSettingsDirty('debounce')"
 								/>
 							</div>
 							<div class="settings-pane__field">
@@ -750,13 +868,18 @@
 									v-model.number="qrSettings.dy"
 									type="number"
 									class="form-control"
+									@input="markSettingsDirty('debounce')"
 								/>
 							</div>
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{
 									__("QR source")
 								}}</label>
-								<select v-model="qrSettings.sourceMode" class="form-control">
+								<select
+									v-model="qrSettings.sourceMode"
+									class="form-control"
+									@change="markSettingsDirty('live')"
+								>
 									<option value="">
 										{{ __("Inherit branding default") }}
 									</option>
@@ -830,23 +953,26 @@ import TypographyStyleEditor from "./TypographyStyleEditor.vue";
 import SettingsSection from "./SettingsSection.vue";
 import BoxSidesEditor from "./BoxSidesEditor.vue";
 import { useBrandingData } from "../composables/useBrandingData";
-import { useStore } from "../composables/useStore";
+import { useStore, type MarkDirtyOptions } from "../composables/useStore";
 import QrFieldsDialog from "./QrFieldsDialog.vue";
 import { getLogger } from "../logger";
 import { getBrandingProfiles, type CrispyBrandingProfileOption } from "../api/crispy";
-import { getDefaultReportBuilderConfig } from "../utils/reportBuilder";
+import { getDefaultReportBuilderConfig, type ReportBuilderConfig } from "../utils/reportBuilder";
 import { FONT_WEIGHT_OPTIONS } from "../utils/typographyOptions";
+import type { TypstFontFamilyFaces } from "../api/crispy";
 import { __ } from "../utils/i18n";
 
 interface Props {
 	presentation_settings: PresentationSettings;
-	markDirty: () => void;
+	markDirty: (options?: MarkDirtyOptions) => void;
 	availableFonts?: string[];
+	fontFaces?: TypstFontFamilyFaces[];
 	loadingFonts?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
 	availableFonts: () => [],
+	fontFaces: () => [],
 	loadingFonts: false,
 });
 const emit = defineEmits<{
@@ -855,6 +981,7 @@ const emit = defineEmits<{
 const logger = getLogger({ component: "SettingsPane" });
 
 const availableFonts = computed(() => props.availableFonts || []);
+const fontFaces = computed(() => props.fontFaces || []);
 const loadingFonts = computed(() => props.loadingFonts);
 const branding_profiles = ref<CrispyBrandingProfileOption[]>([]);
 const loading_branding_profiles = ref(false);
@@ -879,11 +1006,12 @@ const store = useStore();
 const showQrDialog = ref(false);
 const fallbackReportBuilder = ref(getDefaultReportBuilderConfig());
 const isReportMode = computed(() => Boolean(store.isReportMode?.value));
+const isRawTypst = computed(() => Boolean(store.rawTypst?.value));
 const reportBuilderConfig = computed({
 	get: () => store.reportBuilderConfig?.value || fallbackReportBuilder.value,
 	set: (nextValue) => {
-		if (store.reportBuilderConfig?.value) {
-			store.reportBuilderConfig.value = nextValue;
+		if (store.updateReportBuilderConfig) {
+			store.updateReportBuilderConfig(nextValue, { preview: "live" });
 		} else {
 			fallbackReportBuilder.value = nextValue;
 		}
@@ -917,7 +1045,7 @@ const selected_company = computed<string>({
 		if (props.presentation_settings.source === "branding_profile") {
 			props.presentation_settings.source = "custom";
 		}
-		props.markDirty();
+		markSettingsDirty("live");
 	},
 });
 const is_custom_profile = computed(() => props.presentation_settings.source === "custom");
@@ -948,7 +1076,7 @@ const branding_profile_selection = computed<string>({
 			props.presentation_settings.source = "";
 			props.presentation_settings.branding.profile = "";
 		}
-		props.markDirty();
+		markSettingsDirty("live");
 	},
 });
 
@@ -971,9 +1099,14 @@ const qrFieldsSummary = computed(() => {
 	return __("{0} fields selected", [count]);
 });
 
+function markSettingsDirty(policy: MarkDirtyOptions["preview"] = "live") {
+	if (store.loading.value || store.initializing.value) return;
+	props.markDirty({ preview: policy });
+}
+
 const updateQrFields = (fields: string[]) => {
 	qrSettings.value.fields = fields;
-	props.markDirty();
+	markSettingsDirty("live");
 };
 
 function updatePrintBehavior(
@@ -982,7 +1115,67 @@ function updatePrintBehavior(
 ) {
 	if (!store.crispyFormat.value) return;
 	store.crispyFormat.value[fieldname] = value ? 1 : 0;
-	props.markDirty();
+	markSettingsDirty("live");
+}
+
+function updateReportSetting<K extends keyof ReportBuilderConfig>(
+	fieldname: K,
+	value: ReportBuilderConfig[K],
+	policy: MarkDirtyOptions["preview"] = "live"
+) {
+	if (store.updateReportBuilderConfig) {
+		store.updateReportBuilderConfig({ [fieldname]: value } as Partial<ReportBuilderConfig>, {
+			preview: policy,
+		});
+		return;
+	}
+	fallbackReportBuilder.value = {
+		...fallbackReportBuilder.value,
+		[fieldname]: value,
+	};
+	markSettingsDirty(policy);
+}
+
+function updateReportNumberSetting<K extends keyof ReportBuilderConfig>(
+	fieldname: K,
+	value: string,
+	policy: MarkDirtyOptions["preview"] = "debounce"
+) {
+	const parsed = value === "" ? 0 : Number(value);
+	updateReportSetting(
+		fieldname,
+		(Number.isFinite(parsed) ? parsed : 0) as ReportBuilderConfig[K],
+		policy
+	);
+}
+
+function eventTargetValue(event: Event): string {
+	return (event.target as HTMLInputElement | HTMLSelectElement | null)?.value || "";
+}
+
+function eventTargetChecked(event: Event): boolean {
+	return Boolean((event.target as HTMLInputElement | null)?.checked);
+}
+
+function updateReportSettingFromEvent<K extends keyof ReportBuilderConfig>(
+	fieldname: K,
+	event: Event
+) {
+	updateReportSetting(fieldname, eventTargetValue(event) as ReportBuilderConfig[K]);
+}
+
+function updateReportNumberSettingFromEvent<K extends keyof ReportBuilderConfig>(
+	fieldname: K,
+	event: Event
+) {
+	updateReportNumberSetting(fieldname, eventTargetValue(event), "debounce");
+}
+
+function updateReportCheckedSettingFromEvent<K extends keyof ReportBuilderConfig>(
+	fieldname: K,
+	event: Event
+) {
+	updateReportSetting(fieldname, eventTargetChecked(event) as ReportBuilderConfig[K]);
 }
 
 const branding_mode = computed<string>({
@@ -1035,7 +1228,7 @@ async function fetch_branding_profiles() {
 					logo_settings.value.company = default_profile.company;
 					logo_settings.value.image = resolveCompanyLogo(default_profile.company);
 				}
-				props.markDirty();
+				markSettingsDirty("live");
 			}
 		}
 	} catch (error) {
@@ -1070,17 +1263,6 @@ watch(
 		syncedTableRef.value = true;
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => props.presentation_settings,
-	() => {
-		// Don't mark dirty during initial load
-		if (!store.loading.value && !store.initializing.value) {
-			props.markDirty();
-		}
-	},
-	{ deep: true }
 );
 
 watch(

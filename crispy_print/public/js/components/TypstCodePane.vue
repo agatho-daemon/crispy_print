@@ -69,6 +69,7 @@
 import { computed, ref } from "vue";
 import { useStore } from "../composables/useStore";
 import { __ } from "../utils/i18n";
+import { getRawTypstInsertText, type RawTypstInsertField } from "../utils/rawTypstInsert";
 
 const store = useStore();
 const editorRef = ref<HTMLTextAreaElement | null>(null);
@@ -77,7 +78,7 @@ const isDragOver = ref(false);
 const typstCode = computed({
 	get: () => store.typstCode.value,
 	set: (value: string) => {
-		store.typstCode.value = value;
+		store.setTypstCode?.(value);
 	},
 });
 
@@ -107,20 +108,21 @@ function onDrop(event: DragEvent) {
 	isDragOver.value = false;
 	if (!event.dataTransfer) return;
 	const raw = event.dataTransfer.getData("application/json");
-	let fieldname = "";
+	let snippet = "";
 	if (raw) {
 		try {
-			const parsed = JSON.parse(raw);
-			fieldname = parsed?.fieldname || "";
+			const parsed = JSON.parse(raw) as RawTypstInsertField;
+			snippet = getRawTypstInsertText(parsed);
 		} catch {
-			fieldname = "";
+			snippet = "";
 		}
 	}
-	if (!fieldname) {
-		fieldname = event.dataTransfer.getData("text/plain") || "";
+	if (!snippet) {
+		const fieldname = event.dataTransfer.getData("text/plain") || "";
+		snippet = fieldname ? `#doc.${fieldname}` : "";
 	}
-	if (!fieldname) return;
-	insertSnippet(`#doc.${fieldname}`);
+	if (!snippet) return;
+	insertSnippet(snippet);
 }
 </script>
 

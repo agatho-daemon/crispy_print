@@ -13,7 +13,7 @@ from crispy_print.install import ensure_site_font_directory, get_site_font_direc
 
 FONT_CACHE_KEY = "crispy_print:typst_local_fonts:v3"
 MAX_UPLOADED_FONT_BYTES = 25 * 1024 * 1024
-ALLOWED_FONT_EXTENSIONS = {".ttf", ".otf", ".woff", ".woff2"}
+ALLOWED_FONT_EXTENSIONS = {".ttf", ".otf", ".ttc", ".woff", ".woff2"}
 
 
 class CrispyPrintSettings(Document):

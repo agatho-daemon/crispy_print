@@ -35,9 +35,10 @@
 			<div class="report-template-pane__row">
 				<label class="report-template-pane__label">{{ __("Preset") }}</label>
 				<select
-					v-model="store.reportBuilderConfig.value.preset"
+					:value="store.reportBuilderConfig.value.preset"
 					class="form-control"
 					:disabled="store.reportBasicReadOnly.value"
+					@change="updatePreset"
 				>
 					<option value="grid">{{ __("Grid") }}</option>
 					<option value="tree">{{ __("Tree") }}</option>
@@ -47,17 +48,19 @@
 			</div>
 			<label class="report-template-pane__toggle">
 				<input
-					v-model="store.reportBuilderConfig.value.show_filters"
+					:checked="store.reportBuilderConfig.value.show_filters"
 					type="checkbox"
 					:disabled="store.reportBasicReadOnly.value"
+					@change="updateShowFilters"
 				/>
 				<span>{{ __("Show filters block") }}</span>
 			</label>
 			<label class="report-template-pane__toggle">
 				<input
-					v-model="store.reportBuilderConfig.value.show_footer_total"
+					:checked="store.reportBuilderConfig.value.show_footer_total"
 					type="checkbox"
 					:disabled="store.reportBasicReadOnly.value"
+					@change="updateShowFooterTotal"
 				/>
 				<span>{{ __("Show total records footer") }}</span>
 			</label>
@@ -79,6 +82,26 @@ import { useStore } from "../composables/useStore";
 import { __ } from "../utils/i18n";
 
 const store = useStore();
+
+function eventValue(event: Event) {
+	return (event.target as HTMLInputElement | HTMLSelectElement | null)?.value || "";
+}
+
+function eventChecked(event: Event) {
+	return Boolean((event.target as HTMLInputElement | null)?.checked);
+}
+
+function updatePreset(event: Event) {
+	store.updateReportBuilderConfig({ preset: eventValue(event) as any });
+}
+
+function updateShowFilters(event: Event) {
+	store.updateReportBuilderConfig({ show_filters: eventChecked(event) });
+}
+
+function updateShowFooterTotal(event: Event) {
+	store.updateReportBuilderConfig({ show_footer_total: eventChecked(event) });
+}
 </script>
 
 <style scoped>

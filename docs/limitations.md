@@ -9,7 +9,8 @@ As a **beta release**, Crispy Print has several known limitations:
 - **Typst CLI Required**: Must be installed separately; document rendering will not work without it.
 - **Frappe v15/v16/current dev-17 Only**: Older Frappe versions are not supported. dev-17 compatibility reflects the development branch tested for this beta and should be retested before production use.
 - **Server-Side Rendering**: PDF and SVG compilation happen on the server through Typst CLI.
-- **Font Discovery**: Depends on system font configuration, bundled fonts, and `TYPST_FONT_PATHS`.
+- **Font Discovery**: Depends on bundled fonts, uploaded site fonts, system font configuration, and `TYPST_FONT_PATHS`.
+- **Font Face Metadata**: Typography weight/style choices are constrained by Typst-discovered faces. If a font has unusual internal naming, verify the rendered output during beta testing.
 
 ### Layout Builder
 
@@ -25,6 +26,8 @@ As a **beta release**, Crispy Print has several known limitations:
   - Requires knowledge of Typst syntax
   - Preview requires explicit recompilation
   - Syntax errors not caught until compilation
+- **Raw Private Images**: Raw image helpers intentionally resolve only uploaded private files by filename; public paths, nested paths, URLs, and traversal are rejected.
+- **Raw Typst Ownership**: Raw Typst mode intentionally hides builder-owned print behavior, page, typography, and table controls. Authors must define those concerns directly in Typst source.
 - **QR Code Format**: QR output is SVG-based.
 - **Table Styling**: Visual controls expose common table options; full Typst table control is available through Raw Typst.
 

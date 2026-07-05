@@ -122,8 +122,9 @@ interface Props {
 	letterhead: any;
 	docType: string | null;
 	docName?: string | null;
-	changeKey?: number;
+	previewRevision?: number;
 	watchDataChanges?: boolean;
+	typstBlocks?: any[];
 	zoomMode?: "fit" | "manual";
 	zoomPercent?: number;
 	issuePdfSnapshot?: (context: TypstPdfReadyContext) => Promise<void> | void;
@@ -199,42 +200,17 @@ function createAdapter() {
 		getDoctype: () => props.docType,
 		getDocname: () => props.docName,
 		get_presentation_settings: () => props.presentation_settings,
+		getTypstBlocks: () => props.typstBlocks || [],
 		onPdfReady: props.issuePdfSnapshot,
 		hookDataChanges: enableDataWatch
 			? (callback: () => void) => {
-					// Prefer explicit invalidation via changeKey to avoid expensive deep watches.
-					if (props.changeKey !== undefined) {
-						const stop = watch(
-							() => [
-								props.changeKey,
-								props.presentation_settings,
-								props.letterhead,
-								props.qrEnabled,
-								props.printBehavior,
-							],
-							(_newVal, oldVal) => {
-								if (oldVal !== undefined) {
-									callback();
-								}
-							}
-						);
-						return () => stop();
-					}
-
-					// Fallback for callers that don't provide changeKey.
 					const stop = watch(
-						() => [
-							props.layout,
-							props.presentation_settings,
-							props.letterhead,
-							props.docHeader,
-							props.docFooter,
-							props.typstPreamble,
-							props.typstCode,
-							props.rawTypst,
-						],
-						() => callback(),
-						{ deep: true }
+						() => props.previewRevision,
+						(_newVal, oldVal) => {
+							if (oldVal !== undefined) {
+								callback();
+							}
+						}
 					);
 					return () => stop();
 			  }

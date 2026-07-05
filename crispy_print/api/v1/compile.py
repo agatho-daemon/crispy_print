@@ -32,6 +32,43 @@ MAX_CHART_SVG_BYTES = 512 * 1024
 MAX_QR_DATA_BYTES = 16 * 1024
 MAX_INLINE_DATA_URI_BYTES = 256 * 1024
 COMPILE_CACHE_TTL_SECONDS = 5 * 60
+FONT_WEIGHT_ORDER = {
+	"thin": 100,
+	"extralight": 200,
+	"light": 300,
+	"regular": 400,
+	"medium": 500,
+	"semibold": 600,
+	"bold": 700,
+	"extrabold": 800,
+	"black": 900,
+}
+FONT_STYLE_ORDER = {"normal": 0, "italic": 1, "oblique": 2}
+FONT_WEIGHT_ALIASES = {
+	"hairline": "thin",
+	"thin": "thin",
+	"extralight": "extralight",
+	"extra light": "extralight",
+	"ultralight": "extralight",
+	"ultra light": "extralight",
+	"light": "light",
+	"book": "regular",
+	"normal": "regular",
+	"regular": "regular",
+	"roman": "regular",
+	"medium": "medium",
+	"semibold": "semibold",
+	"semi bold": "semibold",
+	"demibold": "semibold",
+	"demi bold": "semibold",
+	"bold": "bold",
+	"extrabold": "extrabold",
+	"extra bold": "extrabold",
+	"ultrabold": "extrabold",
+	"ultra bold": "extrabold",
+	"black": "black",
+	"heavy": "black",
+}
 PDF_STANDARD_LABELS = {
 	"PDF 1.7": "1.7",
 	"PDF 2.0": "2.0",
@@ -72,6 +109,7 @@ IMAGE_EXTENSIONS = {
 }
 _IMAGE_SUFFIX_RE = re.compile(r"\.([A-Za-z0-9]+)(?:[#?].*)?$")
 _TYPST_IMAGE_LITERAL_RE = re.compile(r'image\(\s*"([^"\n]+)"')
+_CRISPY_IMAGE_LITERAL_RE = re.compile(r'crispy_image\(\s*"([^"\n]+)"')
 _TYPST_FILE_NOT_FOUND_RE = re.compile(r"file not found \(searched at ([^)]+)\)")
 QR_ERROR_CORRECTION_MAP = {
 	"l": "l",
@@ -287,6 +325,41 @@ def _reject_path_traversal(clean_path: str, label: str) -> None:
 		frappe.throw(_("{0} path traversal is not allowed: {1}").format(label, clean_path))
 
 
+def _current_site_name() -> str:
+	return str(getattr(frappe.local, "site", "") or "").strip()
+
+
+def _private_asset_url(filename: str) -> str:
+	return f"/assets/{_current_site_name()}/private/files/{filename}"
+
+
+def _validate_crispy_private_image_filename(filename: str, label: str = "Crispy image") -> str:
+	raw = str(filename or "").strip()
+	if not raw:
+		frappe.throw(_("{0} filename is required.").format(label))
+	if "/" in raw or "\\" in raw or raw != Path(raw).name:
+		frappe.throw(_("{0} must be a filename only: {1}").format(label, raw))
+	if ".." in Path(raw).parts or ".." in raw:
+		frappe.throw(_("{0} path traversal is not allowed: {1}").format(label, raw))
+	if _is_external_asset_path(raw) or Path(raw).is_absolute():
+		frappe.throw(_("{0} must be a private file filename only: {1}").format(label, raw))
+	if not _is_image_asset_value(raw):
+		frappe.throw(_("{0} has an unsupported image extension: {1}").format(label, raw))
+	return raw
+
+
+def _resolve_private_asset_filename(filename: str, label: str) -> Path:
+	clean_filename = _validate_crispy_private_image_filename(filename, label)
+	source_path = Path(frappe.get_site_path("private", "files", clean_filename))
+	if source_path.is_symlink():
+		frappe.throw(_("{0} cannot be a symlink: {1}").format(label, clean_filename))
+	resolved = source_path.resolve()
+	allowed_root = Path(frappe.get_site_path("private", "files")).resolve()
+	if not _is_relative_to(resolved, allowed_root) or not resolved.exists() or not resolved.is_file():
+		frappe.throw(_("{0} not found: {1}").format(label, clean_filename))
+	return resolved
+
+
 def _safe_output_filename(output_filename: str | None) -> str:
 	if not output_filename:
 		return f"crispy_{frappe.generate_hash()}.pdf"
@@ -365,6 +438,27 @@ def _normalize_typst_image_literals(typst_source: str) -> tuple[str, list[str]]:
 	return _TYPST_IMAGE_LITERAL_RE.sub(repl, typst_source), collected
 
 
+def _extract_crispy_image_assets(typst_source: str) -> list[str]:
+	assets: list[str] = []
+	seen: set[str] = set()
+	for match in _CRISPY_IMAGE_LITERAL_RE.finditer(typst_source or ""):
+		filename = _validate_crispy_private_image_filename(match.group(1), "Crispy image")
+		asset = _private_asset_url(filename)
+		if asset in seen:
+			continue
+		seen.add(asset)
+		assets.append(asset)
+	return assets
+
+
+def _ensure_crispy_image_helper(typst_source: str) -> str:
+	if "crispy_image(" not in (typst_source or ""):
+		return typst_source
+	if "#let crispy_image" in typst_source:
+		return typst_source
+	return "#let crispy_image(filename, ..args) = image(filename, ..args)\n\n" + typst_source
+
+
 def _extract_missing_image_basenames(error_msg: str) -> list[str]:
 	"""Extract missing image basenames from Typst file-not-found errors."""
 	if not error_msg:
@@ -384,6 +478,230 @@ def _extract_missing_image_basenames(error_msg: str) -> list[str]:
 	return names
 
 
+def _normalize_font_style(value: str) -> str:
+	normalized = value.strip().lower()
+	if "oblique" in normalized:
+		return "oblique"
+	if "italic" in normalized:
+		return "italic"
+	return "normal"
+
+
+def _normalize_font_weight(value: str) -> str:
+	normalized = re.sub(r"[_-]+", " ", value.strip().lower())
+	normalized = re.sub(r"\s+", " ", normalized)
+	candidates = [
+		normalized.replace(" italic", "").replace(" oblique", "").strip(),
+		normalized,
+	]
+	for candidate in candidates:
+		if candidate in FONT_WEIGHT_ALIASES:
+			return FONT_WEIGHT_ALIASES[candidate]
+	for name in sorted(FONT_WEIGHT_ALIASES, key=len, reverse=True):
+		if re.search(rf"\b{re.escape(name)}\b", normalized):
+			return FONT_WEIGHT_ALIASES[name]
+	return "regular"
+
+
+def _font_face_from_label(label: str) -> dict[str, str]:
+	clean_label = label.strip() or "Regular"
+	return {
+		"label": clean_label,
+		"style": _normalize_font_style(clean_label),
+		"weight": _normalize_font_weight(clean_label),
+	}
+
+
+def _font_family_key(family: str) -> str:
+	return re.sub(r"[^a-z0-9]+", "", family.strip().lower())
+
+
+def _resolve_font_family_name(existing_families: list[str], family: str) -> str:
+	clean_family = family.strip()
+	if not clean_family:
+		return ""
+	key = _font_family_key(clean_family)
+	for existing in existing_families:
+		if _font_family_key(existing) == key:
+			return existing
+	return clean_family
+
+
+def _add_font_family_name(families: dict[str, str], family: str) -> None:
+	clean_family = family.strip()
+	if not clean_family:
+		return
+	key = _font_family_key(clean_family)
+	if key not in families:
+		families[key] = clean_family
+
+
+def _font_family_from_filename(font_path: Path) -> str:
+	font_name = font_path.stem
+	for suffix in [
+		"-ExtraBoldItalic",
+		"ExtraBoldItalic",
+		"-SemiBoldItalic",
+		"SemiBoldItalic",
+		"-BoldItalic",
+		"BoldItalic",
+		"-ExtraLightItalic",
+		"ExtraLightItalic",
+		"-LightItalic",
+		"LightItalic",
+		"-MediumItalic",
+		"MediumItalic",
+		"-BlackItalic",
+		"BlackItalic",
+		"-RegularItalic",
+		"RegularItalic",
+		"-Italic",
+		"Italic",
+		"-ExtraBold",
+		"ExtraBold",
+		"-SemiBold",
+		"SemiBold",
+		"-ExtraLight",
+		"ExtraLight",
+		"-Regular",
+		"Regular",
+		"-Medium",
+		"Medium",
+		"-Light",
+		"Light",
+		"-Black",
+		"Black",
+		"-Bold",
+		"Bold",
+	]:
+		if font_name.endswith(suffix) and len(font_name) > len(suffix):
+			return font_name[: -len(suffix)]
+	return font_name
+
+
+def _font_face_label_from_filename(font_path: Path) -> str:
+	family = _font_family_from_filename(font_path)
+	label = font_path.stem[len(family) :].lstrip("-_ ")
+	return label or "Regular"
+
+
+def _empty_font_family_faces(family: str) -> dict[str, object]:
+	return {"family": family, "faces": [], "styles": [], "weights": []}
+
+
+def _add_font_face(families: dict[str, dict[str, object]], family: str, face: dict[str, str]) -> None:
+	clean_family = _resolve_font_family_name(list(families), family)
+	if not clean_family:
+		return
+	record = families.setdefault(clean_family, _empty_font_family_faces(clean_family))
+	faces = record["faces"]
+	if not isinstance(faces, list):
+		return
+	key = (face["style"], face["weight"])
+	if any((existing.get("style"), existing.get("weight")) == key for existing in faces):
+		return
+	faces.append(face)
+
+
+def _parse_typst_font_faces(stdout: str) -> list[dict[str, object]]:
+	families: dict[str, dict[str, object]] = {}
+	for raw_line in stdout.splitlines():
+		line = raw_line.strip()
+		if not line:
+			continue
+		if "(" in line and line.endswith(")"):
+			family, face_list = line.split("(", 1)
+			for face_label in face_list[:-1].split(","):
+				_add_font_face(families, family, _font_face_from_label(face_label))
+		else:
+			_add_font_face(families, line, _font_face_from_label("Regular"))
+	return _finalize_font_faces(families)
+
+
+def _finalize_font_faces(families: dict[str, dict[str, object]]) -> list[dict[str, object]]:
+	result = []
+	for family in sorted(families):
+		record = families[family]
+		faces = record["faces"]
+		if not isinstance(faces, list):
+			continue
+		faces.sort(
+			key=lambda face: (
+				FONT_WEIGHT_ORDER.get(str(face.get("weight", "")), 400),
+				str(face.get("style", "")),
+				str(face.get("label", "")),
+			)
+		)
+		styles = sorted(
+			{str(face.get("style")) for face in faces if face.get("style")},
+			key=lambda style: FONT_STYLE_ORDER.get(style, 99),
+		)
+		weights = sorted(
+			{str(face.get("weight")) for face in faces if face.get("weight")},
+			key=lambda weight: FONT_WEIGHT_ORDER.get(weight, 400),
+		)
+		result.append({"family": family, "faces": faces, "styles": styles, "weights": weights})
+	return result
+
+
+def _add_font_file_faces(families: dict[str, dict[str, object]]) -> None:
+	for font_dir in _typst_font_dirs():
+		for font_file in [
+			*font_dir.rglob("*.ttf"),
+			*font_dir.rglob("*.otf"),
+			*font_dir.rglob("*.ttc"),
+			*font_dir.rglob("*.woff"),
+			*font_dir.rglob("*.woff2"),
+		]:
+			_add_font_face(
+				families,
+				_font_family_from_filename(font_file),
+				_font_face_from_label(_font_face_label_from_filename(font_file)),
+			)
+
+
+def get_typst_font_faces() -> list[dict[str, object]]:
+	"""Returns Typst font families with the styles and weights Typst can resolve."""
+	ensure_compile_typst_permission()
+	enforce_rate_limit("typst_font_faces", limit=20, window_seconds=60)
+
+	cache_key = "crispy_print:typst_font_faces:v2"
+	cached_faces = frappe.cache().get_value(cache_key, expires=True)
+	if isinstance(cached_faces, list):
+		return cached_faces
+
+	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
+	try:
+		font_path = _typst_font_path_arg()
+		command = [typst_bin, "fonts"]
+		if font_path:
+			command.extend(["--font-path", font_path])
+		if should_ignore_system_fonts():
+			command.append("--ignore-system-fonts")
+		result = subprocess.run(
+			command,
+			capture_output=True,
+			text=True,
+			check=True,
+			timeout=get_render_timeout_seconds(),
+			env=_minimal_subprocess_env(),
+			start_new_session=True,
+		)
+	except Exception as e:
+		frappe.throw(f"Error running typst fonts: {e}")
+
+	families: dict[str, dict[str, object]] = {}
+	for record in _parse_typst_font_faces(result.stdout):
+		family = str(record.get("family") or "")
+		for face in record.get("faces") or []:
+			if isinstance(face, dict):
+				_add_font_face(families, family, face)
+	_add_font_file_faces(families)
+	font_faces = _finalize_font_faces(families)
+	frappe.cache().set_value(cache_key, font_faces, expires_in_sec=5 * 60)
+	return font_faces
+
+
 def get_typst_local_fonts() -> list[str]:
 	"""
 	Returns a list of font family names accessible by Typst CLI.
@@ -399,7 +717,7 @@ def get_typst_local_fonts() -> list[str]:
 	ensure_compile_typst_permission()
 	enforce_rate_limit("typst_fonts", limit=20, window_seconds=60)
 
-	cache_key = "crispy_print:typst_local_fonts:v3"
+	cache_key = "crispy_print:typst_local_fonts:v4"
 	cached_fonts = frappe.cache().get_value(cache_key, expires=True)
 	if isinstance(cached_fonts, list):
 		return cached_fonts
@@ -425,7 +743,7 @@ def get_typst_local_fonts() -> list[str]:
 	except Exception as e:
 		frappe.throw(f"Error running typst fonts: {e}")
 
-	fonts = []
+	fonts: dict[str, str] = {}
 	for line in result.stdout.splitlines():
 		line = line.strip()
 		if not line:
@@ -438,29 +756,25 @@ def get_typst_local_fonts() -> list[str]:
 		else:
 			family = line
 
-		fonts.append(family)
+		_add_font_family_name(fonts, family)
 
 	# Add app-bundled and site-private fonts by filename as a fallback.
 	for font_dir in _typst_font_dirs():
 		for font_file in [
 			*font_dir.rglob("*.ttf"),
 			*font_dir.rglob("*.otf"),
+			*font_dir.rglob("*.ttc"),
 			*font_dir.rglob("*.woff"),
 			*font_dir.rglob("*.woff2"),
 		]:
-			# Extract font family name from filename (basic approach)
-			font_name = font_file.stem
-			# Remove common suffixes like -Regular, -Bold, etc.
-			for suffix in ["-Regular", "-Bold", "-Italic", "-BoldItalic", "-Light", "-Medium", "-Black"]:
-				if font_name.endswith(suffix):
-					font_name = font_name[: -len(suffix)]
-					break
-			fonts.append(font_name)
+			fallback_family = _font_family_from_filename(font_file)
+			canonical_family = _resolve_font_family_name(list(fonts.values()), fallback_family)
+			_add_font_family_name(fonts, canonical_family)
 
 	# Deduplicate and sort
-	fonts = sorted(list(set(fonts)))
-	frappe.cache().set_value(cache_key, fonts, expires_in_sec=5 * 60)
-	return fonts
+	font_list = sorted(fonts.values())
+	frappe.cache().set_value(cache_key, font_list, expires_in_sec=5 * 60)
+	return font_list
 
 
 def _resolve_source_path(file_path: str, label: str) -> Path:
@@ -469,6 +783,11 @@ def _resolve_source_path(file_path: str, label: str) -> Path:
 	_reject_path_traversal(clean_path, label)
 
 	site_path = Path(frappe.get_site_path())
+	site_name = _current_site_name()
+	private_asset_prefix = f"/assets/{site_name}/private/files/"
+	if site_name and clean_path.startswith(private_asset_prefix):
+		filename = clean_path[len(private_asset_prefix) :]
+		return _resolve_private_asset_filename(filename, label)
 
 	# Handle Frappe file paths (/files/... or /private/files/...) and relative variants
 	if (
@@ -821,9 +1140,13 @@ def compile_typst(
 	if kwargs:
 		frappe.throw(_("Unsupported compile_typst params: {0}").format(", ".join(sorted(kwargs.keys()))))
 
+	typst_source = _ensure_crispy_image_helper(typst_source)
+	crispy_image_asset_files = _extract_crispy_image_assets(typst_source)
 	typst_source, literal_asset_files = _normalize_typst_image_literals(typst_source)
 	normalized_assets = _normalize_asset_files(asset_files)
-	combined_assets = _normalize_asset_files([*normalized_assets, *literal_asset_files])
+	combined_assets = _normalize_asset_files(
+		[*normalized_assets, *literal_asset_files, *crispy_image_asset_files]
+	)
 	normalized_barcode_options = _normalize_barcode_options(barcode_options)
 	uses_zebra_barcode = (
 		"@local/crispy-print" in typst_source

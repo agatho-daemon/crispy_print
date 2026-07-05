@@ -10,7 +10,7 @@ frappe.ui.form.on("Crispy Print Settings", {
 		const uploader = new frappe.ui.FileUploader({
 			folder: "Home/Attachments",
 			restrictions: {
-				allowed_file_types: [".ttf", ".otf", ".woff", ".woff2"],
+				allowed_file_types: [".ttf", ".otf", ".ttc", ".woff", ".woff2"],
 				max_file_size: 25 * 1024 * 1024,
 			},
 			on_success(file_doc) {

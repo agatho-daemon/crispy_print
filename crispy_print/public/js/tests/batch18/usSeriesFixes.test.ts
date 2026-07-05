@@ -352,14 +352,10 @@ describe("US3 + US7 + US4 + US8 + US14: useStore behavior", () => {
 		expect(store.layout.value?.sections.length).toBe(1)
 	})
 
-	it("US14: assigning reportBuilderConfig into presentation_settings.report is shallow-copied", async () => {
+	it("US14: updateReportBuilderConfig shallow-copies into presentation_settings.report", async () => {
 		const { useStore } = await import("../../composables/useStore")
 		const store = useStore()
-		// Trigger the watch by mutating reportBuilderConfig.
-		store.reportBuilderConfig.value.font_family = "Times New Roman"
-		// Flush the deep watcher.
-		await Promise.resolve()
-		await Promise.resolve()
+		store.updateReportBuilderConfig({ font_family: "Times New Roman" })
 
 		// presentation_settings.value.report must be a distinct object reference.
 		expect(store.presentation_settings.value.report).not.toBe(

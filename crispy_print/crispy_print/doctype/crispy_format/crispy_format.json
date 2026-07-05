@@ -1,270 +1,274 @@
 {
- "actions": [],
- "allow_rename": 1,
- "autoname": "prompt",
- "creation": "2026-06-03 07:13:11.166951",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "company",
-  "crispy_format_type",
-  "raw_typst",
-  "is_generic",
-  "is_advanced",
-  "report",
-  "column_break_gqub",
-  "doc_type",
-  "contract",
-  "generic_report_type",
-  "module",
-  "is_default",
-  "output_settings_section",
-  "default_print_language",
-  "pdf_standard",
-  "print_behavior_section",
-  "compact_item_print",
-  "print_uom_after_quantity",
-  "print_taxes_with_zero_amount",
-  "typst_code_section",
-  "typst_preamble",
-  "doc_header",
-  "doc_footer",
-  "typst_code",
-  "typst_help",
-  "presentation_settings",
-  "layout_json"
- ],
- "fields": [
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1
-  },
-  {
-   "default": "DocType",
-   "fieldname": "crispy_format_type",
-   "fieldtype": "Select",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Type",
-   "options": "DocType\nReport\nContract"
-  },
-  {
-   "fieldname": "column_break_gqub",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "module",
-   "fieldtype": "Link",
-   "label": "Module",
-   "options": "Module Def"
-  },
-  {
-   "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
-   "fieldname": "doc_type",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "DocType",
-   "mandatory_depends_on": "eval:doc.crispy_format_type == \"DocType\"",
-   "options": "DocType"
-  },
-  {
-   "depends_on": "eval:doc.crispy_format_type == \"Contract\"",
-   "fieldname": "contract",
-   "fieldtype": "Data",
-   "label": "Contract",
-   "mandatory_depends_on": "eval:doc.crispy_format_type == \"Contract\""
-  },
-  {
-   "fieldname": "output_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Output Settings"
-  },
-  {
-   "fieldname": "default_print_language",
-   "fieldtype": "Link",
-   "label": "Default Print Language",
-   "options": "Language"
-  },
-  {
-   "default": "PDF/A-2u",
-   "description": "PDF output standard:\n<ul>\n  <li>PDF/A-2u for normal business archives</li>\n  <li>PDF/A-3u when embedding machine-readable payloads such as XML or JSON</li>\n  <li>PDF 1.7 for non-archival output (Typst default)</li>\n  <li>PDF 2.0 for modern non-archival output where supported</li>\n  <li>PDF/A-4 where accepted by the relevant authority</li>\n</ul>\n<span style=\"color: var(--orange-600);\">\n  Note: PDF/A output embeds fonts, so selected fonts must permit PDF embedding/subsetting.\n</span>",
-   "fieldname": "pdf_standard",
-   "fieldtype": "Select",
-   "label": "PDF Standard",
-   "options": "PDF 1.7\nPDF 2.0\nPDF/A-2u\nPDF/A-3u\nPDF/A-4"
-  },
-  {
-   "fieldname": "print_behavior_section",
-   "fieldtype": "Section Break",
-   "label": "Print Behavior"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
-   "fieldname": "compact_item_print",
-   "fieldtype": "Check",
-   "label": "Compact Item Print"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
-   "fieldname": "print_uom_after_quantity",
-   "fieldtype": "Check",
-   "label": "Print UOM after Quantity"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
-   "fieldname": "print_taxes_with_zero_amount",
-   "fieldtype": "Check",
-   "label": "Print Taxes with Zero Amount"
-  },
-  {
-   "default": "#set text(font: \"Inter 18pt\", size: 11pt)\n#set table(\n  stroke: 0.25pt,\n  inset: 8pt,\n)\n#set grid(\n  inset: 8pt,\n)",
-   "description": "See Typst Help below for examples and usage.",
-   "fieldname": "typst_preamble",
-   "fieldtype": "Code",
-   "label": "Typst Preamble"
-  },
-  {
-   "fieldname": "typst_code_section",
-   "fieldtype": "Section Break",
-   "label": "Typst Code"
-  },
-  {
-   "fieldname": "layout_json",
-   "fieldtype": "Code",
-   "hidden": 1,
-   "label": "Layout JSON"
-  },
-  {
-   "fieldname": "presentation_settings",
-   "fieldtype": "Code",
-   "hidden": 1,
-   "label": "Presentation Settings"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_default",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Default",
-   "no_copy": 1
-  },
-  {
-   "description": "See Typst Help below for examples and usage.",
-   "fieldname": "doc_header",
-   "fieldtype": "Code",
-   "label": "Document Header"
-  },
-  {
-   "depends_on": "eval:doc.raw_typst",
-   "fieldname": "typst_code",
-   "fieldtype": "Code",
-   "label": "Typst Code",
-   "mandatory_depends_on": "eval:doc.raw_typst"
-  },
-  {
-   "default": "#let footer_block = align(right + horizon)[\n  #set text(size: 8pt)\n  #context counter(page).display(\"1 of 1\", both: true)\n]",
-   "description": "See Typst Help below for examples and usage.",
-   "fieldname": "doc_footer",
-   "fieldtype": "Code",
-   "label": "Document Footer"
-  },
-  {
-   "default": "0",
-   "description": "Write Typst code directly (automatically enabled for generic templates)",
-   "fieldname": "raw_typst",
-   "fieldtype": "Check",
-   "label": "Raw Typst"
-  },
-  {
-   "fieldname": "typst_help",
-   "fieldtype": "HTML",
-   "label": "Typst Help",
-   "options": "<div style=\"line-height:1.5;\">\n  <h4 style=\"margin:0 0 10px;\">Typst Help</h4>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>How Styling Works</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>\n        <code>fieldLabelStyle</code>, <code>fieldValueStyle</code>, and <code>sectionLabelStyle</code>  \n        are configured in the Builder and automatically inserted <strong>before</strong> the <code>typst_preamble</code>.\n      </li>\n      <li>\n        <code>typst_preamble</code> runs before any document content and can override all global styles <strong>including above fields</strong>.\n      </li>\n      <li>\n        <code>doc_header</code> defines <code>header_block</code>, which is used in  \n        <code>#set page(header: header_block)</code>.\n      </li>\n      <li>\n        <code>doc_footer</code> defines <code>footer_block</code>, which is used in  \n        <code>#set page(footer: footer_block)</code>.\n      </li>\n      <li>\n        All style and layout logic should be placed in the preamble or header/footer blocks,  \n        while the body focuses only on document data rendering.\n      </li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Quick Examples</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Preamble: <code>#set text(font: \"Inter 18pt\", size: 11pt)</code></li>\n      <li>Header: <code>#let header_block = [#text(weight: 700)[#doc.doctype]]</code></li>\n      <li>Footer: <code>#let footer_block = [#text(size: 8pt)[#doc.name]]</code></li>\n    </ol>\n  </div>\n\n  <div>\n    <strong>Branding Layers</strong>\n    <div style=\"margin-top:4px;\">\n      The letterhead is rendered in the page <code>background</code>, while the logo and QR code are rendered in the <code>foreground</code> layer.\n    </div>\n  </div>\n</div>"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:doc.crispy_format_type == \"Report\"",
-   "description": "Use this format as the default template for all <strong>reports</strong> without custom formats",
-   "fieldname": "is_generic",
-   "fieldtype": "Check",
-   "label": "Generic Report"
-  },
-  {
-   "depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
-   "description": "Used only for generic fallback templates; ignored for linked/custom report formats.<br>Select a template type (Grid, Tree, Summary, etc.), or create a custom type.",
-   "fieldname": "generic_report_type",
-   "fieldtype": "Link",
-   "label": "Generic Template Type",
-   "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
-   "options": "Crispy Generic Report"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:doc.crispy_format_type=='Report'",
-   "description": "Enable raw Typst editing for report format.",
-   "fieldname": "is_advanced",
-   "fieldtype": "Check",
-   "label": "Advanced"
-  },
-  {
-   "depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
-   "fieldname": "report",
-   "fieldtype": "Table",
-   "label": "Report",
-   "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
-   "options": "Crispy Format Reports"
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-06-03 07:21:07.147442",
- "modified_by": "Administrator",
- "module": "Crispy Print",
- "name": "Crispy Format",
- "naming_rule": "Set by user",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Desk User",
-   "select": 1,
-   "share": 1
-  }
- ],
- "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "track_changes": 1
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "prompt",
+  "creation": "2026-06-03 07:13:11.166951",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "company",
+    "crispy_format_type",
+    "raw_typst",
+    "is_generic",
+    "is_advanced",
+    "report",
+    "column_break_gqub",
+    "doc_type",
+    "contract",
+    "generic_report_type",
+    "module",
+    "is_default",
+    "output_settings_section",
+    "default_print_language",
+    "pdf_standard",
+    "print_behavior_section",
+    "compact_item_print",
+    "print_uom_after_quantity",
+    "print_taxes_with_zero_amount",
+    "typst_code_section",
+    "typst_preamble",
+    "doc_header",
+    "doc_footer",
+    "typst_code",
+    "typst_help",
+    "presentation_settings",
+    "layout_json"
+  ],
+  "fields": [
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Company",
+      "options": "Company",
+      "reqd": 1
+    },
+    {
+      "default": "DocType",
+      "fieldname": "crispy_format_type",
+      "fieldtype": "Select",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Type",
+      "options": "DocType\nReport\nContract"
+    },
+    {
+      "fieldname": "column_break_gqub",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "module",
+      "fieldtype": "Link",
+      "label": "Module",
+      "options": "Module Def"
+    },
+    {
+      "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+      "fieldname": "doc_type",
+      "fieldtype": "Link",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "DocType",
+      "mandatory_depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+      "options": "DocType"
+    },
+    {
+      "depends_on": "eval:doc.crispy_format_type == \"Contract\"",
+      "fieldname": "contract",
+      "fieldtype": "Data",
+      "label": "Contract",
+      "mandatory_depends_on": "eval:doc.crispy_format_type == \"Contract\""
+    },
+    {
+      "fieldname": "output_settings_section",
+      "fieldtype": "Section Break",
+      "label": "Output Settings"
+    },
+    {
+      "fieldname": "default_print_language",
+      "fieldtype": "Link",
+      "label": "Default Print Language",
+      "options": "Language"
+    },
+    {
+      "default": "PDF/A-2u",
+      "description": "PDF output standard:\n<ul>\n  <li>PDF/A-2u for normal business archives</li>\n  <li>PDF/A-3u when embedding machine-readable payloads such as XML or JSON</li>\n  <li>PDF 1.7 for non-archival output (Typst default)</li>\n  <li>PDF 2.0 for modern non-archival output where supported</li>\n  <li>PDF/A-4 where accepted by the relevant authority</li>\n</ul>\n<span style=\"color: var(--orange-600);\">\n  Note: PDF/A output embeds fonts, so selected fonts must permit PDF embedding/subsetting.\n</span>",
+      "fieldname": "pdf_standard",
+      "fieldtype": "Select",
+      "label": "PDF Standard",
+      "options": "PDF 1.7\nPDF 2.0\nPDF/A-2u\nPDF/A-3u\nPDF/A-4"
+    },
+    {
+      "depends_on": "eval:!doc.raw_typst",
+      "fieldname": "print_behavior_section",
+      "fieldtype": "Section Break",
+      "label": "Print Behavior"
+    },
+    {
+      "default": "0",
+      "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+      "fieldname": "compact_item_print",
+      "fieldtype": "Check",
+      "label": "Compact Item Print"
+    },
+    {
+      "default": "0",
+      "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+      "fieldname": "print_uom_after_quantity",
+      "fieldtype": "Check",
+      "label": "Print UOM after Quantity"
+    },
+    {
+      "default": "0",
+      "depends_on": "eval:doc.crispy_format_type == \"DocType\"",
+      "fieldname": "print_taxes_with_zero_amount",
+      "fieldtype": "Check",
+      "label": "Print Taxes with Zero Amount"
+    },
+    {
+      "default": "#set text(font: \"Inter\", size: 11pt)\n#set table(\n  stroke: 0.25pt,\n  inset: 8pt,\n)\n#set grid(\n  inset: 8pt,\n)",
+      "depends_on": "eval:!doc.raw_typst",
+      "description": "See Typst Help below for examples and usage.",
+      "fieldname": "typst_preamble",
+      "fieldtype": "Code",
+      "label": "Typst Preamble"
+    },
+    {
+      "fieldname": "typst_code_section",
+      "fieldtype": "Section Break",
+      "label": "Typst Code"
+    },
+    {
+      "fieldname": "layout_json",
+      "fieldtype": "Code",
+      "hidden": 1,
+      "label": "Layout JSON"
+    },
+    {
+      "fieldname": "presentation_settings",
+      "fieldtype": "Code",
+      "hidden": 1,
+      "label": "Presentation Settings"
+    },
+    {
+      "default": "0",
+      "fieldname": "is_default",
+      "fieldtype": "Check",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Default",
+      "no_copy": 1
+    },
+    {
+      "depends_on": "eval:!doc.raw_typst",
+      "description": "See Typst Help below for examples and usage.",
+      "fieldname": "doc_header",
+      "fieldtype": "Code",
+      "label": "Document Header"
+    },
+    {
+      "depends_on": "eval:doc.raw_typst",
+      "fieldname": "typst_code",
+      "fieldtype": "Code",
+      "label": "Typst Code",
+      "mandatory_depends_on": "eval:doc.raw_typst"
+    },
+    {
+      "default": "#let footer_block = align(right + horizon)[\n  #set text(size: 8pt)\n  #context counter(page).display(\"1 of 1\", both: true)\n]",
+      "depends_on": "eval:!doc.raw_typst",
+      "description": "See Typst Help below for examples and usage.",
+      "fieldname": "doc_footer",
+      "fieldtype": "Code",
+      "label": "Document Footer"
+    },
+    {
+      "default": "0",
+      "description": "Write Typst code directly (automatically enabled for generic templates)",
+      "fieldname": "raw_typst",
+      "fieldtype": "Check",
+      "label": "Raw Typst"
+    },
+    {
+      "fieldname": "typst_help",
+      "fieldtype": "HTML",
+      "label": "Typst Help",
+      "options": "<div style=\"line-height:1.5;\">\n  <h4 style=\"margin:0 0 10px;\">Typst Help</h4>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>How Styling Works</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>\n        In normal builder mode, <code>fieldLabelStyle</code>, <code>fieldValueStyle</code>, and <code>sectionLabelStyle</code> are configured in the Builder and automatically inserted before <code>typst_preamble</code>.\n      </li>\n      <li>\n        <code>typst_preamble</code> runs before document content and can override global styles.\n      </li>\n      <li>\n        <code>doc_header</code> defines <code>header_block</code>, and <code>doc_footer</code> defines <code>footer_block</code> for page header/footer setup.\n      </li>\n      <li>\n        In Raw Typst mode, Crispy only injects document data and helper functions. Page setup, styling, header, footer, and layout belong in the Raw Typst code.\n      </li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Raw Typst Helpers</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Document data is available as <code>#doc.fieldname</code>.</li>\n      <li>Use <code>crispy_image(\"logo.svg\", width: 20mm)</code> and <code>crispy_block(\"document_title-v1.0\")</code> inside function arguments or other Typst expression contexts.</li>\n      <li>When calling a helper directly from markup, add Typst's markup escape: <code>#crispy_image(\"logo.svg\", width: 20mm)</code> or <code>#crispy_block(\"document_title-v1.0\")</code>.</li>\n      <li><code>crispy_image</code> resolves plain filenames only from the current site's private files assets.</li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Quick Examples</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Preamble: <code>#set text(font: \"Inter\", size: 11pt)</code></li>\n      <li>Header: <code>#let header_block = [#text(weight: 700)[#doc.doctype]]</code></li>\n      <li>Footer: <code>#let footer_block = [#text(size: 8pt)[#doc.name]]</code></li>\n      <li>Raw placement: <code>#place(top + left, crispy_image(\"logo.svg\", width: 20mm))</code></li>\n    </ol>\n  </div>\n\n  <div>\n    <strong>Branding Layers</strong>\n    <div style=\"margin-top:4px;\">\n      In normal builder mode, the letterhead is rendered in the page <code>background</code>, while the logo and QR code are rendered in the <code>foreground</code> layer.\n    </div>\n  </div>\n</div>"
+    },
+    {
+      "default": "0",
+      "depends_on": "eval:doc.crispy_format_type == \"Report\"",
+      "description": "Use this format as the default template for all <strong>reports</strong> without custom formats",
+      "fieldname": "is_generic",
+      "fieldtype": "Check",
+      "label": "Generic Report"
+    },
+    {
+      "depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
+      "description": "Used only for generic fallback templates; ignored for linked/custom report formats.<br>Select a template type (Grid, Tree, Summary, etc.), or create a custom type.",
+      "fieldname": "generic_report_type",
+      "fieldtype": "Link",
+      "label": "Generic Template Type",
+      "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
+      "options": "Crispy Generic Report"
+    },
+    {
+      "default": "0",
+      "depends_on": "eval:doc.crispy_format_type=='Report'",
+      "description": "Enable raw Typst editing for report format.",
+      "fieldname": "is_advanced",
+      "fieldtype": "Check",
+      "label": "Advanced"
+    },
+    {
+      "depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
+      "fieldname": "report",
+      "fieldtype": "Table",
+      "label": "Report",
+      "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
+      "options": "Crispy Format Reports"
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "links": [],
+  "modified": "2026-06-03 07:21:07.147442",
+  "modified_by": "Administrator",
+  "module": "Crispy Print",
+  "name": "Crispy Format",
+  "naming_rule": "Set by user",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Desk User",
+      "select": 1,
+      "share": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "rows_threshold_for_grid_search": 20,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
 }

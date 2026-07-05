@@ -115,21 +115,21 @@ export interface PresentationSettings {
 
 export const defaultTypography: TypographySettings = {
   fieldLabel: {
-    fontFamily: "Inter 18pt",
+    fontFamily: "Inter",
     fontSize: "8pt",
     fontStyle: "normal",
     fontWeight: "semibold",
     color: "#64748b",
   },
   fieldValue: {
-    fontFamily: "Inter 18pt",
+    fontFamily: "Inter",
     fontSize: "10pt",
     fontStyle: "normal",
     fontWeight: "regular",
     color: "#0f172a",
   },
   sectionLabel: {
-    fontFamily: "Inter 18pt",
+    fontFamily: "Inter",
     fontSize: "14pt",
     fontStyle: "normal",
     fontWeight: "bold",
@@ -139,14 +139,14 @@ export const defaultTypography: TypographySettings = {
 
 export const defaultTableTypography: TableTypographySettings = {
   header: {
-    fontFamily: "Inter 18pt",
+    fontFamily: "Inter",
     fontSize: "9pt",
     fontStyle: "normal",
     fontWeight: "semibold",
     color: "#0f172a",
   },
   body: {
-    fontFamily: "Inter 18pt",
+    fontFamily: "Inter",
     fontSize: "9pt",
     fontStyle: "normal",
     fontWeight: "regular",
@@ -282,7 +282,14 @@ export function ensure_table_settings(
 export function ensure_qr_settings(settings: PresentationSettings): QrSettings {
   settings = ensure_presentation_shape(settings);
   if (!settings.qr) {
-    settings.qr = { dx: 0, dy: 0, size: 15, fields: [], enabled: false, sourceMode: "" };
+    settings.qr = {
+      dx: 0,
+      dy: 0,
+      size: 15,
+      fields: [],
+      enabled: false,
+      sourceMode: "",
+    };
   }
   if (!Array.isArray(settings.qr.fields)) {
     settings.qr.fields = [];
@@ -401,7 +408,8 @@ export function merge_presentation_settings(
       ...(base.qr || { dx: 0, dy: 0, size: 15, fields: [] }),
       ...(safeOverrides.qr || {}),
       sourceMode:
-        safeOverrides.qr?.sourceMode === undefined || safeOverrides.qr?.sourceMode === ""
+        safeOverrides.qr?.sourceMode === undefined ||
+        safeOverrides.qr?.sourceMode === ""
           ? base.qr?.sourceMode || ""
           : safeOverrides.qr?.sourceMode,
     },

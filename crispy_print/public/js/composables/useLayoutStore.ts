@@ -3,6 +3,7 @@ import { createDefaultLayout, createLayoutId } from "../utils/layout";
 import type { CrispyLayout, TableColumn } from "../utils/layout";
 import type { PresentationSettings } from "../utils/presentation_settings";
 import type { ReportBuilderConfig } from "../utils/reportBuilder";
+import type { MarkDirtyOptions } from "./useStore";
 
 const REPORT_TABLE_FIELDNAME = "data.table";
 
@@ -16,7 +17,7 @@ interface CreateLayoutStoreOptions {
   buildReportTableColumns: () => TableColumn[];
   getReportBlockColumns: (fieldname: string) => TableColumn[];
   computeColumnsSignature: (columns: TableColumn[] | undefined | null) => string;
-  markDirty: () => void;
+  markDirty: (options?: MarkDirtyOptions) => void;
 }
 
 export function createLayoutStore(options: CreateLayoutStoreOptions) {
@@ -82,7 +83,7 @@ export function createLayoutStore(options: CreateLayoutStoreOptions) {
 
     tableField.table_columns = newColumns;
     reportBuilderConfig.value.report_table_sync_signature = newSignature;
-    presentation_settings.value.report = reportBuilderConfig.value;
+    presentation_settings.value.report = { ...reportBuilderConfig.value };
     return true;
   }
 

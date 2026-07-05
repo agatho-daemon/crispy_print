@@ -404,7 +404,7 @@
 			:doc-type="props.doctype || null"
 			:doc-name="props.docname || null"
 			:presentation_settings="presentation_settings_computed"
-			:change-key="changeKey"
+			:preview-revision="previewRevision"
 			:watch-data-changes="true"
 			:issue-pdf-snapshot="recordIssuedDocumentSnapshot"
 		>
@@ -530,7 +530,7 @@ const lastReportChartSvg = ref<string>("");
 const lastReportAssetFiles = ref<string[]>([]);
 const availableFonts = ref<string[]>([]);
 const loadingFonts = ref(false);
-const reportFontFamily = ref("Inter 18pt");
+const reportFontFamily = ref("Inter");
 const reportFontSizePt = ref(10);
 
 function getPreviewCompany(): string | null {
@@ -638,7 +638,7 @@ const printBehavior = ref({
 });
 const removeQr = ref(false);
 const letterheadDoc = ref<any | null>(null);
-const changeKey = ref(0);
+const previewRevision = ref(0);
 const isReportTemplateExpanded = ref(true);
 const isBrandingExpanded = ref(false);
 const isPresentationSettingsExpanded = ref(false);
@@ -1009,7 +1009,7 @@ watch(
 		reportFontSizePt.value,
 	],
 	() => {
-		changeKey.value++;
+		previewRevision.value++;
 	},
 	{ deep: true }
 );

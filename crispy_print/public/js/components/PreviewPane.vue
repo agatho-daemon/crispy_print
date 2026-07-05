@@ -6,6 +6,7 @@
 		:doc-footer="store.docFooter.value"
 		:typst-preamble="store.typstPreamble.value"
 		:typst-code="store.typstCode.value"
+		:typst-blocks="store.typstBlocks?.value || []"
 		:pdf-standard="store.crispyFormat.value?.pdf_standard || 'PDF/A-2u'"
 		:raw-typst="store.rawTypst.value"
 		:print-behavior="{
@@ -22,7 +23,7 @@
 		:presentation_settings="
 			store.effective_presentation_settings?.value || store.presentation_settings.value
 		"
-		:change-key="store.changeKey.value"
+		:preview-revision="store.previewRevision.value"
 		:watch-data-changes="!isReportMode"
 		:zoom-mode="zoomMode"
 		:zoom-percent="zoomPercent"
@@ -155,7 +156,7 @@
 <script setup lang="ts">
 import PreviewRenderer from "./PreviewRenderer.vue";
 import { useStore } from "../composables/useStore";
-import { computed, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { getLogger } from "../logger";
 import { __ } from "../utils/i18n";
 
@@ -244,20 +245,31 @@ async function compileSelectedReport(reportName: string) {
 }
 
 function onRefreshClick() {
-	if (!isReportMode.value) return;
-	void compileSelectedReport("Style Preview");
+	if (isReportMode.value) {
+		void compileSelectedReport("Style Preview");
+		return;
+	}
+	store.requestPreviewRefresh?.();
 }
 
+function handleRefreshShortcut(event: KeyboardEvent) {
+	if (event.defaultPrevented) return;
+	if (event.key !== "Enter") return;
+	if (!event.metaKey && !event.ctrlKey) return;
+	event.preventDefault();
+	document.getElementById("typst-refresh")?.click();
+}
+
+onMounted(() => {
+	window.addEventListener("keydown", handleRefreshShortcut);
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener("keydown", handleRefreshShortcut);
+});
+
 watch(
-	() =>
-		[
-			isReportMode.value,
-			store.changeKey.value,
-			store.rawTypst.value,
-			store.reportBuilderConfig?.value?.show_filters,
-			store.reportBuilderConfig?.value?.show_summary,
-			store.reportBuilderConfig?.value?.include_total_row,
-		] as const,
+	() => [isReportMode.value, store.previewRevision.value] as const,
 	([reportMode]) => {
 		if (!reportMode) return;
 		void compileSelectedReport("Style Preview");

@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent, h } from "vue";
 import TableColumnsDialog from "../../components/TableColumnsDialog.vue";
 
@@ -24,6 +24,12 @@ const DraggableStub = defineComponent({
 });
 
 describe("TableColumnsDialog report columns source", () => {
+  beforeEach(() => {
+    (globalThis as any).frappe = {
+      show_alert: vi.fn(),
+    };
+  });
+
   it("uses availableColumns override for add-column options", async () => {
     const wrapper = mount(TableColumnsDialog, {
       props: {
@@ -57,5 +63,68 @@ describe("TableColumnsDialog report columns source", () => {
       fieldname?: string;
     }>;
     expect(payload[0]?.fieldname).toBe("account");
+  });
+
+  it("emits valid column width edits immediately", async () => {
+    const wrapper = mount(TableColumnsDialog, {
+      props: {
+        modelValue: [
+          {
+            fieldname: "qty",
+            label: "Quantity",
+            fieldtype: "Float",
+            width: "auto",
+            align: "right",
+          },
+        ],
+        doctype: "",
+      },
+      global: {
+        stubs: {
+          draggable: DraggableStub,
+        },
+      },
+    });
+
+    await wrapper.find(".table-dialog__width-input").setValue("1fr");
+
+    const emitted = wrapper.emitted("update:modelValue") || [];
+    const payload = (emitted[0]?.[0] || []) as Array<{ width?: string }>;
+    expect(payload[0]?.width).toBe("1fr");
+  });
+
+  it("shows invalid width alert without emitting invalid values", async () => {
+    vi.useFakeTimers();
+    const wrapper = mount(TableColumnsDialog, {
+      props: {
+        modelValue: [
+          {
+            fieldname: "qty",
+            label: "Quantity",
+            fieldtype: "Float",
+            width: "auto",
+            align: "right",
+          },
+        ],
+        doctype: "",
+      },
+      global: {
+        stubs: {
+          draggable: DraggableStub,
+        },
+      },
+    });
+
+    await wrapper.find(".table-dialog__width-input").setValue("1");
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    expect((globalThis as any).frappe.show_alert).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(200);
+
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    expect((globalThis as any).frappe.show_alert).toHaveBeenCalledWith(
+      expect.objectContaining({ indicator: "orange" }),
+    );
+    vi.useRealTimers();
   });
 });

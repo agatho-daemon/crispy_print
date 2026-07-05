@@ -11,7 +11,7 @@ const makeStore = (): Record<string, unknown> => ({
   reportBuilderFields: ref([]),
   reportBuilderConfig: ref({
     mode: "basic",
-    font_family: "Inter 18pt",
+    font_family: "Inter",
     show_filters: true,
     show_summary: true,
     include_total_row: true,

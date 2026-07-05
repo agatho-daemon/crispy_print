@@ -86,20 +86,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 
+import type { TypstFontFamilyFaces } from "../api/crispy";
 import type { TypographyStyle } from "../utils/presentation_settings";
 import { formatPt, parseSize } from "../utils/typstTypography";
 import { FONT_STYLE_OPTIONS, FONT_WEIGHT_OPTIONS } from "../utils/typographyOptions";
 import { __ } from "../utils/i18n";
 
 type Option = { value: string; label: string };
+type FontOption = typeof FONT_WEIGHT_OPTIONS[number] | typeof FONT_STYLE_OPTIONS[number];
+
+const FONT_WEIGHT_ORDER = [
+	"thin",
+	"extralight",
+	"light",
+	"regular",
+	"medium",
+	"semibold",
+	"bold",
+	"extrabold",
+	"black",
+];
 
 const props = withDefaults(
 	defineProps<{
 		modelValue: TypographyStyle;
 		title: string;
 		availableFonts?: string[];
+		fontFaces?: TypstFontFamilyFaces[];
 		variant?: "settings" | "cbp";
 		optionValueFormat?: "value" | "label";
 		familyLabel?: string;
@@ -110,6 +125,7 @@ const props = withDefaults(
 	}>(),
 	{
 		availableFonts: () => [],
+		fontFaces: () => [],
 		variant: "settings",
 		optionValueFormat: "value",
 		familyLabel: __("Family"),
@@ -124,8 +140,24 @@ const emit = defineEmits<{
 	"update:modelValue": [value: TypographyStyle];
 }>();
 
-const styleOptions = FONT_STYLE_OPTIONS;
-const weightOptions = FONT_WEIGHT_OPTIONS;
+const selectedFontFaces = computed(() =>
+	props.fontFaces.find((font) => font.family === props.modelValue.fontFamily)
+);
+
+const styleOptions = computed<Option[]>(() => {
+	const styles = selectedFontFaces.value?.styles?.filter(Boolean) || [];
+	if (!styles.length) return [...FONT_STYLE_OPTIONS];
+	return styles.map((style) => optionForValue(style, FONT_STYLE_OPTIONS));
+});
+
+const weightOptions = computed<Option[]>(() => {
+	const weights = selectedFontFaces.value?.weights?.filter(Boolean) || [];
+	if (!weights.length) return [...FONT_WEIGHT_OPTIONS];
+	return weights
+		.slice()
+		.sort((a, b) => weightRank(a) - weightRank(b))
+		.map((weight) => optionForValue(weight, FONT_WEIGHT_OPTIONS));
+});
 
 const fontSizePt = computed(() => Math.max(1, parseSize(props.modelValue.fontSize).value || 0));
 
@@ -133,7 +165,134 @@ function optionValue(option: Option) {
 	return props.optionValueFormat === "label" ? option.label : option.value;
 }
 
+function optionForValue(value: string, source: readonly FontOption[]): Option {
+	const match = source.find((option) => option.value === value);
+	return { value, label: match?.label || toLabel(value) };
+}
+
+function toLabel(value: string) {
+	return value
+		.split(/[\s_-]+/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(" ");
+}
+
+function normalizeOptionValue(value: unknown, options: readonly Option[]) {
+	const clean = String(value || "")
+		.trim()
+		.toLowerCase();
+	const match = options.find(
+		(option) => option.value.toLowerCase() === clean || option.label.toLowerCase() === clean
+	);
+	return match?.value || "";
+}
+
+function outputOptionValue(value: string, options: readonly Option[]) {
+	const option = options.find((candidate) => candidate.value === value);
+	if (!option) return value;
+	return optionValue(option);
+}
+
+function weightRank(weight: string) {
+	const index = FONT_WEIGHT_ORDER.indexOf(weight);
+	return index === -1 ? FONT_WEIGHT_ORDER.indexOf("regular") : index;
+}
+
+function closestWeight(currentValue: string, options: readonly Option[]) {
+	if (!options.length) return currentValue;
+	const currentRank = weightRank(currentValue || "regular");
+	return options
+		.slice()
+		.sort(
+			(a, b) =>
+				Math.abs(weightRank(a.value) - currentRank) -
+				Math.abs(weightRank(b.value) - currentRank)
+		)[0].value;
+}
+
+function firstPreferredStyle(options: readonly Option[]) {
+	return (
+		options.find((option) => option.value === "normal")?.value || options[0]?.value || "normal"
+	);
+}
+
+function normalizeModelValue(value: TypographyStyle) {
+	const nextStyleOptions = styleOptions.value;
+	const nextWeightOptions = weightOptions.value;
+	const currentStyle = normalizeOptionValue(value.fontStyle, nextStyleOptions);
+	const currentWeight = normalizeOptionValue(value.fontWeight, nextWeightOptions);
+	const fontStyle = currentStyle || firstPreferredStyle(nextStyleOptions);
+	const fontWeight =
+		currentWeight ||
+		closestWeight(
+			normalizeOptionValue(value.fontWeight, FONT_WEIGHT_OPTIONS),
+			nextWeightOptions
+		);
+	return {
+		fontStyle: outputOptionValue(fontStyle, nextStyleOptions),
+		fontWeight: outputOptionValue(fontWeight, nextWeightOptions),
+	};
+}
+
+watch(
+	() => [
+		props.modelValue.fontFamily,
+		props.modelValue.fontStyle,
+		props.modelValue.fontWeight,
+		styleOptions.value,
+		weightOptions.value,
+	],
+	() => {
+		if (!selectedFontFaces.value) return;
+		const normalized = normalizeModelValue(props.modelValue);
+		if (
+			normalized.fontStyle === props.modelValue.fontStyle &&
+			normalized.fontWeight === props.modelValue.fontWeight
+		) {
+			return;
+		}
+		emit("update:modelValue", {
+			...props.modelValue,
+			fontStyle: normalized.fontStyle,
+			fontWeight: normalized.fontWeight,
+		});
+	},
+	{ immediate: true }
+);
+
 function updateField<Key extends keyof TypographyStyle>(field: Key, value: TypographyStyle[Key]) {
+	if (field === "fontFamily") {
+		const nextValue = { ...props.modelValue, fontFamily: value as string };
+		const nextFamily = props.fontFaces.find((font) => font.family === nextValue.fontFamily);
+		if (nextFamily) {
+			const nextStyleOptions = nextFamily.styles?.length
+				? nextFamily.styles.map((style) => optionForValue(style, FONT_STYLE_OPTIONS))
+				: [...FONT_STYLE_OPTIONS];
+			const nextWeightOptions = nextFamily.weights?.length
+				? nextFamily.weights
+						.slice()
+						.sort((a, b) => weightRank(a) - weightRank(b))
+						.map((weight) => optionForValue(weight, FONT_WEIGHT_OPTIONS))
+				: [...FONT_WEIGHT_OPTIONS];
+			const currentStyle = normalizeOptionValue(nextValue.fontStyle, nextStyleOptions);
+			const currentWeight = normalizeOptionValue(nextValue.fontWeight, nextWeightOptions);
+			nextValue.fontStyle = outputOptionValue(
+				currentStyle || firstPreferredStyle(nextStyleOptions),
+				nextStyleOptions
+			);
+			nextValue.fontWeight = outputOptionValue(
+				currentWeight ||
+					closestWeight(
+						normalizeOptionValue(nextValue.fontWeight, FONT_WEIGHT_OPTIONS),
+						nextWeightOptions
+					),
+				nextWeightOptions
+			);
+		}
+		emit("update:modelValue", nextValue);
+		return;
+	}
 	emit("update:modelValue", {
 		...props.modelValue,
 		[field]: value,
