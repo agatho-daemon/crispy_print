@@ -117,9 +117,9 @@ crispy_print/
 
 **Frappe Print Engine adapter:**
 
-- **`crispy_print_engine.js`** registers `crispy_print` with `frappe.ui.form.register_print_engine` when the proposed Frappe Print Engine extension is present.
-- The adapter passes document route context through `frappe.route_options` and opens `crispy-print-preview` directly.
-- `install.ensure_print_engine()` creates or repairs the `crispy_print` Print Engine record only when the Frappe Print Engine DocType and controller are available, so standard Frappe installations continue using the existing Typst button path.
+- **`crispy_print_engine.js`** registers `crispy_print` with `frappe.ui.form.register_print_engine` after Frappe lazy-loads it from the `print_engines` hook.
+- The adapter checks for an active approved Crispy Template before passing document route context through `frappe.route_options` and opening `crispy-print-preview`.
+- Crispy Print does not auto-select itself as the default print engine; the site keeps native print behavior until an administrator opts in through Crispy Print Settings.
 
 **Workspace:**
 

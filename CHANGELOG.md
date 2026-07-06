@@ -14,9 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added an optional Frappe Print Engine adapter in preparation for a Frappe PR that loosens the hardcoded native print flow and allows apps to register print engine entry points.
-- Added `crispy_print/public/js/crispy_print_engine.js` to register `crispy_print` through `frappe.ui.form.register_print_engine` and route document print handoffs directly to `crispy-print-preview`.
-- Added install/sync setup that creates or repairs the `crispy_print` Print Engine record when the Frappe Print Engine DocType and controller are available.
+- Added hook-based Frappe Print Engine adapter registration through `print_engines`.
+- Added `crispy_print/public/js/crispy_print_engine.js` to register `crispy_print` through `frappe.ui.form.register_print_engine` and route eligible document print handoffs directly to `crispy-print-preview`.
+- Added an explicit Crispy Print Settings opt-in for selecting Crispy Print as Frappe's default form print engine.
+- Added a `can_print` gate so native Print falls back to Frappe's print view when no active approved Crispy Template resolves for the document.
 - Added raw Typst authoring helpers for private images and reusable Typst blocks, including `crispy_image("filename")` and `crispy_block("block-document-id")`.
 - Added a Crispy Image picker for regular builder mode with private image search, upload, and size controls.
 - Added font-face discovery metadata so typography controls can show only the styles and weights available for the selected font family.
@@ -40,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed regular-mode preview refresh behavior around keystroke-heavy controls by keeping invalid intermediate values from compiling until they become valid.
 - Fixed Raw Typst helper source generation so reusable block bodies are not injected unless referenced by `crispy_block("...")`.
 - Fixed raw private image handling so `crispy_image()` resolves only approved private uploaded filenames and rejects public paths, traversal, nested paths, URLs, unsupported extensions, and missing files.
-- Fixed optional Print Engine setup and tests so sites without the future Print Engine controller skip that integration path instead of failing.
 
 ### Tests
 

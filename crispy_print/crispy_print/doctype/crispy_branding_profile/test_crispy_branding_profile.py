@@ -2,7 +2,6 @@
 # See license.txt
 
 from pathlib import Path
-from unittest import mock
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -20,9 +19,7 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 )
 from crispy_print.install import (
 	after_install,
-	ensure_print_engine,
 	get_site_font_directory,
-	has_print_engine_doctype,
 )
 from crispy_print.letterhead_lifecycle import (
 	APPROVED_AT_FIELD,
@@ -442,22 +439,6 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 				},
 			)
 		)
-
-	def test_print_engine_doctype_is_unavailable_when_controller_is_missing(self):
-		with (
-			mock.patch("crispy_print.install.frappe.db.exists", return_value=True),
-			mock.patch("crispy_print.install.get_controller", side_effect=ImportError("missing")),
-		):
-			self.assertFalse(has_print_engine_doctype())
-
-	def test_ensure_print_engine_skips_when_doctype_is_unavailable(self):
-		with (
-			mock.patch("crispy_print.install.has_print_engine_doctype", return_value=False),
-			mock.patch("crispy_print.install.frappe.get_doc") as get_doc,
-		):
-			ensure_print_engine()
-
-		get_doc.assert_not_called()
 
 	def test_backfill_patch_provisions_defaults_for_all_existing_companies(self):
 		second_company = self._ensure_company(name="CBP Patch Company", abbr="CBPP")

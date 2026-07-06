@@ -1,10 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-06-20 09:11:48.699885",
+ "creation": "2026-07-06 15:56:33.287472",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "print_engine_section",
+  "use_as_default_print_engine",
   "font_settings_section",
   "enable_uploaded_fonts",
   "enable_system_fonts",
@@ -84,13 +86,25 @@
    "fieldname": "allow_print_for_cancelled",
    "fieldtype": "Check",
    "label": "Allow Print for Cancelled"
+  },
+  {
+   "fieldname": "print_engine_section",
+   "fieldtype": "Section Break",
+   "label": "Print Engine Integration"
+  },
+  {
+   "default": "0",
+   "description": "Route Frappe's native Form Print button through Crispy Print when an active approved template resolves. Documents without a matching template still fall back to native print.",
+   "fieldname": "use_as_default_print_engine",
+   "fieldtype": "Check",
+   "label": "Use Crispy Print as Default Print Engine"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-06-20 09:11:48.699885",
+ "modified": "2026-07-06 15:57:36.667900",
  "modified_by": "Administrator",
  "module": "Crispy Print",
  "name": "Crispy Print Settings",

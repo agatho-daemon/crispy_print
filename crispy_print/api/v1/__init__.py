@@ -57,6 +57,9 @@ from .reports import generate_report_pdf as _generate_report_pdf
 from .reports import get_report_typst_source as _get_report_typst_source
 from .reports import get_sample_report_data as _get_sample_report_data
 from .security import enforce_rate_limit, ensure_doctype_read_permission
+from .templates import (
+	can_resolve_crispy_template_for_document as _can_resolve_crispy_template_for_document,
+)
 from .templates import duplicate_crispy_template_for_company as _duplicate_crispy_template_for_company
 from .templates import (
 	get_active_crispy_templates_for_document as _get_active_crispy_templates_for_document,
@@ -359,6 +362,23 @@ def get_active_crispy_templates_for_render(
 		source_report=source_report,
 		source_contract=source_contract,
 		company=company,
+	)
+
+
+@frappe.whitelist()
+def can_resolve_crispy_template_for_document(
+	source_doctype: str,
+	source_docname: str | None = None,
+	company: str | None = None,
+	template: str | None = None,
+	template_name: str | None = None,
+) -> bool:
+	return _can_resolve_crispy_template_for_document(
+		source_doctype=source_doctype,
+		source_docname=source_docname,
+		company=company,
+		template=template,
+		template_name=template_name,
 	)
 
 
@@ -744,6 +764,7 @@ def run_report_template_parity_check(
 
 __all__ = [
 	"add_issued_document_trust_event",
+	"can_resolve_crispy_template_for_document",
 	"cancel_issued_document",
 	"check_import_conflicts",
 	"compile_report_preview",

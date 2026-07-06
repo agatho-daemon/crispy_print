@@ -14,16 +14,19 @@ The typical workflow for using Crispy Print:
 
 ### Frappe Print Engine Integration
 
-Crispy Print includes an optional adapter for the proposed Frappe Print Engine extension. That upstream change is intended to loosen Frappe's hardcoded native print flow by letting apps register client-renderer print engines.
+Crispy Print includes an adapter for Frappe's hook-based print engine dispatch. It lets the native Form **Print** button hand off to the Crispy Typst preview route when an active approved Crispy Template resolves for the document.
 
-When the Frappe extension and its controller are present:
+During install:
 
-1. Crispy Print creates or repairs a `crispy_print` **Print Engine** record during install/sync.
+1. Crispy Print exposes a `crispy_print` engine through the `print_engines` hook.
 2. The engine points to `/assets/crispy_print/js/crispy_print_engine.js`.
-3. The client script registers `crispy_print` with `frappe.ui.form.register_print_engine`.
-4. If **Print Settings → Default Print Engine** is set to **Crispy Print**, Frappe's native **Print** action routes the document to `crispy-print-preview`.
+3. The site keeps Frappe's native print flow until an administrator enables **Use Crispy Print as Default Print Engine** in Crispy Print Settings.
+4. The client script registers `crispy_print` with `frappe.ui.form.register_print_engine`.
+5. `can_print` routes only documents with an active approved Crispy Template to `crispy-print-preview`; all other documents fall back to Frappe's native print view.
 
-The existing **Typst** document button is unchanged and remains the supported entry point on standard Frappe installations where the Print Engine extension is not available.
+The existing **Typst** document button is unchanged and remains available.
+
+To opt in, open **Crispy Print Settings** and enable **Use Crispy Print as Default Print Engine**. Disabling the setting clears Crispy Print only if it is still the selected default; it does not overwrite another engine selected by the site.
 
 ### Output Settings: PDF Standard And Print Policy
 
@@ -191,7 +194,7 @@ Use this layer only when documents need deterministic identifiers or machine-ver
 You can create multiple formats for the same DocType without setting them as default:
 
 - Access via direct URL: `/app/crispy-print-preview/{doctype}/{docname}/{format_name}`
-- Open through the optional Frappe Print Engine handoff when the site is running the proposed Frappe print-engine extension and Crispy Print is selected as the default engine.
+- Open through the Frappe Print Engine handoff when an administrator enables Crispy Print as the default engine and an active approved template resolves.
 - Or programmatically via API (see [API Reference](api-reference.md))
 
 ### Common Layout Recipes

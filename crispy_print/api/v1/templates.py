@@ -81,6 +81,26 @@ def get_resolved_crispy_template_for_document(
 	)
 
 
+def can_resolve_crispy_template_for_document(
+	source_doctype: str,
+	source_docname: str | None = None,
+	company: str | None = None,
+	template: str | None = None,
+	template_name: str | None = None,
+) -> bool:
+	try:
+		get_resolved_crispy_template_for_document(
+			source_doctype=source_doctype,
+			source_docname=source_docname,
+			company=company,
+			template=template,
+			template_name=template_name,
+		)
+	except frappe.ValidationError:
+		return False
+	return True
+
+
 def get_resolved_crispy_template_for_render(
 	source_doctype: str | None = None,
 	source_docname: str | None = None,

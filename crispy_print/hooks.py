@@ -49,7 +49,6 @@ app_include_js = [
 fixtures = [{"dt": "Crispy Format"}]
 
 after_install = "crispy_print.install.after_install"
-after_sync = "crispy_print.install.after_sync"
 after_migrate = [
 	"crispy_print.setup.desk.setup_desk_compatibility",
 ]
@@ -62,4 +61,11 @@ doc_events = {
 	"Letter Head": {
 		"validate": "crispy_print.letterhead_lifecycle.on_letterhead_validate",
 	},
+}
+
+print_engines = {
+	"crispy_print": {
+		"renderer": "crispy_print",
+		"script": "/assets/crispy_print/js/crispy_print_engine.js",
+	}
 }

@@ -14,6 +14,8 @@ from crispy_print.install import ensure_site_font_directory, get_site_font_direc
 FONT_CACHE_KEY = "crispy_print:typst_local_fonts:v3"
 MAX_UPLOADED_FONT_BYTES = 25 * 1024 * 1024
 ALLOWED_FONT_EXTENSIONS = {".ttf", ".otf", ".ttc", ".woff", ".woff2"}
+DEFAULT_PRINT_ENGINE_KEY = "default_print_engine"
+CRISPY_PRINT_ENGINE = "crispy_print"
 
 
 class CrispyPrintSettings(Document):
@@ -23,6 +25,7 @@ class CrispyPrintSettings(Document):
 
 	def on_update(self):
 		frappe.cache().delete_value(FONT_CACHE_KEY)
+		sync_default_print_engine(self)
 
 
 def get_settings_doc() -> Document:
@@ -44,7 +47,31 @@ def apply_settings_defaults(settings: Document) -> Document:
 		settings.always_add_draft_heading = 1
 	if settings.get("allow_print_for_cancelled") in (None, ""):
 		settings.allow_print_for_cancelled = 0
+	if settings.get("use_as_default_print_engine") in (None, ""):
+		settings.use_as_default_print_engine = 0
 	return settings
+
+
+def sync_default_print_engine(settings: Document) -> None:
+	current = _get_default_print_engine()
+	use_crispy = bool(int(settings.get("use_as_default_print_engine") or 0))
+
+	if use_crispy:
+		if current != CRISPY_PRINT_ENGINE:
+			frappe.defaults.set_global_default(DEFAULT_PRINT_ENGINE_KEY, CRISPY_PRINT_ENGINE)
+			frappe.clear_cache()
+		return
+
+	if current == CRISPY_PRINT_ENGINE:
+		frappe.defaults.clear_default(DEFAULT_PRINT_ENGINE_KEY, parent="__default")
+		frappe.clear_cache()
+
+
+def _get_default_print_engine() -> str | None:
+	value = frappe.defaults.get_defaults().get(DEFAULT_PRINT_ENGINE_KEY)
+	if isinstance(value, list | tuple):
+		value = next((item for item in value if item), None)
+	return value or None
 
 
 def get_render_timeout_seconds(settings: Document | None = None) -> int:

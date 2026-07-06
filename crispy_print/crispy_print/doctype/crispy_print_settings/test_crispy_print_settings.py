@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Agathodaemon and Contributors
 # See license.txt
 
+from unittest import mock
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -11,8 +13,11 @@ from crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settin
 	get_render_timeout_seconds,
 	get_typst_font_dirs,
 	get_uploaded_font_directory,
+	sync_default_print_engine,
 	validate_document_print_policy,
 )
+
+SETTINGS_MODULE = "crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settings"
 
 
 class TestCrispyPrintSettings(FrappeTestCase):
@@ -24,6 +29,7 @@ class TestCrispyPrintSettings(FrappeTestCase):
 		self.assertEqual(settings.enable_uploaded_fonts, 1)
 		self.assertEqual(settings.enable_system_fonts, 0)
 		self.assertEqual(settings.render_timeout_seconds, 60)
+		self.assertEqual(settings.use_as_default_print_engine, 0)
 		self.assertEqual(get_render_timeout_seconds(settings), 60)
 
 	def test_font_paths_respect_uploaded_toggle(self):
@@ -67,3 +73,45 @@ class TestCrispyPrintSettings(FrappeTestCase):
 		finally:
 			for fieldname, value in original.items():
 				settings.db_set(fieldname, value, update_modified=False)
+
+	def test_sync_default_print_engine_sets_crispy_when_enabled(self):
+		settings = frappe._dict({"use_as_default_print_engine": 1})
+		with (
+			mock.patch(f"{SETTINGS_MODULE}.frappe.defaults.get_defaults", return_value={}),
+			mock.patch(f"{SETTINGS_MODULE}.frappe.defaults.set_global_default") as set_global_default,
+			mock.patch(f"{SETTINGS_MODULE}.frappe.clear_cache") as clear_cache,
+		):
+			sync_default_print_engine(settings)
+
+		set_global_default.assert_called_once_with("default_print_engine", "crispy_print")
+		clear_cache.assert_called_once()
+
+	def test_sync_default_print_engine_clears_only_crispy_default_when_disabled(self):
+		settings = frappe._dict({"use_as_default_print_engine": 0})
+		with (
+			mock.patch(
+				f"{SETTINGS_MODULE}.frappe.defaults.get_defaults",
+				return_value={"default_print_engine": "crispy_print"},
+			),
+			mock.patch(f"{SETTINGS_MODULE}.frappe.defaults.clear_default") as clear_default,
+			mock.patch(f"{SETTINGS_MODULE}.frappe.clear_cache") as clear_cache,
+		):
+			sync_default_print_engine(settings)
+
+		clear_default.assert_called_once_with("default_print_engine", parent="__default")
+		clear_cache.assert_called_once()
+
+	def test_sync_default_print_engine_does_not_clear_other_default_when_disabled(self):
+		settings = frappe._dict({"use_as_default_print_engine": 0})
+		with (
+			mock.patch(
+				f"{SETTINGS_MODULE}.frappe.defaults.get_defaults",
+				return_value={"default_print_engine": "other_engine"},
+			),
+			mock.patch(f"{SETTINGS_MODULE}.frappe.defaults.clear_default") as clear_default,
+			mock.patch(f"{SETTINGS_MODULE}.frappe.clear_cache") as clear_cache,
+		):
+			sync_default_print_engine(settings)
+
+		clear_default.assert_not_called()
+		clear_cache.assert_not_called()
