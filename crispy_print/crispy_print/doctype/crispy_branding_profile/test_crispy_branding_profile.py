@@ -175,6 +175,60 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(settings["branding"]["logo"]["company"], self.company)
 		self.assertEqual(settings["branding"]["logo"]["image"], "/files/company-logo.png")
 
+	def test_get_branding_profiles_uses_permission_aware_list(self):
+		with mock.patch(
+			"crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile.frappe.get_list",
+			return_value=[
+				{
+					"name": "CBP Test Listed",
+					"profile_name": "CBP Test Listed",
+					"company": self.company,
+				}
+			],
+		) as get_list:
+			rows = get_branding_profiles(company=self.company)
+
+		self.assertEqual(rows[0]["name"], "CBP Test Listed")
+		get_list.assert_called_once()
+		self.assertEqual(get_list.call_args.kwargs["filters"], {"company": self.company})
+
+	def test_presentation_settings_checks_profile_read_permission(self):
+		mock_doc = mock.Mock()
+		mock_doc.to_presentation_settings.return_value = {"page": {"size": "A4"}}
+
+		with mock.patch(
+			"crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile.get_branding_profile",
+			return_value=mock_doc,
+		):
+			settings = get_branding_profile_presentation_settings("CBP Test Mock")
+
+		mock_doc.check_permission.assert_called_once_with("read")
+		self.assertEqual(settings, {"page": {"size": "A4"}})
+
+	def test_resolve_effective_presentation_settings_checks_profile_read_permission(self):
+		mock_doc = mock.Mock()
+		mock_doc.company = self.company
+		mock_doc.to_presentation_settings.return_value = {
+			"page": {"size": "A4"},
+			"branding": {"mode": "logo"},
+		}
+
+		with mock.patch(
+			"crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile.get_branding_profile",
+			return_value=mock_doc,
+		):
+			settings = resolve_effective_presentation_settings(
+				{
+					"source": "branding_profile",
+					"branding": {"profile": "CBP Test Mock"},
+				},
+				company=self.company,
+			)
+
+		mock_doc.check_permission.assert_called_once_with("read")
+		self.assertEqual(settings["source"], "branding_profile")
+		self.assertEqual(settings["branding"]["profile"], "CBP Test Mock")
+
 	def test_resolves_effective_presentation_settings_from_selected_profile(self):
 		doc = self._insert_profile(
 			profile_name="CBP Test Effective",

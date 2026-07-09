@@ -130,7 +130,7 @@ crispy_print/
 
 Backend:
 
-- **`api/v1/__init__.py`** - Whitelisted v1 RPC facade used by Frappe clients.
+- **`api/v1/__init__.py`** - Stable whitelisted v1 RPC facade used by Frappe clients. Public method paths stay here while each endpoint declares an auditable facade policy for rate limiting, permissions, delegated deeper checks, or explicit low-risk exemptions.
 - **`api/v1/compile.py`** - Server-side Typst compile flow, short-lived cache, asset resolution, and preview/PDF output.
 - **`api/v1/images.py`** - Private image listing helpers for builder image fields.
 - **`api/v1/docs.py`** - Permission-aware document fetch and formatted-value preparation.
@@ -139,7 +139,8 @@ Backend:
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
 - **`api/v1/reports.py`** - Report sample data, Typst source generation, combined preview compilation, and report PDF helpers.
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
-- **`api/v1/security.py`** - Shared permission checks, rate limits, path validation, and RPC input hardening.
+- **`api/v1/security.py`** - Shared permission checks, endpoint policy decorators, rate limits, path validation, and RPC input hardening.
+- **`crispy_print.permissions`** - Company User Permission-aware query conditions and target-company authorization helpers for company-scoped Crispy records.
 
 Frontend:
 
@@ -167,3 +168,9 @@ Sample data policy:
 - **No production `Crispy Format` fixtures** - The app intentionally does not export `Crispy Format` records through `hooks.py` fixtures.
 - **`examples/formats/`** - Curated sample payloads are app-owned JSON files and become site data only when a user creates a format from the builder Examples dialog or sample catalog API.
 - **`dev_utils/`** - Rich local demo-data generation remains developer-only and is not treated as production app surface.
+
+Permission policy:
+
+- **Company User Permissions** - Non-manager users with Company User Permission records are restricted to matching company-scoped Crispy Print records in list/report queries.
+- **Compatibility default** - Users without Company User Permission records keep existing unrestricted visibility, which avoids breaking single-company or unconfigured beta sites.
+- **Manager bypass** - `System Manager` and `Crispy Print Manager` bypass company query filters and can perform cross-company duplication.

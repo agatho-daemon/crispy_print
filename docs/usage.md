@@ -70,6 +70,9 @@ Site-wide print behavior is governed by **Crispy Print Settings** (see [Font Con
 Crispy Print is company-aware end to end:
 
 - Format, template, branding profile, and Typst block resolution is filtered and ordered by **Company**, with company-scoped default selection.
+- Company-scoped Crispy Print list/report surfaces honor Frappe **Company User Permission** records for non-manager users. If a user has no Company User Permissions, Crispy Print preserves the existing unrestricted behavior for compatibility.
+- **System Manager** and **Crispy Print Manager** users bypass company query filters by design.
+- Cross-company format/sample/template duplication requires the user to be a manager or have access to the target Company before Crispy Print performs internal backend inserts.
 - A **Crispy Template** is a frozen, approved render contract published from a Crispy Format. It stores an immutable snapshot, snapshot-hash version, PDF standard, and Typst/Zebra/barcode facts, and supports company-specific templates with fallback to global templates.
 - A **Crispy Issued Document** (CID) records an immutable issued snapshot linked to a frozen template, exposing non-sensitive verification metadata and an opaque verification token, with revocation/supersession state.
 

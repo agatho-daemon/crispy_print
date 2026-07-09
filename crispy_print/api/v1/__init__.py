@@ -59,7 +59,7 @@ from .reports import get_sample_report_data as _get_sample_report_data
 from .sample_formats import create_format_from_sample as _create_format_from_sample
 from .sample_formats import get_sample_format as _get_sample_format
 from .sample_formats import list_sample_formats as _list_sample_formats
-from .security import enforce_rate_limit, ensure_doctype_read_permission
+from .security import endpoint_policy, enforce_rate_limit, ensure_doctype_read_permission
 from .templates import duplicate_crispy_template_for_company as _duplicate_crispy_template_for_company
 from .templates import (
 	get_active_crispy_templates_for_document as _get_active_crispy_templates_for_document,
@@ -86,16 +86,24 @@ def _normalize_rpc_list(value: Any) -> Any:
 
 
 @frappe.whitelist()
+@endpoint_policy(delegated=True, exempt_reason="Compile module enforces Typst permission and rate limit.")
 def get_typst_local_fonts() -> list[str]:
 	return _get_typst_local_fonts()
 
 
 @frappe.whitelist()
+@endpoint_policy(delegated=True, exempt_reason="Compile module enforces Typst permission and rate limit.")
 def get_typst_font_faces() -> list[JSONDict]:
 	return _get_typst_font_faces()
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_applicable_typst_blocks",
+	limit=120,
+	window_seconds=60,
+	permissions=(("Crispy Typst Block", "read"),),
+)
 def get_applicable_typst_blocks(
 	doctype: str,
 	query: str | None = None,
@@ -129,11 +137,18 @@ def get_applicable_typst_blocks(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_private_image_files",
+	limit=120,
+	window_seconds=60,
+	permissions=(("File", "read"),),
+)
 def get_private_image_files(query: str | None = None, limit: int | None = 100) -> list[JSONDict]:
 	return _get_private_image_files(query=query, limit=limit)
 
 
 @frappe.whitelist()
+@endpoint_policy(delegated=True, exempt_reason="Compile module enforces Typst permission and rate limit.")
 def compile_typst(
 	typst_source: str,
 	output_format: str = "svg",
@@ -172,11 +187,19 @@ def compile_typst(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_formatted_doc",
+	limit=60,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Document module checks source document read permission.",
+)
 def get_formatted_doc(doctype: str, name: str, qr_source_mode: str | None = None) -> JSONDict:
 	return _get_formatted_doc(doctype, name, qr_source_mode=qr_source_mode)
 
 
 @frappe.whitelist()
+@endpoint_policy(delegated=True, exempt_reason="Facade body enforces Crispy Format read and rate limit.")
 def get_crispy_formats_for_doctype(
 	doctype: str,
 	company: str | None = None,
@@ -187,6 +210,13 @@ def get_crispy_formats_for_doctype(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_crispy_format",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Format module checks selected format and source document read permissions.",
+)
 def get_crispy_format(
 	name: str,
 	company: str | None = None,
@@ -204,6 +234,7 @@ def get_crispy_format(
 
 
 @frappe.whitelist()
+@endpoint_policy(delegated=True, exempt_reason="Facade body enforces Crispy Format read and rate limit.")
 def get_default_doctypes() -> list[str]:
 	ensure_doctype_read_permission("Crispy Format")
 	enforce_rate_limit("get_default_doctypes", limit=120, window_seconds=60)
@@ -211,22 +242,41 @@ def get_default_doctypes() -> list[str]:
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_default_report_builder_config",
+	limit=120,
+	window_seconds=60,
+	exempt_reason="Static builder defaults with no site data access.",
+)
 def get_default_report_builder_config(generic_report_type: str | None = None) -> JSONDict:
 	return _get_default_report_builder_config(generic_report_type)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; Branding module uses permission-aware list."
+)
 def get_branding_profiles(company: str | None = None) -> list[JSONDict]:
 	enforce_rate_limit("get_branding_profiles", limit=120, window_seconds=60)
 	return _get_branding_profiles(company=company)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_branding_profile_presentation_settings",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Branding module checks profile read permission.",
+)
 def get_branding_profile_presentation_settings(name: str) -> JSONDict:
 	return _get_branding_profile_presentation_settings(name)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; Letter Head list uses permission-aware access."
+)
 def get_letterhead_options(
 	company: str | None = None,
 	include_current: str | None = None,
@@ -236,6 +286,10 @@ def get_letterhead_options(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces report PDF rate limits; report module checks report/format permissions.",
+)
 def generate_report_pdf(
 	report: str,
 	filters: JSONDict | str | None = None,
@@ -258,16 +312,36 @@ def generate_report_pdf(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_available_formats",
+	limit=120,
+	window_seconds=60,
+	permissions=(("Crispy Format", "read"),),
+)
 def get_available_formats(report: str, company: str | None = None) -> JSONDict:
 	return _get_available_formats(report, company=company)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_builder_mode",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Format module checks selected format read permission.",
+)
 def get_builder_mode(format_name: str) -> JSONDict:
 	return _get_builder_mode(format_name)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_crispy_template_publish_preview",
+	limit=60,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Template module checks source format read/write semantics for publish preview.",
+)
 def get_crispy_template_publish_preview(
 	source_crispy_format: str,
 	version_bump: str = "minor",
@@ -281,6 +355,13 @@ def get_crispy_template_publish_preview(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="publish_template_from_crispy_format",
+	limit=20,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Template controller checks source format read/write permissions.",
+)
 def publish_template_from_crispy_format(
 	source_crispy_format: str,
 	version_bump: str = "minor",
@@ -300,6 +381,10 @@ def publish_template_from_crispy_format(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; format module checks source read/create/target company.",
+)
 def duplicate_crispy_format_for_company(
 	source_name: str,
 	target_company: str,
@@ -318,6 +403,10 @@ def duplicate_crispy_format_for_company(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; template module checks source permissions and target company.",
+)
 def duplicate_crispy_template_for_company(
 	source_template: str,
 	target_company: str,
@@ -336,6 +425,13 @@ def duplicate_crispy_template_for_company(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_active_crispy_templates_for_document",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Template module checks source document and Crispy Template read permissions.",
+)
 def get_active_crispy_templates_for_document(
 	source_doctype: str,
 	source_docname: str | None = None,
@@ -349,6 +445,13 @@ def get_active_crispy_templates_for_document(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_active_crispy_templates_for_render",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Template module checks render source and Crispy Template read permissions.",
+)
 def get_active_crispy_templates_for_render(
 	source_doctype: str | None = None,
 	source_docname: str | None = None,
@@ -366,6 +469,13 @@ def get_active_crispy_templates_for_render(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_resolved_crispy_template_for_document",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Template module checks source document and Crispy Template read permissions.",
+)
 def get_resolved_crispy_template_for_document(
 	source_doctype: str,
 	source_docname: str | None = None,
@@ -383,6 +493,13 @@ def get_resolved_crispy_template_for_document(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_resolved_crispy_template_for_render",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Template module checks render source and Crispy Template read permissions.",
+)
 def get_resolved_crispy_template_for_render(
 	source_doctype: str | None = None,
 	source_docname: str | None = None,
@@ -404,31 +521,57 @@ def get_resolved_crispy_template_for_render(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="export_crispy_format",
+	limit=60,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Format module checks selected format read permission.",
+)
 def export_crispy_format(name: str) -> JSONDict:
 	return _export_crispy_format(name)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="check_import_conflicts",
+	limit=60,
+	window_seconds=60,
+	permissions=(("Crispy Format", "create"),),
+)
 def check_import_conflicts(payload: JSONDict | str) -> JSONDict:
 	return _check_import_conflicts(payload)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="import_crispy_format",
+	limit=20,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="Format module checks create/write permissions according to conflict action.",
+)
 def import_crispy_format(payload: JSONDict | str, on_conflict: str = "copy") -> JSONDict:
 	return _import_crispy_format(payload, on_conflict=on_conflict)
 
 
 @frappe.whitelist()
+@endpoint_policy(rate_key="list_sample_formats", limit=120, window_seconds=60)
 def list_sample_formats() -> list[JSONDict]:
 	return _list_sample_formats()
 
 
 @frappe.whitelist()
+@endpoint_policy(rate_key="get_sample_format", limit=120, window_seconds=60)
 def get_sample_format(sample_id: str) -> JSONDict:
 	return _get_sample_format(sample_id)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; sample module checks create permission and target company.",
+)
 def create_format_from_sample(
 	sample_id: str,
 	company: str,
@@ -445,11 +588,20 @@ def create_format_from_sample(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_reports_without_custom_html",
+	limit=120,
+	window_seconds=60,
+	permissions=(("Report", "read"),),
+)
 def get_reports_without_custom_html(generic_report_type: str | None = None) -> list[JSONDict]:
 	return _get_reports_without_custom_html(generic_report_type)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; report module checks report/format permissions."
+)
 def get_report_typst_source(
 	report: str,
 	format_name: str,
@@ -488,6 +640,9 @@ def get_report_typst_source(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; report module checks report/format permissions."
+)
 def compile_report_preview(
 	report: str,
 	format_name: str,
@@ -528,12 +683,20 @@ def compile_report_preview(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; report module checks report permission and internal report rate.",
+)
 def get_sample_report_data(report: str, filters: JSONDict | str | None = None, limit: int = 50) -> JSONDict:
 	enforce_rate_limit("get_sample_report_data", limit=60, window_seconds=60)
 	return _get_sample_report_data(report, filters=filters, limit=limit)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; document-code module checks source document read permission.",
+)
 def resolve_document_code(
 	doctype: str,
 	name: str,
@@ -556,6 +719,10 @@ def resolve_document_code(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; document-code module checks source document read permission.",
+)
 def generate_document_code(
 	doctype: str,
 	name: str,
@@ -578,6 +745,12 @@ def generate_document_code(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_fiscal_credential_status",
+	limit=120,
+	window_seconds=60,
+	permissions=(("Crispy Fiscal Credential", "read"),),
+)
 def get_fiscal_credential_status(
 	company: str,
 	regulatory_profile: str,
@@ -593,6 +766,9 @@ def get_fiscal_credential_status(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; QR profile module uses permission-aware list."
+)
 def get_qr_regulatory_profiles(
 	country: str | None = None,
 	authority_code: str | None = None,
@@ -607,17 +783,30 @@ def get_qr_regulatory_profiles(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_qr_regulatory_profile",
+	limit=120,
+	window_seconds=60,
+	delegated=True,
+	exempt_reason="QR profile module checks selected profile read permission.",
+)
 def get_qr_regulatory_profile(name: str) -> JSONDict:
 	return _get_qr_regulatory_profile(name)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; registry metadata is app-owned static data."
+)
 def get_qr_field_registry_metadata() -> JSONDict:
 	enforce_rate_limit("get_qr_field_registry_metadata", limit=120, window_seconds=60)
 	return _get_qr_field_registry_metadata()
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; registry fields are app-owned static data."
+)
 def get_qr_registry_fields(
 	doctype: str,
 	authority_code: str | None = None,
@@ -632,18 +821,29 @@ def get_qr_registry_fields(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; business field sets are app-owned static data."
+)
 def get_qr_business_field_set(key: str) -> JSONDict:
 	enforce_rate_limit("get_qr_business_field_set", limit=120, window_seconds=60)
 	return _get_qr_business_field_set(key)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module checks document read permission.",
+)
 def get_issued_document(name: str) -> JSONDict:
 	enforce_rate_limit("get_issued_document", limit=120, window_seconds=60)
 	return _get_issued_document(name)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module checks DocType read permission.",
+)
 def get_issued_documents(
 	company: str | None = None,
 	issuance_status: str | None = None,
@@ -662,6 +862,10 @@ def get_issued_documents(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module checks DocType read permission.",
+)
 def get_issued_document_audit_events(
 	company: str | None = None,
 	issued_document: str | None = None,
@@ -678,18 +882,30 @@ def get_issued_document_audit_events(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; token lookup module returns verification-safe payload.",
+)
 def get_issued_document_by_token(verification_token: str) -> JSONDict:
 	enforce_rate_limit("get_issued_document_by_token", limit=120, window_seconds=60)
 	return _get_issued_document_by_token(verification_token)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; token verification module returns verification-safe payload.",
+)
 def verify_issued_document_token(verification_token: str) -> JSONDict:
 	enforce_rate_limit("verify_issued_document_token", limit=120, window_seconds=60)
 	return _verify_issued_document_token(verification_token)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module checks source document and format/template permissions.",
+)
 def create_issued_document_snapshot(
 	source_doctype: str,
 	source_docname: str,
@@ -708,24 +924,39 @@ def create_issued_document_snapshot(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; issued-document module checks read permission."
+)
 def render_issued_document_pdf(name: str) -> JSONDict:
 	enforce_rate_limit("render_issued_document_pdf", limit=30, window_seconds=60)
 	return _render_issued_document_pdf(name)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module requires manager permission.",
+)
 def revoke_issued_document(name: str, reason: str | None = None) -> JSONDict:
 	enforce_rate_limit("revoke_issued_document", limit=20, window_seconds=60)
 	return _revoke_issued_document(name, reason=reason)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module requires manager permission.",
+)
 def cancel_issued_document(name: str, reason: str | None = None) -> JSONDict:
 	enforce_rate_limit("cancel_issued_document", limit=20, window_seconds=60)
 	return _cancel_issued_document(name, reason=reason)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module requires manager permission.",
+)
 def supersede_issued_document(
 	name: str,
 	superseded_by: str,
@@ -736,6 +967,10 @@ def supersede_issued_document(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module requires manager permission.",
+)
 def record_issued_document_integrity_check(
 	name: str,
 	integrity_status: str,
@@ -750,12 +985,19 @@ def record_issued_document_integrity_check(
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True,
+	exempt_reason="Facade body enforces rate; issued-document module requires manager permission.",
+)
 def add_issued_document_trust_event(name: str, event: JSONDict | None = None, **values: Any) -> JSONDict:
 	enforce_rate_limit("add_issued_document_trust_event", limit=60, window_seconds=60)
 	return _add_issued_document_trust_event(name, event=event, **values)
 
 
 @frappe.whitelist()
+@endpoint_policy(
+	delegated=True, exempt_reason="Facade body enforces rate; parity module requires manager permission."
+)
 def run_report_template_parity_check(
 	report: str,
 	format_name: str,

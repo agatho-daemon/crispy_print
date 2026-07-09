@@ -1,6 +1,7 @@
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from functools import wraps
+from typing import Any
 
 import frappe
 from frappe import _
@@ -36,6 +37,14 @@ def ensure_crispy_print_manager_permission() -> None:
 def ensure_doctype_read_permission(doctype: str) -> None:
 	if not frappe.has_permission(doctype, "read"):
 		frappe.throw(_("Not permitted to read {0}.").format(doctype), frappe.PermissionError)
+
+
+def ensure_doctype_permission(doctype: str, ptype: str) -> None:
+	if not frappe.has_permission(doctype, ptype):
+		frappe.throw(
+			_("Not permitted to {0} {1}.").format(ptype, doctype),
+			frappe.PermissionError,
+		)
 
 
 def enforce_rate_limit(
@@ -115,6 +124,48 @@ def rate_limited(
 			enforce_rate_limit(key, limit=limit, window_seconds=window_seconds)
 			return fn(*args, **kwargs)
 
+		return wrapper
+
+	return decorator
+
+
+EndpointPermission = tuple[str, str]
+
+
+def endpoint_policy(
+	*,
+	rate_key: str | None = None,
+	limit: int = 60,
+	window_seconds: int = 60,
+	permissions: Iterable[EndpointPermission] | None = None,
+	manager_only: bool = False,
+	delegated: bool = False,
+	exempt_reason: str | None = None,
+) -> Callable:
+	"""Declare and optionally enforce policy for a whitelisted v1 endpoint."""
+	permission_list = tuple(permissions or ())
+	policy: dict[str, Any] = {
+		"rate_key": rate_key,
+		"limit": limit if rate_key else None,
+		"window_seconds": window_seconds if rate_key else None,
+		"permissions": permission_list,
+		"manager_only": manager_only,
+		"delegated": delegated,
+		"exempt_reason": exempt_reason,
+	}
+
+	def decorator(fn: Callable) -> Callable:
+		@wraps(fn)
+		def wrapper(*args, **kwargs):
+			if manager_only:
+				ensure_crispy_print_manager_permission()
+			for doctype, ptype in permission_list:
+				ensure_doctype_permission(doctype, ptype)
+			if rate_key:
+				enforce_rate_limit(rate_key, limit=limit, window_seconds=window_seconds)
+			return fn(*args, **kwargs)
+
+		wrapper.__crispy_endpoint_policy__ = policy
 		return wrapper
 
 	return decorator

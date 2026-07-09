@@ -398,7 +398,7 @@ def get_branding_profiles(company: str | None = None) -> list[dict]:
 	if company:
 		filters["company"] = company
 
-	return frappe.get_all(
+	return frappe.get_list(
 		"Crispy Branding Profile",
 		filters=filters,
 		fields=["name", "profile_name", "company", "is_default", "branding_mode", "modified"],
@@ -407,7 +407,9 @@ def get_branding_profiles(company: str | None = None) -> list[dict]:
 
 
 def get_branding_profile_presentation_settings(name: str) -> dict:
-	return get_branding_profile(name).to_presentation_settings()
+	doc = get_branding_profile(name)
+	doc.check_permission("read")
+	return doc.to_presentation_settings()
 
 
 def resolve_effective_presentation_settings(
@@ -423,6 +425,7 @@ def resolve_effective_presentation_settings(
 		return settings
 
 	profile = get_branding_profile(profile_name)
+	profile.check_permission("read")
 	if company and profile.company and profile.company != company:
 		frappe.throw(
 			_("Branding Profile {0} does not belong to company {1}.").format(

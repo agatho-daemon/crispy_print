@@ -290,6 +290,32 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertEqual(settings["branding"]["company"], target_company)
 		self.assertEqual(settings["branding"]["logo"]["company"], target_company)
 
+	def test_duplicate_insert_checks_target_company_access_before_insert(self):
+		from crispy_print.api.v1 import formats
+
+		with (
+			mock.patch("crispy_print.api.v1.formats._ensure_create_permission"),
+			mock.patch(
+				"crispy_print.api.v1.formats._require_target_company",
+				return_value="Blocked Company",
+			),
+			mock.patch(
+				"crispy_print.api.v1.formats.ensure_company_access",
+				side_effect=frappe.PermissionError,
+			) as ensure_access,
+			mock.patch("crispy_print.api.v1.formats.frappe.get_doc") as get_doc,
+		):
+			self.assertRaises(
+				frappe.PermissionError,
+				formats._insert_format_duplicate_for_company,
+				{"name": "Test API Format Blocked Duplicate"},
+				target_company="Blocked Company",
+				source_name="Test API Format Source",
+			)
+
+		ensure_access.assert_called_once_with("Blocked Company", doctype="Crispy Format")
+		get_doc.assert_not_called()
+
 	def test_get_crispy_format_includes_pdf_standard(self):
 		from crispy_print.api.v1 import get_crispy_format
 

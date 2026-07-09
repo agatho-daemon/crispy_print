@@ -11,6 +11,7 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block import (
 	resolve_layout_json_typst_blocks,
 )
+from crispy_print.permissions import ensure_company_access
 
 from .company_context import apply_effective_company_to_presentation_settings, resolve_effective_company
 from .security import ensure_doctype_read_permission
@@ -660,6 +661,7 @@ def _insert_format_duplicate_for_company(
 ) -> tuple["frappe.model.document.Document", list[str]]:
 	_ensure_create_permission()
 	target_company = _require_target_company(target_company)
+	ensure_company_access(target_company, doctype="Crispy Format")
 	name_strategy = _normalize_duplicate_name_strategy(name_strategy)
 	doc_data = {field: format_data.get(field) for field in EXPORT_FIELDS}
 	warnings: list[str] = []

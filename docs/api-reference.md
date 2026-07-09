@@ -4,6 +4,11 @@ All endpoints below are whitelisted and callable through `frappe.call`.
 
 Use method path: `crispy_print.api.v1.<endpoint>`
 
+The `api.v1` module is a stable compatibility facade. Each whitelisted endpoint declares
+an explicit facade policy for rate limiting, permission checks, delegated deeper checks,
+or a documented low-risk exemption; backend tests audit that new endpoints do not skip
+this policy metadata.
+
 ## Compile & Fonts
 
 ### `get_typst_local_fonts()`

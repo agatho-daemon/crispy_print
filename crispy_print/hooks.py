@@ -37,6 +37,16 @@ add_to_apps_screen = [
 ]
 # END VERSION COMPATIBILITY
 
+permission_query_conditions = {
+	"Crispy Format": "crispy_print.permissions.company_permission_query_condition",
+	"Crispy Branding Profile": "crispy_print.permissions.company_permission_query_condition",
+	"Crispy Template": "crispy_print.permissions.company_permission_query_condition",
+	"Crispy Issued Document": "crispy_print.permissions.company_permission_query_condition",
+	"Crispy Typst Block": "crispy_print.permissions.company_permission_query_condition",
+	"Crispy Document Code Profile": "crispy_print.permissions.company_permission_query_condition",
+	"Crispy Fiscal Credential": "crispy_print.permissions.company_permission_query_condition",
+}
+
 
 # include js, css files in header of desk.html
 app_include_js = [
