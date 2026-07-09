@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "app": "crispy_print",
+  "sample": {
+    "id": "quotation-basic",
+    "title": "Quotation Starter",
+    "description": "A simple quotation format focused on party details, valid-until date, items, and totals.",
+    "target_type": "DocType",
+    "doc_type": "Quotation",
+    "tags": ["quotation", "doctype", "starter"],
+    "recommended_use": "Use for standard quotation workflows before adding proposal-specific sections."
+  },
+  "format": {
+    "name": "Sample Quotation Starter",
+    "crispy_format_type": "DocType",
+    "doc_type": "Quotation",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "is_generic": 0,
+    "is_advanced": 0,
+    "generic_report_type": null,
+    "raw_typst": 0,
+    "layout_json": "{\"sections\":[{\"id\":\"summary\",\"label\":\"Summary\",\"columns\":[{\"id\":\"summary-left\",\"width\":1,\"fields\":[{\"fieldname\":\"party_name\",\"label\":\"Party\",\"fieldtype\":\"Data\"},{\"fieldname\":\"transaction_date\",\"label\":\"Date\",\"fieldtype\":\"Date\"}]},{\"id\":\"summary-right\",\"width\":1,\"fields\":[{\"fieldname\":\"valid_till\",\"label\":\"Valid Till\",\"fieldtype\":\"Date\"},{\"fieldname\":\"grand_total\",\"label\":\"Grand Total\",\"fieldtype\":\"Currency\"}]}]},{\"id\":\"items\",\"label\":\"Items\",\"columns\":[{\"id\":\"items-main\",\"width\":1,\"fields\":[{\"fieldname\":\"items\",\"label\":\"Items\",\"fieldtype\":\"Table\",\"columns\":[{\"fieldname\":\"item_code\",\"label\":\"Item\"},{\"fieldname\":\"description\",\"label\":\"Description\"},{\"fieldname\":\"qty\",\"label\":\"Qty\"},{\"fieldname\":\"rate\",\"label\":\"Rate\"},{\"fieldname\":\"amount\",\"label\":\"Amount\"}]}]}]},{\"id\":\"terms\",\"label\":\"Terms\",\"columns\":[{\"id\":\"terms-main\",\"width\":1,\"fields\":[{\"fieldname\":\"terms\",\"label\":\"Terms and Conditions\",\"fieldtype\":\"Text Editor\"}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a4\",\"orientation\":\"portrait\",\"marginTop\":24,\"marginBottom\":18,\"marginLeft\":12,\"marginRight\":12},\"branding\":{\"company\":\"\",\"mode\":\"None\",\"profile\":\"\",\"logo\":{\"source\":\"Company logo\",\"company\":\"\",\"image\":\"\",\"width\":28,\"offsetX\":0,\"offsetY\":0},\"letterhead\":\"\"},\"typography\":{\"sectionLabel\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":12,\"fontWeight\":\"600\",\"fontStyle\":\"normal\",\"color\":\"#1E293B\"},\"fieldLabel\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":9,\"fontWeight\":\"500\",\"fontStyle\":\"normal\",\"color\":\"#64748B\"},\"fieldValue\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":10,\"fontWeight\":\"400\",\"fontStyle\":\"normal\",\"color\":\"#0F172A\"}},\"table\":{\"cellInset\":{\"top\":6,\"right\":4,\"bottom\":6,\"left\":4},\"border\":{\"width\":0.5,\"color\":\"#E2E8F0\"},\"header\":{\"background\":\"#F8FAFC\"},\"rowStriping\":false,\"stripeColor\":\"#F8FAFC\",\"typography\":{\"header\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":9,\"fontWeight\":\"600\",\"fontStyle\":\"normal\",\"color\":\"#0F172A\"},\"body\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":9,\"fontWeight\":\"400\",\"fontStyle\":\"normal\",\"color\":\"#0F172A\"}}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 0,
+    "print_uom_after_quantity": 0,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

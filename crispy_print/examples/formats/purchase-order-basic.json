@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "app": "crispy_print",
+  "sample": {
+    "id": "purchase-order-basic",
+    "title": "Purchase Order Starter",
+    "description": "A purchase order layout with supplier, schedule, item table, taxes, and total sections.",
+    "target_type": "DocType",
+    "doc_type": "Purchase Order",
+    "tags": ["purchase", "doctype", "starter"],
+    "recommended_use": "Use as a base for vendor-facing purchase order print formats."
+  },
+  "format": {
+    "name": "Sample Purchase Order Starter",
+    "crispy_format_type": "DocType",
+    "doc_type": "Purchase Order",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "is_generic": 0,
+    "is_advanced": 0,
+    "generic_report_type": null,
+    "raw_typst": 0,
+    "layout_json": "{\"sections\":[{\"id\":\"supplier\",\"label\":\"Supplier\",\"columns\":[{\"id\":\"supplier-left\",\"width\":1,\"fields\":[{\"fieldname\":\"supplier_name\",\"label\":\"Supplier\",\"fieldtype\":\"Data\"},{\"fieldname\":\"transaction_date\",\"label\":\"Date\",\"fieldtype\":\"Date\"}]},{\"id\":\"supplier-right\",\"width\":1,\"fields\":[{\"fieldname\":\"schedule_date\",\"label\":\"Required By\",\"fieldtype\":\"Date\"},{\"fieldname\":\"grand_total\",\"label\":\"Grand Total\",\"fieldtype\":\"Currency\"}]}]},{\"id\":\"items\",\"label\":\"Items\",\"columns\":[{\"id\":\"items-main\",\"width\":1,\"fields\":[{\"fieldname\":\"items\",\"label\":\"Items\",\"fieldtype\":\"Table\",\"columns\":[{\"fieldname\":\"item_code\",\"label\":\"Item\"},{\"fieldname\":\"description\",\"label\":\"Description\"},{\"fieldname\":\"schedule_date\",\"label\":\"Required By\"},{\"fieldname\":\"qty\",\"label\":\"Qty\"},{\"fieldname\":\"rate\",\"label\":\"Rate\"},{\"fieldname\":\"amount\",\"label\":\"Amount\"}]}]}]},{\"id\":\"taxes\",\"label\":\"Taxes and Totals\",\"columns\":[{\"id\":\"taxes-main\",\"width\":1,\"fields\":[{\"fieldname\":\"taxes\",\"label\":\"Taxes\",\"fieldtype\":\"Table\",\"columns\":[{\"fieldname\":\"description\",\"label\":\"Description\"},{\"fieldname\":\"rate\",\"label\":\"Rate\"},{\"fieldname\":\"tax_amount\",\"label\":\"Amount\"},{\"fieldname\":\"total\",\"label\":\"Total\"}]},{\"fieldname\":\"in_words\",\"label\":\"In Words\",\"fieldtype\":\"Data\"}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a4\",\"orientation\":\"portrait\",\"marginTop\":25,\"marginBottom\":20,\"marginLeft\":12,\"marginRight\":12},\"branding\":{\"company\":\"\",\"mode\":\"None\",\"profile\":\"\",\"logo\":{\"source\":\"Company logo\",\"company\":\"\",\"image\":\"\",\"width\":28,\"offsetX\":0,\"offsetY\":0},\"letterhead\":\"\"},\"typography\":{\"sectionLabel\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":12,\"fontWeight\":\"600\",\"fontStyle\":\"normal\",\"color\":\"#1E293B\"},\"fieldLabel\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":9,\"fontWeight\":\"500\",\"fontStyle\":\"normal\",\"color\":\"#64748B\"},\"fieldValue\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":10,\"fontWeight\":\"400\",\"fontStyle\":\"normal\",\"color\":\"#0F172A\"}},\"table\":{\"cellInset\":{\"top\":6,\"right\":4,\"bottom\":6,\"left\":4},\"border\":{\"width\":0.5,\"color\":\"#E2E8F0\"},\"header\":{\"background\":\"#F1F5F9\"},\"rowStriping\":true,\"stripeColor\":\"#F8FAFC\",\"typography\":{\"header\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":9,\"fontWeight\":\"600\",\"fontStyle\":\"normal\",\"color\":\"#0F172A\"},\"body\":{\"fontFamily\":\"Inter 18pt\",\"fontSize\":9,\"fontWeight\":\"400\",\"fontStyle\":\"normal\",\"color\":\"#0F172A\"}}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 0,
+    "print_uom_after_quantity": 0,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

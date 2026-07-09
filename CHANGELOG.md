@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added a file-based **Sample Format Catalog** under `crispy_print/examples/formats/` so example formats can ship with the app without being installed as site data.
+- Added builder **Examples** workflow for creating a company-scoped Crispy Format from a curated sample only when a user explicitly chooses it.
+- Added sample catalog APIs: `list_sample_formats`, `get_sample_format`, and `create_format_from_sample`.
+- Added starter samples for Sales Invoice, Quotation, Purchase Order, and a Raw Typst Payment Entry receipt voucher.
 - Added an optional Frappe Print Engine adapter in preparation for a Frappe PR that loosens the hardcoded native print flow and allows apps to register print engine entry points.
 - Added `crispy_print/public/js/crispy_print_engine.js` to register `crispy_print` through `frappe.ui.form.register_print_engine` and route document print handoffs directly to `crispy-print-preview`.
 - Added install/sync setup that creates or repairs the `crispy_print` Print Engine record when the Frappe Print Engine DocType and controller are available.
@@ -23,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Removed automatic `Crispy Format` fixture shipping. Sample formats now live as app-owned JSON examples and are copied into site data only through the explicit Examples workflow.
 - Updated Crispy Print Preview to consume document context from `frappe.route_options` when opened through the optional Frappe print-engine handoff, while preserving direct route segment fallback.
 - Updated preview lifecycle handling to unmount the existing Vue preview before mounting a new document preview.
 - Changed Raw Typst mode to be author-controlled: presentation/page/table/typography controls are hidden in the builder, raw code changes no longer auto-compile, and refresh happens through the Refresh button or Command/Ctrl-Enter.
@@ -42,8 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed raw private image handling so `crispy_image()` resolves only approved private uploaded filenames and rejects public paths, traversal, nested paths, URLs, unsupported extensions, and missing files.
 - Fixed optional Print Engine setup and tests so sites without the future Print Engine controller skip that integration path instead of failing.
 
+### Removed
+
+- Removed the production `fixtures/` sample data path, including the old `fixtures/crispy_format.json` file and `fixtures = [{"dt": "Crispy Format"}]` hook.
+- Removed company-specific demo/sample data from the install/migrate surface. Existing sites keep their already-created `Crispy Format` records, but future installs and migrations no longer import or overwrite sample formats automatically.
+
 ### Tests
 
+- Added backend and frontend coverage for the Sample Format Catalog, explicit sample creation, fixture removal, and builder Examples flow.
 - Current frontend gate: `yarn test:unit` passed 223 tests across 57 test files.
 - Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 289 tests with 2 skipped.
 

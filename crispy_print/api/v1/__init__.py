@@ -56,6 +56,9 @@ from .reports import compile_report_preview as _compile_report_preview
 from .reports import generate_report_pdf as _generate_report_pdf
 from .reports import get_report_typst_source as _get_report_typst_source
 from .reports import get_sample_report_data as _get_sample_report_data
+from .sample_formats import create_format_from_sample as _create_format_from_sample
+from .sample_formats import get_sample_format as _get_sample_format
+from .sample_formats import list_sample_formats as _list_sample_formats
 from .security import enforce_rate_limit, ensure_doctype_read_permission
 from .templates import duplicate_crispy_template_for_company as _duplicate_crispy_template_for_company
 from .templates import (
@@ -416,6 +419,32 @@ def import_crispy_format(payload: JSONDict | str, on_conflict: str = "copy") -> 
 
 
 @frappe.whitelist()
+def list_sample_formats() -> list[JSONDict]:
+	return _list_sample_formats()
+
+
+@frappe.whitelist()
+def get_sample_format(sample_id: str) -> JSONDict:
+	return _get_sample_format(sample_id)
+
+
+@frappe.whitelist()
+def create_format_from_sample(
+	sample_id: str,
+	company: str,
+	name: str | None = None,
+	set_default: int | bool = 0,
+) -> JSONDict:
+	enforce_rate_limit("create_format_from_sample", limit=20, window_seconds=60)
+	return _create_format_from_sample(
+		sample_id=sample_id,
+		company=company,
+		name=name,
+		set_default=set_default,
+	)
+
+
+@frappe.whitelist()
 def get_reports_without_custom_html(generic_report_type: str | None = None) -> list[JSONDict]:
 	return _get_reports_without_custom_html(generic_report_type)
 
@@ -748,6 +777,7 @@ __all__ = [
 	"check_import_conflicts",
 	"compile_report_preview",
 	"compile_typst",
+	"create_format_from_sample",
 	"create_issued_document_snapshot",
 	"export_crispy_format",
 	"generate_document_code",
@@ -779,10 +809,12 @@ __all__ = [
 	"get_reports_without_custom_html",
 	"get_resolved_crispy_template_for_document",
 	"get_resolved_crispy_template_for_render",
+	"get_sample_format",
 	"get_sample_report_data",
 	"get_typst_font_faces",
 	"get_typst_local_fonts",
 	"import_crispy_format",
+	"list_sample_formats",
 	"record_issued_document_integrity_check",
 	"render_issued_document_pdf",
 	"resolve_document_code",

@@ -42,6 +42,14 @@
 				<template #header-actions>
 					<button
 						type="button"
+						class="btn btn-default btn-xs examples-button"
+						:title="__('Create from Example')"
+						@click="sampleDialogOpen = true"
+					>
+						{{ __("Examples") }}
+					</button>
+					<button
+						type="button"
 						class="pane-toggle pane-toggle--inline pane-toggle--fields pane-toggle--left"
 						:title="__('Collapse Fields')"
 						:aria-label="__('Collapse Fields')"
@@ -160,6 +168,12 @@
 			@close="duplicateDialogOpen = false"
 			@confirm="duplicateForCompany"
 		/>
+		<SampleFormatsDialog
+			:open="sampleDialogOpen"
+			:submitting="sampleSubmitting"
+			@close="sampleDialogOpen = false"
+			@confirm="createFromSample"
+		/>
 	</div>
 </template>
 
@@ -173,9 +187,11 @@ import SettingsPane from "../components/SettingsPane.vue";
 import SettingsSection from "../components/SettingsSection.vue";
 import CrispyTemplatePublishDialog from "../components/CrispyTemplatePublishDialog.vue";
 import DuplicateForCompanyDialog from "../components/DuplicateForCompanyDialog.vue";
+import SampleFormatsDialog from "../components/SampleFormatsDialog.vue";
 import FormatHealthPanel, { type FormatHealthItem } from "../components/FormatHealthPanel.vue";
 import { useStore } from "../composables/useStore";
 import type { CrispyTemplatePublishPreview } from "../api/crispy";
+import { createFormatFromSample } from "../api/crispy";
 import { getCrispyBuilderFormatName } from "../utils/routes";
 import { __ } from "../utils/i18n";
 import { fetchTypstFontFaces, fetchTypstFonts } from "../utils/typstTypography";
@@ -219,6 +235,8 @@ const publishSubmitting = ref(false);
 const publishPreview = ref<CrispyTemplatePublishPreview | null>(null);
 const duplicateDialogOpen = ref(false);
 const duplicateSubmitting = ref(false);
+const sampleDialogOpen = ref(false);
+const sampleSubmitting = ref(false);
 const isDiagnosticsExpanded = ref(false);
 const availableFonts = ref<string[]>([]);
 const fontFaces = ref<TypstFontFamilyFaces[]>([]);
@@ -601,6 +619,36 @@ async function duplicateForCompany(
 	}
 }
 
+async function createFromSample(args: {
+	sample_id: string;
+	company: string;
+	name?: string | null;
+	set_default: boolean;
+}) {
+	sampleSubmitting.value = true;
+	try {
+		const result = await createFormatFromSample(args);
+		sampleDialogOpen.value = false;
+		frappe.show_alert({
+			message: __("Crispy Format created: {0}", [result.name]),
+			indicator: "green",
+		});
+		if (result.warnings?.length) {
+			frappe.msgprint({
+				title: __("Created with Warnings"),
+				message: result.warnings.join("<br>"),
+				indicator: "orange",
+			});
+		}
+		if (typeof frappe !== "undefined" && frappe?.set_route) {
+			frappe.set_route("crispy-format-builder", result.name);
+		}
+		await store.fetch(result.name);
+	} finally {
+		sampleSubmitting.value = false;
+	}
+}
+
 function resetMiddleSplit() {
 	middleSplitPercent.value = defaultLayoutState.middleSplitPercent;
 	if (previewMode.value !== "normal") previewMode.value = "normal";
@@ -757,6 +805,10 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	flex: 0 0 auto;
 	--icon-stroke: currentColor;
 	--icon-fill: transparent;
+}
+
+.examples-button {
+	flex: 0 0 auto;
 }
 
 .pane-toggle:hover .pane-toggle__placeholder,

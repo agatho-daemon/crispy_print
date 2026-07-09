@@ -7,6 +7,7 @@ quick start, see the [project README](../README.md).
 
 - [Overview & Vision](overview.md) - Why Crispy Print exists, what makes it different, and the long-term direction.
 - [Usage](usage.md) - Print, report, branding, letterhead, document-code workflows, and layout recipes.
+- [Sample Format Catalog](usage.md#sample-format-catalog) - Explicitly create company-scoped formats from app-owned examples without installing fixtures.
 - [Frappe Print Engine integration](usage.md#frappe-print-engine-integration) - Optional native Print button handoff when the proposed Frappe print-engine extension is available.
 - [QR Field Registry](qr-field-registry.md) - Backend field allow-list, selected field child rows, authority filtering, and migration notes.
 - [Font Configuration](fonts.md) - Bundled, system, uploaded, and custom fonts plus global Crispy Print Settings.

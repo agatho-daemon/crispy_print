@@ -103,6 +103,25 @@ Use method path: `crispy_print.api.v1.<endpoint>`
 - Returns: duplicate result payload with `name`, `source_name`, `company`, `is_default`, and `warnings`
 - Notes: preserves render fields and retargets company-scoped presentation settings to the target company
 
+### `list_sample_formats()`
+
+- Args: none
+- Returns: lightweight sample catalog cards
+- Shape: `[{ id, title, description, target_type, doc_type, report_kind, tags, recommended_use, format_name }]`
+- Notes: reads app-owned JSON files from `crispy_print/examples/formats/`; does not create site data
+
+### `get_sample_format(sample_id)`
+
+- Args: `sample_id: str`
+- Returns: full export-compatible sample payload
+- Notes: sample files are validated as company-neutral payloads; company-scoped data and private file paths are rejected
+
+### `create_format_from_sample(sample_id, company, name=None, set_default=0)`
+
+- Args: sample id, target Company, optional format name/default flag
+- Returns: creation result payload with `name`, `sample_id`, `company`, `is_default`, and `warnings`
+- Notes: always creates a new/copy Crispy Format for the selected company; it never overwrites an existing format and replaces the old automatic `Crispy Format` fixture workflow
+
 ## Reports
 
 ### `get_reports_without_custom_html(generic_report_type=None)`

@@ -46,8 +46,6 @@ app_include_js = [
 	"/assets/crispy_print/js/crispy_print_button.js",
 ]
 
-fixtures = [{"dt": "Crispy Format"}]
-
 after_install = "crispy_print.install.after_install"
 after_sync = "crispy_print.install.after_sync"
 after_migrate = [

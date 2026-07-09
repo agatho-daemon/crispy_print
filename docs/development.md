@@ -11,6 +11,12 @@ This app includes comprehensive test coverage:
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 
+Sample Crispy Formats are not exported through Frappe fixtures. Keep curated
+examples as company-neutral JSON files under `crispy_print/examples/formats/` and
+load them through the Sample Format Catalog APIs. Do not re-add
+`fixtures = [{"dt": "Crispy Format"}]` or a production `fixtures/crispy_format.json`
+file for demo data; rich local demo generation belongs in `crispy_print/dev_utils/`.
+
 ## Development
 
 ### Frontend Dependencies
@@ -80,6 +86,14 @@ bench --site your-site run-tests --doctype "Crispy Format"
 - **Total:** 449 tests/test methods
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
+
+**Sample format catalog checks:**
+
+```bash
+bench --site your-site run-tests --app crispy_print --module crispy_print.tests.api.test_sample_formats
+cd apps/crispy_print/crispy_print/public/js
+yarn vitest run tests/batch15/formatImportExportApi.test.ts tests/batch16/crispyPFBLayout.test.ts tests/batch18/sampleFormatsDialog.test.ts
+```
 
 ### QR Field Registry Checks
 

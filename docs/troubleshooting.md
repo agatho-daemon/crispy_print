@@ -143,6 +143,9 @@ A: Users need access to the Frappe server. Typst runs server-side and fonts shou
 **Q: Can I export formats between sites?**  
 A: Yes, format import/export exists. In beta, verify imported formats carefully because related assets, branding profiles, and compliance records may need site-specific setup.
 
+**Q: Where did the sample `Crispy Format` fixtures go?**
+A: Sample formats are no longer installed through Frappe fixtures. Use **Crispy Format Builder → Examples** to create a company-scoped format from app-owned examples in `crispy_print/examples/formats/`. The old `fixtures/crispy_format.json` path was removed to avoid importing company-specific demo data into production sites.
+
 **Q: How do I customize fonts?**  
 A: Prefer uploading fonts through Crispy Print Settings for site-scoped fonts. For server-wide fonts, install them on the system or set `TYPST_FONT_PATHS`, then restart bench. See [Font Configuration](fonts.md).
 

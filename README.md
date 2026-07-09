@@ -66,6 +66,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Crispy Print Workspace** - Desk workspace with grouped shortcuts and cards for builders, core format records, reusable libraries, issued documents, reports, and regulatory setup.
 - **Reusable Typst Blocks** - Governed snippets for repeatable custom document fragments, scoped by category and linked DocType usage, with generated snake_case reference keys, explicit major/minor versions, and a dedicated compile/preview builder.
 - **DocType-Aware Format Registry** - Crispy Format records link formats to target DocTypes, format types, branding profiles, custom builders, and generated Typst.
+- **Sample Format Catalog** - Ships company-neutral example formats as app files and lets users explicitly create company-scoped Crispy Formats from the builder Examples dialog, including a Raw Typst receipt voucher sample.
 - **Company-Scoped Rendering** - Format, template, branding profile, and Typst block resolution is company-aware, with company-scoped default selection and cache invalidation.
 - **Approved Render Contracts (Crispy Template)** - Publish frozen, versioned approved render snapshots from a Crispy Format with snapshot-hash versioning, PDF standard, and Typst/Zebra/barcode facts, including company-specific templates with fallback to global templates.
 - **Duplicate for Company** - Clone a Crispy Format or frozen Crispy Template snapshot to another company while preserving layout/content, retargeting company-scoped presentation settings, and optionally publishing a target-company template from the frozen snapshot.
@@ -80,7 +81,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Controlled Asset Resolution** - Typst image assets resolve through approved site/app roots with traversal, symlink, external URL, and duplicate-basename protections; Raw Typst `crispy_image()` intentionally resolves private uploaded image filenames only.
 - **Compile Caching and Preview Optimizations** - Short-lived Typst compile cache, document fetch cache, report preview consolidation, lazy page bundles, SVG rerender avoidance, and bounded undo snapshots.
 - **Builder and Preview Diagnostics** - Collapsed builder checks plus runtime preview diagnostics for resolved format/template context, Typst version, render timing, page count, and cache state.
-- **Import, Export, and Migration Support** - Structured format import/export, schema validation, backfill patches, and compatibility tests for evolving format data.
+- **Import, Export, Samples, and Migration Support** - Structured format import/export, explicit sample creation, schema validation, backfill patches, and compatibility tests for evolving format data.
 - **Typed Frontend Architecture** - Vue 3 and TypeScript modules for builder state, report state, presentation settings, Typst translation, workers, and sanitization utilities.
 
 ## Requirements
@@ -186,12 +187,26 @@ The workspace groups the main builder pages, format records, templates, branding
 
 > ⚠️ **Required:** Set one **Crispy Format** as **Default** for the DocType so the document form can show the **Typst** button. Then publish an **Approved** and **Active** **Crispy Template** from that format; runtime preview and PDF output use the frozen template snapshot.
 
+> [!IMPORTANT]
+> Crispy Print no longer ships `Crispy Format` records as Frappe fixtures. The previous `fixtures/crispy_format.json` sample-data path has been removed so installs and migrations do not import company-specific demo formats into production sites. Use the builder **Examples** dialog to create sample formats explicitly for a selected company.
+
 Recommended setup order:
 
 1. Create or select a **Crispy Branding Profile** for company-wide page, typography, letterhead, logo, table, and QR defaults.
 2. Create a **Crispy Format** for the target DocType.
 3. Design the layout in the builder, attach the branding profile, save, and test with real documents.
 4. Configure document-code or regulatory QR profiles only if the document workflow needs compliance-oriented identifiers.
+
+**Start from an example:**
+
+1. Open **Crispy Format Builder**.
+2. Expand the left **Fields** pane if it is collapsed.
+3. Click **Examples**.
+4. Pick a sample such as **Sales Invoice Starter**, **Quotation Starter**, **Purchase Order Starter**, or **Receipt Voucher Raw Typst**.
+5. Select the target **Company**, optionally rename the format, and choose whether to set it as default.
+6. Click **Create Format**. Crispy Print creates a normal company-scoped `Crispy Format` record and routes the builder to it.
+
+Examples are stored in `crispy_print/examples/formats/` as company-neutral JSON payloads. They are hints and starter templates, not production defaults, and they are never installed automatically.
 
 **Step-by-step:**
 

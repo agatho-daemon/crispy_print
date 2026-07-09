@@ -89,6 +89,27 @@ export interface ImportResult {
   conflict_action: "copy" | "overwrite";
 }
 
+export interface SampleFormatCatalogItem {
+  id: string;
+  title: string;
+  description: string;
+  target_type: "DocType" | "Report" | "Contract" | string;
+  doc_type?: string | null;
+  report_kind?: string | null;
+  tags: string[];
+  recommended_use?: string | null;
+  format_name?: string | null;
+}
+
+export interface CreateFormatFromSampleResult {
+  success: boolean;
+  name: string;
+  sample_id: string;
+  company: string;
+  is_default?: number;
+  warnings: string[];
+}
+
 export interface ReportBuilderDefaults {
   mode: "basic" | "advanced";
   preset: "grid" | "tree" | "summary" | "minimal";
@@ -1294,6 +1315,47 @@ export async function importCrispyFormat(
   });
   if (!res.message) {
     throw new Error("Missing import response");
+  }
+  return res.message;
+}
+
+export async function listSampleFormats(): Promise<SampleFormatCatalogItem[]> {
+  const res = await call<SampleFormatCatalogItem[]>({
+    method: "crispy_print.api.v1.list_sample_formats",
+  });
+  return res.message || [];
+}
+
+export async function getSampleFormat(
+  sampleId: string,
+): Promise<ExportPayload & { sample?: Record<string, unknown> }> {
+  const res = await call<ExportPayload & { sample?: Record<string, unknown> }>({
+    method: "crispy_print.api.v1.get_sample_format",
+    args: { sample_id: sampleId },
+  });
+  if (!res.message) {
+    throw new Error("Missing sample format payload");
+  }
+  return res.message;
+}
+
+export async function createFormatFromSample(args: {
+  sample_id: string;
+  company: string;
+  name?: string | null;
+  set_default?: boolean;
+}): Promise<CreateFormatFromSampleResult> {
+  const res = await call<CreateFormatFromSampleResult>({
+    method: "crispy_print.api.v1.create_format_from_sample",
+    args: {
+      sample_id: args.sample_id,
+      company: args.company,
+      name: args.name || null,
+      set_default: Boolean(args.set_default),
+    },
+  });
+  if (!res.message) {
+    throw new Error("Missing sample format creation result");
   }
   return res.message;
 }

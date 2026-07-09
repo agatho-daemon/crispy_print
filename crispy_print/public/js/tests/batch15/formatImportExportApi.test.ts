@@ -81,6 +81,81 @@ describe("crispy format import/export api wrappers", () => {
 		})
 	})
 
+	it("lists sample format catalog entries", async () => {
+		const { call } = await import("../../api/frappe")
+		;(call as any).mockResolvedValueOnce({
+			message: [
+				{
+					id: "sales-invoice-basic",
+					title: "Sales Invoice Starter",
+					target_type: "DocType",
+					tags: ["invoice"],
+				},
+			],
+		})
+
+		const { listSampleFormats } = await import("../../api/crispy")
+		const samples = await listSampleFormats()
+
+		expect(samples[0].id).toBe("sales-invoice-basic")
+		expect((call as any).mock.calls[0][0]).toMatchObject({
+			method: "crispy_print.api.v1.list_sample_formats",
+		})
+	})
+
+	it("gets a full sample format payload", async () => {
+		const { call } = await import("../../api/frappe")
+		;(call as any).mockResolvedValueOnce({
+			message: {
+				schema_version: 1,
+				app: "crispy_print",
+				sample: { id: "sales-invoice-basic" },
+				format: { name: "Sales Invoice Starter" },
+			},
+		})
+
+		const { getSampleFormat } = await import("../../api/crispy")
+		const payload = await getSampleFormat("sales-invoice-basic")
+
+		expect(payload.format.name).toBe("Sales Invoice Starter")
+		expect((call as any).mock.calls[0][0]).toMatchObject({
+			method: "crispy_print.api.v1.get_sample_format",
+			args: { sample_id: "sales-invoice-basic" },
+		})
+	})
+
+	it("creates a format from a sample", async () => {
+		const { call } = await import("../../api/frappe")
+		;(call as any).mockResolvedValueOnce({
+			message: {
+				success: true,
+				name: "Sales Invoice Starter",
+				sample_id: "sales-invoice-basic",
+				company: "ACME",
+				warnings: [],
+			},
+		})
+
+		const { createFormatFromSample } = await import("../../api/crispy")
+		const result = await createFormatFromSample({
+			sample_id: "sales-invoice-basic",
+			company: "ACME",
+			name: "Sales Invoice Starter",
+			set_default: true,
+		})
+
+		expect(result.name).toBe("Sales Invoice Starter")
+		expect((call as any).mock.calls[0][0]).toMatchObject({
+			method: "crispy_print.api.v1.create_format_from_sample",
+			args: {
+				sample_id: "sales-invoice-basic",
+				company: "ACME",
+				name: "Sales Invoice Starter",
+				set_default: true,
+			},
+		})
+	})
+
 	it("gets report builder defaults from backend", async () => {
 		const { call } = await import("../../api/frappe")
 		;(call as any).mockResolvedValueOnce({

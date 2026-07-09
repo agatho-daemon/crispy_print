@@ -22,17 +22,20 @@ This beta structure is documented here for orientation only. It is expected to k
 ```
 crispy_print/
 ├── crispy_print/
-│   ├── hooks.py                          # Frappe hooks, fixtures, desk assets
+│   ├── hooks.py                          # Frappe hooks and desk assets
 │   ├── install.py                        # Install-time setup helpers
 │   ├── json_utils.py                     # Shared JSON parsing/coercion helpers
 │   ├── letterhead_lifecycle.py           # Letter Head lifecycle fields and validation
 │   ├── config/
 │   │   └── __init__.py                   # Frappe config package marker
+│   ├── examples/
+│   │   └── formats/                      # Company-neutral sample format catalog
 │   ├── api/
 │   │   └── v1/                           # Versioned backend API surface
 │   │       ├── compile.py                # Typst compile, cache, asset controls
 │   │       ├── docs.py                   # Document fetch and print data helpers
 │   │       ├── formats.py                # Crispy Format query/import/export APIs
+│   │       ├── sample_formats.py         # File-based sample catalog APIs
 │   │       ├── branding_profiles.py      # Branding Profile APIs
 │   │       ├── reports.py                # Report preview/rendering APIs
 │   │       ├── document_codes.py         # Document-code generation APIs
@@ -98,8 +101,6 @@ crispy_print/
 │   │   └── pages/                        # Frappe website template package
 │   ├── translations/                     # App translation CSV files
 │   └── tests/                            # Backend API/helper tests
-├── fixtures/
-│   └── crispy_format.json                # Demo/seed formats
 ├── patches/                             # Schema/data backfill patches
 ├── dev_utils/
 │   └── perf_benchmarks.py                # Local benchmark helper
@@ -134,6 +135,7 @@ Backend:
 - **`api/v1/images.py`** - Private image listing helpers for builder image fields.
 - **`api/v1/docs.py`** - Permission-aware document fetch and formatted-value preparation.
 - **`api/v1/formats.py`** - Format listing, import/export, conflict detection, builder mode, and report-format lookup.
+- **`api/v1/sample_formats.py`** - Company-neutral sample catalog listing and explicit format creation from app-owned examples.
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
 - **`api/v1/reports.py`** - Report sample data, Typst source generation, combined preview compilation, and report PDF helpers.
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
@@ -159,3 +161,9 @@ Data model:
 - **`Crispy Generic Report`** - Generic report definition for report-type formats.
 - **`Crispy Print Settings`** - Single DocType for global font, rendering, and print-policy configuration.
 - **`Crispy QR Regulatory Profile`**, **`Crispy Fiscal Credential`**, **`Crispy Document Code Profile`**, and **`Crispy Document Code Rule`** - Compliance-oriented document identity and verification layer.
+
+Sample data policy:
+
+- **No production `Crispy Format` fixtures** - The app intentionally does not export `Crispy Format` records through `hooks.py` fixtures.
+- **`examples/formats/`** - Curated sample payloads are app-owned JSON files and become site data only when a user creates a format from the builder Examples dialog or sample catalog API.
+- **`dev_utils/`** - Rich local demo-data generation remains developer-only and is not treated as production app surface.

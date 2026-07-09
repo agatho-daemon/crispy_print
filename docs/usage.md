@@ -12,6 +12,36 @@ The typical workflow for using Crispy Print:
 4. **Save and set default** -> enable the Typst button for that DocType
 5. **Open document** -> click `Typst` -> preview and download PDF
 
+### Sample Format Catalog
+
+Crispy Print ships starter examples as app-owned JSON files under
+`crispy_print/examples/formats/`. These files are not Frappe fixtures and are not
+inserted during install or migrate.
+
+Use the builder **Examples** dialog when you want to create a real format from a
+sample:
+
+1. Open **Crispy Format Builder**.
+2. Expand the left **Fields** pane if it is collapsed.
+3. Click **Examples**.
+4. Select a sample format.
+5. Choose the target **Company**.
+6. Optionally change the format name and mark it as default.
+7. Click **Create Format**.
+
+The created record is a normal company-scoped **Crispy Format**. It can be saved,
+edited, published as a Crispy Template, exported, duplicated for another company,
+or deleted like any user-created format.
+
+Current samples include regular builder starters for Sales Invoice, Quotation,
+and Purchase Order, plus a Raw Typst **Receipt Voucher** sample for Payment Entry.
+
+> **Fixture removal note:** older beta builds shipped sample `Crispy Format`
+> records through `fixtures/crispy_format.json`. That fixture path has been
+> removed intentionally. Existing sites keep any records that were already
+> imported, but new installs and migrations no longer create or overwrite sample
+> formats automatically.
+
 ### Frappe Print Engine Integration
 
 Crispy Print includes an optional adapter for the proposed Frappe Print Engine extension. That upstream change is intended to loosen Frappe's hardcoded native print flow by letting apps register client-renderer print engines.

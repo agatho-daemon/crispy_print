@@ -5,6 +5,13 @@ import CrispyPFB from "../../pages/CrispyPFB.vue";
 
 const STORAGE_KEY = "crispy-print:format-builder-layout:v1";
 let storage: Record<string, string>;
+const createFormatFromSample = vi.fn(async () => ({
+  success: true,
+  name: "Sample Sales Invoice Starter",
+  sample_id: "sales-invoice-basic",
+  company: "ACME",
+  warnings: ["Adjusted presentation settings"],
+}));
 
 const makeStore = (): Record<string, unknown> => ({
   fields: ref([]),
@@ -48,6 +55,13 @@ vi.mock("../../utils/routes", () => ({
   getCrispyBuilderFormatName: vi.fn((): string | null => null),
 }));
 
+vi.mock("../../api/crispy", () => ({
+  createFormatFromSample: (args: Record<string, unknown>) =>
+    createFormatFromSample(args),
+  getCompanies: vi.fn(async () => []),
+  listSampleFormats: vi.fn(async () => []),
+}));
+
 async function mountBuilder() {
   const { useStore } = await import("../../composables/useStore");
   (useStore as any).mockReturnValue(makeStore());
@@ -70,6 +84,12 @@ async function mountBuilder() {
         SettingsPane: {
           template:
             '<div class="pane pane--settings" data-test="settings-pane"><slot name="header-actions" /></div>',
+        },
+        SampleFormatsDialog: {
+          props: ["open", "submitting"],
+          emits: ["close", "confirm"],
+          template:
+            '<div v-if="open" data-test="sample-dialog"><button data-test="sample-confirm" @click="$emit(\'confirm\', { sample_id: \'sales-invoice-basic\', company: \'ACME\', name: \'Sample Sales Invoice Starter\', set_default: true })">Create</button></div>',
         },
       },
     },
@@ -97,6 +117,13 @@ describe("CrispyPFB persisted pane layout", () => {
       configurable: true,
     });
     vi.clearAllMocks();
+    createFormatFromSample.mockClear();
+    (globalThis as any).frappe = {
+      show_alert: vi.fn(),
+      msgprint: vi.fn(),
+      set_route: vi.fn(),
+      router: { on: vi.fn() },
+    };
   });
 
   it("starts collapsed, toggles side panes, and persists expanded state", async () => {
@@ -196,6 +223,62 @@ describe("CrispyPFB persisted pane layout", () => {
 
     stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
     expect(stored.middleSplitPercent).toBe(50);
+  });
+
+  it("creates an example format and routes to the new builder record", async () => {
+    const store = makeStore();
+    const { useStore } = await import("../../composables/useStore");
+    (useStore as any).mockReturnValue(store);
+
+    const wrapper = mount(CrispyPFB, {
+      global: {
+        stubs: {
+          FieldsPane: {
+            template:
+              '<div class="pane pane--fields" data-test="fields-pane"><slot name="header-actions" /></div>',
+          },
+          LayoutPane: {
+            template:
+              '<div class="pane pane--layout" data-test="layout-pane" />',
+          },
+          TypstCodePane: { template: '<div data-test="typst-pane" />' },
+          PreviewPane: {
+            template:
+              '<div class="pane pane--preview" data-test="preview-pane" />',
+          },
+          SettingsPane: {
+            template:
+              '<div class="pane pane--settings" data-test="settings-pane"><slot name="header-actions" /></div>',
+          },
+          SampleFormatsDialog: {
+            props: ["open", "submitting"],
+            emits: ["close", "confirm"],
+            template:
+              '<div v-if="open" data-test="sample-dialog"><button data-test="sample-confirm" @click="$emit(\'confirm\', { sample_id: \'sales-invoice-basic\', company: \'ACME\', name: \'Sample Sales Invoice Starter\', set_default: true })">Create</button></div>',
+          },
+        },
+      },
+    });
+
+    await wrapper.find(".pane-toggle--fields").trigger("click");
+    await nextTick();
+    await wrapper.find(".examples-button").trigger("click");
+    await nextTick();
+    await wrapper.find("[data-test='sample-confirm']").trigger("click");
+    await nextTick();
+
+    expect(createFormatFromSample).toHaveBeenCalledWith({
+      sample_id: "sales-invoice-basic",
+      company: "ACME",
+      name: "Sample Sales Invoice Starter",
+      set_default: true,
+    });
+    expect((globalThis as any).frappe.set_route).toHaveBeenCalledWith(
+      "crispy-format-builder",
+      "Sample Sales Invoice Starter",
+    );
+    expect(store.fetch).toHaveBeenCalledWith("Sample Sales Invoice Starter");
+    expect((globalThis as any).frappe.msgprint).toHaveBeenCalled();
   });
 
   it("warns when multiple default Branding Profiles match the company", async () => {
