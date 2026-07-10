@@ -14,6 +14,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
+from crispy_print.api.v1.company_context import (
+	extract_presentation_settings_company,
+	extract_source_company,
+)
 from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
 	resolve_effective_presentation_settings,
 )
@@ -605,14 +609,11 @@ def _snapshot_value_from_source(
 
 
 def _get_source_company(source: Document) -> str | None:
-	return source.get("company") or _get_presentation_settings_company(source.get("presentation_settings"))
+	return extract_source_company(source)
 
 
 def _get_presentation_settings_company(presentation_settings_json: str | None) -> str | None:
-	settings = loads_dict_or_empty(presentation_settings_json)
-	branding = settings.get("branding") or {}
-	logo = branding.get("logo") or {}
-	return _clean(branding.get("company") or logo.get("company")) or None
+	return extract_presentation_settings_company(presentation_settings_json)
 
 
 def _get_source_branding_profile(presentation_settings_json: str | None) -> str | None:

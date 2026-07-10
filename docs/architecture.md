@@ -139,6 +139,7 @@ Backend:
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
 - **`api/v1/reports.py`** - Report sample data, Typst source generation, combined preview compilation, and report PDF helpers.
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
+- **`api/v1/company_context.py`** - Shared company extraction, presentation-settings company parsing, and final effective-company resolution for backend render paths.
 - **`api/v1/security.py`** - Shared permission checks, endpoint policy decorators, rate limits, path validation, and RPC input hardening.
 - **`crispy_print.permissions`** - Company User Permission-aware query conditions and target-company authorization helpers for company-scoped Crispy records.
 - **`crispy_print.defaults`** - Shared one-default-per-scope enforcement using database advisory locks and batched clearing for defaultable Crispy records.

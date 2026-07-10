@@ -12,6 +12,7 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 
 from .company_context import (
 	apply_effective_company_to_presentation_settings,
+	extract_presentation_settings_company,
 	resolve_effective_company,
 )
 from .compile import compile_typst
@@ -225,7 +226,7 @@ def generate_report_pdf(
 			format_presentation_settings = {}
 	effective_company = resolve_effective_company(
 		report_filters=filters,
-		explicit_company=_get_presentation_settings_company(format_presentation_settings)
+		explicit_company=extract_presentation_settings_company(format_presentation_settings)
 		or format_doc.get("company"),
 	)
 	format_presentation_settings = resolve_effective_presentation_settings(
@@ -372,7 +373,7 @@ def get_report_typst_source(
 	format_doc.check_permission("read")
 	effective_company = resolve_effective_company(
 		report_filters=filters,
-		explicit_company=_get_presentation_settings_company(presentation_settings_dict)
+		explicit_company=extract_presentation_settings_company(presentation_settings_dict)
 		or getattr(format_doc, "company", None),
 		allow_global_fallback=bool(preview_data_dict),
 	)
@@ -765,18 +766,6 @@ def _fill_default_report_filters(report: str, filters: dict) -> dict:
 				filled[fieldname] = default_fy
 
 	return filled
-
-
-def _get_presentation_settings_company(presentation_settings: dict | None) -> str | None:
-	if not isinstance(presentation_settings, dict):
-		return None
-	branding = presentation_settings.get("branding") or {}
-	if not isinstance(branding, dict):
-		return None
-	logo = branding.get("logo") or {}
-	company = branding.get("company") or (logo.get("company") if isinstance(logo, dict) else None)
-	company = str(company or "").strip()
-	return company or None
 
 
 def _prepare_typst_report_data(
