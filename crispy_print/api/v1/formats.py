@@ -12,6 +12,11 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	resolve_layout_json_typst_blocks,
 )
 from crispy_print.permissions import ensure_company_access
+from crispy_print.render_contract import (
+	FORMAT_EXPORT_FIELDS,
+	FORMAT_IMPORT_FIELD_MAX_BYTES,
+	format_data_from_doc,
+)
 
 from .company_context import apply_effective_company_to_presentation_settings, resolve_effective_company
 from .security import ensure_doctype_read_permission
@@ -20,49 +25,9 @@ EXPORT_SCHEMA_VERSION = 1
 ALLOWED_IMPORT_CONFLICT_ACTIONS = {"copy", "overwrite"}
 ALLOWED_DUPLICATE_NAME_STRATEGIES = {"copy", "replace"}
 MAX_IMPORT_FIELD_BYTES = {
-	"name": 140,
-	"crispy_format_type": 40,
-	"doc_type": 140,
-	"report": 140,
-	"contract": 140,
-	"company": 140,
-	"generic_report_type": 140,
-	"raw_typst": 256 * 1024,
-	"layout_json": 512 * 1024,
-	"presentation_settings": 128 * 1024,
-	"doc_header": 128 * 1024,
-	"doc_footer": 128 * 1024,
-	"typst_preamble": 256 * 1024,
-	"typst_code": 512 * 1024,
-	"default_print_language": 140,
-	"pdf_standard": 40,
-	"compact_item_print": 8,
-	"print_uom_after_quantity": 8,
-	"print_taxes_with_zero_amount": 8,
+	**FORMAT_IMPORT_FIELD_MAX_BYTES,
 }
-EXPORT_FIELDS = [
-	"name",
-	"crispy_format_type",
-	"doc_type",
-	"report",
-	"contract",
-	"company",
-	"is_generic",
-	"is_advanced",
-	"generic_report_type",
-	"raw_typst",
-	"layout_json",
-	"presentation_settings",
-	"doc_header",
-	"doc_footer",
-	"typst_preamble",
-	"typst_code",
-	"default_print_language",
-	"pdf_standard",
-	"compact_item_print",
-	"print_uom_after_quantity",
-	"print_taxes_with_zero_amount",
-]
+EXPORT_FIELDS = list(FORMAT_EXPORT_FIELDS)
 FORMAT_LIST_CACHE_TTL_SECONDS = 5 * 60
 
 
@@ -640,7 +605,7 @@ def duplicate_crispy_format_for_company(
 
 
 def _format_data_from_doc(doc) -> dict:
-	data = {field: doc.get(field) for field in EXPORT_FIELDS}
+	data = format_data_from_doc(doc)
 	if isinstance(data.get("report"), list):
 		data["report"] = [
 			{"report": row.get("report"), "disabled": row.get("disabled") or 0}

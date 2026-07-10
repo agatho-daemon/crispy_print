@@ -21,6 +21,12 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	resolve_layout_json_typst_blocks,
 )
 from crispy_print.json_utils import loads_dict_or_empty
+from crispy_print.render_contract import (
+	TEMPLATE_IMMUTABLE_AFTER_INSERT_FIELDS,
+	TEMPLATE_SNAPSHOT_FIELD_MAP,
+	TEMPLATE_SNAPSHOT_HASH_FIELDS_V1,
+	TEMPLATE_SNAPSHOT_HASH_FIELDS_V2,
+)
 from crispy_print.template_resolution import (
 	TemplateRenderContext,
 	is_effective_template_row,
@@ -43,66 +49,9 @@ ALLOWED_STATUS_TRANSITIONS = {
 	"Retired": {"Retired"},
 	"Superseded": {"Superseded"},
 }
-IMMUTABLE_AFTER_INSERT_FIELDS = {
-	"template_name",
-	"company",
-	"version",
-	"source_crispy_format",
-	"source_branding_profile",
-	"crispy_format_type",
-	"source_doctype",
-	"source_report",
-	"source_contract",
-	"pdf_standard",
-	"raw_typst",
-	"compact_item_print",
-	"print_uom_after_quantity",
-	"print_taxes_with_zero_amount",
-	"typst_version",
-	"zebra_version",
-	"barcode_symbology",
-	"layout_json",
-	"presentation_settings_json",
-	"doc_header",
-	"doc_footer",
-	"typst_preamble",
-	"typst_code",
-	"snapshot_hash",
-	"snapshot_hash_version",
-	"approved_by",
-	"approved_at",
-	"retired_by",
-	"retired_at",
-}
-SNAPSHOT_HASH_FIELDS_V1 = (
-	"template_name",
-	"company",
-	"version",
-	"source_crispy_format",
-	"source_branding_profile",
-	"crispy_format_type",
-	"source_doctype",
-	"source_report",
-	"source_contract",
-	"pdf_standard",
-	"raw_typst",
-	"compact_item_print",
-	"print_uom_after_quantity",
-	"print_taxes_with_zero_amount",
-	"typst_version",
-	"layout_json",
-	"presentation_settings_json",
-	"doc_header",
-	"doc_footer",
-	"typst_preamble",
-	"typst_code",
-)
-SNAPSHOT_HASH_FIELDS_V2 = (
-	*SNAPSHOT_HASH_FIELDS_V1,
-	"snapshot_hash_version",
-	"zebra_version",
-	"barcode_symbology",
-)
+IMMUTABLE_AFTER_INSERT_FIELDS = TEMPLATE_IMMUTABLE_AFTER_INSERT_FIELDS
+SNAPSHOT_HASH_FIELDS_V1 = TEMPLATE_SNAPSHOT_HASH_FIELDS_V1
+SNAPSHOT_HASH_FIELDS_V2 = TEMPLATE_SNAPSHOT_HASH_FIELDS_V2
 SNAPSHOT_HASH_FIELDS = SNAPSHOT_HASH_FIELDS_V1
 
 
@@ -174,42 +123,10 @@ class CrispyTemplate(Document):
 		source = frappe.get_doc("Crispy Format", self.source_crispy_format)
 		source.check_permission("read")
 
-		self.crispy_format_type = source.get("crispy_format_type")
-		self.source_doctype = source.get("doc_type")
-		self.source_report = _get_source_report(source)
-		self.source_contract = source.get("contract")
-		self.pdf_standard = source.get("pdf_standard") or self.pdf_standard or "PDF/A-2u"
-		self.raw_typst = 1 if source.get("raw_typst") or source.get("is_advanced") else 0
-		self.compact_item_print = 1 if source.get("compact_item_print") else 0
-		self.print_uom_after_quantity = 1 if source.get("print_uom_after_quantity") else 0
-		self.print_taxes_with_zero_amount = 1 if source.get("print_taxes_with_zero_amount") else 0
+		for format_field, template_field in TEMPLATE_SNAPSHOT_FIELD_MAP:
+			self.set(template_field, _snapshot_value_from_source(source, format_field, template_field, self))
 		self.typst_version = self.typst_version or get_typst_version()
 		self.zebra_version = self.zebra_version or ZEBRA_VERSION
-		if self.company is None:
-			self.company = source.get("company") or _get_presentation_settings_company(
-				source.get("presentation_settings"),
-			)
-		presentation_settings = resolve_effective_presentation_settings(
-			loads_dict_or_empty(source.get("presentation_settings")),
-			company=self.company,
-		)
-		self.presentation_settings_json = json.dumps(
-			presentation_settings,
-			sort_keys=True,
-			separators=(",", ":"),
-			default=str,
-		)
-		self.layout_json = source.get("layout_json") or ""
-		if self.layout_json and self.source_doctype:
-			self.layout_json = resolve_layout_json_typst_blocks(
-				self.layout_json,
-				self.source_doctype,
-				company=self.company,
-			)
-		self.doc_header = source.get("doc_header") or ""
-		self.doc_footer = source.get("doc_footer") or ""
-		self.typst_preamble = source.get("typst_preamble") or ""
-		self.typst_code = source.get("typst_code") or ""
 		self.source_branding_profile = self.source_branding_profile or _get_source_branding_profile(
 			self.presentation_settings_json,
 		)
@@ -638,6 +555,53 @@ def get_typst_version() -> str:
 	except Exception:
 		return ""
 	return (result.stdout or result.stderr or "").strip()
+
+
+def _snapshot_value_from_source(
+	source: Document,
+	format_field: str,
+	template_field: str,
+	template: CrispyTemplate,
+) -> Any:
+	if template_field == "source_report":
+		return _get_source_report(source)
+	if template_field == "company":
+		if template.company is not None:
+			return template.company
+		return _get_source_company(source)
+	if template_field == "pdf_standard":
+		return source.get(format_field) or template.pdf_standard or "PDF/A-2u"
+	if template_field == "raw_typst":
+		return 1 if source.get("raw_typst") or source.get("is_advanced") else 0
+	if template_field in {
+		"compact_item_print",
+		"print_uom_after_quantity",
+		"print_taxes_with_zero_amount",
+	}:
+		return 1 if source.get(format_field) else 0
+	if template_field == "presentation_settings_json":
+		presentation_settings = resolve_effective_presentation_settings(
+			loads_dict_or_empty(source.get(format_field)),
+			company=template.company,
+		)
+		return json.dumps(
+			presentation_settings,
+			sort_keys=True,
+			separators=(",", ":"),
+			default=str,
+		)
+	if template_field == "layout_json":
+		layout_json = source.get(format_field) or ""
+		if layout_json and template.source_doctype:
+			return resolve_layout_json_typst_blocks(
+				layout_json,
+				template.source_doctype,
+				company=template.company,
+			)
+		return layout_json
+	if template_field in {"doc_header", "doc_footer", "typst_preamble", "typst_code"}:
+		return source.get(format_field) or ""
+	return source.get(format_field)
 
 
 def _get_source_company(source: Document) -> str | None:
