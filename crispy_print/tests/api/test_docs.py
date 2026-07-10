@@ -95,6 +95,105 @@ class TestFormattedDocAPI(FrappeTestCase):
 		self.assertEqual(out["address_display"], "Line 1\nLine 2")
 		mock_doc.check_permission.assert_called_once_with("read")
 
+	def test_get_formatted_doc_with_requested_fields_returns_render_payload_only(self):
+		"""Requested fields should not leak unrelated doc.as_dict() values."""
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		mock_doc = SimpleNamespace(
+			doctype="Sales Invoice",
+			name="SINV-1",
+			check_permission=mock.Mock(),
+			as_dict=lambda: {
+				"doctype": "Sales Invoice",
+				"name": "SINV-1",
+				"docstatus": 1,
+				"modified": "2026-07-10 10:00:00",
+				"customer": "Acme",
+				"grand_total": 42,
+				"owner": "private@example.com",
+				"_assign": "[]",
+			},
+		)
+		mock_meta = SimpleNamespace(
+			fields=[
+				SimpleNamespace(fieldname="customer", fieldtype="Data", options=None, hidden=0),
+				SimpleNamespace(fieldname="grand_total", fieldtype="Currency", options=None, hidden=0),
+			]
+		)
+
+		with (
+			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
+			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
+			mock.patch("crispy_print.api.v1.docs.frappe.format", side_effect=lambda value, *a, **k: value),
+			mock.patch(
+				"crispy_print.api.v1.docs.validate_document_print_policy",
+				return_value={"can_print": True},
+			),
+		):
+			out = get_formatted_doc("Sales Invoice", "SINV-1", fields=["customer", "owner", "_assign"])
+
+		self.assertEqual(out["doctype"], "Sales Invoice")
+		self.assertEqual(out["name"], "SINV-1")
+		self.assertEqual(out["docstatus"], 1)
+		self.assertEqual(out["modified"], "2026-07-10 10:00:00")
+		self.assertEqual(out["customer"], "Acme")
+		self.assertEqual(out["__crispy_print_context"], {"can_print": True})
+		self.assertNotIn("grand_total", out)
+		self.assertNotIn("owner", out)
+		self.assertNotIn("_assign", out)
+
+	def test_get_formatted_doc_with_requested_child_fields_limits_child_columns(self):
+		"""Requested table paths should return only requested child columns."""
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		mock_doc = SimpleNamespace(
+			doctype="Sales Invoice",
+			name="SINV-1",
+			check_permission=mock.Mock(),
+			as_dict=lambda: {
+				"doctype": "Sales Invoice",
+				"name": "SINV-1",
+				"items": [
+					{
+						"item_code": "ITEM-1",
+						"description": "Hidden details",
+						"qty": 2,
+						"rate": 5,
+					}
+				],
+			},
+		)
+		parent_meta = SimpleNamespace(
+			fields=[
+				SimpleNamespace(fieldname="items", fieldtype="Table", options="Sales Invoice Item", hidden=0)
+			]
+		)
+		child_meta = SimpleNamespace(
+			fields=[
+				SimpleNamespace(fieldname="item_code", fieldtype="Data", options=None, hidden=0),
+				SimpleNamespace(fieldname="description", fieldtype="Text", options=None, hidden=0),
+				SimpleNamespace(fieldname="qty", fieldtype="Float", options=None, hidden=0),
+				SimpleNamespace(fieldname="rate", fieldtype="Currency", options=None, hidden=0),
+			]
+		)
+
+		def mock_get_meta(doctype):
+			return child_meta if doctype == "Sales Invoice Item" else parent_meta
+
+		with (
+			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
+			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", side_effect=mock_get_meta),
+			mock.patch("crispy_print.api.v1.docs.frappe.format", side_effect=lambda value, *a, **k: value),
+			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
+		):
+			out = get_formatted_doc("Sales Invoice", "SINV-1", fields='["items.item_code","items.qty"]')
+
+		self.assertEqual(out["items"], [{"item_code": "ITEM-1", "qty": 2}])
+
 	def test_get_formatted_doc_keeps_raw_value_when_child_format_fails(self):
 		"""Child-table formatter errors should not break payload generation."""
 		from types import SimpleNamespace
@@ -138,7 +237,7 @@ class TestFormattedDocAPI(FrappeTestCase):
 		self.assertEqual(out["items"][0]["qty"], "formatted:2")
 		mock_doc.check_permission.assert_called_once_with("read")
 
-	def test_get_formatted_doc_attaches_document_code_preview_when_available(self):
+	def test_get_formatted_doc_does_not_run_document_code_preview_without_explicit_allow(self):
 		from types import SimpleNamespace
 
 		from crispy_print.api.v1.docs import get_formatted_doc
@@ -153,6 +252,32 @@ class TestFormattedDocAPI(FrappeTestCase):
 			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
 			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
 			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
+			mock.patch("crispy_print.api.v1.docs.get_preferred_document_code_for_doc") as get_preferred,
+		):
+			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
+
+		self.assertNotIn("__crispy_document_code", out)
+		get_preferred.assert_not_called()
+
+	def test_get_formatted_doc_attaches_safe_document_code_preview_when_allowed(self):
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		mock_doc = SimpleNamespace(
+			check_permission=mock.Mock(),
+			as_dict=lambda: {"name": "DOC-1"},
+		)
+		mock_meta = SimpleNamespace(fields=[])
+		mock_profile = SimpleNamespace(check_permission=mock.Mock())
+
+		with (
+			mock.patch(
+				"crispy_print.api.v1.docs.frappe.get_doc",
+				side_effect=[mock_doc, mock_profile],
+			),
+			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
+			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
 			mock.patch(
 				"crispy_print.api.v1.docs.get_preferred_document_code_for_doc",
 				return_value={
@@ -164,9 +289,17 @@ class TestFormattedDocAPI(FrappeTestCase):
 					"payload": {"name": "DOC-1"},
 					"encoded_value": "ENCODED-QR",
 				},
-			),
+			) as get_preferred,
 		):
-			out = get_formatted_doc("Any", "DOC-1", qr_source_mode="document_code_profile")
+			out = get_formatted_doc(
+				"Any",
+				"DOC-1",
+				qr_source_mode="document_code_profile",
+				allow_document_code_preview=1,
+			)
 
 		self.assertEqual(out["__crispy_document_code"]["encoded_value"], "ENCODED-QR")
 		self.assertEqual(out["__crispy_document_code"]["profile_name"], "Profile-1")
+		self.assertNotIn("payload", out["__crispy_document_code"])
+		get_preferred.assert_called_once_with(mock_doc, allow_custom_methods=False)
+		mock_profile.check_permission.assert_called_once_with("read")

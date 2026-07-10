@@ -69,6 +69,7 @@ def resolve_document_code_for_doc(
 	document_role: str | None = None,
 	company: str | None = None,
 	profile_name: str | None = None,
+	allow_custom_methods: bool = True,
 ) -> JSONDict:
 	company = resolve_effective_company(source_doc=doc, explicit_company=company)
 	if not company:
@@ -81,8 +82,14 @@ def resolve_document_code_for_doc(
 		code_purpose=code_purpose,
 		document_role=document_role,
 		profile_name=profile_name,
+		allow_custom_methods=allow_custom_methods,
 	)
-	matched_rules = _get_matched_rules(profile, doc, document_role=document_role)
+	matched_rules = _get_matched_rules(
+		profile,
+		doc,
+		document_role=document_role,
+		throw_on_custom=allow_custom_methods,
+	)
 	regulatory_profile = _get_linked_regulatory_profile(profile)
 	credential = _resolve_fiscal_credential(profile, company=company, environment=environment)
 	resolved = _build_resolved_config(
@@ -106,6 +113,7 @@ def generate_document_code_for_doc(
 	document_role: str | None = None,
 	company: str | None = None,
 	profile_name: str | None = None,
+	allow_custom_methods: bool = True,
 ) -> JSONDict:
 	resolved = resolve_document_code_for_doc(
 		doc=doc,
@@ -114,6 +122,7 @@ def generate_document_code_for_doc(
 		document_role=document_role,
 		company=company,
 		profile_name=profile_name,
+		allow_custom_methods=allow_custom_methods,
 	)
 	payload = _build_document_code_payload(doc, resolved)
 	encoded_value = _encode_document_code_payload(payload, resolved)
@@ -128,6 +137,7 @@ def get_preferred_document_code_for_doc(
 	doc: Any,
 	purposes: list[str] | tuple[str, ...] | None = None,
 	environments: list[str] | tuple[str, ...] | None = None,
+	allow_custom_methods: bool = True,
 ) -> JSONDict | None:
 	purposes = tuple(purposes or ("Regulatory", "Verification", "Portal Link", "Other"))
 	environments = tuple(environments or ("Production", "Sandbox"))
@@ -140,6 +150,7 @@ def get_preferred_document_code_for_doc(
 					doc=doc,
 					code_purpose=purpose,
 					environment=environment,
+					allow_custom_methods=allow_custom_methods,
 				)
 			except Exception as exc:
 				last_error = exc
@@ -159,6 +170,7 @@ def _select_profile(
 	code_purpose: str,
 	document_role: str | None,
 	profile_name: str | None,
+	allow_custom_methods: bool = True,
 ):
 	if profile_name:
 		profile = frappe.get_doc(PROFILE_DOCTYPE, profile_name)
@@ -186,7 +198,12 @@ def _select_profile(
 	applicable: list[tuple[int, str, Any]] = []
 	for row in names:
 		profile = frappe.get_doc(PROFILE_DOCTYPE, row["name"])
-		matched_rules = _get_matched_rules(profile, doc, document_role=document_role)
+		matched_rules = _get_matched_rules(
+			profile,
+			doc,
+			document_role=document_role,
+			throw_on_custom=allow_custom_methods,
+		)
 		profile_rules = [rule for rule in (profile.document_rules or []) if rule.enabled]
 		if profile_rules and not matched_rules:
 			continue

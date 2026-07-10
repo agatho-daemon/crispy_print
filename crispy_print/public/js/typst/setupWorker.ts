@@ -181,10 +181,13 @@ export function setupWorker(
 		}
 		dispatchStatus("fetching", docname)
 
+		const qrSourceMode = getEffectiveQrSourceMode()
 		documentLoader
 			.fetchDoc(doctype, docname, {
 				force: Boolean(opts.force),
-				qrSourceMode: getEffectiveQrSourceMode(),
+				qrSourceMode,
+				fields: getDocumentRequestFields(),
+				allowDocumentCodePreview: qrSourceMode === "document_code_profile",
 			})
 			.then((doc) => {
 			if (disposed || capturedGeneration !== documentLoadGeneration) {
@@ -578,6 +581,69 @@ export function setupWorker(
 		return String(qrSettings.sourceMode || "").trim() === "document_code_profile"
 			? "document_code_profile"
 			: "basic"
+	}
+
+	function getDocumentRequestFields() {
+		const fields = new Set<string>(["name", "doctype", "docstatus", "modified"])
+		const rawTypst =
+			adapter && typeof adapter.getRawTypst === "function" ? adapter.getRawTypst() : false
+		const layout = getLayout()
+
+		if (rawTypst) {
+			const docHeader =
+				adapter && typeof adapter.getDocHeader === "function" ? adapter.getDocHeader() || "" : ""
+			const docFooter =
+				adapter && typeof adapter.getDocFooter === "function" ? adapter.getDocFooter() || "" : ""
+			const typstPreamble =
+				adapter && typeof adapter.getTypstPreamble === "function"
+					? adapter.getTypstPreamble() || ""
+					: ""
+			const typstCode =
+				adapter && typeof adapter.getTypstCode === "function" ? adapter.getTypstCode() || "" : ""
+			const typstBlocks =
+				adapter && typeof adapter.getTypstBlocks === "function"
+					? adapter.getTypstBlocks() || []
+					: []
+			const referencedBlockIds = extractCrispyBlockIds(typstCode)
+			const typstBlockFieldSource = typstBlocks
+				.filter((block: any) => referencedBlockIds.has(String(block?.name || "").trim()))
+				.map((block: any) => block?.typst_code || "")
+				.join("\n")
+			const typstFieldSource = [
+				docHeader,
+				docFooter,
+				typstPreamble,
+				typstCode,
+				typstBlockFieldSource,
+			]
+				.filter(Boolean)
+				.join("\n")
+			extractUsedFieldsFromTypstSource(typstFieldSource).forEach((field) => fields.add(field))
+		} else if (layout) {
+			extractUsedFields(layout).forEach((field) => fields.add(field))
+		}
+
+		const qrSettings = getQrSettings()
+		const qrFields = Array.isArray(qrSettings.fields) ? qrSettings.fields : []
+		if (
+			adapter &&
+			typeof adapter.getQrEnabled === "function" &&
+			adapter.getQrEnabled() &&
+			getEffectiveQrSourceMode() !== "document_code_profile"
+		) {
+			qrFields.forEach((field: any) => {
+				const fieldname = String(field || "").trim()
+				if (!fieldname) return
+				if (fieldname === "timestamp") {
+					fields.add("posting_date")
+					fields.add("posting_time")
+					return
+				}
+				fields.add(fieldname)
+			})
+		}
+
+		return Array.from(fields)
 	}
 
 	function getBarcodeOptions(qrSettings: Record<string, any> = getQrSettings()) {

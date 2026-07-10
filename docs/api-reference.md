@@ -62,10 +62,21 @@ this policy metadata.
 
 ## Doc & Formats
 
-### `get_formatted_doc(doctype, name)`
+### `get_formatted_doc(doctype, name, qr_source_mode=None, fields=None, allow_document_code_preview=0)`
 
-- Args: `doctype: str`, `name: str`, optional `qr_source_mode: str`
-- Returns: formatted document dict
+- Args:
+  - `doctype: str`
+  - `name: str`
+  - optional `qr_source_mode: "basic" | "document_code_profile"`
+  - optional `fields: list[str] | JSON string` with top-level fields and child paths such as `items.item_code`
+  - optional `allow_document_code_preview: 0 | 1`
+- Returns: formatted render payload
+- Notes:
+  - When `fields` is provided, the payload is limited to requested render fields plus safe essentials: `doctype`, `name`, `docstatus`, `modified`, and `__crispy_print_context`.
+  - Child tables return only requested child columns. A top-level child-table field such as `items` keeps the legacy all-child-columns behavior for raw Typst compatibility.
+  - When `fields` is provided, hidden, password, internal, and unsupported field paths are ignored instead of being copied from `doc.as_dict()`.
+  - Omitting `fields` keeps the legacy broad formatted document payload for backward compatibility; new preview callers should send fields.
+  - Document-code QR preview is not executed unless `qr_source_mode="document_code_profile"` and `allow_document_code_preview=1`. Preview output is limited to safe QR metadata and encoded value.
 
 ### `get_crispy_formats_for_doctype(doctype, company=None)`
 

@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed automatic `Crispy Format` fixture shipping. Sample formats now live as app-owned JSON examples and are copied into site data only through the explicit Examples workflow.
 - Tightened company permission boundaries for company-scoped Crispy Print records. Branding Profile reads now use permission-aware list/read checks, and Duplicate/Create-from-Sample target-company inserts require manager access or matching Company User Permission access before internal `ignore_permissions=True` writes run.
 - Added explicit, auditable facade policies to all whitelisted `crispy_print.api.v1` endpoints so rate limits, permission gates, delegated deeper checks, and low-risk exemptions are declared consistently.
+- Hardened `get_formatted_doc` into an explicit render-payload endpoint. Builder previews now request only referenced document fields, child-table payloads are narrowed to requested columns, and Document Code Profile QR preview requires an explicit allow flag while skipping custom-method rules.
 - Updated Crispy Print Preview to consume document context from `frappe.route_options` when opened through the optional Frappe print-engine handoff, while preserving direct route segment fallback.
 - Updated preview lifecycle handling to unmount the existing Vue preview before mounting a new document preview.
 - Changed Raw Typst mode to be author-controlled: presentation/page/table/typography controls are hidden in the builder, raw code changes no longer auto-compile, and refresh happens through the Refresh button or Command/Ctrl-Enter.
@@ -59,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added backend and frontend coverage for the Sample Format Catalog, explicit sample creation, fixture removal, and builder Examples flow.
 - Added backend coverage for Company User Permission query conditions, manager bypass, Branding Profile read checks, and target-company duplicate authorization.
 - Added backend coverage that audits every whitelisted v1 facade endpoint for explicit policy metadata and checks representative rate/permission gates.
+- Added backend and frontend coverage for requested-field formatted document payloads, child-table narrowing, document-code preview gating, and worker cache separation by field set.
 - Current frontend gate: `yarn test:unit` passed 223 tests across 57 test files.
 - Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 289 tests with 2 skipped.
 

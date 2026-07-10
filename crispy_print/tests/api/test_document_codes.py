@@ -6,7 +6,11 @@ import base64
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from crispy_print.api.v1.document_codes import generate_document_code, resolve_document_code
+from crispy_print.api.v1.document_codes import (
+	generate_document_code,
+	get_preferred_document_code_for_doc,
+	resolve_document_code,
+)
 
 
 def rule_matches_test_company(doc, profile, rule):
@@ -368,6 +372,33 @@ class TestDocumentCodes(FrappeTestCase):
 
 		self.assertEqual(out["profile_name"], profile.name)
 		self.assertEqual(len(out["matched_rules"]), 1)
+
+	def test_preferred_document_code_can_skip_custom_method_rules_for_preview(self):
+		self._make_profile(
+			profile_name="DCR Preview Custom Method Only",
+			code_purpose="Other",
+			regulatory_profile=None,
+			fiscal_credential=None,
+			document_rules=[
+				{
+					"document_type": "Company",
+					"document_role": "Other",
+					"condition_type": "Custom Method",
+					"condition_expression": "crispy_print.tests.api.test_document_codes.rule_matches_test_company",
+					"priority": 10,
+				}
+			],
+		)
+		doc = frappe.get_doc("Company", self.company)
+
+		out = get_preferred_document_code_for_doc(
+			doc,
+			purposes=("Other",),
+			environments=("Production",),
+			allow_custom_methods=False,
+		)
+
+		self.assertIsNone(out)
 
 	def _ensure_company(self):
 		company = "DCR Test Company"

@@ -133,7 +133,7 @@ Backend:
 - **`api/v1/__init__.py`** - Stable whitelisted v1 RPC facade used by Frappe clients. Public method paths stay here while each endpoint declares an auditable facade policy for rate limiting, permissions, delegated deeper checks, or explicit low-risk exemptions.
 - **`api/v1/compile.py`** - Server-side Typst compile flow, short-lived cache, asset resolution, and preview/PDF output.
 - **`api/v1/images.py`** - Private image listing helpers for builder image fields.
-- **`api/v1/docs.py`** - Permission-aware document fetch and formatted-value preparation.
+- **`api/v1/docs.py`** - Permission-aware document fetch and formatted-value preparation using an explicit render-field payload contract for previews.
 - **`api/v1/formats.py`** - Format listing, import/export, conflict detection, builder mode, and report-format lookup.
 - **`api/v1/sample_formats.py`** - Company-neutral sample catalog listing and explicit format creation from app-owned examples.
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
@@ -174,3 +174,10 @@ Permission policy:
 - **Company User Permissions** - Non-manager users with Company User Permission records are restricted to matching company-scoped Crispy Print records in list/report queries.
 - **Compatibility default** - Users without Company User Permission records keep existing unrestricted visibility, which avoids breaking single-company or unconfigured beta sites.
 - **Manager bypass** - `System Manager` and `Crispy Print Manager` bypass company query filters and can perform cross-company duplication.
+
+Render payload policy:
+
+- **Requested fields first** - Builder preview requests only the document fields referenced by the current layout or raw Typst source before loading the source document.
+- **Safe essentials** - `get_formatted_doc` always includes `doctype`, `name`, `docstatus`, `modified`, and the Crispy print context needed by render helpers.
+- **Legacy compatibility** - Callers that omit `fields` still receive the older broad formatted document payload during the compatibility window.
+- **Document-code preview gate** - Document Code Profile QR preview is opt-in per request and skips custom-method rules in preview/read contexts.

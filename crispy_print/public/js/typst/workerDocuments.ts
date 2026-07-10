@@ -12,13 +12,29 @@ export function createDocumentLoader(maxEntries = 50) {
 		return `${doctype}::${docname}`
 	}
 
+	function normalizeFields(fields?: Iterable<string> | null) {
+		if (!fields) return []
+		return Array.from(fields)
+			.map((field) => String(field || "").trim())
+			.filter(Boolean)
+			.sort()
+			.filter((field, index, list) => field !== list[index - 1])
+	}
+
 	function fetchDoc(
 		doctype: string,
 		docname: string,
-		opts: { force?: boolean; qrSourceMode?: string } = {}
+		opts: {
+			force?: boolean
+			qrSourceMode?: string
+			fields?: Iterable<string> | null
+			allowDocumentCodePreview?: boolean
+		} = {}
 	): Promise<Record<string, any> | null> {
 		const qrSourceMode = String(opts.qrSourceMode || "")
-		const key = `${cacheKey(doctype, docname)}::${qrSourceMode}`
+		const fields = normalizeFields(opts.fields)
+		const allowDocumentCodePreview = Boolean(opts.allowDocumentCodePreview)
+		const key = `${cacheKey(doctype, docname)}::${qrSourceMode}::${allowDocumentCodePreview ? 1 : 0}::${fields.join(",")}`
 		const cached = docCache.get(key)
 		if (!opts.force && cached) {
 			docCache.delete(key)
@@ -34,7 +50,13 @@ export function createDocumentLoader(maxEntries = 50) {
 
 			frappe.call({
 				method: "crispy_print.api.v1.get_formatted_doc",
-				args: { doctype, name: docname, qr_source_mode: qrSourceMode || null },
+				args: {
+					doctype,
+					name: docname,
+					qr_source_mode: qrSourceMode || null,
+					fields: JSON.stringify(fields),
+					allow_document_code_preview: allowDocumentCodePreview ? 1 : 0,
+				},
 				callback: (r: any) => {
 					if (r?.message && typeof r.message === "object") {
 						docCache.delete(key)

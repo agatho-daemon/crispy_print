@@ -194,8 +194,20 @@ def compile_typst(
 	delegated=True,
 	exempt_reason="Document module checks source document read permission.",
 )
-def get_formatted_doc(doctype: str, name: str, qr_source_mode: str | None = None) -> JSONDict:
-	return _get_formatted_doc(doctype, name, qr_source_mode=qr_source_mode)
+def get_formatted_doc(
+	doctype: str,
+	name: str,
+	qr_source_mode: str | None = None,
+	fields: list[str] | str | None = None,
+	allow_document_code_preview: int | bool = 0,
+) -> JSONDict:
+	return _get_formatted_doc(
+		doctype,
+		name,
+		qr_source_mode=qr_source_mode,
+		fields=fields,
+		allow_document_code_preview=allow_document_code_preview,
+	)
 
 
 @frappe.whitelist()

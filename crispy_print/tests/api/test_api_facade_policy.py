@@ -107,7 +107,13 @@ class TestApiFacadePolicy(FrappeTestCase):
 
 		self.assertEqual(result, {"name": "SINV-1"})
 		enforce_limit.assert_called_once_with("get_formatted_doc", limit=60, window_seconds=60)
-		inner.assert_called_once_with("Sales Invoice", "SINV-1", qr_source_mode=None)
+		inner.assert_called_once_with(
+			"Sales Invoice",
+			"SINV-1",
+			qr_source_mode=None,
+			fields=None,
+			allow_document_code_preview=0,
+		)
 
 	def test_available_formats_facade_applies_read_permission_and_rate_limit(self):
 		with (

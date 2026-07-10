@@ -70,4 +70,44 @@ describe("createDocumentLoader", () => {
 		expect(call.mock.calls[0][0].args.qr_source_mode).toBe("basic");
 		expect(call.mock.calls[1][0].args.qr_source_mode).toBe("document_code_profile");
 	});
+
+	it("sends requested fields and document-code preview allowance", async () => {
+		const call = installFrappeDocResponder({
+			"INV-1": { name: "INV-1" },
+		});
+		const loader = createDocumentLoader(2);
+
+		await loader.fetchDoc("Sales Invoice", "INV-1", {
+			qrSourceMode: "document_code_profile",
+			fields: new Set(["items.item_code", "customer", "customer"]),
+			allowDocumentCodePreview: true,
+		});
+
+		expect(call).toHaveBeenCalledTimes(1);
+		expect(call.mock.calls[0][0].args).toMatchObject({
+			doctype: "Sales Invoice",
+			name: "INV-1",
+			qr_source_mode: "document_code_profile",
+			allow_document_code_preview: 1,
+		});
+		expect(JSON.parse(call.mock.calls[0][0].args.fields)).toEqual([
+			"customer",
+			"items.item_code",
+		]);
+	});
+
+	it("separates cache entries by requested field set", async () => {
+		const call = installFrappeDocResponder({
+			"INV-1": { name: "INV-1" },
+		});
+		const loader = createDocumentLoader(2);
+
+		await loader.fetchDoc("Sales Invoice", "INV-1", { fields: ["customer"] });
+		await loader.fetchDoc("Sales Invoice", "INV-1", { fields: ["customer"] });
+		await loader.fetchDoc("Sales Invoice", "INV-1", { fields: ["grand_total"] });
+
+		expect(call).toHaveBeenCalledTimes(2);
+		expect(JSON.parse(call.mock.calls[0][0].args.fields)).toEqual(["customer"]);
+		expect(JSON.parse(call.mock.calls[1][0].args.fields)).toEqual(["grand_total"]);
+	});
 });
