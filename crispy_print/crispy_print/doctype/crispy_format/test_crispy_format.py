@@ -338,6 +338,39 @@ class TestCrispyFormat(FrappeTestCase):
 		self.assertTrue(second.is_default)
 		self.assertTrue(third.is_default)
 
+	def test_custom_report_default_lookup_batches_candidate_report_rows(self):
+		doc = self._new_format(
+			"Test Format Report Batch",
+			crispy_format_type="Report",
+			doc_type=None,
+			is_generic=0,
+		)
+		doc.append("report", {"report": "Report A"})
+		rows = [
+			frappe._dict({"name": "Candidate A", "is_generic": 0}),
+			frappe._dict({"name": "Candidate B", "is_generic": 0}),
+		]
+
+		with mock.patch(
+			"crispy_print.crispy_print.doctype.crispy_format.crispy_format.frappe.get_all",
+			return_value=[
+				frappe._dict({"parent": "Candidate A", "report": "Report A"}),
+				frappe._dict({"parent": "Candidate B", "report": "Report B"}),
+			],
+		) as get_all:
+			defaults = doc._get_scoped_report_default_names(rows)
+
+		self.assertEqual(defaults, ["Candidate A"])
+		get_all.assert_called_once_with(
+			"Crispy Format Reports",
+			filters={
+				"parent": ["in", ["Candidate A", "Candidate B"]],
+				"parenttype": "Crispy Format",
+				"disabled": 0,
+			},
+			fields=["parent", "report"],
+		)
+
 	def test_custom_report_default_scope_locks_each_linked_report(self):
 		company = "Test Format Lock Company"
 		doc = self._new_format(

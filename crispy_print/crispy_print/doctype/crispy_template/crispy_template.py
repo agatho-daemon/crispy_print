@@ -548,18 +548,12 @@ def get_company_abbr(company: str | None) -> str:
 
 
 def get_typst_version() -> str:
-	typst_bin = frappe.conf.get("TYPST_BIN", "typst")
 	try:
-		result = subprocess.run(
-			[typst_bin, "--version"],
-			capture_output=True,
-			text=True,
-			check=True,
-			timeout=5,
-		)
+		from crispy_print.api.v1.compile import get_cached_typst_version
+
+		return get_cached_typst_version()
 	except Exception:
 		return ""
-	return (result.stdout or result.stderr or "").strip()
 
 
 def _snapshot_value_from_source(

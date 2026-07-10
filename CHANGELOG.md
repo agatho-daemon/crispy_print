@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Centralized render-contract field mapping so Crispy Format export/import/duplicate fields and Crispy Template snapshot, immutability, and snapshot-hash fields are derived from one registry.
 - Centralized company extraction helpers in `api/v1/company_context.py` so report and template render paths share one presentation-settings/source-company parsing policy.
 - Centralized small v1 API helper behavior for truth coercion, version parsing, target-company validation, and string cleanup in `api/v1/_common.py`.
+- Reduced repeated work in render paths by caching Typst CLI version checks, batching custom report default overlap lookups, and passing report preview row limits into live report data fetching.
 - Updated Crispy Print Preview to consume document context from `frappe.route_options` when opened through the optional Frappe print-engine handoff, while preserving direct route segment fallback.
 - Updated preview lifecycle handling to unmount the existing Vue preview before mounting a new document preview.
 - Changed Raw Typst mode to be author-controlled: presentation/page/table/typography controls are hidden in the builder, raw code changes no longer auto-compile, and refresh happens through the Refresh button or Command/Ctrl-Enter.

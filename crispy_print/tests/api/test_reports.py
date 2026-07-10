@@ -289,7 +289,7 @@ class TestReportDataPrep(FrappeTestCase):
 
 		with (
 			mock.patch("crispy_print.api.v1.reports.frappe.get_doc", return_value=format_doc),
-			mock.patch("crispy_print.api.v1.reports._get_report_data", return_value=report_data),
+			mock.patch("crispy_print.api.v1.reports._get_report_data", return_value=report_data) as get_data,
 		):
 			result = get_report_typst_source("Sample Report", "Any Format", limit=1)
 
@@ -300,6 +300,7 @@ class TestReportDataPrep(FrappeTestCase):
 		self.assertEqual(truncation["rows"]["max"], 1)
 		self.assertIn("columns", truncation)
 		self.assertIn("cells_truncated_count", truncation)
+		get_data.assert_called_once_with("Sample Report", {}, max_rows=1)
 
 	def test_get_report_typst_source_rejects_oversized_live_payload(self):
 		from crispy_print.api.v1.reports import MAX_REPORT_PAYLOAD_BYTES, get_report_typst_source

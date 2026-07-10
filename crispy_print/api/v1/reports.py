@@ -416,7 +416,9 @@ def get_report_typst_source(
 			for col in typst_data.get("columns") or []
 		]
 	else:
-		report_data = _get_report_data(report, filters or {})
+		report_data = _get_report_data(
+			report, filters or {}, max_rows=limit if limit else MAX_REPORT_RESULT_ROWS
+		)
 		typst_data = _prepare_typst_report_data(
 			report,
 			report_data,
@@ -648,7 +650,7 @@ def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
 	filters = _fill_default_report_filters(report, filters)
 
 	# Get report data
-	report_data = _get_report_data(report, filters)
+	report_data = _get_report_data(report, filters, max_rows=limit if limit else MAX_REPORT_RESULT_ROWS)
 
 	# Prepare for Typst
 	typst_data = _prepare_typst_report_data(report, report_data, filters=None, column_filter=None)

@@ -258,20 +258,29 @@ class CrispyFormat(Document):
 			return []
 
 		default_names = []
+		candidate_names = [row.name for row in rows if not row.get("is_generic")]
+		report_rows = []
+		if candidate_names:
+			report_rows = frappe.get_all(
+				"Crispy Format Reports",
+				filters={
+					"parent": ["in", candidate_names],
+					"parenttype": "Crispy Format",
+					"disabled": 0,
+				},
+				fields=["parent", "report"],
+			)
+		reports_by_parent: dict[str, set[str]] = {}
+		for report_row in report_rows:
+			parent = report_row.get("parent")
+			report = report_row.get("report")
+			if parent and report:
+				reports_by_parent.setdefault(parent, set()).add(report)
+
 		for row in rows:
 			if row.get("is_generic"):
 				continue
-			candidate_reports = set(
-				frappe.get_all(
-					"Crispy Format Reports",
-					filters={
-						"parent": row.name,
-						"parenttype": "Crispy Format",
-						"disabled": 0,
-					},
-					pluck="report",
-				)
-			)
+			candidate_reports = reports_by_parent.get(row.name, set())
 			if report_names.intersection(candidate_reports):
 				default_names.append(row.name)
 		return default_names

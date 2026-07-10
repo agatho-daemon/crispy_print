@@ -3,6 +3,7 @@
 
 import json
 import re
+from unittest import mock
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -101,6 +102,21 @@ class TestCrispyTemplate(FrappeTestCase):
 		template.zebra_version = "0.2.0"
 
 		self.assertNotEqual(template.compute_snapshot_hash(), original_hash)
+
+	def test_get_typst_version_uses_cached_compile_helper_and_preserves_empty_fallback(self):
+		from crispy_print.crispy_print.doctype.crispy_template.crispy_template import get_typst_version
+
+		with mock.patch(
+			"crispy_print.api.v1.compile.get_cached_typst_version", return_value="typst 0.15.2"
+		) as cached_version:
+			self.assertEqual(get_typst_version(), "typst 0.15.2")
+
+		cached_version.assert_called_once()
+
+		with mock.patch(
+			"crispy_print.api.v1.compile.get_cached_typst_version", side_effect=Exception("missing")
+		):
+			self.assertEqual(get_typst_version(), "")
 
 	def test_insert_increments_version_for_same_template_scope(self):
 		source = self._insert_format("CT Test Source 2")

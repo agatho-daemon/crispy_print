@@ -26,7 +26,7 @@ class TestTypstVersionRequirement(FrappeTestCase):
 
 		mock_run.return_value = Mock(returncode=0, stdout="typst 0.15.0", stderr="")
 
-		_ensure_typst_minimum_version("typst")
+		_ensure_typst_minimum_version("typst-supported")
 
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_typst_minimum_version_rejects_old_versions(self, mock_run):
@@ -35,7 +35,20 @@ class TestTypstVersionRequirement(FrappeTestCase):
 		mock_run.return_value = Mock(returncode=0, stdout="typst 0.14.0", stderr="")
 
 		with self.assertRaises(Exception):
-			_ensure_typst_minimum_version("typst")
+			_ensure_typst_minimum_version("typst-old")
+
+	@patch("crispy_print.api.v1.compile.subprocess.run")
+	def test_typst_minimum_version_uses_short_ttl_cache(self, mock_run):
+		from crispy_print.api.v1.compile import _ensure_typst_minimum_version, _typst_version_cache_key
+
+		frappe.cache().delete_value(_typst_version_cache_key("typst-cached"))
+
+		mock_run.return_value = Mock(returncode=0, stdout="typst 0.15.2", stderr="")
+
+		self.assertEqual(_ensure_typst_minimum_version("typst-cached"), "typst 0.15.2")
+		self.assertEqual(_ensure_typst_minimum_version("typst-cached"), "typst 0.15.2")
+
+		mock_run.assert_called_once()
 
 
 class TestTypstAPI(FrappeTestCase):

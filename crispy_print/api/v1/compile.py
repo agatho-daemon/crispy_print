@@ -32,6 +32,7 @@ MAX_CHART_SVG_BYTES = 512 * 1024
 MAX_QR_DATA_BYTES = 16 * 1024
 MAX_INLINE_DATA_URI_BYTES = 256 * 1024
 COMPILE_CACHE_TTL_SECONDS = 5 * 60
+TYPST_VERSION_CACHE_TTL_SECONDS = 5 * 60
 FONT_WEIGHT_ORDER = {
 	"thin": 100,
 	"extralight": 200,
@@ -243,7 +244,17 @@ def _parse_typst_version(output: str) -> tuple[int, int, int] | None:
 	return tuple(int(part) for part in match.groups())
 
 
+def _typst_version_cache_key(typst_bin: str) -> str:
+	digest = hashlib.sha256(str(typst_bin or "typst").encode("utf-8")).hexdigest()
+	return f"crispy_print:typst_version:{digest}"
+
+
 def _ensure_typst_minimum_version(typst_bin: str) -> str:
+	cache_key = _typst_version_cache_key(typst_bin)
+	cached_output = frappe.cache().get_value(cache_key, expires=True)
+	if isinstance(cached_output, str) and cached_output:
+		return cached_output
+
 	result = subprocess.run(
 		[typst_bin, "--version"],
 		capture_output=True,
@@ -263,7 +274,17 @@ def _ensure_typst_minimum_version(typst_bin: str) -> str:
 		frappe.throw(
 			_("Typst CLI {0} or newer is required. Found: {1}").format(MIN_TYPST_VERSION_LABEL, output)
 		)
-	return str(output)
+	output = str(output)
+	cache_ttl = int(
+		frappe.conf.get("CRISPY_PRINT_TYPST_VERSION_CACHE_TTL_SECONDS", TYPST_VERSION_CACHE_TTL_SECONDS) or 0
+	)
+	if cache_ttl > 0:
+		frappe.cache().set_value(cache_key, output, expires_in_sec=cache_ttl)
+	return output
+
+
+def get_cached_typst_version(typst_bin: str | None = None) -> str:
+	return _ensure_typst_minimum_version(typst_bin or frappe.conf.get("TYPST_BIN", "typst"))
 
 
 def _typst_compile_command(
