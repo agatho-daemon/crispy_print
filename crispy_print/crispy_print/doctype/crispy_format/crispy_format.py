@@ -6,6 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 
 from crispy_print.api.v1.company_context import resolve_effective_company
+from crispy_print.defaults import enforce_single_default
 
 
 class CrispyFormat(Document):
@@ -170,11 +171,10 @@ class CrispyFormat(Document):
 
 		# Clear other defaults when this format is set as default
 		if self.is_default:
-			old_default = self.get_current_default()
-			self.clear_other_defaults()
+			cleared_defaults = self.clear_other_defaults()
 
-			if old_default:
-				message = f"Replaced {frappe.bold(old_default)} as default for {frappe.bold(self._get_default_scope_label())}"
+			if cleared_defaults:
+				message = f"Replaced {frappe.bold(cleared_defaults[0])} as default for {frappe.bold(self._get_default_scope_label())}"
 
 				frappe.msgprint(message, indicator="blue")
 
@@ -191,8 +191,30 @@ class CrispyFormat(Document):
 
 	def clear_other_defaults(self):
 		"""Clear is_default on other formats for this scoped target."""
-		for name in self._get_scoped_default_names():
-			frappe.db.set_value("Crispy Format", name, "is_default", 0, update_modified=False)
+		return enforce_single_default(
+			"Crispy Format",
+			self.name,
+			self._get_default_scope_keys(),
+			competing_names=self._get_scoped_default_names(),
+		)
+
+	def _get_default_scope_keys(self) -> list[str]:
+		company = self._clean_scope_value(self.company)
+		format_type = self._clean_scope_value(self.crispy_format_type)
+		if self.crispy_format_type == "DocType":
+			return [f"{company}|{format_type}|doctype|{self._clean_scope_value(self.doc_type)}"]
+		if self.crispy_format_type == "Contract":
+			return [f"{company}|{format_type}|contract|{self._clean_scope_value(self.contract)}"]
+		if self.crispy_format_type == "Report" and self.is_generic:
+			return [
+				f"{company}|{format_type}|generic-report|{self._clean_scope_value(self.generic_report_type)}"
+			]
+		if self.crispy_format_type == "Report":
+			report_names = sorted(
+				{row.get("report") for row in self._get_linked_reports() if row.get("report")}
+			)
+			return [f"{company}|{format_type}|custom-report|{report}" for report in report_names]
+		return [f"{company}|{format_type}|unknown|{self.name}"]
 
 	def _get_scoped_default_names(self) -> list[str]:
 		company = self._clean_scope_value(self.company)

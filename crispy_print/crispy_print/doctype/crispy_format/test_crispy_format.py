@@ -338,6 +338,49 @@ class TestCrispyFormat(FrappeTestCase):
 		self.assertTrue(second.is_default)
 		self.assertTrue(third.is_default)
 
+	def test_custom_report_default_scope_locks_each_linked_report(self):
+		company = "Test Format Lock Company"
+		doc = self._new_format(
+			"Test Format Lock Scope",
+			company=company,
+			crispy_format_type="Report",
+			doc_type=None,
+			is_generic=0,
+		)
+		doc.append("report", {"report": "Report B"})
+		doc.append("report", {"report": "Report A"})
+
+		self.assertEqual(
+			doc._get_default_scope_keys(),
+			[
+				f"{company}|Report|custom-report|Report A",
+				f"{company}|Report|custom-report|Report B",
+			],
+		)
+
+	def test_clear_other_defaults_uses_shared_default_helper(self):
+		company = "Test Format Helper Company"
+		doc = self._new_format("Test Format Helper Scope", company=company)
+		doc.name = "Test Format Helper Scope"
+
+		with (
+			mock.patch.object(doc, "_get_scoped_default_names", return_value=["Other Format"]) as defaults,
+			mock.patch(
+				"crispy_print.crispy_print.doctype.crispy_format.crispy_format.enforce_single_default",
+				return_value=["Other Format"],
+			) as enforce,
+		):
+			out = doc.clear_other_defaults()
+
+		self.assertEqual(out, ["Other Format"])
+		defaults.assert_called_once_with()
+		enforce.assert_called_once_with(
+			"Crispy Format",
+			doc.name,
+			[f"{company}|DocType|doctype|Sales Invoice"],
+			competing_names=["Other Format"],
+		)
+
 	def test_get_current_default(self):
 		"""Test getting the current default format for a DocType"""
 		# Create default format

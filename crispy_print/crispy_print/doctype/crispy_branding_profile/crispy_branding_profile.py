@@ -8,6 +8,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from crispy_print.defaults import enforce_single_default
+
 CBP_CODE_ONLY_TEMPLATE_PATH = ("public", "js", "templates", "cbp_code_only_template.json")
 
 
@@ -59,7 +61,8 @@ def ensure_default_branding_profile(company: str) -> "CrispyBrandingProfile":
 	)
 	if existing_named_profile:
 		doc = frappe.get_doc("Crispy Branding Profile", existing_named_profile)
-		doc.db_set("is_default", 1, update_modified=False)
+		doc.is_default = 1
+		doc.save(ignore_permissions=True)
 		doc.reload()
 		return doc
 
@@ -93,8 +96,6 @@ class CrispyBrandingProfile(Document):
 		# 	return
 		self.validate_branding_assets()
 		self.validate_numeric_settings()
-
-	def on_update(self) -> None:
 		self.clear_other_company_defaults()
 
 	def set_defaults(self) -> None:
@@ -230,19 +231,15 @@ class CrispyBrandingProfile(Document):
 		if flt(self.enable_qr_code) and flt(self.qr_code_size_mm) <= 0:
 			frappe.throw(_("QR Code size must be greater than zero."))
 
-	def clear_other_company_defaults(self) -> None:
+	def clear_other_company_defaults(self) -> list[str]:
 		if not flt(self.is_default) or not self.company:
-			return
+			return []
 
-		frappe.db.set_value(
+		return enforce_single_default(
 			"Crispy Branding Profile",
-			{
-				"company": self.company,
-				"is_default": 1,
-				"name": ["!=", self.name],
-			},
-			"is_default",
-			0,
+			self.name,
+			f"{self.company}|default-branding-profile",
+			filters={"company": self.company, "is_default": 1, "name": ["!=", self.name]},
 		)
 
 	def uses_logo(self) -> bool:

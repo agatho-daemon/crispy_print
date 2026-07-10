@@ -141,6 +141,7 @@ Backend:
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
 - **`api/v1/security.py`** - Shared permission checks, endpoint policy decorators, rate limits, path validation, and RPC input hardening.
 - **`crispy_print.permissions`** - Company User Permission-aware query conditions and target-company authorization helpers for company-scoped Crispy records.
+- **`crispy_print.defaults`** - Shared one-default-per-scope enforcement using database advisory locks and batched clearing for defaultable Crispy records.
 
 Frontend:
 
@@ -174,6 +175,11 @@ Permission policy:
 - **Company User Permissions** - Non-manager users with Company User Permission records are restricted to matching company-scoped Crispy Print records in list/report queries.
 - **Compatibility default** - Users without Company User Permission records keep existing unrestricted visibility, which avoids breaking single-company or unconfigured beta sites.
 - **Manager bypass** - `System Manager` and `Crispy Print Manager` bypass company query filters and can perform cross-company duplication.
+
+Default policy:
+
+- **One default per scope** - `Crispy Format` and `Crispy Branding Profile` use a shared advisory-lock helper when setting defaults.
+- **Dynamic format scopes** - Format defaults remain scoped by company and target type; custom report formats compete only when linked report rows overlap.
 
 Render payload policy:
 

@@ -291,6 +291,24 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("Crispy Branding Profile", second.name, "is_default"), 1)
 		self.assertEqual(frappe.db.get_value("Crispy Branding Profile", first.name, "is_default"), 0)
 
+	def test_clear_other_company_defaults_uses_shared_default_helper(self):
+		doc = self._new_profile(profile_name="CBP Test Helper Default", is_default=1)
+		doc.name = "CBP Test Helper Default"
+
+		with mock.patch(
+			"crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile.enforce_single_default",
+			return_value=["Other Branding Profile"],
+		) as enforce:
+			out = doc.clear_other_company_defaults()
+
+		self.assertEqual(out, ["Other Branding Profile"])
+		enforce.assert_called_once_with(
+			"Crispy Branding Profile",
+			doc.name,
+			f"{self.company}|default-branding-profile",
+			filters={"company": self.company, "is_default": 1, "name": ["!=", doc.name]},
+		)
+
 	def test_lists_profiles_for_company(self):
 		doc = self._insert_profile(profile_name="CBP Test Listed")
 
