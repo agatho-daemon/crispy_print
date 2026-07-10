@@ -8,6 +8,7 @@ from crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settin
 	validate_document_print_policy,
 )
 
+from ._common import truthy
 from .document_codes import get_preferred_document_code_for_doc
 from .text import normalize_html_text
 
@@ -209,9 +210,7 @@ def _is_supported_render_field(df) -> bool:
 
 
 def _truthy(value: int | bool | str | None) -> bool:
-	if isinstance(value, str):
-		return value.strip().lower() in {"1", "true", "yes", "on"}
-	return bool(value)
+	return truthy(value)
 
 
 def _build_document_code_preview(

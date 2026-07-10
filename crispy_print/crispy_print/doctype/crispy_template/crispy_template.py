@@ -14,6 +14,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
+from crispy_print.api.v1._common import parse_version
 from crispy_print.api.v1.company_context import (
 	extract_presentation_settings_company,
 	extract_source_company,
@@ -707,16 +708,7 @@ def _normalize_barcode_symbology(value: Any) -> str:
 
 
 def _parse_version(value: Any) -> tuple[int, int]:
-	major_raw, _, minor_raw = str(value or "0.0").partition(".")
-	try:
-		major = int(major_raw)
-	except (TypeError, ValueError):
-		major = 0
-	try:
-		minor = int(minor_raw or 0)
-	except (TypeError, ValueError):
-		minor = 0
-	return major, minor
+	return parse_version(value)
 
 
 def _get_source_report(source: Document) -> str | None:

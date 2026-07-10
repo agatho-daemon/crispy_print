@@ -16,6 +16,7 @@ from crispy_print.template_resolution import (
 	resolve_active_template_for_context,
 )
 
+from ._common import clean, require_target_company, truthy
 from .formats import _format_data_from_doc, _insert_format_duplicate_for_company
 from .security import ensure_doctype_read_permission
 
@@ -336,12 +337,7 @@ def _template_result_payload(doc) -> JSONDict:
 
 
 def _require_target_company(company: str | None) -> str:
-	company = _clean(company)
-	if not company:
-		frappe.throw(_("Target company is required."))
-	if not frappe.db.exists("Company", company):
-		frappe.throw(_("Company {0} does not exist.").format(company))
-	return company
+	return require_target_company(company)
 
 
 def _normalize_template_clone_mode(value: str | None) -> str:
@@ -352,10 +348,8 @@ def _normalize_template_clone_mode(value: str | None) -> str:
 
 
 def _truthy(value: int | bool | str | None) -> bool:
-	if isinstance(value, str):
-		return value.strip().lower() in {"1", "true", "yes", "on"}
-	return bool(value)
+	return truthy(value)
 
 
 def _clean(value: Any) -> str:
-	return str(value or "").strip()
+	return clean(value)

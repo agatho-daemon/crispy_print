@@ -18,6 +18,7 @@ from crispy_print.render_contract import (
 	format_data_from_doc,
 )
 
+from ._common import require_target_company, truthy
 from .company_context import apply_effective_company_to_presentation_settings, resolve_effective_company
 from .security import ensure_doctype_read_permission
 
@@ -663,12 +664,7 @@ def _format_duplicate_payload(doc, source_name: str, warnings: list[str]) -> dic
 
 
 def _require_target_company(company: str | None) -> str:
-	company = _clean_company(company)
-	if not company:
-		frappe.throw(_("Target company is required."))
-	if not frappe.db.exists("Company", company):
-		frappe.throw(_("Company {0} does not exist.").format(company))
-	return company
+	return require_target_company(company)
 
 
 def _normalize_duplicate_name_strategy(value: str | None) -> str:
@@ -728,9 +724,7 @@ def _retarget_presentation_settings(
 
 
 def _truthy(value: int | bool | str | None) -> bool:
-	if isinstance(value, str):
-		return value.strip().lower() in {"1", "true", "yes", "on"}
-	return bool(value)
+	return truthy(value)
 
 
 def _parse_import_payload(payload: dict | str) -> dict:

@@ -7,6 +7,8 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
+from crispy_print.api.v1._common import parse_version as common_parse_version
+
 
 @dataclass(frozen=True)
 class TemplateRenderContext:
@@ -250,16 +252,7 @@ def get_company_abbr(company: str | None) -> str:
 
 
 def parse_version(value: Any) -> tuple[int, int]:
-	major_raw, _, minor_raw = str(value or "0.0").partition(".")
-	try:
-		major = int(major_raw)
-	except (TypeError, ValueError):
-		major = 0
-	try:
-		minor = int(minor_raw or 0)
-	except (TypeError, ValueError):
-		minor = 0
-	return major, minor
+	return common_parse_version(value)
 
 
 def _get_active_template_rows(filters: dict[str, Any]) -> list[dict[str, Any]]:
