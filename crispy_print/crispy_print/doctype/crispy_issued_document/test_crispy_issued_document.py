@@ -100,6 +100,58 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(doc.issuance_status, "Superseded")
 		self.assertEqual(doc.superseded_by, replacement.name)
 
+	def test_backend_transition_allows_source_company_drift(self):
+		other_company = self._ensure_company(name="CID Drift Company", abbr="CIDD")
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+		frappe.db.set_value("Crispy Format", self.format_name, "company", other_company)
+
+		revoke_issued_document(doc.name, reason="Source format company changed after issuance")
+		doc.reload()
+
+		self.assertEqual(doc.company, self.company)
+		self.assertEqual(doc.business_status, "Revoked")
+		self.assertEqual(doc.issuance_status, "Revoked")
+
+	def test_normal_save_rejects_source_company_drift(self):
+		other_company = self._ensure_company(name="CID Save Drift Company", abbr="CIDSD")
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+		frappe.db.set_value("Crispy Format", self.format_name, "company", other_company)
+		doc.reload()
+
+		with self.assertRaises(frappe.ValidationError):
+			doc.save(ignore_permissions=True)
+
+	def test_backend_transition_requires_frozen_company(self):
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+		frappe.db.set_value("Crispy Issued Document", doc.name, "company", "")
+		doc.reload()
+		doc.business_status = "Revoked"
+		doc.issuance_status = "Revoked"
+
+		with self.assertRaises(frappe.ValidationError):
+			doc.save_backend_transition()
+
+	def test_draft_issued_document_can_be_deleted_by_backend_path(self):
+		doc = self._new_issued_document()
+		doc.insert(ignore_permissions=True)
+
+		frappe.delete_doc("Crispy Issued Document", doc.name, ignore_permissions=True)
+
+		self.assertFalse(frappe.db.exists("Crispy Issued Document", doc.name))
+
+	def test_non_draft_issued_document_cannot_be_deleted(self):
+		doc = self._new_issued_document()
+		doc.issuance_status = "Issued"
+		doc.insert(ignore_permissions=True)
+
+		with self.assertRaises(frappe.ValidationError):
+			frappe.delete_doc("Crispy Issued Document", doc.name, ignore_permissions=True)
+
+		self.assertTrue(frappe.db.exists("Crispy Issued Document", doc.name))
+
 	def test_integrity_check_action_updates_status_and_trust_event(self):
 		doc = self._new_issued_document()
 		doc.insert(ignore_permissions=True)

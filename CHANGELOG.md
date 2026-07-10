@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Raw Typst helper source generation so reusable block bodies are not injected unless referenced by `crispy_block("...")`.
 - Fixed raw private image handling so `crispy_image()` resolves only approved private uploaded filenames and rejects public paths, traversal, nested paths, URLs, unsupported extensions, and missing files.
 - Fixed optional Print Engine setup and tests so sites without the future Print Engine controller skip that integration path instead of failing.
+- Fixed Crispy Issued Document lifecycle transitions so controlled revoke/cancel/supersede actions trust the frozen issued-document company when the original source format or document company changes later.
 
 ### Removed
 

@@ -32,7 +32,7 @@ class CrispyIssuedDocument(Document):
 		self._sync_revocation_fields()
 		self._validate_source_document()
 
-	def before_trash(self):
+	def on_trash(self):
 		if self.issuance_status != "Draft":
 			frappe.throw(_("Issued document records cannot be deleted after issuance starts."))
 
@@ -60,12 +60,15 @@ class CrispyIssuedDocument(Document):
 			self.company = self._resolve_company()
 			return
 
-		if not self.company:
+		if not self.company and not self._is_backend_transition():
 			self.company = self._resolve_company()
 
 	def _validate_company(self):
 		if not self.company:
 			frappe.throw(_("Company is required for Crispy Issued Document."))
+
+		if self._is_backend_transition():
+			return
 
 		resolved_company = self._resolve_company()
 		if not self.is_new() and resolved_company and resolved_company != self.company:
@@ -91,6 +94,9 @@ class CrispyIssuedDocument(Document):
 		if not self.crispy_template:
 			return None
 		return frappe.db.get_value("Crispy Template", self.crispy_template, "company")
+
+	def _is_backend_transition(self) -> bool:
+		return bool(not self.is_new() and self.flags.allow_cid_state_transition)
 
 	def _validate_backend_controlled_changes(self):
 		if self.is_new() or self.flags.allow_cid_state_transition:
