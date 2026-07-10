@@ -6,6 +6,7 @@ import frappe
 from frappe import _
 from frappe.permissions import get_user_permissions
 
+DESIGNER_ROLE = "Crispy Print Designer"
 MANAGER_ROLES = {"System Manager", "Crispy Print Manager"}
 
 COMPANY_SCOPED_DOCTYPES_ALLOW_GLOBAL = {

@@ -15,6 +15,8 @@ from crispy_print.crispy_print.doctype.crispy_template.crispy_template import (
 	publish_crispy_template,
 	resolve_active_crispy_template,
 )
+from crispy_print.install import ensure_designer_role
+from crispy_print.permissions import DESIGNER_ROLE
 from crispy_print.template_resolution import (
 	TemplateRenderContext,
 	is_effective_template_row,
@@ -32,6 +34,7 @@ class TestCrispyTemplate(FrappeTestCase):
 		self._delete_test_records()
 
 	def tearDown(self):
+		frappe.set_user("Administrator")
 		self._delete_test_records()
 		frappe.db.rollback()
 
@@ -204,6 +207,26 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(first_doc.is_active, 0)
 		self.assertEqual(second_doc.status, "Approved")
 		self.assertEqual(second_doc.is_active, 1)
+
+	def test_designer_can_publish_template_from_writable_format(self):
+		ensure_designer_role()
+		source = self._insert_format("CT Test Source Designer Publish")
+		self._ensure_user("ct-test-designer@example.com", [DESIGNER_ROLE])
+		frappe.set_user("ct-test-designer@example.com")
+
+		result = publish_crispy_template(source.name, version_bump="minor", make_active=True)
+
+		self.assertEqual(result["source_branding_profile"], None)
+		self.assertEqual(result["company"], self.company)
+		self.assertTrue(frappe.db.exists("Crispy Template", result["name"]))
+
+	def test_non_designer_without_format_write_cannot_publish_template(self):
+		source = self._insert_format("CT Test Source Designer Blocked")
+		self._ensure_user("ct-test-viewer@example.com", ["Desk User"])
+		frappe.set_user("ct-test-viewer@example.com")
+
+		with self.assertRaises(frappe.PermissionError):
+			publish_crispy_template(source.name, version_bump="minor", make_active=True)
 
 	def test_publish_requires_source_format_company(self):
 		source = self._insert_format("CT Test Source No Company")
@@ -674,6 +697,30 @@ class TestCrispyTemplate(FrappeTestCase):
 
 	def _get_other_company(self) -> str | None:
 		return frappe.db.get_value("Company", {"name": ["!=", self.company]}, "name")
+
+	def _ensure_user(self, email: str, roles: list[str]) -> str:
+		if frappe.db.exists("User", email):
+			user = frappe.get_doc("User", email)
+			user.enabled = 1
+			existing_roles = {row.role for row in user.roles}
+		else:
+			user = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": "CT Test",
+					"last_name": "Designer",
+					"send_welcome_email": 0,
+					"enabled": 1,
+				}
+			)
+			existing_roles = set()
+
+		for role in roles:
+			if role not in existing_roles:
+				user.append("roles", {"role": role})
+		user.save(ignore_permissions=True)
+		return email
 
 	def _company_abbr(self, company: str) -> str:
 		return frappe.db.get_value("Company", company, "abbr") or company

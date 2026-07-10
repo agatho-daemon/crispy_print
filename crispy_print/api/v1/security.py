@@ -11,7 +11,12 @@ def ensure_compile_typst_permission() -> None:
 	if frappe.session.user == "Administrator":
 		return
 
-	allowed_roles = {"System Manager", "Crispy Print User", "Crispy Print Manager"}
+	allowed_roles = {
+		"System Manager",
+		"Crispy Print User",
+		"Crispy Print Manager",
+		"Crispy Print Designer",
+	}
 	if allowed_roles.intersection(set(frappe.get_roles())):
 		return
 

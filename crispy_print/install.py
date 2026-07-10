@@ -6,6 +6,7 @@ from frappe.model.base_document import get_controller
 from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
 	ensure_default_branding_profiles_for_all_companies,
 )
+from crispy_print.permissions import DESIGNER_ROLE
 
 SITE_FONT_PATH_PARTS = ("private", "files", "crispy_print", "fonts")
 
@@ -21,12 +22,14 @@ def ensure_site_font_directory() -> str:
 
 
 def after_install():
+	ensure_designer_role()
 	ensure_site_font_directory()
 	ensure_default_branding_profiles_for_all_companies()
 	ensure_print_engine()
 
 
 def after_sync():
+	ensure_designer_role()
 	ensure_print_engine()
 
 
@@ -75,5 +78,22 @@ def ensure_print_engine():
 		{
 			"doctype": "Print Engine",
 			**engine_values,
+		}
+	).insert(ignore_permissions=True)
+
+
+def ensure_designer_role() -> None:
+	if frappe.db.exists("Role", DESIGNER_ROLE):
+		role = frappe.get_doc("Role", DESIGNER_ROLE)
+		if not role.desk_access:
+			role.desk_access = 1
+			role.save(ignore_permissions=True)
+		return
+
+	frappe.get_doc(
+		{
+			"doctype": "Role",
+			"role_name": DESIGNER_ROLE,
+			"desk_access": 1,
 		}
 	).insert(ignore_permissions=True)

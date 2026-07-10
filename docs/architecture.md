@@ -179,6 +179,7 @@ Permission policy:
 - **Company User Permissions** - Non-manager users with Company User Permission records are restricted to matching company-scoped Crispy Print records in list/report queries.
 - **Compatibility default** - Users without Company User Permission records keep existing unrestricted visibility, which avoids breaking single-company or unconfigured beta sites.
 - **Manager bypass** - `System Manager` and `Crispy Print Manager` bypass company query filters and can perform cross-company duplication.
+- **Designer authoring** - `Crispy Print Designer` can author mutable design records and publish templates from writable formats, while still using the same Company User Permission boundaries as other non-manager users.
 
 Default policy:
 

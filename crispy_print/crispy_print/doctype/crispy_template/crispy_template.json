@@ -375,6 +375,14 @@
    "read": 1,
    "report": 1,
    "role": "Desk User"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Crispy Print Designer",
+   "select": 1
   }
  ],
  "row_format": "Dynamic",

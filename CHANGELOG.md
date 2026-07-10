@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the `Crispy Print Designer` role for company-scoped template authors who can edit formats, branding profiles, Typst blocks, document-code profiles, and publish templates without manager bypass privileges.
 - Added a file-based **Sample Format Catalog** under `crispy_print/examples/formats/` so example formats can ship with the app without being installed as site data.
 - Added builder **Examples** workflow for creating a company-scoped Crispy Format from a curated sample only when a user explicitly chooses it.
 - Added sample catalog APIs: `list_sample_formats`, `get_sample_format`, and `create_format_from_sample`.

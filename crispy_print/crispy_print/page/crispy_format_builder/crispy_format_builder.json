@@ -13,6 +13,9 @@
  "roles": [
   {
    "role": "System Manager"
+  },
+  {
+   "role": "Crispy Print Designer"
   }
  ],
  "script": null,

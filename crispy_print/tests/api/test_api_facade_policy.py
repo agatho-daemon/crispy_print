@@ -10,6 +10,31 @@ from crispy_print.api.v1.security import endpoint_policy
 
 
 class TestEndpointPolicy(FrappeTestCase):
+	def test_compile_permission_allows_designer_role(self):
+		from crispy_print.api.v1.security import ensure_compile_typst_permission
+
+		try:
+			frappe.set_user("Guest")
+			with mock.patch(
+				"crispy_print.api.v1.security.frappe.get_roles", return_value=["Crispy Print Designer"]
+			):
+				ensure_compile_typst_permission()
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_manager_permission_rejects_designer_role(self):
+		from crispy_print.api.v1.security import ensure_crispy_print_manager_permission
+
+		try:
+			frappe.set_user("Guest")
+			with mock.patch(
+				"crispy_print.api.v1.security.frappe.get_roles", return_value=["Crispy Print Designer"]
+			):
+				with self.assertRaises(frappe.PermissionError):
+					ensure_crispy_print_manager_permission()
+		finally:
+			frappe.set_user("Administrator")
+
 	def test_endpoint_policy_enforces_permission_and_rate_limit(self):
 		calls = []
 
