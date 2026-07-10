@@ -18,6 +18,8 @@
 > Typst CLI `0.15.0` or newer is required because Crispy Print ships variable fonts, and Typst supports variable fonts starting in `0.15.0`. Upgrade Typst before running previews, PDF generation, or migration verification; older Typst versions are rejected at compile time.
 >
 > After update run `bench migrate` to apply database changes and data migration. Then open each format in the builder and verify that the layout is correct. Some fields may need to be re-dragged or reconfigured due to changes in field properties and layout structure.
+>
+> Existing `Crispy Template` records are also renamed to canonical document IDs during migration. If a site already has both a legacy template name and its target canonical name, migration stops instead of merging or overwriting records. Take a database backup before upgrading sites with existing templates and resolve duplicate template records manually if the patch reports a collision.
 
 ## Beta 1 Testing Request
 

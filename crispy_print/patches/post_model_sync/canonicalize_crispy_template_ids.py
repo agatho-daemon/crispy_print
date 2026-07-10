@@ -19,7 +19,9 @@ def execute():
 		if current_name != canonical_id:
 			if frappe.db.exists("Crispy Template", canonical_id):
 				frappe.throw(
-					f"Cannot canonicalize Crispy Template {current_name}: target {canonical_id} already exists."
+					f"Cannot canonicalize Crispy Template {current_name}: target {canonical_id} already exists. "
+					"Resolve the duplicate template records manually and take a database backup before "
+					"rerunning migration."
 				)
 			rename_doc(
 				"Crispy Template",

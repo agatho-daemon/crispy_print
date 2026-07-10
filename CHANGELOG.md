@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Centralized company extraction helpers in `api/v1/company_context.py` so report and template render paths share one presentation-settings/source-company parsing policy.
 - Centralized small v1 API helper behavior for truth coercion, version parsing, target-company validation, and string cleanup in `api/v1/_common.py`.
 - Reduced repeated work in render paths by caching Typst CLI version checks, batching custom report default overlap lookups, and passing report preview row limits into live report data fetching.
+- Hardened the canonical Crispy Template ID migration with coverage for idempotence, collision failure, and existing link preservation.
 - Updated Crispy Print Preview to consume document context from `frappe.route_options` when opened through the optional Frappe print-engine handoff, while preserving direct route segment fallback.
 - Updated preview lifecycle handling to unmount the existing Vue preview before mounting a new document preview.
 - Changed Raw Typst mode to be author-controlled: presentation/page/table/typography controls are hidden in the builder, raw code changes no longer auto-compile, and refresh happens through the Refresh button or Command/Ctrl-Enter.
@@ -69,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added backend and frontend coverage for requested-field formatted document payloads, child-table narrowing, document-code preview gating, and worker cache separation by field set.
 - Added backend coverage for shared default locking/clearing behavior and Crispy Format/Branding Profile default-scope delegation.
 - Added backend coverage for shared Crispy Template resolver target validation, company/global fallback parity, effective-date filtering, and explicit-template validation.
+- Added migration coverage for the canonical Crispy Template ID patch, including rename idempotence, collision handling, and issued-document link preservation.
 - Current frontend gate: `yarn test:unit` passed 223 tests across 57 test files.
 - Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 348 tests with 2 skipped.
 
