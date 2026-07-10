@@ -6,11 +6,19 @@ import re
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_to_date, now_datetime
 
+from crispy_print.api.v1.templates import get_active_crispy_templates_for_render
 from crispy_print.crispy_print.doctype.crispy_template.crispy_template import (
 	get_publish_preview,
 	publish_crispy_template,
 	resolve_active_crispy_template,
+)
+from crispy_print.template_resolution import (
+	TemplateRenderContext,
+	is_effective_template_row,
+	template_target_filters,
+	validate_template_render_context,
 )
 
 
@@ -378,6 +386,53 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(resolved["resolution_reason"], "explicit")
 		self.assertNotEqual(resolved["name"], first.name)
 
+	def test_template_render_context_requires_exactly_one_target(self):
+		with self.assertRaises(frappe.ValidationError):
+			validate_template_render_context(TemplateRenderContext())
+
+		with self.assertRaises(frappe.ValidationError):
+			validate_template_render_context(
+				TemplateRenderContext(source_doctype="Sales Invoice", source_report="General Ledger")
+			)
+
+	def test_template_target_filters_are_shared_for_all_targets(self):
+		self.assertEqual(
+			template_target_filters(TemplateRenderContext(source_doctype="Sales Invoice")),
+			{"crispy_format_type": "DocType", "source_doctype": "Sales Invoice"},
+		)
+		self.assertEqual(
+			template_target_filters(TemplateRenderContext(source_report="General Ledger")),
+			{"crispy_format_type": "Report", "source_report": "General Ledger"},
+		)
+		self.assertEqual(
+			template_target_filters(TemplateRenderContext(source_contract="NDA")),
+			{"crispy_format_type": "Contract", "source_contract": "NDA"},
+		)
+
+	def test_template_name_filter_is_opt_in_for_named_resolution(self):
+		context = TemplateRenderContext(source_doctype="Sales Invoice", template_name="Template A")
+
+		self.assertNotIn("template_name", template_target_filters(context))
+		self.assertEqual(
+			template_target_filters(context, include_template_name=True)["template_name"],
+			"Template A",
+		)
+
+	def test_template_effective_date_helper_rejects_future_and_expired_rows(self):
+		now = now_datetime()
+
+		self.assertFalse(is_effective_template_row({"effective_from": add_to_date(now, days=1)}, now=now))
+		self.assertFalse(is_effective_template_row({"effective_to": add_to_date(now, days=-1)}, now=now))
+		self.assertTrue(
+			is_effective_template_row(
+				{
+					"effective_from": add_to_date(now, days=-1),
+					"effective_to": add_to_date(now, days=1),
+				},
+				now=now,
+			)
+		)
+
 	def test_resolver_prefers_company_template_over_global(self):
 		source = self._insert_format("CT Test Source Company Resolve")
 		self._insert_template(
@@ -403,6 +458,37 @@ class TestCrispyTemplate(FrappeTestCase):
 
 		self.assertEqual(resolved["name"], company_template.name)
 		self.assertEqual(resolved["resolution_reason"], "company")
+
+	def test_active_template_list_and_resolver_share_company_precedence(self):
+		source = self._insert_format("CT Test Source List Resolve Parity")
+		global_template = self._insert_template(
+			template_name="CT Test List Resolve Parity",
+			source_crispy_format=source.name,
+			company="",
+			status="Approved",
+			is_active=1,
+		)
+		company_template = self._insert_template(
+			template_name="CT Test List Resolve Parity",
+			source_crispy_format=source.name,
+			company=self.company,
+			status="Approved",
+			is_active=1,
+		)
+
+		rows = get_active_crispy_templates_for_render(
+			source_doctype="Sales Invoice",
+			company=self.company,
+		)
+		resolved = resolve_active_crispy_template(
+			source_doctype="Sales Invoice",
+			company=self.company,
+			template_name=company_template.name,
+		)
+		test_rows = [row for row in rows if row["name"] in {company_template.name, global_template.name}]
+
+		self.assertEqual([row["name"] for row in test_rows], [company_template.name, global_template.name])
+		self.assertEqual(resolved["name"], company_template.name)
 
 	def test_resolver_uses_global_fallback(self):
 		source = self._insert_format("CT Test Source Global Resolve")
@@ -461,6 +547,25 @@ class TestCrispyTemplate(FrappeTestCase):
 			source_doctype="Sales Invoice",
 			company=self.company,
 			template_name="CT Test Missing Active",
+		)
+
+	def test_explicit_template_validation_rejects_inactive_template(self):
+		source = self._insert_format("CT Test Source Explicit Inactive")
+		template = self._insert_template(
+			template_name="CT Test Explicit Inactive",
+			source_crispy_format=source.name,
+			company=self.company,
+			status="Approved",
+			is_active=1,
+		)
+		frappe.db.set_value("Crispy Template", template.name, "is_active", 0, update_modified=False)
+
+		self.assertRaises(
+			frappe.ValidationError,
+			resolve_active_crispy_template,
+			source_doctype="Sales Invoice",
+			company=self.company,
+			template=template.name,
 		)
 
 	def test_rejects_company_mismatch_with_source_format(self):

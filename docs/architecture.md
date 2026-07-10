@@ -142,6 +142,7 @@ Backend:
 - **`api/v1/security.py`** - Shared permission checks, endpoint policy decorators, rate limits, path validation, and RPC input hardening.
 - **`crispy_print.permissions`** - Company User Permission-aware query conditions and target-company authorization helpers for company-scoped Crispy records.
 - **`crispy_print.defaults`** - Shared one-default-per-scope enforcement using database advisory locks and batched clearing for defaultable Crispy records.
+- **`crispy_print.template_resolution`** - Shared Crispy Template resolver for target filtering, company/global fallback, effective-date filtering, version ordering, explicit-template validation, and list/result payload projection.
 
 Frontend:
 

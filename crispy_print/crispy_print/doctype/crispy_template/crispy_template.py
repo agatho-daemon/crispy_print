@@ -21,6 +21,17 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	resolve_layout_json_typst_blocks,
 )
 from crispy_print.json_utils import loads_dict_or_empty
+from crispy_print.template_resolution import (
+	TemplateRenderContext,
+	is_effective_template_row,
+	resolve_active_template_for_context,
+	template_resolution_payload,
+	template_target_filters,
+	validate_resolved_template_target,
+)
+from crispy_print.template_resolution import (
+	get_latest_active_template as get_latest_active_template_for_context,
+)
 
 ZEBRA_VERSION = "0.1.0"
 ALLOWED_STATUSES = {"Draft", "Approved", "Retired", "Superseded"}
@@ -532,51 +543,17 @@ def resolve_active_crispy_template(
 	template_name: str | None = None,
 	template: str | None = None,
 ) -> dict:
-	from crispy_print.api.v1.company_context import resolve_effective_company
-
-	effective_company = resolve_effective_company(
-		source_doctype=source_doctype,
-		source_docname=source_docname,
-		explicit_company=company,
-		allow_global_fallback=False,
-	)
-	if template:
-		doc = frappe.get_doc("Crispy Template", template)
-		doc.check_permission("read")
-		_validate_resolved_template_target(
-			doc,
+	return resolve_active_template_for_context(
+		TemplateRenderContext(
 			source_doctype=source_doctype,
+			source_docname=source_docname,
 			source_report=source_report,
 			source_contract=source_contract,
-			company=effective_company,
+			company=company,
+			template=template,
+			template_name=template_name,
 		)
-		return _template_resolution_payload(doc, effective_company, "explicit")
-
-	target_filters = _template_target_filters(
-		source_doctype=source_doctype,
-		source_report=source_report,
-		source_contract=source_contract,
-		template_name=template_name,
 	)
-	if not target_filters.get("crispy_format_type"):
-		frappe.throw(_("Template target is required."))
-
-	base_filters = {
-		**target_filters,
-		"status": "Approved",
-		"is_active": 1,
-	}
-
-	if effective_company:
-		doc = _get_latest_active_template({**base_filters, "company": effective_company})
-		if doc:
-			return _template_resolution_payload(doc, effective_company, "company")
-
-	doc = _get_latest_active_template(base_filters, expected_company="")
-	if doc:
-		return _template_resolution_payload(doc, effective_company, "global")
-
-	frappe.throw(_("No active Crispy Template found for this document context."))
 
 
 def _template_target_filters(
@@ -585,45 +562,26 @@ def _template_target_filters(
 	source_contract: str | None = None,
 	template_name: str | None = None,
 ) -> dict:
-	filters = {}
-	if source_doctype:
-		filters.update({"crispy_format_type": "DocType", "source_doctype": source_doctype})
-	elif source_report:
-		filters.update({"crispy_format_type": "Report", "source_report": source_report})
-	elif source_contract:
-		filters.update({"crispy_format_type": "Contract", "source_contract": source_contract})
-	if template_name:
-		filters["template_name"] = template_name
-	return filters
+	return template_target_filters(
+		TemplateRenderContext(
+			source_doctype=source_doctype,
+			source_report=source_report,
+			source_contract=source_contract,
+			template_name=template_name,
+		),
+		include_template_name=True,
+	)
 
 
 def _get_latest_active_template(
 	filters: dict,
 	expected_company: str | None = None,
 ) -> CrispyTemplate | None:
-	rows = frappe.get_all(
-		"Crispy Template",
-		filters={key: value for key, value in filters.items() if value not in (None, "")},
-		fields=["name", "company", "version", "effective_from", "effective_to"],
-	)
-	if expected_company is not None:
-		rows = [row for row in rows if _clean(row.get("company")) == _clean(expected_company)]
-	now = now_datetime()
-	rows = [row for row in rows if _is_effective_now(row, now)]
-	if not rows:
-		return None
-	rows.sort(key=lambda row: str(row.get("name") or ""))
-	rows.sort(key=lambda row: _parse_version(row.get("version")), reverse=True)
-	rows.sort(key=lambda row: str(row.get("effective_from") or ""), reverse=True)
-	return frappe.get_doc("Crispy Template", rows[0].get("name"))
+	return get_latest_active_template_for_context(filters, expected_company=expected_company)
 
 
 def _is_effective_now(row: dict, now) -> bool:
-	if row.get("effective_from") and row.get("effective_from") > now:
-		return False
-	if row.get("effective_to") and row.get("effective_to") < now:
-		return False
-	return True
+	return is_effective_template_row(row, now=now)
 
 
 def _validate_resolved_template_target(
@@ -633,16 +591,15 @@ def _validate_resolved_template_target(
 	source_contract: str | None = None,
 	company: str | None = None,
 ) -> None:
-	if doc.status != "Approved" or not doc.is_active:
-		frappe.throw(_("Selected Crispy Template is not an active approved template."))
-	if source_doctype and doc.source_doctype != source_doctype:
-		frappe.throw(_("Selected Crispy Template does not match the source DocType."))
-	if source_report and doc.source_report != source_report:
-		frappe.throw(_("Selected Crispy Template does not match the source Report."))
-	if source_contract and doc.source_contract != source_contract:
-		frappe.throw(_("Selected Crispy Template does not match the source Contract."))
-	if doc.company and company and doc.company != company:
-		frappe.throw(_("Selected Crispy Template does not belong to company {0}.").format(company))
+	return validate_resolved_template_target(
+		doc,
+		TemplateRenderContext(
+			source_doctype=source_doctype,
+			source_report=source_report,
+			source_contract=source_contract,
+		),
+		company=company,
+	)
 
 
 def _template_resolution_payload(
@@ -650,63 +607,7 @@ def _template_resolution_payload(
 	effective_company: str | None,
 	resolution_reason: str,
 ) -> dict:
-	presentation_settings = doc.presentation_settings_json
-	return {
-		"name": doc.name,
-		"template_name": doc.template_name,
-		"template_id": doc.name,
-		"company": doc.company,
-		"company_abbr": get_company_abbr(doc.company),
-		"effective_company": effective_company,
-		"scope": "Company" if doc.company else "Global",
-		"version": doc.version,
-		"resolution_reason": resolution_reason,
-		"source_crispy_format": doc.source_crispy_format,
-		"source_branding_profile": doc.source_branding_profile,
-		"crispy_format_type": doc.crispy_format_type,
-		"source_doctype": doc.source_doctype,
-		"source_report": doc.source_report,
-		"source_contract": doc.source_contract,
-		"pdf_standard": doc.pdf_standard,
-		"raw_typst": bool(doc.raw_typst),
-		"compact_item_print": doc.compact_item_print,
-		"print_uom_after_quantity": doc.print_uom_after_quantity,
-		"print_taxes_with_zero_amount": doc.print_taxes_with_zero_amount,
-		"layout_json": doc.layout_json,
-		"presentation_settings": presentation_settings,
-		"doc_header": doc.doc_header,
-		"doc_footer": doc.doc_footer,
-		"typst_preamble": doc.typst_preamble,
-		"typst_code": doc.typst_code,
-		"snapshot_hash": doc.snapshot_hash,
-		"snapshot_hash_version": doc.snapshot_hash_version,
-		"zebra_version": doc.zebra_version,
-		"barcode_symbology": doc.barcode_symbology,
-		"render_payload": {
-			"name": doc.source_crispy_format or doc.name,
-			"doc_type": doc.source_doctype,
-			"crispy_format_type": doc.crispy_format_type,
-			"company": doc.company,
-			"effective_company": effective_company,
-			"layout_json": doc.layout_json,
-			"presentation_settings": presentation_settings,
-			"doc_header": doc.doc_header,
-			"doc_footer": doc.doc_footer,
-			"typst_preamble": doc.typst_preamble,
-			"typst_code": doc.typst_code,
-			"pdf_standard": doc.pdf_standard,
-			"raw_typst": 1 if doc.raw_typst else 0,
-			"compact_item_print": doc.compact_item_print,
-			"print_uom_after_quantity": doc.print_uom_after_quantity,
-			"print_taxes_with_zero_amount": doc.print_taxes_with_zero_amount,
-			"crispy_template": doc.name,
-			"crispy_template_version": doc.version,
-			"template_hash": doc.snapshot_hash,
-			"snapshot_hash_version": doc.snapshot_hash_version,
-			"zebra_version": doc.zebra_version,
-			"barcode_symbology": doc.barcode_symbology,
-		},
-	}
+	return template_resolution_payload(doc, effective_company, resolution_reason)
 
 
 def build_template_id(template_name: str, company: str | None, version: str) -> str:

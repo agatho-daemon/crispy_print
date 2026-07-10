@@ -236,7 +236,9 @@ this policy metadata.
 
 A Crispy Template is a frozen, versioned approved render contract published from a
 Crispy Format. Resolution is company-aware, with fallback from company-specific
-templates to global templates.
+templates to global templates. Template list and resolution endpoints share the
+same backend resolver for target matching, active/approved filtering,
+effective-date checks, company fallback, and version ordering.
 
 ### `publish_template_from_crispy_format(source_crispy_format, version_bump='minor', make_active=1, effective_from=None, notes=None, company=None)`
 

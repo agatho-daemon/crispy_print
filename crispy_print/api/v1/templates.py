@@ -6,13 +6,16 @@ from frappe.utils import now_datetime
 
 from crispy_print.crispy_print.doctype.crispy_template.crispy_template import (
 	_supersede_previous_active_templates,
-	get_company_abbr,
 	get_publish_preview,
 	publish_crispy_template,
-	resolve_active_crispy_template,
+)
+from crispy_print.template_resolution import (
+	TemplateRenderContext,
+	get_active_templates_for_context,
+	get_company_abbr,
+	resolve_active_template_for_context,
 )
 
-from .company_context import resolve_effective_company
 from .formats import _format_data_from_doc, _insert_format_duplicate_for_company
 from .security import ensure_doctype_read_permission
 
@@ -52,17 +55,15 @@ def get_active_crispy_templates_for_render(
 		source_report=source_report,
 		source_contract=source_contract,
 	)
-	target_filters = _template_target_filters(
-		source_doctype=source_doctype,
-		source_report=source_report,
-		source_contract=source_contract,
+	return get_active_templates_for_context(
+		TemplateRenderContext(
+			source_doctype=source_doctype,
+			source_docname=source_docname,
+			source_report=source_report,
+			source_contract=source_contract,
+			company=company,
+		)
 	)
-	effective_company = _resolve_render_company(
-		source_doctype=source_doctype,
-		source_docname=source_docname,
-		company=company,
-	)
-	return _get_active_templates(target_filters, effective_company)
 
 
 def get_resolved_crispy_template_for_document(
@@ -95,75 +96,17 @@ def get_resolved_crispy_template_for_render(
 		source_report=source_report,
 		source_contract=source_contract,
 	)
-	return resolve_active_crispy_template(
-		source_doctype=source_doctype,
-		source_docname=source_docname,
-		source_report=source_report,
-		source_contract=source_contract,
-		company=company,
-		template=template,
-		template_name=template_name,
-	)
-
-
-def _get_active_templates(target_filters: dict[str, Any], effective_company: str | None) -> list[JSONDict]:
-	now = now_datetime()
-	filters: dict[str, Any] = {
-		**target_filters,
-		"status": "Approved",
-		"is_active": 1,
-	}
-	rows = frappe.get_all(
-		"Crispy Template",
-		filters=filters,
-		fields=[
-			"name",
-			"template_name",
-			"company",
-			"version",
-			"effective_from",
-			"effective_to",
-			"source_branding_profile",
-			"snapshot_hash",
-			"snapshot_hash_version",
-			"zebra_version",
-			"barcode_symbology",
-		],
-	)
-
-	applicable = []
-	for row in rows:
-		row_company = _clean(row.get("company"))
-		if row_company and row_company != _clean(effective_company):
-			continue
-		if row.get("effective_from") and row.get("effective_from") > now:
-			continue
-		if row.get("effective_to") and row.get("effective_to") < now:
-			continue
-		applicable.append(
-			{
-				"name": row.get("name"),
-				"template_name": row.get("template_name"),
-				"template_id": row.get("name"),
-				"company": row.get("company"),
-				"company_abbr": get_company_abbr(row.get("company")),
-				"version": row.get("version"),
-				"effective_from": row.get("effective_from"),
-				"effective_to": row.get("effective_to"),
-				"source_branding_profile": row.get("source_branding_profile"),
-				"snapshot_hash": row.get("snapshot_hash"),
-				"snapshot_hash_version": row.get("snapshot_hash_version"),
-				"zebra_version": row.get("zebra_version"),
-				"barcode_symbology": row.get("barcode_symbology"),
-				"scope": "Company" if row_company else "Global",
-			}
+	return resolve_active_template_for_context(
+		TemplateRenderContext(
+			source_doctype=source_doctype,
+			source_docname=source_docname,
+			source_report=source_report,
+			source_contract=source_contract,
+			company=company,
+			template=template,
+			template_name=template_name,
 		)
-
-	applicable.sort(key=lambda row: str(row.get("template_name") or ""))
-	applicable.sort(key=lambda row: _parse_version(row.get("version")), reverse=True)
-	applicable.sort(key=lambda row: str(row.get("effective_from") or ""), reverse=True)
-	applicable.sort(key=lambda row: 0 if _clean(row.get("company")) == _clean(effective_company) else 1)
-	return applicable
+	)
 
 
 def _validate_template_render_context(
@@ -181,31 +124,6 @@ def _validate_template_render_context(
 		ensure_doctype_read_permission("Report")
 		return
 	ensure_doctype_read_permission("Crispy Template")
-
-
-def _template_target_filters(
-	source_doctype: str | None = None,
-	source_report: str | None = None,
-	source_contract: str | None = None,
-) -> dict[str, str]:
-	if source_doctype:
-		return {"crispy_format_type": "DocType", "source_doctype": source_doctype}
-	if source_report:
-		return {"crispy_format_type": "Report", "source_report": source_report}
-	return {"crispy_format_type": "Contract", "source_contract": source_contract or ""}
-
-
-def _resolve_render_company(
-	source_doctype: str | None = None,
-	source_docname: str | None = None,
-	company: str | None = None,
-) -> str | None:
-	return resolve_effective_company(
-		source_doctype=source_doctype,
-		source_docname=source_docname,
-		explicit_company=company,
-		allow_global_fallback=False,
-	)
 
 
 def publish_template_from_crispy_format(
@@ -441,16 +359,3 @@ def _truthy(value: int | bool | str | None) -> bool:
 
 def _clean(value: Any) -> str:
 	return str(value or "").strip()
-
-
-def _parse_version(value: Any) -> tuple[int, int]:
-	major_raw, _, minor_raw = str(value or "0.0").partition(".")
-	try:
-		major = int(major_raw)
-	except (TypeError, ValueError):
-		major = 0
-	try:
-		minor = int(minor_raw or 0)
-	except (TypeError, ValueError):
-		minor = 0
-	return major, minor

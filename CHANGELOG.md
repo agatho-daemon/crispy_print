@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added explicit, auditable facade policies to all whitelisted `crispy_print.api.v1` endpoints so rate limits, permission gates, delegated deeper checks, and low-risk exemptions are declared consistently.
 - Hardened `get_formatted_doc` into an explicit render-payload endpoint. Builder previews now request only referenced document fields, child-table payloads are narrowed to requested columns, and Document Code Profile QR preview requires an explicit allow flag while skipping custom-method rules.
 - Centralized one-default-per-scope enforcement for Crispy Format and Crispy Branding Profile through a shared advisory-lock helper, reducing race windows while preserving existing default scope behavior.
+- Centralized Crispy Template resolution into a shared backend service so list, preview, render, publish-adjacent, and issued-document paths use one target/company/effective-date/version ordering rule set.
 - Updated Crispy Print Preview to consume document context from `frappe.route_options` when opened through the optional Frappe print-engine handoff, while preserving direct route segment fallback.
 - Updated preview lifecycle handling to unmount the existing Vue preview before mounting a new document preview.
 - Changed Raw Typst mode to be author-controlled: presentation/page/table/typography controls are hidden in the builder, raw code changes no longer auto-compile, and refresh happens through the Refresh button or Command/Ctrl-Enter.
@@ -63,8 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added backend coverage that audits every whitelisted v1 facade endpoint for explicit policy metadata and checks representative rate/permission gates.
 - Added backend and frontend coverage for requested-field formatted document payloads, child-table narrowing, document-code preview gating, and worker cache separation by field set.
 - Added backend coverage for shared default locking/clearing behavior and Crispy Format/Branding Profile default-scope delegation.
+- Added backend coverage for shared Crispy Template resolver target validation, company/global fallback parity, effective-date filtering, and explicit-template validation.
 - Current frontend gate: `yarn test:unit` passed 223 tests across 57 test files.
-- Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 289 tests with 2 skipped.
+- Current backend gate: `bench --site fdev.local run-tests --app crispy_print` passed 338 tests with 2 skipped.
 
 ## [0.2.0-beta.1] - 2026-07-01
 
