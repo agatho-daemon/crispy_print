@@ -32,7 +32,7 @@ export interface FormatData {
   name: string;
   doc_type?: string;
   crispy_format_type?: string;
-  report?: string;
+  report?: string | Array<{ report: string; disabled?: number }>;
   contract?: string;
   company?: string;
   layout_json?: string;
@@ -128,7 +128,10 @@ export async function getDefaultFormat(
 /**
  * Load complete format data including layout and page settings
  */
-export async function loadFormatData(formatName: string, context: FormatLoadContext = {}): Promise<{
+export async function loadFormatData(
+  formatName: string,
+  context: FormatLoadContext = {},
+): Promise<{
   layout: any;
   presentation_settings: PresentationSettings;
   formatDoc: FormatData;
@@ -212,10 +215,12 @@ function getTypstBlockLayoutFields(layout: CrispyLayout): any[] {
 /**
  * Get all available Letter Heads
  */
-export async function getLetterheads(args: {
-  company?: string | null;
-  include_current?: string | null;
-} = {}): Promise<string[]> {
+export async function getLetterheads(
+  args: {
+    company?: string | null;
+    include_current?: string | null;
+  } = {},
+): Promise<string[]> {
   try {
     return await apiGetLetterheads(args);
   } catch (error) {

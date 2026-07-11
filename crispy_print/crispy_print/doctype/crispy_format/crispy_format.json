@@ -9,13 +9,14 @@
     "company",
     "crispy_format_type",
     "raw_typst",
-    "is_generic",
+    "report_scope",
     "is_advanced",
     "report",
     "column_break_gqub",
     "doc_type",
     "contract",
-    "generic_report_type",
+    "report_renderer",
+    "report_source_fingerprint",
     "module",
     "is_default",
     "output_settings_section",
@@ -44,7 +45,7 @@
       "in_standard_filter": 1,
       "label": "Company",
       "options": "Company",
-      "reqd": 1
+      "mandatory_depends_on": "eval:doc.crispy_format_type != 'Report'"
     },
     {
       "default": "DocType",
@@ -200,21 +201,31 @@
       "options": "<div style=\"line-height:1.5;\">\n  <h4 style=\"margin:0 0 10px;\">Typst Help</h4>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>How Styling Works</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>\n        In normal builder mode, <code>fieldLabelStyle</code>, <code>fieldValueStyle</code>, and <code>sectionLabelStyle</code> are configured in the Builder and automatically inserted before <code>typst_preamble</code>.\n      </li>\n      <li>\n        <code>typst_preamble</code> runs before document content and can override global styles.\n      </li>\n      <li>\n        <code>doc_header</code> defines <code>header_block</code>, and <code>doc_footer</code> defines <code>footer_block</code> for page header/footer setup.\n      </li>\n      <li>\n        In Raw Typst mode, Crispy only injects document data and helper functions. Page setup, styling, header, footer, and layout belong in the Raw Typst code.\n      </li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Raw Typst Helpers</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Document data is available as <code>#doc.fieldname</code>.</li>\n      <li>Use <code>crispy_image(\"logo.svg\", width: 20mm)</code> and <code>crispy_block(\"document_title-v1.0\")</code> inside function arguments or other Typst expression contexts.</li>\n      <li>When calling a helper directly from markup, add Typst's markup escape: <code>#crispy_image(\"logo.svg\", width: 20mm)</code> or <code>#crispy_block(\"document_title-v1.0\")</code>.</li>\n      <li><code>crispy_image</code> resolves plain filenames only from the current site's private files assets.</li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Quick Examples</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Preamble: <code>#set text(font: \"Inter\", size: 11pt)</code></li>\n      <li>Header: <code>#let header_block = [#text(weight: 700)[#doc.doctype]]</code></li>\n      <li>Footer: <code>#let footer_block = [#text(size: 8pt)[#doc.name]]</code></li>\n      <li>Raw placement: <code>#place(top + left, crispy_image(\"logo.svg\", width: 20mm))</code></li>\n    </ol>\n  </div>\n\n  <div>\n    <strong>Branding Layers</strong>\n    <div style=\"margin-top:4px;\">\n      In normal builder mode, the letterhead is rendered in the page <code>background</code>, while the logo and QR code are rendered in the <code>foreground</code> layer.\n    </div>\n  </div>\n</div>"
     },
     {
-      "default": "0",
+      "default": "Selected Reports",
       "depends_on": "eval:doc.crispy_format_type == \"Report\"",
-      "description": "Use this format as the default template for all <strong>reports</strong> without custom formats",
-      "fieldname": "is_generic",
-      "fieldtype": "Check",
-      "label": "Generic Report"
+      "description": "Apply this format to selected reports or as a compatible fallback.",
+      "fieldname": "report_scope",
+      "fieldtype": "Select",
+      "label": "Report Coverage",
+      "options": "All Compatible Reports\nSelected Reports",
+      "mandatory_depends_on": "eval:doc.crispy_format_type=='Report'"
     },
     {
-      "depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
-      "description": "Used only for generic fallback templates; ignored for linked/custom report formats.<br>Select a template type (Grid, Tree, Summary, etc.), or create a custom type.",
-      "fieldname": "generic_report_type",
-      "fieldtype": "Link",
-      "label": "Generic Template Type",
-      "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && doc.is_generic",
-      "options": "Crispy Generic Report"
+      "depends_on": "eval:doc.crispy_format_type=='Report'",
+      "description": "Structural renderer for this report format. Usually inferred from selected reports.",
+      "fieldname": "report_renderer",
+      "fieldtype": "Select",
+      "label": "Report Renderer",
+      "mandatory_depends_on": "eval:doc.crispy_format_type=='Report'",
+      "options": "generic_report\nreceivable_payable\nfinancial_statement\ngeneral_ledger\nbank_reconciliation\ncustom"
+    },
+    {
+      "depends_on": "eval:doc.crispy_format_type=='Report'",
+      "fieldname": "report_source_fingerprint",
+      "fieldtype": "Data",
+      "hidden": 1,
+      "label": "Report Source Fingerprint",
+      "read_only": 1
     },
     {
       "default": "0",
@@ -225,11 +236,11 @@
       "label": "Advanced"
     },
     {
-      "depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
+      "depends_on": "eval:doc.crispy_format_type=='Report' && doc.report_scope=='Selected Reports'",
       "fieldname": "report",
       "fieldtype": "Table",
       "label": "Report",
-      "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && !doc.is_generic",
+      "mandatory_depends_on": "eval:doc.crispy_format_type=='Report' && doc.report_scope=='Selected Reports'",
       "options": "Crispy Format Reports"
     }
   ],

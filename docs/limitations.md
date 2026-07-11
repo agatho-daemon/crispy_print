@@ -17,7 +17,10 @@ As a **beta release**, Crispy Print has several known limitations:
 - **Field Coverage**: Standard document fields and child tables are the main target; complex custom fields may require Raw Typst.
 - **Grid Model**: The visual builder uses a constrained column layout to keep output predictable.
 - **Conditional Logic**: Visual conditional visibility is not implemented yet.
-- **Report Scope**: Report support is in beta stabilization; Basic mode covers common report patterns while complex report logic still requires Advanced Raw Typst.
+- **Report Scope (WIP)**: The renderer architecture currently covers generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation. It has not completed comprehensive acceptance testing, so every generated report PDF must be reviewed before operational or accounting use.
+- **Report Family Coverage**: Known renderer mappings are curated. New or renamed ERPNext reports fall back to the generic renderer until deliberately classified and tested.
+- **Upstream Report Changes**: Source fingerprints warn when referenced Frappe/ERPNext HTML changes, but native Typst renderers are not automatically regenerated. A designer must review and approve corresponding renderer changes.
+- **Report Edge Cases**: Dynamic columns, unusual filters, empty datasets, very wide reports, long values, multiple pages, charts, totals, RTL content, and custom ERPNext modifications require report-specific testing. Advanced Raw Typst may still be necessary.
 - **Contract Scope**: Contract format type exists as a foundation, but contract authoring workflows are WIP.
 
 ### Typst Integration

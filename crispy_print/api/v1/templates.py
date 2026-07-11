@@ -292,11 +292,17 @@ def _snapshot_report_target_data(source) -> dict[str, Any]:
 		source_format = frappe.get_doc("Crispy Format", source.source_crispy_format)
 		return {
 			"report": _format_data_from_doc(source_format).get("report"),
-			"is_generic": source_format.get("is_generic"),
-			"generic_report_type": source_format.get("generic_report_type"),
+			"report_scope": source_format.get("report_scope"),
+			"report_renderer": source_format.get("report_renderer"),
 		}
 	if source.source_report:
-		return {"report": [{"report": source.source_report, "disabled": 0}], "is_generic": 0}
+		from crispy_print.report_renderers import infer_report_renderer
+
+		return {
+			"report": [{"report": source.source_report, "disabled": 0}],
+			"report_scope": "Selected Reports",
+			"report_renderer": infer_report_renderer(source.source_report),
+		}
 	frappe.throw(_("Report template duplication requires a source report target."))
 
 

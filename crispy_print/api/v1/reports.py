@@ -9,6 +9,7 @@ from frappe import _
 from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
 	resolve_effective_presentation_settings,
 )
+from crispy_print.report_renderers import get_renderer_metadata, infer_report_renderer
 
 from .company_context import (
 	apply_effective_company_to_presentation_settings,
@@ -837,8 +838,8 @@ def _prepare_typst_report_data(
 	processed_rows = []
 	for index, row in enumerate(rows):
 		processed_rows.append(_prepare_row_data(row, visible_columns, index, truncation_tracker))
-	processed_rows = _enrich_report_rows_for_typst(report, processed_rows)
-	processed_rows = _mark_report_total_like_rows(report, processed_rows)
+	renderer = infer_report_renderer(report)
+	processed_rows = _adapt_report_rows(renderer, processed_rows)
 	base_rows = [row for row in processed_rows if not row.get("is_total_row")]
 	final_rows = (
 		processed_rows
@@ -863,6 +864,8 @@ def _prepare_typst_report_data(
 	skip_total_row = bool(report_data.get("skip_total_row"))
 
 	return {
+		"renderer": renderer,
+		"sections": get_renderer_metadata(renderer)["sections"],
 		"columns": visible_columns,
 		"rows": final_rows,
 		"total_rows": len(base_rows),
@@ -895,6 +898,34 @@ def _prepare_typst_report_data(
 		},
 		"truncation": truncation_tracker.as_dict(),
 	}
+
+
+def _adapt_report_rows(renderer: str, rows: list[dict]) -> list[dict]:
+	"""Attach stable presentation roles without discarding upstream row metadata."""
+	if renderer == "bank_reconciliation":
+		rows = _enrich_report_rows_for_typst("Bank Reconciliation Statement", rows)
+		rows = _mark_report_total_like_rows("Bank Reconciliation Statement", rows)
+	for row in rows:
+		if row.get("is_total_row"):
+			role = "grand_total"
+		elif row.get("is_total_like_row"):
+			role = "calculation"
+		elif row.get("is_auxiliary_row"):
+			role = "auxiliary"
+		elif not any(cell.get("value") for cell in row.get("cells") or []):
+			role = "spacer"
+		elif (
+			renderer == "financial_statement"
+			and not row.get("parent_account")
+			and not row.get("parent_section")
+		):
+			role = "section"
+		elif row.get("indent"):
+			role = "detail"
+		else:
+			role = "detail"
+		row["role"] = role
+	return rows
 
 
 def _coerce_filter_bool(value) -> bool:
@@ -1346,20 +1377,12 @@ def _normalize_columns(columns: list) -> list:
 
 
 def _get_format_for_report(report: str) -> str:
-	"""Auto-select format for report (custom or generic)"""
-	custom_formats = get_custom_report_formats(report)
-	if custom_formats:
-		return custom_formats[0]["name"]
+	"""Auto-select the highest-ranked compatible live format."""
+	from crispy_print.api.v1.formats import get_available_formats
 
-	# Fallback to first available generic Grid template
-	generic = frappe.db.get_value(
-		"Crispy Format",
-		{"crispy_format_type": "Report", "is_generic": 1, "generic_report_type": "Grid"},
-		"name",
-	)
-
-	if generic:
-		return generic
+	available = get_available_formats(report)
+	if available.get("default_format"):
+		return available["default_format"]
 
 	frappe.throw(_("No print format found for report '{0}'").format(report))
 

@@ -9,6 +9,32 @@ from frappe.tests.utils import FrappeTestCase
 class TestReportDataPrep(FrappeTestCase):
 	"""Test report data shaping for Typst templates"""
 
+	def test_renderer_registry_covers_initial_accounting_families(self):
+		from crispy_print.report_renderers import infer_report_renderer
+
+		self.assertEqual(infer_report_renderer("Accounts Receivable"), "receivable_payable")
+		self.assertEqual(infer_report_renderer("Accounts Payable Summary"), "receivable_payable")
+		self.assertEqual(infer_report_renderer("Balance Sheet"), "financial_statement")
+		self.assertEqual(infer_report_renderer("General Ledger"), "general_ledger")
+		self.assertEqual(infer_report_renderer("Bank Reconciliation Statement"), "bank_reconciliation")
+		self.assertEqual(infer_report_renderer("Unknown Custom Report"), "generic_report")
+
+	def test_report_payload_exposes_renderer_sections_and_row_roles(self):
+		from crispy_print.api.v1.reports import _prepare_typst_report_data
+
+		out = _prepare_typst_report_data(
+			"Balance Sheet",
+			{
+				"columns": [{"fieldname": "account_name", "label": "Account", "fieldtype": "Data"}],
+				"result": [{"account_name": "Assets", "indent": 0}, {}],
+				"message": None,
+			},
+		)
+		self.assertEqual(out["renderer"], "financial_statement")
+		self.assertTrue(any(section["key"] == "table" for section in out["sections"]))
+		self.assertEqual(out["rows"][0]["role"], "section")
+		self.assertEqual(out["rows"][1]["role"], "spacer")
+
 	def _fake_format_doc(self, **kwargs):
 		from types import SimpleNamespace
 
@@ -525,15 +551,16 @@ class TestReportDataPrep(FrappeTestCase):
 
 		with (
 			mock.patch(
-				"crispy_print.api.v1.reports.get_custom_report_formats",
-				return_value=[{"name": "Linked Report Format"}],
+				"crispy_print.api.v1.formats.get_available_formats",
+				return_value={
+					"formats": [{"name": "Linked Report Format"}],
+					"default_format": "Linked Report Format",
+				},
 			),
-			mock.patch("crispy_print.api.v1.reports.frappe.db.get_value") as mock_get_value,
 		):
 			out = _get_format_for_report("Any Report")
 
 		self.assertEqual(out, "Linked Report Format")
-		mock_get_value.assert_not_called()
 
 	def test_get_report_typst_source_skips_chart_when_include_chart_disabled(self):
 		from crispy_print.api.v1.reports import get_report_typst_source

@@ -21,7 +21,9 @@ The following areas are planned or under active stabilization:
 - [ ] Progress indicator for multi-document compilation
 - [ ] Configurable batch size limits
 - [ ] Multi-language document rendering (per-format `default_print_language` and UI translations exist; render-time language switching and RTL not yet wired)
-- [ ] Report publishing stabilization
+- [ ] Complete report renderer acceptance testing for generic, receivable/payable, financial statement, General Ledger, and Bank Reconciliation families
+- [ ] Validate report layouts with representative filters, empty and large datasets, multi-page output, charts, branding, RTL, and supported PDF standards
+- [ ] Stabilize report publishing after renderer-family acceptance criteria pass
 - [ ] Contract authoring workflow
 - [ ] Signature, certificate, timestamp, and authority-submission workflows building on the issued-document trust-event and regulatory-submission tables, after feedback from regulated regions
 - [ ] Builder-side draft format version history

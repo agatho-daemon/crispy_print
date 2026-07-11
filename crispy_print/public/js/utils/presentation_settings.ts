@@ -415,7 +415,7 @@ export function merge_presentation_settings(
     },
     report: normalizeReportBuilderConfig(
       safeOverrides.report || base.report || {},
-      safeOverrides.generic_report_type || (base as any)?.generic_report_type,
+      safeOverrides.report_renderer || (base as any)?.report_renderer,
     ),
   };
 

@@ -5,10 +5,10 @@ vi.mock("../../api/crispy", () => ({
     async (): Promise<Record<string, unknown>> => ({
       name: "Generic Report Format",
       crispy_format_type: "Report",
-      is_generic: 1,
+      report_scope: "All Compatible Reports",
       is_advanced: 0,
-      generic_report_type: "Grid",
-      report: "Account Balance",
+      report_renderer: "generic_report",
+      report: [],
       doc_type: null as unknown,
       layout_json: JSON.stringify({
         sections: [
@@ -98,18 +98,14 @@ describe("report layout fallback", () => {
     };
   });
 
-  it("always resets generic report builder layout to style-preview defaults", async () => {
+  it("preserves the saved report layout", async () => {
     const { useStore } = await import("../../composables/useStore");
     const { saveCrispyFormat } = await import("../../api/crispy");
     const store = useStore();
 
     await store.fetch("Generic Report Format");
 
-    expect(store.layout.value?.sections?.length).toBe(1);
-    expect(store.layout.value?.sections?.[0]?.columns?.length).toBe(1);
-    expect(
-      store.layout.value?.sections?.[0]?.columns?.[0]?.fields?.[0]?.fieldname,
-    ).toBe("data.title");
+    expect(store.layout.value?.sections).toEqual([]);
     expect(saveCrispyFormat).toHaveBeenCalledTimes(0);
   });
 });

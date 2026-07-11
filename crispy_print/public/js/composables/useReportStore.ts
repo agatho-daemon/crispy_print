@@ -17,7 +17,10 @@ import {
 } from "../utils/reportPreviewDummy";
 import { dispatchCrispyPreviewSource } from "../utils/events";
 import { escapeTypstString } from "../utils/typstEscape";
-import { compileReportPreview as compileReportPreviewApi, type TypstCompileResult } from "../api/crispy";
+import {
+  compileReportPreview as compileReportPreviewApi,
+  type TypstCompileResult,
+} from "../api/crispy";
 
 const DEFAULT_REPORT_PREVIEW_LIMIT = 50;
 const logger = getLogger({ module: "ReportStore" });
@@ -77,14 +80,18 @@ export function createReportStore(options: CreateReportStoreOptions) {
       10,
       Math.min(
         100,
-        Math.round(Number(reportBuilderConfig.value.chart_width_percent) || 100),
+        Math.round(
+          Number(reportBuilderConfig.value.chart_width_percent) || 100,
+        ),
       ),
     );
     const height = Math.max(
       60,
       Math.min(
         600,
-        Math.round(Number(reportBuilderConfig.value.chart_max_height_pt) || 220),
+        Math.round(
+          Number(reportBuilderConfig.value.chart_max_height_pt) || 220,
+        ),
       ),
     );
 
@@ -98,19 +105,32 @@ export function createReportStore(options: CreateReportStoreOptions) {
     reportName: string,
     filters: Record<string, any> = {},
   ) {
-    void reportName;
-    void filters;
-    reportColumns.value = getDummyReportTableColumns();
+    if (!reportName || reportName === "Style Preview") {
+      reportColumns.value = getDummyReportTableColumns();
+      return;
+    }
+    const response = await frappe.call({
+      method: "crispy_print.api.v1.get_sample_report_data",
+      args: {
+        report: reportName,
+        filters,
+        limit: DEFAULT_REPORT_PREVIEW_LIMIT,
+      },
+    });
+    reportColumns.value = response?.message?.columns || [];
   }
 
   async function loadReportFilterFields(reportName: string) {
-    void reportName;
-    reportFilterFields.value = getDummyReportFilterColumns().map((col) => ({
-      fieldname: col.fieldname,
-      label: col.label,
-      fieldtype: col.fieldtype || "Data",
-      reqd: false,
-    }));
+    if (!reportName || reportName === "Style Preview") {
+      reportFilterFields.value = getDummyReportFilterColumns().map((col) => ({
+        fieldname: col.fieldname,
+        label: col.label,
+        fieldtype: col.fieldtype || "Data",
+        reqd: false,
+      }));
+      return;
+    }
+    reportFilterFields.value = [];
   }
 
   async function loadSampleReports() {
@@ -121,21 +141,26 @@ export function createReportStore(options: CreateReportStoreOptions) {
     name: string,
     options: { refreshKey?: boolean; promptOnCustomized?: boolean } = {},
   ) {
-    void name;
     void options;
-    selectedReportName.value = "Style Preview";
-    await loadReportFilterFields("Style Preview");
-    await loadReportColumns("Style Preview", {});
+    selectedReportName.value = name || "Style Preview";
+    await loadReportFilterFields(selectedReportName.value);
+    await loadReportColumns(
+      selectedReportName.value,
+      reportFilters.value || {},
+    );
   }
 
   async function compileReportPreview(
     reportName: string,
     columnConfig: any[] = [],
-  ): Promise<(TypstCompileResult & {
-    typst_source?: string;
-    truncation?: Record<string, any>;
-    asset_files?: string[];
-  }) | null> {
+  ): Promise<
+    | (TypstCompileResult & {
+        typst_source?: string;
+        truncation?: Record<string, any>;
+        asset_files?: string[];
+      })
+    | null
+  > {
     try {
       logger.info("Building report source", reportName);
 
@@ -152,7 +177,9 @@ export function createReportStore(options: CreateReportStoreOptions) {
       );
       presentation_settings_payload.report = { ...reportBuilderConfig.value };
       const configured_branding_mode = String(
-        presentation_settings_payload.branding?.mode || "",
+        presentation_settings.value?.branding?.mode ||
+          presentation_settings_payload.branding?.mode ||
+          "",
       ).toLowerCase();
       const branding_mode =
         configured_branding_mode === "letterhead" ||
@@ -177,6 +204,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
       );
       const typst_preamble_override = buildReportFontPreambleOverride();
       const table_columns = getReportTableColumnsForPreview();
+      const useDummyData = !reportName || reportName === "Style Preview";
       const preview_data = buildDummyReportPreviewData({
         title: reportName || selectedReportName.value || "Style Preview",
         includeFilters,
@@ -219,7 +247,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
         typst_code_override: buildReportTypstOverrideForPreview(
           typstCode.value || "",
         ),
-        preview_data: preview_data_payload,
+        preview_data: useDummyData ? preview_data_payload : undefined,
         presentation_settings: {
           ...presentation_settings_payload,
           branding: {

@@ -37,8 +37,8 @@ def run(iterations: int = 10):
 			"name": benchmark_format_name,
 			"crispy_format_type": "Report",
 			"module": "Crispy Print",
-			"is_generic": 1,
-			"generic_report_type": "Grid",
+			"report_scope": "All Compatible Reports",
+			"report_renderer": "generic_report",
 			"raw_typst": 1,
 			"typst_code": "#text(size: 9pt)[Benchmark report preview]",
 		}

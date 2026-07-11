@@ -140,25 +140,31 @@ this policy metadata.
 
 ## Reports
 
-### `get_reports_without_custom_html(generic_report_type=None)`
+> **Status: WIP.** These interfaces support renderer development and acceptance testing. Their presence does not mean every supported ERPNext report layout has completed production acceptance testing.
 
-- Args: optional `generic_report_type: str`
-- Returns: `list[dict]`
+### `get_report_renderer_catalog()`
 
-### `get_default_report_builder_config(generic_report_type=None)`
+- Returns: renderer definitions and permission-visible Script/Query Reports classified by renderer
 
-- Args: optional `generic_report_type: str`
+### `get_report_renderer_metadata(format_name)`
+
+- Args: `format_name: str`
+- Returns: renderer metadata, curated sections, supported reports, and source fingerprint status for the selected format
+
+### `get_default_report_builder_config(report_renderer=None)`
+
+- Args: optional `report_renderer: str`
 - Returns: report builder config dict
 
 ### `get_available_formats(report, company=None)`
 
 - Args: `report: str`, optional `company: str`
-- Returns: available report format metadata
+- Returns: `{ formats, default_format, renderer }`; each format includes company, scope, renderer, layout style, default status, and compatibility status
 
 ### `get_sample_report_data(report, filters=None, limit=50)`
 
 - Args: `report: str`, optional `filters`, `limit: int`
-- Returns: sample report payload (`columns`, `rows`, `filters`, `report_summary`, etc.)
+- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, chart data, and compatibility aliases
 
 ### `get_report_typst_source(report, format_name, ..., limit=50)`
 

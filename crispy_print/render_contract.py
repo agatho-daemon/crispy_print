@@ -23,9 +23,10 @@ RENDER_CONTRACT_FIELDS: tuple[RenderContractField, ...] = (
 	RenderContractField("report", "source_report", True, 140, True, True, True, True),
 	RenderContractField("contract", "source_contract", True, 140, True, True, True, True),
 	RenderContractField("company", "company", True, 140, True, True, True, True),
-	RenderContractField("is_generic", exported=True),
+	RenderContractField("report_scope", exported=True, import_max_bytes=40),
 	RenderContractField("is_advanced", exported=True),
-	RenderContractField("generic_report_type", exported=True, import_max_bytes=140),
+	RenderContractField("report_renderer", exported=True, import_max_bytes=40),
+	RenderContractField("report_source_fingerprint", exported=True, import_max_bytes=128),
 	RenderContractField("raw_typst", "raw_typst", True, 256 * 1024, True, True, True, True),
 	RenderContractField("layout_json", "layout_json", True, 512 * 1024, True, True, True, True),
 	RenderContractField(

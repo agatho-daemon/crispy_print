@@ -10,10 +10,13 @@ frappe.ui.form.on("Crispy Format", {
 				Contract: "contract",
 			};
 
-			// Generic templates don't require a specific report
-			if (frm.doc.crispy_format_type === "Report" && frm.doc.is_generic) {
-				if (!frm.doc.generic_report_type) {
-					frappe.msgprint(__("Please select Generic Report Type first"));
+			// All-compatible formats don't require a specific report.
+			if (
+				frm.doc.crispy_format_type === "Report" &&
+				frm.doc.report_scope === "All Compatible Reports"
+			) {
+				if (!frm.doc.report_renderer) {
+					frappe.msgprint(__("Please select Report Renderer first"));
 					return;
 				}
 			} else if (frm.doc.crispy_format_type === "Report") {
@@ -60,9 +63,12 @@ frappe.ui.form.on("Crispy Format", {
 		}
 
 		// Show alert for generic templates
-		if (frm.doc.crispy_format_type === "Report" && frm.doc.is_generic) {
+		if (
+			frm.doc.crispy_format_type === "Report" &&
+			frm.doc.report_scope === "All Compatible Reports"
+		) {
 			frm.dashboard.set_headline(
-				__("Generic template for {0} reports", [frm.doc.generic_report_type]),
+				__("Compatible fallback for {0}", [frm.doc.report_renderer]),
 				"blue"
 			);
 		}
@@ -70,19 +76,13 @@ frappe.ui.form.on("Crispy Format", {
 		syncReportRawTypstFromAdvanced(frm);
 	},
 
-	is_generic(frm) {
+	report_scope(frm) {
 		if (frm.doc.crispy_format_type !== "Report") return;
 
-		if (frm.doc.is_generic) {
-			// Clear linked reports table (generic templates don't have specific reports)
+		if (frm.doc.report_scope === "All Compatible Reports") {
 			if ((frm.doc.report || []).length) {
 				frm.clear_table("report");
 				frm.refresh_field("report");
-			}
-		} else {
-			// Clear generic_report_type when switching to custom report
-			if (frm.doc.generic_report_type) {
-				frm.set_value("generic_report_type", null);
 			}
 		}
 	},
@@ -118,10 +118,10 @@ function getDefaultScopeLabel(doc) {
 	}
 
 	if (doc.crispy_format_type === "Report") {
-		if (doc.is_generic) {
-			return doc.generic_report_type
-				? __("generic {0} reports", [doc.generic_report_type])
-				: __("generic reports");
+		if (doc.report_scope === "All Compatible Reports") {
+			return doc.report_renderer
+				? __("compatible {0} reports", [doc.report_renderer])
+				: __("compatible reports");
 		}
 
 		const linkedReports = getActiveLinkedReports(doc).map((row) => row.report);

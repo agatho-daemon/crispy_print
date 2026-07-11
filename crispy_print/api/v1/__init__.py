@@ -7,6 +7,7 @@ from frappe import _
 from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block import (
 	get_applicable_typst_blocks as _get_applicable_typst_blocks,
 )
+from crispy_print.report_renderers import get_renderer_metadata as _get_renderer_metadata
 
 from .branding_profiles import (
 	get_branding_profile_presentation_settings as _get_branding_profile_presentation_settings,
@@ -29,7 +30,7 @@ from .formats import get_crispy_format as _get_crispy_format
 from .formats import get_crispy_formats_for_doctype as _get_crispy_formats_for_doctype
 from .formats import get_default_doctypes as _get_default_doctypes
 from .formats import get_default_report_builder_config as _get_default_report_builder_config
-from .formats import get_reports_without_custom_html as _get_reports_without_custom_html
+from .formats import get_report_renderer_catalog as _get_report_renderer_catalog
 from .formats import import_crispy_format as _import_crispy_format
 from .images import get_private_image_files as _get_private_image_files
 from .issued_documents import add_issued_document_trust_event as _add_issued_document_trust_event
@@ -260,8 +261,21 @@ def get_default_doctypes() -> list[str]:
 	window_seconds=60,
 	exempt_reason="Static builder defaults with no site data access.",
 )
-def get_default_report_builder_config(generic_report_type: str | None = None) -> JSONDict:
-	return _get_default_report_builder_config(generic_report_type)
+def get_default_report_builder_config(report_renderer: str | None = None) -> JSONDict:
+	return _get_default_report_builder_config(report_renderer)
+
+
+@frappe.whitelist()
+@endpoint_policy(
+	rate_key="get_report_renderer_metadata",
+	limit=120,
+	window_seconds=60,
+	permissions=(("Crispy Format", "read"),),
+)
+def get_report_renderer_metadata(format_name: str) -> JSONDict:
+	doc = frappe.get_doc("Crispy Format", format_name)
+	doc.check_permission("read")
+	return _get_renderer_metadata(doc.report_renderer, doc.report_source_fingerprint)
 
 
 @frappe.whitelist()
@@ -601,13 +615,13 @@ def create_format_from_sample(
 
 @frappe.whitelist()
 @endpoint_policy(
-	rate_key="get_reports_without_custom_html",
+	rate_key="get_report_renderer_catalog",
 	limit=120,
 	window_seconds=60,
 	permissions=(("Report", "read"),),
 )
-def get_reports_without_custom_html(generic_report_type: str | None = None) -> list[JSONDict]:
-	return _get_reports_without_custom_html(generic_report_type)
+def get_report_renderer_catalog() -> JSONDict:
+	return _get_report_renderer_catalog()
 
 
 @frappe.whitelist()
@@ -1059,8 +1073,9 @@ __all__ = [
 	"get_qr_registry_fields",
 	"get_qr_regulatory_profile",
 	"get_qr_regulatory_profiles",
+	"get_report_renderer_catalog",
+	"get_report_renderer_metadata",
 	"get_report_typst_source",
-	"get_reports_without_custom_html",
 	"get_resolved_crispy_template_for_document",
 	"get_resolved_crispy_template_for_render",
 	"get_sample_format",

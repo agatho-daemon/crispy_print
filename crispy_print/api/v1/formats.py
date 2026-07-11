@@ -17,12 +17,13 @@ from crispy_print.render_contract import (
 	FORMAT_IMPORT_FIELD_MAX_BYTES,
 	format_data_from_doc,
 )
+from crispy_print.report_renderers import get_renderer_metadata, infer_report_renderer, list_renderer_metadata
 
 from ._common import require_target_company, truthy
 from .company_context import apply_effective_company_to_presentation_settings, resolve_effective_company
 from .security import ensure_doctype_read_permission
 
-EXPORT_SCHEMA_VERSION = 1
+EXPORT_SCHEMA_VERSION = 2
 ALLOWED_IMPORT_CONFLICT_ACTIONS = {"copy", "overwrite"}
 ALLOWED_DUPLICATE_NAME_STRATEGIES = {"copy", "replace"}
 MAX_IMPORT_FIELD_BYTES = {
@@ -189,61 +190,70 @@ def get_default_doctypes():
 
 
 def get_available_formats(report: str, company: str | None = None) -> dict:
-	"""
-	Get all available formats for a report (custom + generic).
-
-	Returns:
-		dict: {
-			"custom_formats": [...],
-			"generic_formats": [...],
-			"default_format": str
-		}
-	"""
+	"""Return all compatible formats in report/company resolution order."""
 	ensure_doctype_read_permission("Crispy Format")
-	company = _clean_company(company)
-	# Custom formats linked to this report via child table rows.
-	custom_formats = get_custom_report_formats(report, company=company)
-
-	# Generic formats are fallback-only.
-	generic_formats = []
-	if not custom_formats:
-		generic_formats = [
-			row
-			for row in frappe.get_list(
-				"Crispy Format",
-				filters={"crispy_format_type": "Report", "is_generic": 1},
-				fields=["name", "generic_report_type", "company", "is_default"],
-				order_by="generic_report_type asc",
-			)
-			if not company or _clean_company(row.get("company")) in (company, None)
-		]
-		if company:
-			generic_formats.sort(
-				key=lambda row: (
-					0 if _clean_company(row.get("company")) == company else 1,
-					0 if row.get("is_default") else 1,
-					str(row.get("generic_report_type") or ""),
-				)
-			)
-
-		is_tree = _get_report_is_tree(report)
-		if is_tree is not None:
-			expected_type = "Tree" if is_tree else "Grid"
-			generic_formats = [
-				fmt for fmt in generic_formats if fmt.get("generic_report_type") == expected_type
-			]
-
-	# Determine default
-	default = (
-		custom_formats[0]["name"]
-		if custom_formats
-		else (generic_formats[0]["name"] if generic_formats else None)
+	company = _clean_company(company) or _clean_company(frappe.defaults.get_user_default("Company"))
+	renderer = infer_report_renderer(report)
+	exact = get_custom_report_formats(report, company=company)
+	fallbacks = frappe.get_list(
+		"Crispy Format",
+		filters={
+			"crispy_format_type": "Report",
+			"report_scope": "All Compatible Reports",
+			"report_renderer": ["in", [renderer, "generic_report"]],
+		},
+		fields=["name", "company", "is_default", "report_scope", "report_renderer", "presentation_settings"],
+		order_by="name asc",
 	)
+	fallbacks = [
+		row for row in fallbacks if not company or _clean_company(row.get("company")) in (company, None)
+	]
+	seen = {row.get("name") for row in exact}
+	rows = exact + [row for row in fallbacks if row.get("name") not in seen]
 
+	def rank(row):
+		exact_target = row.get("report_scope") == "Selected Reports"
+		exact_company = bool(company and _clean_company(row.get("company")) == company)
+		global_company = not _clean_company(row.get("company"))
+		exact_renderer = row.get("report_renderer") == renderer
+		if exact_target and exact_company and row.get("is_default"):
+			bucket = 0
+		elif exact_target and exact_company:
+			bucket = 1
+		elif exact_target and global_company:
+			bucket = 2
+		elif exact_renderer and exact_company:
+			bucket = 3
+		elif exact_renderer and global_company:
+			bucket = 4
+		elif exact_company:
+			bucket = 5
+		else:
+			bucket = 6
+		return bucket, 0 if row.get("is_default") else 1, str(row.get("name"))
+
+	rows.sort(key=rank)
+	formats = []
+	for row in rows:
+		try:
+			settings = json.loads(row.get("presentation_settings") or "{}")
+		except (TypeError, json.JSONDecodeError):
+			settings = {}
+		formats.append(
+			{
+				"name": row.get("name"),
+				"company": row.get("company"),
+				"report_scope": row.get("report_scope"),
+				"report_renderer": row.get("report_renderer"),
+				"layout_style": (settings.get("report") or {}).get("layout_style") or "Standard",
+				"is_default": row.get("is_default"),
+				"compatibility_status": "compatible",
+			}
+		)
 	return {
-		"custom_formats": custom_formats,
-		"generic_formats": generic_formats,
-		"default_format": default,
+		"formats": formats,
+		"default_format": formats[0]["name"] if formats else None,
+		"renderer": renderer,
 	}
 
 
@@ -269,9 +279,17 @@ def get_custom_report_formats(report: str, company: str | None = None) -> list[d
 		filters={
 			"name": ["in", parent_names],
 			"crispy_format_type": "Report",
-			"is_generic": 0,
+			"report_scope": "Selected Reports",
 		},
-		fields=["name", "modified", "company", "is_default"],
+		fields=[
+			"name",
+			"modified",
+			"company",
+			"is_default",
+			"report_scope",
+			"report_renderer",
+			"presentation_settings",
+		],
 		order_by="modified desc",
 	)
 	if not company:
@@ -292,14 +310,7 @@ def get_builder_mode(format_name: str) -> dict:
 	Determine which builder mode to use for a Crispy Format.
 
 	Returns:
-		dict: {
-			"mode": "visual" | "code",
-			"format_type": "DocType" | "Report" | "Contract",
-			"is_generic": bool,
-			"generic_report_type": str | None,
-			"doc_type": str | None,
-			"report": str | None
-		}
+		dict: Builder mode, target type, report scope/renderer, and linked targets.
 	"""
 	format_doc = frappe.get_doc("Crispy Format", format_name)
 	format_doc.check_permission("read")
@@ -318,24 +329,22 @@ def get_builder_mode(format_name: str) -> dict:
 	return {
 		"mode": mode,
 		"format_type": format_doc.crispy_format_type,
-		"is_generic": format_doc.is_generic or 0,
+		"report_scope": format_doc.report_scope,
 		"is_advanced": getattr(format_doc, "is_advanced", 0) or 0,
-		"generic_report_type": format_doc.generic_report_type,
+		"report_renderer": format_doc.report_renderer,
 		"doc_type": format_doc.doc_type,
 		"report": format_doc.report,
 	}
 
 
-def get_default_report_builder_config(generic_report_type: str | None = None) -> dict:
+def get_default_report_builder_config(report_renderer: str | None = None) -> dict:
 	"""Return canonical server-side defaults for report builder basic mode."""
-	report_type = (generic_report_type or "").strip().lower()
-	preset = "grid"
-	if report_type in ("tree", "summary", "minimal", "grid"):
-		preset = report_type
-
 	return {
 		"mode": "basic",
-		"preset": preset,
+		"renderer": report_renderer or "generic_report",
+		"preset": "grid",
+		"layout_style": "Standard",
+		"sections": get_renderer_metadata(report_renderer or "generic_report")["sections"],
 		"show_filters": True,
 		"show_summary": True,
 		"include_total_row": True,
@@ -360,6 +369,19 @@ def get_default_report_builder_config(generic_report_type: str | None = None) ->
 		"raw_signature": None,
 		"report_table_sync_signature": None,
 	}
+
+
+def get_report_renderer_catalog() -> dict:
+	"""Return product-owned renderer definitions and classified reports."""
+	reports = frappe.get_list(
+		"Report",
+		fields=["name", "report_type", "ref_doctype", "module"],
+		filters={"disabled": 0, "report_type": ["in", ["Script Report", "Query Report"]]},
+		order_by="name asc",
+	)
+	for report in reports:
+		report["report_renderer"] = infer_report_renderer(report["name"])
+	return {"renderers": list_renderer_metadata(), "reports": reports}
 
 
 def get_reports_without_custom_html(generic_report_type: str | None = None) -> list[dict]:
@@ -506,7 +528,7 @@ def _coerce_tree_bool(value) -> bool | None:
 
 
 def export_crispy_format(name: str) -> dict:
-	"""Export a Crispy Format in portable schema v1 JSON payload."""
+	"""Export a Crispy Format in portable schema v2 JSON payload."""
 	if not name:
 		frappe.throw(_("Format name is required"))
 
@@ -527,7 +549,7 @@ def export_crispy_format(name: str) -> dict:
 def check_import_conflicts(payload: dict | str) -> dict:
 	"""Preflight payload validation and collision check."""
 	_ensure_create_permission()
-	parsed = _parse_import_payload(payload)
+	parsed = _convert_v1_import_payload(_parse_import_payload(payload))
 	format_data = _validate_import_payload(parsed)
 	name = format_data.get("name")
 	exists = bool(name and frappe.db.exists("Crispy Format", name))
@@ -541,8 +563,9 @@ def check_import_conflicts(payload: dict | str) -> dict:
 
 
 def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict:
-	"""Import a Crispy Format exported via schema v1."""
+	"""Import a Crispy Format, converting portable schema v1 when necessary."""
 	parsed = _parse_import_payload(payload)
+	parsed = _convert_v1_import_payload(parsed)
 	format_data = _validate_import_payload(parsed)
 	on_conflict_value = (on_conflict or "copy").strip().lower()
 
@@ -573,6 +596,32 @@ def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict
 		"warnings": warnings,
 		"conflict_action": on_conflict_value,
 	}
+
+
+def _convert_v1_import_payload(payload: dict) -> dict:
+	if payload.get("schema_version") != 1:
+		return payload
+	converted = dict(payload)
+	data = dict(converted.get("format") or {})
+	legacy_generic = bool(data.pop("is_generic", 0))
+	legacy_type = data.pop("generic_report_type", None)
+	reports = [
+		row.get("report") for row in (data.get("report") or []) if isinstance(row, dict) and row.get("report")
+	]
+	data["report_scope"] = "All Compatible Reports" if legacy_generic else "Selected Reports"
+	data["report_renderer"] = (
+		"generic_report" if legacy_generic else infer_report_renderer(reports[0] if reports else None)
+	)
+	try:
+		settings = json.loads(data.get("presentation_settings") or "{}")
+	except (TypeError, json.JSONDecodeError):
+		settings = {}
+	style = {"Summary": "Summary Focus", "Minimal": "Minimal"}.get(legacy_type, "Standard")
+	settings.setdefault("report", {})["layout_style"] = style
+	data["presentation_settings"] = json.dumps(settings, separators=(",", ":"))
+	converted["format"] = data
+	converted["schema_version"] = EXPORT_SCHEMA_VERSION
+	return converted
 
 
 def duplicate_crispy_format_for_company(
@@ -855,7 +904,6 @@ def _collect_reference_warnings(doc) -> list[str]:
 		("doc_type", "DocType"),
 		("company", "Company"),
 		("report", "Report"),
-		("generic_report_type", "Crispy Generic Report"),
 		("default_print_language", "Language"),
 	]
 	for fieldname, doctype in link_checks:

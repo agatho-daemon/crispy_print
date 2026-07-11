@@ -81,7 +81,6 @@ crispy_print/
 │   │   │   ├── crispy_document_code_profile/ # Document-code strategy
 │   │   │   ├── crispy_document_code_rule/    # Document-code rule rows
 │   │   │   ├── crispy_format_reports/        # Report links for formats
-│   │   │   ├── crispy_generic_report/        # Generic report definition
 │   │   │   ├── crispy_template/              # Frozen approved render contract
 │   │   │   ├── crispy_issued_document/       # Issued-document registry (CID) + child tables
 │   │   │   └── crispy_print_settings/        # Global font, render, and print policy (Single)
@@ -112,7 +111,7 @@ crispy_print/
 
 **Pages:**
 
-- **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType, Report (beta), and Contract (WIP) formats.
+- **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType, Report (WIP), and Contract (WIP) formats.
 - **Crispy Print Preview** (`/app/crispy-print-preview/{doctype}/{docname}/{format}`) - Server-rendered document preview and PDF workflow.
 - **Crispy Branding Profile Builder** (`/app/cbp-builder`) - Dedicated builder for reusable page, typography, branding, table, and QR presentation profiles.
 
@@ -138,6 +137,7 @@ Backend:
 - **`api/v1/sample_formats.py`** - Company-neutral sample catalog listing and explicit format creation from app-owned examples.
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
 - **`api/v1/reports.py`** - Report sample data, Typst source generation, combined preview compilation, and report PDF helpers.
+- **`report_renderers.py`** - Report-family registry, renderer compatibility, curated sections, and upstream structural-source fingerprints. Report rendering remains WIP pending full acceptance testing.
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
 - **`api/v1/company_context.py`** - Shared company extraction, presentation-settings company parsing, and final effective-company resolution for backend render paths.
 - **`api/v1/_common.py`** - Small shared API helpers for string cleanup, truth coercion, version parsing, and target-company validation.
@@ -164,7 +164,7 @@ Data model:
 - **`Crispy Issued Document`** - Immutable issued-document registry (CID) with verification tokens and revocation/supersession state, plus artifact, trust-event, and regulatory-submission child tables.
 - **`Crispy Branding Profile`** - Reusable company presentation profile.
 - **`Crispy Typst Block`** - Governed reusable Typst snippet library with generated snake_case reference keys, major/minor versions, company-aware override support, and a preview-only authoring builder.
-- **`Crispy Generic Report`** - Generic report definition for report-type formats.
+- **Report renderer fields on `Crispy Format`** - `report_scope`, `report_renderer`, linked report rows, and source fingerprint replace the removed `Crispy Generic Report` classification model.
 - **`Crispy Print Settings`** - Single DocType for global font, rendering, and print-policy configuration.
 - **`Crispy QR Regulatory Profile`**, **`Crispy Fiscal Credential`**, **`Crispy Document Code Profile`**, and **`Crispy Document Code Rule`** - Compliance-oriented document identity and verification layer.
 
@@ -184,7 +184,7 @@ Permission policy:
 Default policy:
 
 - **One default per scope** - `Crispy Format` and `Crispy Branding Profile` use a shared advisory-lock helper when setting defaults.
-- **Dynamic format scopes** - Format defaults remain scoped by company and target type; custom report formats compete only when linked report rows overlap.
+- **Dynamic format scopes** - Report resolution considers exact linked reports, company/global scope, compatible renderer formats, and generic fallbacks; linked report defaults compete when their report rows overlap.
 
 Render payload policy:
 

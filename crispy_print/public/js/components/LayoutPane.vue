@@ -729,12 +729,12 @@ const showGenericReportTypeBadge = computed(() => {
 	const format = currentFormat.value;
 	return (
 		format?.crispy_format_type === "Report" &&
-		Number(format?.is_generic || 0) === 1 &&
-		Boolean(format?.generic_report_type)
+		format?.report_scope === "All Compatible Reports" &&
+		Boolean(format?.report_renderer)
 	);
 });
 const genericReportTypeLabel = computed(() =>
-	String(currentFormat.value?.generic_report_type || "").trim()
+	String(currentFormat.value?.report_renderer || "").trim()
 );
 const isReportFormat = computed(() => currentFormat.value?.crispy_format_type === "Report");
 const columnEditorAvailableColumns = computed(() => {

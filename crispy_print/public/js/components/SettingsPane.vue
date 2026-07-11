@@ -181,17 +181,17 @@
 						:title="__('Report Template')"
 					>
 						<div class="settings-pane__field">
-							<label class="settings-pane__label">{{ __("Preset") }}</label>
+							<label class="settings-pane__label">{{ __("Layout Style") }}</label>
 							<select
-								:value="reportBuilderConfig.preset"
+								:value="reportBuilderConfig.layout_style"
 								class="form-control"
 								:disabled="reportBasicReadOnly"
-								@change="updateReportSettingFromEvent('preset', $event)"
+								@change="updateReportSettingFromEvent('layout_style', $event)"
 							>
-								<option value="grid">{{ __("Grid") }}</option>
-								<option value="tree">{{ __("Tree") }}</option>
-								<option value="summary">{{ __("Summary") }}</option>
-								<option value="minimal">{{ __("Minimal") }}</option>
+								<option value="Standard">{{ __("Standard") }}</option>
+								<option value="Compact">{{ __("Compact") }}</option>
+								<option value="Minimal">{{ __("Minimal") }}</option>
+								<option value="Summary Focus">{{ __("Summary Focus") }}</option>
 							</select>
 						</div>
 						<div class="settings-pane__grid">
@@ -289,6 +289,25 @@
 									/>
 								</div>
 							</div>
+						</div>
+						<div
+							v-if="reportBuilderConfig.sections?.length"
+							class="settings-pane__field"
+						>
+							<label class="settings-pane__label">{{ __("Report Sections") }}</label>
+							<label
+								v-for="section in reportBuilderConfig.sections"
+								:key="section.key"
+								class="settings-pane__checkbox-row"
+							>
+								<input
+									:checked="section.visible"
+									type="checkbox"
+									:disabled="reportBasicReadOnly || !section.optional"
+									@change="updateReportSectionVisibility(section.key, $event)"
+								/>
+								<span>{{ section.label }}</span>
+							</label>
 						</div>
 					</SettingsSection>
 					<SettingsSection
@@ -1176,6 +1195,14 @@ function updateReportCheckedSettingFromEvent<K extends keyof ReportBuilderConfig
 	event: Event
 ) {
 	updateReportSetting(fieldname, eventTargetChecked(event) as ReportBuilderConfig[K]);
+}
+
+function updateReportSectionVisibility(key: string, event: Event) {
+	const visible = eventTargetChecked(event);
+	const sections = (reportBuilderConfig.value.sections || []).map((section) =>
+		section.key === key ? { ...section, visible } : { ...section }
+	);
+	updateReportSetting("sections", sections, "live");
 }
 
 const branding_mode = computed<string>({

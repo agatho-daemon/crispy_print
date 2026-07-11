@@ -337,14 +337,14 @@ describe("SettingsPane", () => {
     await pageHeader!.trigger("click");
     await nextTick();
 
-    const preset = wrapper.find('select option[value="summary"]').element
+    const preset = wrapper.find('select option[value="Summary Focus"]').element
       .parentElement as HTMLSelectElement;
     await wrapper
       .findAll("select")
       .find((select) => select.element === preset)!
-      .setValue("summary");
+      .setValue("Summary Focus");
     expect(hoisted.storeMock.updateReportBuilderConfig).toHaveBeenCalledWith(
-      { preset: "summary" },
+      { layout_style: "Summary Focus" },
       { preview: "live" },
     );
 

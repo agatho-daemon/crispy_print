@@ -183,7 +183,7 @@ crispy_print.show_format_selector = function (report_name, report_instance) {
 		callback: (r) => {
 			const formats = r.message;
 
-			if (!formats.custom_formats.length && !formats.generic_formats.length) {
+			if (!formats.formats || !formats.formats.length) {
 				frappe.msgprint({
 					title: __("No Formats Available"),
 					message: __(
@@ -205,31 +205,15 @@ crispy_print.show_format_dialog = function (report_name, formats, report_instanc
 	let format_options = [];
 	let default_value = null;
 
-	// Add custom formats
-	if (formats.custom_formats.length > 0) {
+	if (formats.formats.length > 0) {
 		format_options.push({
-			label: __("Custom Formats"),
-			options: formats.custom_formats.map((f) => ({
-				label: f.name,
+			label: __("Compatible Formats"),
+			options: formats.formats.map((f) => ({
+				label: `${f.name} (${f.report_renderer} · ${f.layout_style})`,
 				value: f.name,
 			})),
 		});
-		default_value = formats.custom_formats[0].name;
-	}
-
-	// Add generic formats
-	if (formats.generic_formats.length > 0) {
-		format_options.push({
-			label: __("Generic Templates"),
-			options: formats.generic_formats.map((f) => ({
-				label: `${f.generic_report_type} Template`,
-				value: f.name,
-			})),
-		});
-
-		if (!default_value) {
-			default_value = formats.generic_formats[0].name;
-		}
+		default_value = formats.default_format || formats.formats[0].name;
 	}
 
 	// Flatten options for Select field

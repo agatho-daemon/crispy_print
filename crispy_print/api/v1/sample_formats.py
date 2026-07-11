@@ -116,7 +116,7 @@ def _catalog_card(payload: JSONDict, path: Path) -> JSONDict:
 		"description": sample.get("description") or "",
 		"target_type": sample.get("target_type") or format_data.get("crispy_format_type") or "",
 		"doc_type": sample.get("doc_type") or format_data.get("doc_type") or "",
-		"report_kind": sample.get("report_kind") or format_data.get("generic_report_type") or "",
+		"report_kind": sample.get("report_kind") or format_data.get("report_renderer") or "",
 		"tags": sample.get("tags") if isinstance(sample.get("tags"), list) else [],
 		"recommended_use": sample.get("recommended_use") or "",
 		"format_name": format_data.get("name") or "",

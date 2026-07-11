@@ -8,14 +8,15 @@ export interface CrispyFormatDoc {
   name: string;
   doc_type?: string;
   crispy_format_type?: string;
-  report?: string;
+  report?: Array<{ report: string; disabled?: number }>;
   contract?: string;
   company?: string;
   effective_company?: string | null;
   is_default?: number;
-  is_generic?: number;
+  report_scope?: "All Compatible Reports" | "Selected Reports";
   is_advanced?: number;
-  generic_report_type?: string;
+  report_renderer?: string;
+  report_source_fingerprint?: string;
   doc_header?: string;
   doc_footer?: string;
   raw_typst?: number;
@@ -112,7 +113,10 @@ export interface CreateFormatFromSampleResult {
 
 export interface ReportBuilderDefaults {
   mode: "basic" | "advanced";
+  renderer: string;
   preset: "grid" | "tree" | "summary" | "minimal";
+  layout_style: "Standard" | "Compact" | "Minimal" | "Summary Focus";
+  sections: ReportSectionConfig[];
   show_filters: boolean;
   show_summary: boolean;
   include_total_row: boolean;
@@ -136,6 +140,14 @@ export interface ReportBuilderDefaults {
   table_stroke_body_pt: number;
   raw_signature: string | null;
   report_table_sync_signature: string | null;
+}
+
+export interface ReportSectionConfig {
+  key: string;
+  label: string;
+  optional: boolean;
+  movable: boolean;
+  visible: boolean;
 }
 
 export interface FiscalCredentialPublicInfo {
@@ -1086,11 +1098,11 @@ export async function compileTypstSvg(args: {
 }
 
 export async function getDefaultReportBuilderConfig(
-  genericReportType?: string | null,
+  reportRenderer?: string | null,
 ): Promise<ReportBuilderDefaults> {
   const res = await call<ReportBuilderDefaults>({
     method: "crispy_print.api.v1.get_default_report_builder_config",
-    args: { generic_report_type: genericReportType || null },
+    args: { report_renderer: reportRenderer || null },
   });
   if (!res.message) {
     throw new Error("Missing report builder defaults");

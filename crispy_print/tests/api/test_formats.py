@@ -537,23 +537,14 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 	def test_get_default_doctypes_excludes_report_formats(self):
 		from crispy_print.api.v1 import get_default_doctypes
 
-		if not frappe.db.exists("Crispy Generic Report", "Grid"):
-			frappe.get_doc(
-				{
-					"doctype": "Crispy Generic Report",
-					"template_type": "Grid",
-					"description": "Grid report test fixture",
-				}
-			).insert(ignore_permissions=True)
-
 		format_report = frappe.get_doc(
 			{
 				"doctype": "Crispy Format",
 				"name": "Test API Format Default Report",
 				"crispy_format_type": "Report",
 				"module": "Crispy Print",
-				"is_generic": 1,
-				"generic_report_type": "Grid",
+				"report_scope": "All Compatible Reports",
+				"report_renderer": "generic_report",
 				"typst_code": "#text[Report]",
 				"is_advanced": 1,
 			}
@@ -570,13 +561,13 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 	def test_get_default_report_builder_config(self):
 		from crispy_print.api.v1 import get_default_report_builder_config
 
-		grid = get_default_report_builder_config("Grid")
-		tree = get_default_report_builder_config("Tree")
-		unknown = get_default_report_builder_config("SomethingElse")
+		grid = get_default_report_builder_config("generic_report")
+		financial = get_default_report_builder_config("financial_statement")
+		unknown = get_default_report_builder_config("custom")
 
 		self.assertEqual(grid["mode"], "basic")
 		self.assertEqual(grid["preset"], "grid")
-		self.assertEqual(tree["preset"], "tree")
+		self.assertEqual(financial["renderer"], "financial_statement")
 		self.assertEqual(unknown["preset"], "grid")
 		self.assertIn("show_filters", grid)
 		self.assertIn("chart_enabled", grid)
@@ -635,15 +626,17 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		frappe.db.commit()
 
 		filtered = get_available_formats(report, company=company)
-		filtered_names = [row["name"] for row in filtered["custom_formats"]]
+		filtered_names = [row["name"] for row in filtered["formats"]]
 		unfiltered = get_available_formats(report)
-		unfiltered_names = [row["name"] for row in unfiltered["custom_formats"]]
+		unfiltered_names = [row["name"] for row in unfiltered["formats"]]
 
 		self.assertIn(exact.name, filtered_names)
 		self.assertIn(global_format.name, filtered_names)
 		self.assertNotIn(other.name, filtered_names)
 		self.assertLess(filtered_names.index(exact.name), filtered_names.index(global_format.name))
-		self.assertIn(other.name, unfiltered_names)
+		# Omitting company uses the user's default company; formats from unrelated
+		# companies must never leak into discovery.
+		self.assertNotIn(other.name, unfiltered_names)
 		self.assertEqual(filtered["default_format"], exact.name)
 
 	def test_get_reports_without_custom_html_type_filtering(self):
@@ -732,10 +725,6 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		report_name = frappe.db.get_value("Report", {}, "name")
 		if not report_name:
 			self.skipTest("No Report records available")
-		generic_report_type = frappe.db.get_value("Crispy Generic Report", {}, "name")
-		if not generic_report_type:
-			self.skipTest("No Crispy Generic Report records available")
-
 		custom_name = "Test API Format Linked Report Custom"
 		generic_name = "Test API Format Linked Report Generic"
 
@@ -744,7 +733,8 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 				"doctype": "Crispy Format",
 				"name": custom_name,
 				"crispy_format_type": "Report",
-				"is_generic": 0,
+				"report_scope": "Selected Reports",
+				"report_renderer": "generic_report",
 				"module": "Crispy Print",
 				"report": [{"report": report_name, "disabled": 0}],
 			}
@@ -756,8 +746,8 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 				"doctype": "Crispy Format",
 				"name": generic_name,
 				"crispy_format_type": "Report",
-				"is_generic": 1,
-				"generic_report_type": generic_report_type,
+				"report_scope": "All Compatible Reports",
+				"report_renderer": "generic_report",
 				"module": "Crispy Print",
 			}
 		)
@@ -765,11 +755,11 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		frappe.db.commit()
 
 		out = get_available_formats(report_name)
-		custom_names = [row["name"] for row in out.get("custom_formats") or []]
+		custom_names = [row["name"] for row in out.get("formats") or []]
 
 		self.assertIn(custom_name, custom_names)
 		self.assertEqual(out.get("default_format"), custom_name)
-		self.assertEqual(out.get("generic_formats"), [])
+		self.assertIn(generic_name, custom_names)
 
 
 class TestCrispyFormatImportExportAPI(FrappeTestCase):
@@ -818,7 +808,7 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self._insert_format("Test ImportExport Export")
 		payload = export_crispy_format("Test ImportExport Export")
 
-		self.assertEqual(payload["schema_version"], 1)
+		self.assertEqual(payload["schema_version"], 2)
 		self.assertEqual(payload["app"], "crispy_print")
 		self.assertIn("exported_at", payload)
 		self.assertIn("format", payload)
@@ -902,7 +892,8 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		result = import_crispy_format(payload, on_conflict="copy")
 		imported = frappe.get_doc("Crispy Format", result["name"])
 		self.assertEqual(imported.crispy_format_type, "Report")
-		self.assertEqual(imported.is_generic, 1)
+		self.assertEqual(imported.report_scope, "All Compatible Reports")
+		self.assertEqual(imported.report_renderer, "generic_report")
 		self.assertEqual(imported.is_advanced, 1)
 		self.assertEqual(imported.raw_typst, 1)
 

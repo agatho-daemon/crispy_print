@@ -141,6 +141,8 @@ Use **Duplicate** in the builder preview pane when the same document design shou
 
 ### Report Builder Workflow (Dual Mode)
 
+> **Status: WIP / acceptance testing required.** The renderer-based report workflow is available for development and real-data testing, but it has not been fully validated across all supported reports, filter combinations, languages, page counts, and ERPNext datasets. Do not treat current report output as an approved production or accounting publication without reviewing the generated PDF.
+
 For `Crispy Format Type = Report`, builder now supports two editing modes:
 
 - **Basic mode**: non-technical controls generate a managed Typst report template
@@ -156,7 +158,17 @@ Key behavior:
 
 This keeps report editing accessible while protecting advanced customizations.
 
-Reports are in beta stabilization. Treat the current report flow as a testing target for real report layouts, while expecting refinements before a stable report publishing contract.
+Report formats now select a coverage scope and renderer:
+
+- **All Compatible Reports** is intended for generic renderer fallback formats.
+- **Selected Reports** links one or more compatible ERPNext reports.
+- Known reports are grouped into receivable/payable, financial statement, General Ledger, and Bank Reconciliation renderer families.
+- Unknown reports use the generic renderer, based on Frappe's report-grid structure.
+- **Custom** permits deliberate cross-family or fully bespoke Typst implementations.
+
+Basic mode offers renderer-curated sections and Standard, Compact, Minimal, and Summary Focus layout styles. Selected-report formats can execute a linked report for preview; all-compatible generic formats retain a dummy design preview. A source status warning indicates when the upstream Frappe or ERPNext HTML structural reference has changed. The warning does not modify approved Typst automatically.
+
+Until acceptance testing is complete, test every intended report with representative filters, long values, multiple pages, totals, empty results, branding, and the target PDF standard.
 
 ### Branding Profile Workflow
 

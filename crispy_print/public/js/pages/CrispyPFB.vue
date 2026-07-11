@@ -330,6 +330,18 @@ const formatHealthItems = computed<FormatHealthItem[]>(() => {
 			message: __("Report format has no generated Typst source yet."),
 		});
 	}
+	const sourceStatus = store.reportRendererMetadata?.value?.source?.status;
+	if (sourceStatus === "review_required") {
+		items.push({
+			level: "warning",
+			message: __("The upstream report HTML changed; review this native Typst renderer."),
+		});
+	} else if (sourceStatus === "source_unavailable") {
+		items.push({
+			level: "warning",
+			message: __("The source report HTML is unavailable for compatibility checking."),
+		});
+	}
 	if (isGeneratedReportTypstStale()) {
 		items.push({
 			level: "warning",

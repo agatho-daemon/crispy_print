@@ -7,11 +7,18 @@ from frappe.model.document import Document
 
 from crispy_print.api.v1.company_context import resolve_effective_company
 from crispy_print.defaults import enforce_single_default
+from crispy_print.report_renderers import (
+	get_source_fingerprint,
+	infer_renderer_for_reports,
+	validate_renderer_reports,
+)
 
 
 class CrispyFormat(Document):
 	def _set_default_company_if_missing(self) -> None:
-		if self.company:
+		# Report formats may intentionally be global and participate in the
+		# company/global resolution chain.
+		if self.company or self.crispy_format_type == "Report":
 			return
 
 		self.company = resolve_effective_company(allow_global_fallback=True)
@@ -31,10 +38,7 @@ class CrispyFormat(Document):
 		return [row for row in rows if row.get("report") and not row.get("disabled")]
 
 	def autoname(self):
-		"""Auto-generate name for generic templates"""
-		if self.crispy_format_type == "Report" and self.is_generic and self.generic_report_type:
-			# Format: "Generic Report - Grid", "Generic Report - Tree", etc.
-			self.name = f"Generic Report - {self.generic_report_type}"
+		"""Names are supplied by designers or deterministic setup/migration code."""
 
 	def before_insert(self):
 		"""Clear is_default when duplicating a format"""
@@ -42,7 +46,7 @@ class CrispyFormat(Document):
 			self.is_default = 0
 
 		# Set default template for new Report formats
-		if self.crispy_format_type == "Report" and self.is_generic and not self.typst_code:
+		if self.crispy_format_type == "Report" and not self.typst_code:
 			self._set_default_report_template()
 
 	def _is_duplicate_insert(self) -> bool:
@@ -117,30 +121,37 @@ class CrispyFormat(Document):
 	def validate(self):
 		"""Validate field combinations and keep report raw mode aligned with is_advanced."""
 		self._set_default_company_if_missing()
-		if not self.company:
+		if not self.company and self.crispy_format_type != "Report":
 			frappe.throw(_("Company is required for Crispy Format. Set a Default Company first."))
 
 		# Validate Report mode fields
 		if self.crispy_format_type == "Report":
 			linked_reports = self._get_linked_reports()
+			report_names = [row.get("report") for row in linked_reports]
+			self.report_scope = self.report_scope or "Selected Reports"
 
-			if self.is_generic:
-				# Generic templates must have generic_report_type
-				if not self.generic_report_type:
-					frappe.throw(_("Generic Report Type is required for generic templates"))
-
-				# Generic templates must not have specific linked reports
+			if self.report_scope == "All Compatible Reports":
 				if linked_reports:
-					frappe.throw(_("Generic templates cannot be linked to a specific report"))
-
-			else:
-				# Custom report formats must have at least one linked report
+					frappe.throw(_("All-compatible report formats cannot link selected reports."))
+				self.report_renderer = self.report_renderer or "generic_report"
+			elif self.report_scope == "Selected Reports":
 				if not linked_reports:
-					frappe.throw(_("At least one linked report is required for custom report formats"))
+					frappe.throw(_("At least one linked report is required for selected-report formats."))
+				self.report_renderer = self.report_renderer or infer_renderer_for_reports(report_names)
+				if not validate_renderer_reports(self.report_renderer, report_names):
+					frappe.throw(
+						_(
+							"Selected reports are incompatible with renderer {0}. Use the custom renderer to combine report families."
+						).format(frappe.bold(self.report_renderer))
+					)
+			else:
+				frappe.throw(_("Report Coverage must be All Compatible Reports or Selected Reports."))
 
-				# Custom formats must not have generic_report_type
-				if self.generic_report_type:
-					frappe.throw(_("Custom report formats cannot have a Generic Report Type"))
+			if not self.report_renderer:
+				frappe.throw(_("Report Renderer is required."))
+			fingerprint = get_source_fingerprint(self.report_renderer).get("fingerprint")
+			if fingerprint and not self.report_source_fingerprint:
+				self.report_source_fingerprint = fingerprint
 
 			# Report mode source of truth: is_advanced drives raw_typst.
 			self.raw_typst = 1 if self.is_advanced else 0
@@ -151,9 +162,9 @@ class CrispyFormat(Document):
 				frappe.throw(_("DocType is required"))
 
 			# DocType formats should not have report fields
-			if self.generic_report_type or self.is_generic:
-				self.generic_report_type = None
-				self.is_generic = 0
+			self.report_scope = None
+			self.report_renderer = None
+			self.report_source_fingerprint = None
 			self.set("report", [])
 			self.is_advanced = 0
 
@@ -163,9 +174,9 @@ class CrispyFormat(Document):
 				frappe.throw(_("Contract is required"))
 
 			# Contract formats should not have report fields
-			if self.generic_report_type or self.is_generic:
-				self.generic_report_type = None
-				self.is_generic = 0
+			self.report_scope = None
+			self.report_renderer = None
+			self.report_source_fingerprint = None
 			self.set("report", [])
 			self.is_advanced = 0
 
@@ -205,10 +216,8 @@ class CrispyFormat(Document):
 			return [f"{company}|{format_type}|doctype|{self._clean_scope_value(self.doc_type)}"]
 		if self.crispy_format_type == "Contract":
 			return [f"{company}|{format_type}|contract|{self._clean_scope_value(self.contract)}"]
-		if self.crispy_format_type == "Report" and self.is_generic:
-			return [
-				f"{company}|{format_type}|generic-report|{self._clean_scope_value(self.generic_report_type)}"
-			]
+		if self.crispy_format_type == "Report" and self.report_scope == "All Compatible Reports":
+			return [f"{company}|{format_type}|renderer|{self._clean_scope_value(self.report_renderer)}"]
 		if self.crispy_format_type == "Report":
 			report_names = sorted(
 				{row.get("report") for row in self._get_linked_reports() if row.get("report")}
@@ -230,8 +239,8 @@ class CrispyFormat(Document):
 				"company",
 				"doc_type",
 				"contract",
-				"is_generic",
-				"generic_report_type",
+				"report_scope",
+				"report_renderer",
 			],
 			order_by="name asc",
 		)
@@ -246,11 +255,12 @@ class CrispyFormat(Document):
 		return []
 
 	def _get_scoped_report_default_names(self, rows: list[dict]) -> list[str]:
-		if self.is_generic:
+		if self.report_scope == "All Compatible Reports":
 			return [
 				row.name
 				for row in rows
-				if row.get("is_generic") and row.get("generic_report_type") == self.generic_report_type
+				if row.get("report_scope") == "All Compatible Reports"
+				and row.get("report_renderer") == self.report_renderer
 			]
 
 		report_names = {row.get("report") for row in self._get_linked_reports()}
@@ -258,7 +268,7 @@ class CrispyFormat(Document):
 			return []
 
 		default_names = []
-		candidate_names = [row.name for row in rows if not row.get("is_generic")]
+		candidate_names = [row.name for row in rows if row.get("report_scope") == "Selected Reports"]
 		report_rows = []
 		if candidate_names:
 			report_rows = frappe.get_all(
@@ -278,7 +288,7 @@ class CrispyFormat(Document):
 				reports_by_parent.setdefault(parent, set()).add(report)
 
 		for row in rows:
-			if row.get("is_generic"):
+			if row.get("report_scope") != "Selected Reports":
 				continue
 			candidate_reports = reports_by_parent.get(row.name, set())
 			if report_names.intersection(candidate_reports):
@@ -290,8 +300,8 @@ class CrispyFormat(Document):
 			return self.doc_type or self.crispy_format_type
 		if self.crispy_format_type == "Contract":
 			return self.contract or self.crispy_format_type
-		if self.crispy_format_type == "Report" and self.is_generic:
-			return self.generic_report_type or self.crispy_format_type
+		if self.crispy_format_type == "Report" and self.report_scope == "All Compatible Reports":
+			return self.report_renderer or self.crispy_format_type
 		if self.crispy_format_type == "Report":
 			reports = [row.get("report") for row in self._get_linked_reports()]
 			return ", ".join(reports) or self.crispy_format_type

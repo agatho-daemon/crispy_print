@@ -63,13 +63,14 @@ interface CrispyFormat {
   doc_type?: string;
   // TODO: investigate the possibility of having a dynamic crispy_format_type for future.
   crispy_format_type?: string;
-  report?: string;
+  report?: Array<{ report: string; disabled?: number }>;
   contract?: string;
   company?: string;
   is_default?: number;
-  is_generic?: number;
+  report_scope?: "All Compatible Reports" | "Selected Reports";
   is_advanced?: number;
-  generic_report_type?: string;
+  report_renderer?: string;
+  report_source_fingerprint?: string;
   doc_header?: string;
   doc_footer?: string;
   raw_typst?: number;
@@ -122,6 +123,7 @@ function buildStore() {
   );
   const reportBasicReadOnly = ref(false);
   const reportModeNotice = ref("");
+  const reportRendererMetadata = ref<any>(null);
   const presentation_settings = ref<PresentationSettings>(
     merge_presentation_settings(default_presentation_settings, {}),
   );
@@ -1250,11 +1252,27 @@ function buildStore() {
 
       // Load sample reports and initial selection for Report mode.
       if (formatType === "Report") {
-        await reportStore.loadSampleReports();
+        const linkedReports = (doc.report || [])
+          .filter((row: any) => row?.report && !row?.disabled)
+          .map((row: any) => ({ name: row.report }));
+        sampleReports.value =
+          doc.report_scope === "Selected Reports" && linkedReports.length
+            ? linkedReports
+            : [{ name: "Style Preview" }];
         logger.info("Sample reports loaded", sampleReports.value);
-        selectedReportName.value = "Style Preview";
-        await reportStore.loadReportFilterFields("Style Preview");
-        await reportStore.loadReportColumns("Style Preview", {});
+        selectedReportName.value = sampleReports.value[0].name;
+        await reportStore.loadReportFilterFields(selectedReportName.value);
+        await reportStore.loadReportColumns(selectedReportName.value, {});
+        try {
+          const metadataResponse = await frappe.call({
+            method: "crispy_print.api.v1.get_report_renderer_metadata",
+            args: { format_name: doc.name },
+          });
+          reportRendererMetadata.value = metadataResponse?.message || null;
+        } catch (error) {
+          logger.warn("Failed to load report renderer metadata", error);
+          reportRendererMetadata.value = null;
+        }
       }
 
       // Load DocType metadata
@@ -1342,11 +1360,7 @@ function buildStore() {
       // Load or create layout
       const persistedLayout = parsed.layout;
       const hadNoLayout = !persistedLayout;
-      // Generic report builder uses a fixed style-preview layout model.
-      layout.value =
-        formatType === "Report"
-          ? layoutStore.getDefaultLayout()
-          : persistedLayout || layoutStore.getDefaultLayout();
+      layout.value = persistedLayout || layoutStore.getDefaultLayout();
 
       // Load page settings (already merged with defaults by parser)
       presentation_settings.value = merge_presentation_settings(
@@ -1368,7 +1382,7 @@ function buildStore() {
       if (formatType === "Report") {
         try {
           serverDefaults = await getServerReportBuilderConfig(
-            doc.generic_report_type || null,
+            doc.report_renderer || null,
           );
         } catch (error) {
           logger.warn(
@@ -1386,7 +1400,7 @@ function buildStore() {
           ...serverDefaults,
           ...report_settings,
         },
-        doc.generic_report_type,
+        doc.report_renderer,
       );
       // Set mode before assigning into reactive state so the deep watcher
       // doesn't generate basic Typst over advanced raw Typst during fetch.
@@ -1737,6 +1751,7 @@ function buildStore() {
     reportBuilderMode,
     reportBasicReadOnly,
     reportModeNotice,
+    reportRendererMetadata,
 
     // Methods
     fetch,

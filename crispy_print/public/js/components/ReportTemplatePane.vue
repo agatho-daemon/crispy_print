@@ -33,17 +33,17 @@
 
 		<div class="report-template-pane__body">
 			<div class="report-template-pane__row">
-				<label class="report-template-pane__label">{{ __("Preset") }}</label>
+				<label class="report-template-pane__label">{{ __("Layout Style") }}</label>
 				<select
-					:value="store.reportBuilderConfig.value.preset"
+					:value="store.reportBuilderConfig.value.layout_style"
 					class="form-control"
 					:disabled="store.reportBasicReadOnly.value"
 					@change="updatePreset"
 				>
-					<option value="grid">{{ __("Grid") }}</option>
-					<option value="tree">{{ __("Tree") }}</option>
-					<option value="summary">{{ __("Summary") }}</option>
-					<option value="minimal">{{ __("Minimal") }}</option>
+					<option value="Standard">{{ __("Standard") }}</option>
+					<option value="Compact">{{ __("Compact") }}</option>
+					<option value="Minimal">{{ __("Minimal") }}</option>
+					<option value="Summary Focus">{{ __("Summary Focus") }}</option>
 				</select>
 			</div>
 			<label class="report-template-pane__toggle">
@@ -92,7 +92,7 @@ function eventChecked(event: Event) {
 }
 
 function updatePreset(event: Event) {
-	store.updateReportBuilderConfig({ preset: eventValue(event) as any });
+	store.updateReportBuilderConfig({ layout_style: eventValue(event) as any });
 }
 
 function updateShowFilters(event: Event) {

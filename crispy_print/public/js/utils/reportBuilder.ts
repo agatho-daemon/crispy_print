@@ -7,10 +7,26 @@ export const REPORT_BASIC_SIGNATURE_PREFIX = "CRISPY_REPORT_BASIC_SIGNATURE:";
 export type ReportBuilderMode = "basic" | "advanced";
 export type ReportBuilderPreset = "grid" | "tree" | "summary" | "minimal";
 export type ColumnAlignStrategy = "auto" | "left" | "center" | "right";
+export type ReportLayoutStyle =
+  | "Standard"
+  | "Compact"
+  | "Minimal"
+  | "Summary Focus";
+
+export interface ReportSectionConfig {
+  key: string;
+  label: string;
+  optional: boolean;
+  movable: boolean;
+  visible: boolean;
+}
 
 export interface ReportBuilderConfig {
   mode: ReportBuilderMode;
+  renderer: string;
   preset: ReportBuilderPreset;
+  layout_style: ReportLayoutStyle;
+  sections: ReportSectionConfig[];
   show_filters: boolean;
   show_summary: boolean;
   include_total_row: boolean;
@@ -41,21 +57,17 @@ interface ReportTypstBuildOptions {
 }
 
 export function getDefaultReportBuilderConfig(
-  genericReportType?: string | null,
+  reportRenderer?: string | null,
 ): ReportBuilderConfig {
-  const type = String(genericReportType || "").toLowerCase();
-  const preset: ReportBuilderPreset =
-    type === "tree"
-      ? "tree"
-      : type === "summary"
-        ? "summary"
-        : type === "minimal"
-          ? "minimal"
-          : "grid";
+  void reportRenderer;
+  const preset: ReportBuilderPreset = "grid";
 
   return {
     mode: "basic",
+    renderer: reportRenderer || "generic_report",
     preset,
+    layout_style: "Standard",
+    sections: [],
     show_filters: true,
     show_summary: true,
     include_total_row: true,
@@ -84,9 +96,9 @@ export function getDefaultReportBuilderConfig(
 
 export function normalizeReportBuilderConfig(
   input: unknown,
-  genericReportType?: string | null,
+  reportRenderer?: string | null,
 ): ReportBuilderConfig {
-  const defaults = getDefaultReportBuilderConfig(genericReportType);
+  const defaults = getDefaultReportBuilderConfig(reportRenderer);
   const raw = (input && typeof input === "object" ? input : {}) as Record<
     string,
     unknown
@@ -120,7 +132,10 @@ export function normalizeReportBuilderConfig(
   return {
     ...defaults,
     mode,
+    renderer: asString(raw.renderer, defaults.renderer),
     preset,
+    layout_style: normalizeLayoutStyle(raw.layout_style),
+    sections: normalizeSections(raw.sections, defaults.sections),
     show_filters: toBool(raw.show_filters, defaults.show_filters),
     show_summary: toBool(raw.show_summary, defaults.show_summary),
     include_total_row: includeTotalRow,
@@ -186,11 +201,54 @@ export function normalizeReportBuilderConfig(
   };
 }
 
+function normalizeLayoutStyle(value: unknown): ReportLayoutStyle {
+  const candidate = String(value || "Standard");
+  return candidate === "Compact" ||
+    candidate === "Minimal" ||
+    candidate === "Summary Focus"
+    ? candidate
+    : "Standard";
+}
+
+function normalizeSections(
+  value: unknown,
+  fallback: ReportSectionConfig[],
+): ReportSectionConfig[] {
+  if (!Array.isArray(value)) return fallback.map((section) => ({ ...section }));
+  return value
+    .filter(
+      (section) =>
+        section &&
+        typeof section === "object" &&
+        String((section as any).key || ""),
+    )
+    .map((section: any) => ({
+      key: String(section.key),
+      label: String(section.label || section.key),
+      optional: Boolean(section.optional),
+      movable: Boolean(section.movable),
+      visible: section.visible !== false,
+    }));
+}
+
 export function buildReportTypstFromConfig(
   config: ReportBuilderConfig,
   options: ReportTypstBuildOptions = {},
 ): string {
-  const fontSize = Math.max(1, Number(config.font_size_pt) || 9);
+  const densityScale =
+    config.layout_style === "Compact"
+      ? 0.85
+      : config.layout_style === "Minimal"
+        ? 0.92
+        : 1;
+  const fontSize = Math.max(
+    1,
+    (Number(config.font_size_pt) || 9) * densityScale,
+  );
+  const sectionVisible = (key: string) => {
+    const section = (config.sections || []).find((item) => item.key === key);
+    return !section || section.visible !== false;
+  };
   const tableHeaderAlign = resolveHeaderAlign(config.column_align_strategy);
   const tableBodyAlign = resolveBodyAlign(config.column_align_strategy);
   const tableSettings = options.tableSettings || null;
@@ -211,18 +269,22 @@ export function buildReportTypstFromConfig(
   const tableStrokeBodyPt = tableSettings
     ? toNumber(tableSettings.stroke?.width, config.table_stroke_body_pt)
     : config.table_stroke_body_pt;
-  const tableInsetTopPt = tableSettings
-    ? toNumber(tableSettings.inset?.top, config.table_inset_y_pt)
-    : config.table_inset_y_pt;
-  const tableInsetRightPt = tableSettings
-    ? toNumber(tableSettings.inset?.right, config.table_inset_x_pt)
-    : config.table_inset_x_pt;
-  const tableInsetBottomPt = tableSettings
-    ? toNumber(tableSettings.inset?.bottom, config.table_inset_y_pt)
-    : config.table_inset_y_pt;
-  const tableInsetLeftPt = tableSettings
-    ? toNumber(tableSettings.inset?.left, config.table_inset_x_pt)
-    : config.table_inset_x_pt;
+  const tableInsetTopPt =
+    (tableSettings
+      ? toNumber(tableSettings.inset?.top, config.table_inset_y_pt)
+      : config.table_inset_y_pt) * densityScale;
+  const tableInsetRightPt =
+    (tableSettings
+      ? toNumber(tableSettings.inset?.right, config.table_inset_x_pt)
+      : config.table_inset_x_pt) * densityScale;
+  const tableInsetBottomPt =
+    (tableSettings
+      ? toNumber(tableSettings.inset?.bottom, config.table_inset_y_pt)
+      : config.table_inset_y_pt) * densityScale;
+  const tableInsetLeftPt =
+    (tableSettings
+      ? toNumber(tableSettings.inset?.left, config.table_inset_x_pt)
+      : config.table_inset_x_pt) * densityScale;
   const headerFontFamily = asString(
     tableSettings?.typography?.header?.fontFamily,
     config.font_family,
@@ -299,16 +361,59 @@ export function buildReportTypstFromConfig(
     `#set text(font: "${escapeTypstString(config.font_family)}", size: ${formatPt(fontSize)})`,
   );
   lines.push("");
-  lines.push("#align(center)[");
-  lines.push('  #text(size: 16pt, weight: "bold")[#data.title]');
-  lines.push("  #v(0.3em)");
-  lines.push('  #text(size: 9pt, fill: rgb("#666"))[#data.subtitle]');
-  lines.push("]");
-  lines.push("");
-  lines.push("#v(1em)");
-  lines.push("");
+  if (sectionVisible("heading")) {
+    lines.push("#align(center)[");
+    lines.push('  #text(size: 16pt, weight: "bold")[#data.title]');
+    lines.push("  #v(0.3em)");
+    lines.push('  #text(size: 9pt, fill: rgb("#666"))[#data.subtitle]');
+    lines.push("]");
+    lines.push("");
+    lines.push("#v(1em)");
+    lines.push("");
+  }
 
-  if (config.show_filters) {
+  if (config.renderer === "receivable_payable") {
+    lines.push('#if "filters_map" in data [');
+    lines.push(
+      '  #align(center)[#text(size: 10pt, weight: "semibold")[#if "party" in data.filters_map { data.filters_map.party }]]',
+    );
+    lines.push(
+      '  #align(center)[#text(size: 8pt)[#if "tax_id" in data.filters_map { [Tax ID: #data.filters_map.tax_id] }]]',
+    );
+    lines.push(
+      '  #align(center)[#text(size: 8pt)[#if "ageing_based_on" in data.filters_map { data.filters_map.ageing_based_on } #h(0.5em) #if "report_date" in data.filters_map { data.filters_map.report_date }]]',
+    );
+    lines.push("]");
+  } else if (config.renderer === "financial_statement") {
+    lines.push('#if "filters_map" in data [');
+    lines.push(
+      '  #align(center)[#text(size: 11pt, weight: "semibold")[#if "company" in data.filters_map { data.filters_map.company }]]',
+    );
+    lines.push(
+      '  #align(center)[#text(size: 8pt)[#if "fiscal_year" in data.filters_map { data.filters_map.fiscal_year } #h(1em) #if "presentation_currency" in data.filters_map { data.filters_map.presentation_currency }]]',
+    );
+    lines.push("]");
+  } else if (config.renderer === "general_ledger") {
+    lines.push('#if "filters_map" in data [');
+    lines.push(
+      '  #align(center)[#text(size: 11pt, weight: "semibold")[#if "party" in data.filters_map { data.filters_map.party } else if "account" in data.filters_map { data.filters_map.account }]]',
+    );
+    lines.push(
+      '  #align(center)[#text(size: 8pt)[#if "from_date" in data.filters_map { data.filters_map.from_date } #h(0.5em)–#h(0.5em) #if "to_date" in data.filters_map { data.filters_map.to_date }]]',
+    );
+    lines.push("]");
+  } else if (config.renderer === "bank_reconciliation") {
+    lines.push('#if "filters_map" in data [');
+    lines.push(
+      '  #align(center)[#text(size: 10pt, weight: "semibold")[#if "account" in data.filters_map { data.filters_map.account }]]',
+    );
+    lines.push(
+      '  #align(center)[#text(size: 8pt)[#if "company" in data.filters_map { data.filters_map.company } #h(1em) #if "report_date" in data.filters_map { data.filters_map.report_date }]]',
+    );
+    lines.push("]");
+  }
+
+  if (config.show_filters && sectionVisible("filters")) {
     lines.push('#if "filters" in data and data.filters.len() > 0 [');
     lines.push("  #block(");
     lines.push('    fill: rgb("f5f5f5"),');
@@ -336,7 +441,7 @@ export function buildReportTypstFromConfig(
     lines.push("");
   }
 
-  if (config.chart_enabled) {
+  if (config.chart_enabled && sectionVisible("chart")) {
     lines.push('#if "chart_svg" in data and data.chart_svg != "" [');
     if (config.chart_spacing_top_pt > 0) {
       lines.push(`  #v(${formatPt(config.chart_spacing_top_pt)})`);
@@ -367,7 +472,7 @@ export function buildReportTypstFromConfig(
     lines.push("");
   }
 
-  if (config.show_summary) {
+  if (config.show_summary && sectionVisible("report_summary")) {
     lines.push(
       '#if "report_summary" in data and data.report_summary.len() > 0 [',
     );
@@ -399,89 +504,91 @@ export function buildReportTypstFromConfig(
     lines.push("");
   }
 
-  lines.push("#let cp_column_width(col) = {");
-  lines.push('  if "width_kind" in col {');
-  lines.push('    if col.width_kind == "auto" { auto }');
-  lines.push('    else if col.width_kind == "fr" { col.width_value * 1fr }');
-  lines.push('    else if col.width_kind == "pt" { col.width_value * 1pt }');
-  lines.push('    else if col.width_kind == "em" { col.width_value * 1em }');
-  lines.push('    else if col.width_kind == "rem" { col.width_value * 1em }');
-  lines.push('    else if col.width_kind == "%" { col.width_value * 1% }');
-  lines.push('    else if col.width_kind == "cm" { col.width_value * 1cm }');
-  lines.push('    else if col.width_kind == "mm" { col.width_value * 1mm }');
-  lines.push('    else if col.width_kind == "in" { col.width_value * 1in }');
-  lines.push("    else { auto }");
-  lines.push("  } else { auto }");
-  lines.push("}");
-  lines.push("");
-  lines.push("#table(");
-  lines.push("  columns: data.columns.map(cp_column_width),");
-  lines.push("");
-  lines.push("  stroke: (x, y) => (");
-  lines.push(
-    `    top: if y == 0 { ${formatPt(tableStrokeTopPt)} } else { ${formatPt(tableStrokeBodyPt)} },`,
-  );
-  lines.push(`    bottom: ${formatPt(tableStrokeBodyPt)},`);
-  lines.push("    left: 0pt,");
-  lines.push("    right: 0pt,");
-  lines.push("  ),");
-  lines.push("");
-  lines.push("  align: (x, y) => {");
-  lines.push("    if y == 0 {");
-  lines.push(`      ${tableHeaderAlign} + horizon`);
-  lines.push("    } else if data.columns.at(x).is_numeric {");
-  lines.push(`      ${tableBodyAlign}`);
-  lines.push("    } else {");
-  lines.push(
-    `      ${tableBodyAlign === "right + horizon" ? "left + horizon" : tableBodyAlign}`,
-  );
-  lines.push("    }");
-  lines.push("  },");
-  lines.push("");
-  lines.push("  fill: (x, y) => {");
-  lines.push('    if y == 0 { rgb("' + headerFill + '") }');
-  if (stripeEnabled) {
-    lines.push(`    else if calc.even(y) { rgb("${stripeFill}") }`);
+  if (sectionVisible("table")) {
+    lines.push("#let cp_column_width(col) = {");
+    lines.push('  if "width_kind" in col {');
+    lines.push('    if col.width_kind == "auto" { auto }');
+    lines.push('    else if col.width_kind == "fr" { col.width_value * 1fr }');
+    lines.push('    else if col.width_kind == "pt" { col.width_value * 1pt }');
+    lines.push('    else if col.width_kind == "em" { col.width_value * 1em }');
+    lines.push('    else if col.width_kind == "rem" { col.width_value * 1em }');
+    lines.push('    else if col.width_kind == "%" { col.width_value * 1% }');
+    lines.push('    else if col.width_kind == "cm" { col.width_value * 1cm }');
+    lines.push('    else if col.width_kind == "mm" { col.width_value * 1mm }');
+    lines.push('    else if col.width_kind == "in" { col.width_value * 1in }');
+    lines.push("    else { auto }");
+    lines.push("  } else { auto }");
+    lines.push("}");
+    lines.push("");
+    lines.push("#table(");
+    lines.push("  columns: data.columns.map(cp_column_width),");
+    lines.push("");
+    lines.push("  stroke: (x, y) => (");
+    lines.push(
+      `    top: if y == 0 { ${formatPt(tableStrokeTopPt)} } else { ${formatPt(tableStrokeBodyPt)} },`,
+    );
+    lines.push(`    bottom: ${formatPt(tableStrokeBodyPt)},`);
+    lines.push("    left: 0pt,");
+    lines.push("    right: 0pt,");
+    lines.push("  ),");
+    lines.push("");
+    lines.push("  align: (x, y) => {");
+    lines.push("    if y == 0 {");
+    lines.push(`      ${tableHeaderAlign} + horizon`);
+    lines.push("    } else if data.columns.at(x).is_numeric {");
+    lines.push(`      ${tableBodyAlign}`);
+    lines.push("    } else {");
+    lines.push(
+      `      ${tableBodyAlign === "right + horizon" ? "left + horizon" : tableBodyAlign}`,
+    );
+    lines.push("    }");
+    lines.push("  },");
+    lines.push("");
+    lines.push("  fill: (x, y) => {");
+    lines.push('    if y == 0 { rgb("' + headerFill + '") }');
+    if (stripeEnabled) {
+      lines.push(`    else if calc.even(y) { rgb("${stripeFill}") }`);
+    }
+    lines.push("  },");
+    lines.push("");
+    lines.push(
+      `  inset: (top: ${formatPt(tableInsetTopPt)}, right: ${formatPt(tableInsetRightPt)}, bottom: ${formatPt(tableInsetBottomPt)}, left: ${formatPt(tableInsetLeftPt)}),`,
+    );
+    lines.push("");
+    lines.push("  table.header(");
+    lines.push(
+      `    ..data.columns.map(col => text(..${headerTextStyle})[#col.label])`,
+    );
+    lines.push("  ),");
+    lines.push("");
+    lines.push("  ..data");
+    lines.push("    .rows");
+    if (!config.include_total_row) {
+      lines.push("    .filter(row => row.is_total_row != true)");
+    }
+    lines.push("    .map(row => {");
+    lines.push("      row.cells.enumerate().map(cell_entry => {");
+    lines.push("        let idx = cell_entry.at(0)");
+    lines.push("        let cell = cell_entry.at(1)");
+    lines.push("        let content = if row.is_bold {");
+    lines.push(`          text(..${boldBodyTextStyle})[#cell.value]`);
+    lines.push("        } else {");
+    lines.push(`          text(..${bodyTextStyle})[#cell.value]`);
+    lines.push("        }");
+    lines.push(
+      '        if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
+    );
+    lines.push("          box(inset: (left: row.indent * 2em))[#content]");
+    lines.push("        } else {");
+    lines.push("          content");
+    lines.push("        }");
+    lines.push("      })");
+    lines.push("    })");
+    lines.push("    .flatten()");
+    lines.push(")");
   }
-  lines.push("  },");
-  lines.push("");
-  lines.push(
-    `  inset: (top: ${formatPt(tableInsetTopPt)}, right: ${formatPt(tableInsetRightPt)}, bottom: ${formatPt(tableInsetBottomPt)}, left: ${formatPt(tableInsetLeftPt)}),`,
-  );
-  lines.push("");
-  lines.push("  table.header(");
-  lines.push(
-    `    ..data.columns.map(col => text(..${headerTextStyle})[#col.label])`,
-  );
-  lines.push("  ),");
-  lines.push("");
-  lines.push("  ..data");
-  lines.push("    .rows");
-  if (!config.include_total_row) {
-    lines.push("    .filter(row => row.is_total_row != true)");
-  }
-  lines.push("    .map(row => {");
-  lines.push("      row.cells.enumerate().map(cell_entry => {");
-  lines.push("        let idx = cell_entry.at(0)");
-  lines.push("        let cell = cell_entry.at(1)");
-  lines.push("        let content = if row.is_bold {");
-  lines.push(`          text(..${boldBodyTextStyle})[#cell.value]`);
-  lines.push("        } else {");
-  lines.push(`          text(..${bodyTextStyle})[#cell.value]`);
-  lines.push("        }");
-  lines.push(
-    '        if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
-  );
-  lines.push("          box(inset: (left: row.indent * 2em))[#content]");
-  lines.push("        } else {");
-  lines.push("          content");
-  lines.push("        }");
-  lines.push("      })");
-  lines.push("    })");
-  lines.push("    .flatten()");
-  lines.push(")");
 
-  if (config.show_footer_total) {
+  if (config.show_footer_total && sectionVisible("footer")) {
     lines.push("");
     lines.push("#v(1em)");
     lines.push("#align(right)[");

@@ -11,9 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Raw Typst document authoring is now a working beta path for authors who want full Typst control: builder-owned presentation controls are hidden, raw code refresh is explicit, and compile helpers are constrained to the author-facing raw API.
 - Regular builder image insertion, private uploaded image lookup, font-face-aware typography controls, and menu layering fixes are working beta changes intended for real template testing during stabilization.
+- Report usage remains **WIP**. The renderer architecture and migration path are available for development and acceptance testing, but the supported ERPNext report families have not yet completed representative data, layout, pagination, RTL, and PDF acceptance testing.
 
 ### Added
 
+- Added a report-renderer registry for generic reports, receivables/payables, financial statements, General Ledger, Bank Reconciliation, and explicit custom formats.
+- Added renderer-owned report families, curated semantic sections, source HTML fingerprints, compatibility metadata, row-role enrichment, and a native renderer-aware Typst baseline.
+- Added live selected-report preview execution and renderer source status reporting in the Format Builder.
+- Added report migration and setup patches for legacy format conversion, mixed-family splitting, renderer seeding, test-company cleanup, and safe refresh of untouched fallback templates.
 - Added the `Crispy Print Designer` role for company-scoped template authors who can edit formats, branding profiles, Typst blocks, document-code profiles, and publish templates without manager bypass privileges.
 - Added a file-based **Sample Format Catalog** under `crispy_print/examples/formats/` so example formats can ship with the app without being installed as site data.
 - Added builder **Examples** workflow for creating a company-scoped Crispy Format from a curated sample only when a user explicitly chooses it.
@@ -28,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced the legacy `is_generic` / `generic_report_type` model with `report_scope`, `report_renderer`, and `report_source_fingerprint`.
+- Changed report format discovery to return specialized and generic alternatives in one ordered collection using selected-report, company/global, compatible-renderer, and generic fallback precedence.
+- Upgraded portable Crispy Format exports to schema v2 while retaining import-only conversion for legacy v1 payloads.
+- Changed Basic report authoring to use renderer-defined layout styles and curated sections; Advanced mode remains a complete Typst override over the normalized report payload.
 - Removed automatic `Crispy Format` fixture shipping. Sample formats now live as app-owned JSON examples and are copied into site data only through the explicit Examples workflow.
 - Tightened company permission boundaries for company-scoped Crispy Print records. Branding Profile reads now use permission-aware list/read checks, and Duplicate/Create-from-Sample target-company inserts require manager access or matching Company User Permission access before internal `ignore_permissions=True` writes run.
 - Added explicit, auditable facade policies to all whitelisted `crispy_print.api.v1` endpoints so rate limits, permission gates, delegated deeper checks, and low-risk exemptions are declared consistently.
@@ -61,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed the `Crispy Generic Report` DocType and its runtime generic-type classification model.
 - Removed the production `fixtures/` sample data path, including the old `fixtures/crispy_format.json` file and `fixtures = [{"dt": "Crispy Format"}]` hook.
 - Removed company-specific demo/sample data from the install/migrate surface. Existing sites keep their already-created `Crispy Format` records, but future installs and migrations no longer import or overwrite sample formats automatically.
 

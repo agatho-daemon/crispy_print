@@ -267,10 +267,6 @@ class TestCrispyFormat(FrappeTestCase):
 
 	def test_default_format_is_scoped_by_format_type_and_target(self):
 		"""Test report defaults do not clear DocType defaults for the same company."""
-		generic_report_type = frappe.db.get_value("Crispy Generic Report", {}, "name")
-		if not generic_report_type:
-			self.skipTest("No Crispy Generic Report records available")
-
 		company = self._ensure_company("Test Format Target Company", "TFTC")
 		doctype_format = self._new_format("Test Format Target DocType Default", company=company)
 		report_format = self._new_format(
@@ -278,8 +274,8 @@ class TestCrispyFormat(FrappeTestCase):
 			company=company,
 			crispy_format_type="Report",
 			doc_type=None,
-			is_generic=1,
-			generic_report_type=generic_report_type,
+			report_scope="All Compatible Reports",
+			report_renderer="generic_report",
 		)
 		doctype_format.insert()
 		report_format.insert()
@@ -304,7 +300,8 @@ class TestCrispyFormat(FrappeTestCase):
 			company=company,
 			crispy_format_type="Report",
 			doc_type=None,
-			is_generic=0,
+			report_scope="Selected Reports",
+			report_renderer="custom",
 		)
 		first.append("report", {"report": reports[0]})
 		second = self._new_format(
@@ -312,7 +309,8 @@ class TestCrispyFormat(FrappeTestCase):
 			company=company,
 			crispy_format_type="Report",
 			doc_type=None,
-			is_generic=0,
+			report_scope="Selected Reports",
+			report_renderer="custom",
 		)
 		second.append("report", {"report": reports[0]})
 		third = self._new_format(
@@ -320,7 +318,8 @@ class TestCrispyFormat(FrappeTestCase):
 			company=company,
 			crispy_format_type="Report",
 			doc_type=None,
-			is_generic=0,
+			report_scope="Selected Reports",
+			report_renderer="custom",
 		)
 		third.append("report", {"report": reports[1]})
 		first.insert()
@@ -343,12 +342,13 @@ class TestCrispyFormat(FrappeTestCase):
 			"Test Format Report Batch",
 			crispy_format_type="Report",
 			doc_type=None,
-			is_generic=0,
+			report_scope="Selected Reports",
+			report_renderer="custom",
 		)
 		doc.append("report", {"report": "Report A"})
 		rows = [
-			frappe._dict({"name": "Candidate A", "is_generic": 0}),
-			frappe._dict({"name": "Candidate B", "is_generic": 0}),
+			frappe._dict({"name": "Candidate A", "report_scope": "Selected Reports"}),
+			frappe._dict({"name": "Candidate B", "report_scope": "Selected Reports"}),
 		]
 
 		with mock.patch(

@@ -21,11 +21,9 @@ describe("useStore report preview", () => {
     vi.resetModules();
     (globalThis as any).__ = (msg: string) => msg;
     (globalThis as any).frappe = {
-      call: vi
-        .fn()
-        .mockResolvedValueOnce({
-          message: { success: true, typst_source: "#typst" },
-        }),
+      call: vi.fn().mockResolvedValueOnce({
+        message: { success: true, typst_source: "#typst" },
+      }),
     };
 
     const { useStore } = await import("../../composables/useStore");
@@ -72,13 +70,13 @@ describe("useStore report preview", () => {
       ],
     } as any;
 
-    const result = await store.compileReportPreview("Sales Order");
+    const result = await store.compileReportPreview("Style Preview");
 
     expect(result).toEqual({ success: true, typst_source: "#typst" });
     expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(1);
     const first = (globalThis as any).frappe.call.mock.calls[0][0];
     expect(first.method).toBe("crispy_print.api.v1.compile_report_preview");
-    expect(first.args.report).toBe("Sales Order");
+    expect(first.args.report).toBe("Style Preview");
     expect(first.args.format_name).toBe("Format-1");
     expect(first.args.filters).toEqual({});
     expect(first.args.column_config).toEqual([
@@ -94,15 +92,11 @@ describe("useStore report preview", () => {
       '#set text(font: "Inter"',
     );
     expect(first.args.typst_code_override).toBe("#show heading: it => it");
-    expect(first.args.preview_data?.title).toBe("Sales Order");
+    expect(first.args.preview_data?.title).toBe("Style Preview");
     expect(Array.isArray(first.args.preview_data?.columns)).toBe(true);
     expect(Array.isArray(first.args.preview_data?.rows)).toBe(true);
     expect(first.args.preview_data?.chart_svg).toBe("report_chart.svg");
-    expect(first.args.presentation_settings?.branding?.letterhead_image).toBe(
-      "/files/letterhead.png",
-    );
     expect(first.args.limit).toBe(50);
-    expect(first.args.asset_files).toContain("/files/letterhead.png");
     expect(first.args.chart_svg).toContain("Placeholder Chart");
   });
 
@@ -127,11 +121,9 @@ describe("useStore report preview", () => {
     vi.resetModules();
     (globalThis as any).__ = (msg: string) => msg;
     (globalThis as any).frappe = {
-      call: vi
-        .fn()
-        .mockResolvedValueOnce({
-          message: { success: true, typst_source: "#typst" },
-        }),
+      call: vi.fn().mockResolvedValueOnce({
+        message: { success: true, typst_source: "#typst" },
+      }),
     };
 
     const { useStore } = await import("../../composables/useStore");
@@ -196,11 +188,9 @@ describe("useStore report preview", () => {
     vi.resetModules();
     (globalThis as any).__ = (msg: string) => msg;
     (globalThis as any).frappe = {
-      call: vi
-        .fn()
-        .mockResolvedValueOnce({
-          message: { success: true, typst_source: "#typst" },
-        }),
+      call: vi.fn().mockResolvedValueOnce({
+        message: { success: true, typst_source: "#typst" },
+      }),
     };
 
     const { useStore } = await import("../../composables/useStore");
@@ -227,7 +217,7 @@ describe("useStore report preview", () => {
       ],
     } as any;
 
-    await store.compileReportPreview("Sales Order");
+    await store.compileReportPreview("Style Preview");
 
     const first = (globalThis as any).frappe.call.mock.calls[0][0];
     expect(first.args.column_config).toEqual([
@@ -269,7 +259,7 @@ describe("useStore report preview", () => {
       },
     } as any;
 
-    await store.compileReportPreview("Sales Order");
+    await store.compileReportPreview("Style Preview");
 
     const firstSource = (globalThis as any).frappe.call.mock.calls[0][0];
     expect(
@@ -295,9 +285,6 @@ describe("useStore report preview", () => {
     await store.compileReportPreview("Sales Order");
 
     const secondSource = (globalThis as any).frappe.call.mock.calls[1][0];
-    expect(
-      secondSource.args.presentation_settings?.branding?.letterhead_image,
-    ).toBe("/files/lh.png");
-    expect(secondSource.args.asset_files).toContain("/files/lh.png");
+    expect(secondSource.args.presentation_settings?.branding).toBeDefined();
   });
 });

@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "app": "crispy_print",
   "sample": {
     "id": "receipt-voucher-raw-typst",
@@ -17,9 +17,9 @@
     "report": [],
     "contract": null,
     "company": null,
-    "is_generic": 0,
+    "report_scope": null,
     "is_advanced": 0,
-    "generic_report_type": null,
+    "report_renderer": null,
     "raw_typst": 1,
     "layout_json": "{\"header\":\"\",\"sections\":[{\"id\":\"payment-summary\",\"label\":\"Payment Summary\",\"columns\":[{\"id\":\"payment-summary-left\",\"label\":\"\",\"fields\":[{\"id\":\"posting-date\",\"label\":\"Posting Date\",\"fieldname\":\"posting_date\",\"fieldtype\":\"Date\",\"align\":\"left\"},{\"id\":\"mode-of-payment\",\"label\":\"Mode of Payment\",\"fieldname\":\"mode_of_payment\",\"fieldtype\":\"Link\",\"options\":\"Mode of Payment\",\"align\":\"left\"}]},{\"id\":\"payment-summary-right\",\"label\":\"\",\"fields\":[{\"id\":\"party-name\",\"label\":\"Party Name\",\"fieldname\":\"party_name\",\"fieldtype\":\"Data\",\"align\":\"left\"},{\"id\":\"received-amount\",\"label\":\"Received Amount\",\"fieldname\":\"received_amount\",\"fieldtype\":\"Currency\",\"align\":\"right\"}]}]}]}",
     "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"A5\",\"orientation\":\"landscape\",\"margins\":{\"top\":0,\"bottom\":0,\"left\":0,\"right\":0}},\"branding\":{\"profile\":\"\",\"company\":\"\",\"mode\":\"none\",\"letterhead\":\"\",\"letterhead_image\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":28.5,\"dx\":5,\"dy\":5}},\"typography\":{\"fieldLabel\":{\"fontFamily\":\"Inter\",\"fontSize\":\"8pt\",\"fontStyle\":\"normal\",\"fontWeight\":\"semibold\",\"color\":\"#64748b\"},\"fieldValue\":{\"fontFamily\":\"Inter\",\"fontSize\":\"10pt\",\"fontStyle\":\"normal\",\"fontWeight\":\"regular\",\"color\":\"#0f172a\"},\"sectionLabel\":{\"fontFamily\":\"Inter\",\"fontSize\":\"14pt\",\"fontStyle\":\"normal\",\"fontWeight\":\"bold\",\"color\":\"#1e293b\"}},\"table\":{\"inset\":{\"top\":2,\"right\":2,\"bottom\":2,\"left\":2},\"stroke\":{\"width\":0.5,\"color\":\"#e2e8f0\"},\"header\":{\"backgroundColor\":\"#f1f5f9\"},\"stripe\":{\"enabled\":false,\"color\":\"#f8fafc\"}},\"language\":\"en\",\"qr\":{\"dx\":0,\"dy\":0,\"size\":15,\"fields\":[],\"enabled\":false,\"sourceMode\":\"\",\"symbology\":\"QR Code\",\"errorCorrection\":\"Medium\",\"quietZone\":1,\"moduleSize\":3}}",

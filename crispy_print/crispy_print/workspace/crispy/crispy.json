@@ -108,17 +108,6 @@
    "type": "Card Break"
   },
   {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Generic Report Templates",
-   "link_count": 0,
-   "link_to": "Crispy Generic Report",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
    "description": "Compliance identifiers, fiscal credentials, and QR profile setup",
    "hidden": 0,
    "is_query_report": 0,
