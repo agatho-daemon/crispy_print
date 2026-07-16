@@ -85,20 +85,23 @@
 				<typography-editor
 					v-model="sectionLabelTypography"
 					:title="__('Section Label')"
+					:available-fonts="availableFonts"
+					:font-faces="fontFaces"
 					variant="cbp"
-					option-value-format="label"
 				/>
 				<typography-editor
 					v-model="fieldLabelTypography"
 					:title="__('Field Label')"
+					:available-fonts="availableFonts"
+					:font-faces="fontFaces"
 					variant="cbp"
-					option-value-format="label"
 				/>
 				<typography-editor
 					v-model="fieldValueTypography"
 					:title="__('Field Value')"
+					:available-fonts="availableFonts"
+					:font-faces="fontFaces"
 					variant="cbp"
-					option-value-format="label"
 				/>
 			</section>
 
@@ -135,14 +138,16 @@
 				<typography-editor
 					v-model="tableHeaderTypography"
 					:title="__('Table Header')"
+					:available-fonts="availableFonts"
+					:font-faces="fontFaces"
 					variant="cbp"
-					option-value-format="label"
 				/>
 				<typography-editor
 					v-model="tableBodyTypography"
 					:title="__('Table Body')"
+					:available-fonts="availableFonts"
+					:font-faces="fontFaces"
 					variant="cbp"
-					option-value-format="label"
 				/>
 			</section>
 
@@ -158,7 +163,17 @@
 				<div class="cbp-grid cbp-grid--two">
 					<label>
 						<span>{{ __("Title Font") }}</span>
+						<select
+							v-if="availableFonts.length"
+							v-model="model.report_title_font_family"
+							class="form-control"
+						>
+							<option v-for="font in availableFonts" :key="font" :value="font">
+								{{ font }}
+							</option>
+						</select>
 						<input
+							v-else
 							v-model="model.report_title_font_family"
 							class="form-control"
 							type="text"
@@ -227,14 +242,10 @@
 						:label="__('Hierarchy Indent')"
 					/>
 				</div>
-				<label>
-					<span>{{ __("Chart Palette") }}</span>
-					<textarea
-						v-model="model.report_chart_palette"
-						class="form-control"
-						rows="2"
-					></textarea>
-				</label>
+				<chart-palette-field
+					v-model="model.report_chart_palette"
+					:default-palette="defaultReportChartPalette"
+				/>
 			</section>
 
 			<section v-if="!effectiveCodeOnly" class="cbp-panel">
@@ -351,14 +362,14 @@
 				<div class="cbp-grid cbp-grid--two">
 					<label class="cbp-field">
 						<span>{{ __("Symbology") }}</span>
-						<select v-model="model.qr_symbology">
+						<select v-model="model.qr_symbology" class="form-control">
 							<option value="QR Code">{{ __("QR Code") }}</option>
 							<option value="DataMatrix">{{ __("DataMatrix") }}</option>
 						</select>
 					</label>
 					<label v-if="model.qr_symbology !== 'DataMatrix'" class="cbp-field">
 						<span>{{ __("Error correction") }}</span>
-						<select v-model="model.qr_error_correction">
+						<select v-model="model.qr_error_correction" class="form-control">
 							<option value="Low">{{ __("Low") }}</option>
 							<option value="Medium">{{ __("Medium") }}</option>
 							<option value="Quartile">{{ __("Quartile") }}</option>
@@ -367,7 +378,7 @@
 					</label>
 					<label v-if="model.qr_symbology === 'DataMatrix'" class="cbp-field">
 						<span>{{ __("Encodation") }}</span>
-						<select v-model="model.datamatrix_encodation">
+						<select v-model="model.datamatrix_encodation" class="form-control">
 							<option value="">{{ __("Auto") }}</option>
 							<option value="ASCII">ASCII</option>
 							<option value="C40">C40</option>
@@ -379,7 +390,7 @@
 					</label>
 					<label v-if="model.qr_symbology === 'DataMatrix'" class="cbp-field">
 						<span>{{ __("Symbols") }}</span>
-						<select v-model="model.datamatrix_symbols">
+						<select v-model="model.datamatrix_symbols" class="form-control">
 							<option value="">{{ __("Square") }}</option>
 							<option value="Rectangular">{{ __("Rectangular") }}</option>
 							<option value="DMRE">DMRE</option>
@@ -466,14 +477,17 @@ import {
 	saveBrandingProfile,
 	type CompanyOption,
 	type CrispyBrandingProfileDoc,
+	type TypstFontFamilyFaces,
 } from "../api/crispy";
 import TypographyEditor from "../components/TypographyStyleEditor.vue";
 import { __ } from "../utils/i18n";
 import { sanitizeSvg } from "../utils/safeSvg";
+import { fetchTypstFontFaces, fetchTypstFonts } from "../utils/typstTypography";
 import { cbpTypographyModel } from "./cbpTypographyAdapter";
 import {
 	createFallbackModel,
 	defaultCodeOnlyTypst,
+	defaultReportChartPalette,
 	pageDimensions,
 	pageSizes,
 	showCodeMode,
@@ -484,26 +498,29 @@ import {
 	type CbpPreviewTypstContext,
 } from "./cbpBuilderTypst";
 import ColorField from "./cbpFields/ColorField";
+import ChartPaletteField from "./cbpFields/ChartPaletteField.vue";
 import NumberField from "./cbpFields/NumberField";
 
 const props = defineProps<{ profileName: string }>();
 const emit = defineEmits<{ (event: "dirty", value: boolean): void }>();
 const reportFontWeights = [
-	"Thin",
-	"Extralight",
-	"Light",
-	"Regular",
-	"Medium",
-	"Semibold",
-	"Bold",
-	"Extrabold",
-	"Black",
+	"thin",
+	"extralight",
+	"light",
+	"regular",
+	"medium",
+	"semibold",
+	"bold",
+	"extrabold",
+	"black",
 ];
 
 const fallbackModel = createFallbackModel(props.profileName);
 const codeReferenceComment = defaultCodeOnlyTypst.split("*/")[0] + "*/";
 const model = reactive<CrispyBrandingProfileDoc>({ ...fallbackModel });
 const companies = ref<CompanyOption[]>([]);
+const availableFonts = ref<string[]>([]);
+const fontFaces = ref<TypstFontFamilyFaces[]>([]);
 const letterheads = ref<string[]>([]);
 const selectedLetterheadImage = ref("");
 const initialSnapshot = ref("");
@@ -810,8 +827,10 @@ function resetPreviewDefaults() {
 }
 
 async function load() {
-	const doc = await getBrandingProfile(props.profileName);
+	const [doc] = await Promise.all([getBrandingProfile(props.profileName), loadFonts()]);
 	Object.assign(model, fallbackModel, doc);
+	normalizeTypographyValues();
+	includeConfiguredFonts();
 	if (Number(model.code_only || 0)) {
 		model.custom_typst_code = ensureCodeReference(model.custom_typst_code || "");
 	}
@@ -822,6 +841,48 @@ async function load() {
 	await refreshLetterheadOptions();
 	await nextTick();
 	initialSnapshot.value = JSON.stringify(savableModel());
+}
+
+async function loadFonts() {
+	const [fonts, faces] = await Promise.all([fetchTypstFonts(), fetchTypstFontFaces()]);
+	fontFaces.value = faces;
+	availableFonts.value = Array.from(
+		new Set([...fonts, ...faces.map((face) => face.family)].filter(Boolean))
+	).sort((a, b) => a.localeCompare(b));
+}
+
+function includeConfiguredFonts() {
+	const configured = [
+		model.section_label_font_family,
+		model.field_label_font_family,
+		model.field_value_font_family,
+		model.table_header_font_family,
+		model.table_body_font_family,
+		model.report_title_font_family,
+	].filter(Boolean) as string[];
+	availableFonts.value = Array.from(new Set([...availableFonts.value, ...configured])).sort(
+		(a, b) => a.localeCompare(b)
+	);
+}
+
+function normalizeTypographyValues() {
+	for (const prefix of [
+		"section_label",
+		"field_label",
+		"field_value",
+		"table_header",
+		"table_body",
+	]) {
+		(model as any)[`${prefix}_font_style`] = String(
+			(model as any)[`${prefix}_font_style`] || "normal"
+		).toLowerCase();
+		(model as any)[`${prefix}_font_weight`] = String(
+			(model as any)[`${prefix}_font_weight`] || "regular"
+		).toLowerCase();
+	}
+	model.report_title_font_weight = String(
+		model.report_title_font_weight || "bold"
+	).toLowerCase();
 }
 
 async function refreshLetterheadOptions() {
@@ -999,7 +1060,7 @@ label span,
 }
 
 .cbp-file-row,
-.cbp-color-input {
+.cbp-builder :deep(.cbp-color-input) {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto;
 	gap: 8px;
@@ -1025,22 +1086,30 @@ label span,
 	color: #64748b;
 }
 
-.cbp-color-input {
+.cbp-builder :deep(.cbp-color-input) {
 	grid-template-columns: 36px minmax(0, 1fr);
 	margin: 0;
 }
 
-.cbp-color-input input[type="color"] {
+.cbp-builder :deep(.cbp-color-well) {
+	position: relative;
+	display: block;
 	width: 36px;
 	height: 36px;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: inset 0 0 0 1px rgb(15 23 42 / 8%);
+}
+
+.cbp-builder :deep(.cbp-color-well input[type="color"]) {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
 	padding: 0;
 	border: 0;
-	border-radius: 8px;
-	background: transparent;
-	box-shadow: none;
-	overflow: hidden;
-	appearance: none;
-	-webkit-appearance: none;
+	opacity: 0;
+	cursor: pointer;
 }
 
 .cbp-builder :deep(.form-control) {
@@ -1051,6 +1120,12 @@ label span,
 	padding: 6px 10px;
 	font-size: 13px;
 	line-height: 1.4;
+}
+
+.cbp-builder :deep(select.form-control) {
+	border-color: transparent;
+	background-color: var(--control-bg, #f3f3f3);
+	box-shadow: none;
 }
 
 .cbp-builder__preview-wrap {

@@ -45,10 +45,6 @@ class CrispyFormat(Document):
 		if self.is_default and self._is_duplicate_insert():
 			self.is_default = 0
 
-		# Set default template for new Report formats
-		if self.crispy_format_type == "Report" and not self.typst_code:
-			self._set_default_report_template()
-
 	def _is_duplicate_insert(self) -> bool:
 		"""Return true when caller explicitly marks this insert as a copied document."""
 		return bool(
@@ -57,66 +53,6 @@ class CrispyFormat(Document):
 			or self.get("_copied_from")
 			or self.get("__copied_from")
 		)
-
-	def _set_default_report_template(self):
-		"""Load default Typst template for Report mode"""
-		from pathlib import Path
-
-		app_path = frappe.get_app_path("crispy_print")
-		template_path = Path(app_path).parent / "REPORT_TEMPLATE_DEFAULT.typ"
-
-		if template_path.exists():
-			self.typst_code = template_path.read_text(encoding="utf-8")
-		else:
-			# Fallback inline template
-			self.typst_code = """// Generic Report Template
-// Available data: #data.title, #data.columns, #data.rows, #data.filters
-
-#set page(
-  paper: "a4",
-  margin: (x: 1.5cm, y: 2cm),
-  flipped: data.presentation_settings.page.orientation == "landscape",
-  header: header_block,
-  footer: footer_block,
-)
-
-#align(center)[
-  #text(size: 16pt, weight: "bold")[#data.title]
-  #v(0.3em)
-  #text(size: 9pt, fill: rgb("#666"))[#data.subtitle]
-]
-
-#v(1em)
-
-// Table
-#let cp_column_width(col) = {
-  if "width_kind" in col {
-    if col.width_kind == "auto" { auto }
-    else if col.width_kind == "fr" { col.width_value * 1fr }
-    else if col.width_kind == "pt" { col.width_value * 1pt }
-    else if col.width_kind == "em" { col.width_value * 1em }
-    else if col.width_kind == "rem" { col.width_value * 1em }
-    else if col.width_kind == "%" { col.width_value * 1% }
-    else if col.width_kind == "cm" { col.width_value * 1cm }
-    else if col.width_kind == "mm" { col.width_value * 1mm }
-    else if col.width_kind == "in" { col.width_value * 1in }
-    else { auto }
-  } else { auto }
-}
-
-#table(
-  columns: data.columns.map(cp_column_width),
-  stroke: 0.5pt,
-  inset: 8pt,
-  align: (x, y) => if y == 0 { center } else if data.columns.at(x).is_numeric { right } else { left },
-
-  // Header
-  ..data.columns.map(col => text(weight: "bold")[#col.label]),
-
-  // Rows
-  ..data.rows.map(row => row.cells.map(cell => cell.value)).flatten()
-)
-"""
 
 	def validate(self):
 		"""Validate field combinations and keep report raw mode aligned with is_advanced."""

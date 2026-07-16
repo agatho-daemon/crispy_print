@@ -118,6 +118,18 @@ class TestCrispyFormat(FrappeTestCase):
 		# Clean up
 		doc.delete()
 
+	def test_new_report_format_does_not_inject_legacy_typst_template(self):
+		doc = self._new_format(
+			"Test Format Without Legacy Report Template",
+			crispy_format_type="Report",
+			doc_type=None,
+			report_scope="All Compatible Reports",
+			report_renderer="generic_report",
+			typst_code="",
+		)
+		doc.before_insert()
+		self.assertFalse(doc.typst_code)
+
 	def test_raw_typst_hides_author_owned_form_fields(self):
 		json_path = frappe.get_app_path(
 			"crispy_print",

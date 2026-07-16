@@ -218,18 +218,18 @@
    "label": "Family"
   },
   {
-   "default": "Bold",
+   "default": "bold",
    "fieldname": "section_label_font_weight",
    "fieldtype": "Select",
    "label": "Weight",
-   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+   "options": "thin\nextralight\nlight\nregular\nmedium\nsemibold\nbold\nextrabold\nblack"
   },
   {
-   "default": "Normal",
+   "default": "normal",
    "fieldname": "section_label_font_style",
    "fieldtype": "Select",
    "label": "Style",
-   "options": "Normal\nItalic\nOblique"
+   "options": "normal\nitalic\noblique"
   },
   {
    "default": "#000000",
@@ -244,18 +244,18 @@
    "label": "Family"
   },
   {
-   "default": "Semibold",
+   "default": "semibold",
    "fieldname": "field_label_font_weight",
    "fieldtype": "Select",
    "label": "Weight",
-   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+   "options": "thin\nextralight\nlight\nregular\nmedium\nsemibold\nbold\nextrabold\nblack"
   },
   {
-   "default": "Normal",
+   "default": "normal",
    "fieldname": "field_label_font_style",
    "fieldtype": "Select",
    "label": "Style",
-   "options": "Normal\nItalic\nOblique"
+   "options": "normal\nitalic\noblique"
   },
   {
    "default": "#64748B",
@@ -270,18 +270,18 @@
    "label": "Family"
   },
   {
-   "default": "Regular",
+   "default": "regular",
    "fieldname": "field_value_font_weight",
    "fieldtype": "Select",
    "label": "Weight",
-   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+   "options": "thin\nextralight\nlight\nregular\nmedium\nsemibold\nbold\nextrabold\nblack"
   },
   {
-   "default": "Normal",
+   "default": "normal",
    "fieldname": "field_value_font_style",
    "fieldtype": "Select",
    "label": "Style",
-   "options": "Normal\nItalic\nOblique"
+   "options": "normal\nitalic\noblique"
   },
   {
    "default": "#000000",
@@ -407,18 +407,18 @@
    "non_negative": 1
   },
   {
-   "default": "Semibold",
+   "default": "semibold",
    "fieldname": "table_header_font_weight",
    "fieldtype": "Select",
    "label": "Weight",
-   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+   "options": "thin\nextralight\nlight\nregular\nmedium\nsemibold\nbold\nextrabold\nblack"
   },
   {
-   "default": "Normal",
+   "default": "normal",
    "fieldname": "table_header_font_style",
    "fieldtype": "Select",
    "label": "Style",
-   "options": "Normal\nItalic\nOblique"
+   "options": "normal\nitalic\noblique"
   },
   {
    "default": "#000000",
@@ -445,18 +445,18 @@
    "non_negative": 1
   },
   {
-   "default": "Regular",
+   "default": "regular",
    "fieldname": "table_body_font_weight",
    "fieldtype": "Select",
    "label": "Weight",
-   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+   "options": "thin\nextralight\nlight\nregular\nmedium\nsemibold\nbold\nextrabold\nblack"
   },
   {
-   "default": "Normal",
+   "default": "normal",
    "fieldname": "table_body_font_style",
    "fieldtype": "Select",
    "label": "Style",
-   "options": "Normal\nItalic\nOblique"
+   "options": "normal\nitalic\noblique"
   },
   {
    "default": "#000000",
@@ -484,11 +484,11 @@
    "non_negative": 1
   },
   {
-   "default": "Bold",
+   "default": "bold",
    "fieldname": "report_title_font_weight",
    "fieldtype": "Select",
    "label": "Report title weight",
-   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+   "options": "thin\nextralight\nlight\nregular\nmedium\nsemibold\nbold\nextrabold\nblack"
   },
   {
    "default": "#1E293B",
@@ -583,7 +583,7 @@
   },
   {
    "default": "#1E3A8A, #2563EB, #0F766E, #B45309, #7C3AED, #BE123C",
-   "description": "Comma-separated colors used by report charts.",
+   "description": "Use the Branding Profile Builder to choose, preview, and reorder chart colors visually—no color-code editing is required. Advanced users may still enter comma-separated hex colors here.",
    "fieldname": "report_chart_palette",
    "fieldtype": "Small Text",
    "label": "Chart palette"

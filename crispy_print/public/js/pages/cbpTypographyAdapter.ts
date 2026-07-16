@@ -1,4 +1,4 @@
-import { computed, type ComputedRef } from "vue";
+import { computed, type WritableComputedRef } from "vue";
 
 import type { CrispyBrandingProfileDoc } from "../api/crispy";
 import type { TypographyStyle } from "../utils/presentation_settings";
@@ -19,8 +19,8 @@ export function cbpTypographySpecimen(
   return {
     family: String((model as any)[`${prefix}_font_family`] || "Arial"),
     size_pt: num((model as any)[`${prefix}_font_size_pt`]),
-    style: String((model as any)[`${prefix}_font_style`] || "Normal"),
-    weight: String((model as any)[`${prefix}_font_weight`] || "Regular"),
+    style: String((model as any)[`${prefix}_font_style`] || "normal"),
+    weight: String((model as any)[`${prefix}_font_weight`] || "regular"),
     color: String((model as any)[`${prefix}_font_color`] || "#000000"),
   };
 }
@@ -30,12 +30,12 @@ export function cbpTypographyStyle(
   prefix: string,
 ): TypographyStyle {
   const typography = cbpTypographySpecimen(model, prefix);
-  const style = String(typography.style || "Normal").toLowerCase();
+  const style = String(typography.style || "normal").toLowerCase();
   return {
     fontFamily: typography.family,
     fontSize: `${typography.size_pt}pt`,
     fontStyle: style === "italic" || style === "oblique" ? style : "normal",
-    fontWeight: String(typography.weight || "Regular").toLowerCase(),
+    fontWeight: String(typography.weight || "regular").toLowerCase(),
     color: typography.color,
   };
 }
@@ -43,7 +43,7 @@ export function cbpTypographyStyle(
 export function cbpTypographyModel(
   model: CrispyBrandingProfileDoc,
   prefix: string,
-): ComputedRef<TypographyStyle> {
+): WritableComputedRef<TypographyStyle> {
   return computed<TypographyStyle>({
     get: () => cbpTypographyStyle(model, prefix),
     set: (value) => {

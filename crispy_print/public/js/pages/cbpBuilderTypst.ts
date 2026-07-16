@@ -154,7 +154,7 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 #text(
   font: ${toTypstValue(model.report_title_font_family || "Arial")},
   size: ${num(model.report_title_font_size_pt)}pt,
-  weight: ${toTypstValue(String(model.report_title_font_weight || "Bold").toLowerCase())},
+  weight: ${toTypstValue(String(model.report_title_font_weight || "bold"))},
   fill: rgb(${toTypstValue(model.report_title_font_color || "#1E293B")}),
 )[Financial Statement Title]
 #v(0.35em)

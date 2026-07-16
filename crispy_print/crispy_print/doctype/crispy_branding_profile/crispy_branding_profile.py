@@ -22,6 +22,25 @@ def get_cbp_code_only_template() -> str:
 
 CBP_CODE_ONLY_TEMPLATE = get_cbp_code_only_template()
 DEFAULT_BRANDING_PROFILE_NAME_PREFIX = "Default Branding Profile - "
+FONT_STYLE_OPTIONS = ("normal", "italic", "oblique")
+FONT_WEIGHT_OPTIONS = (
+	"thin",
+	"extralight",
+	"light",
+	"regular",
+	"medium",
+	"semibold",
+	"bold",
+	"extrabold",
+	"black",
+)
+TYPOGRAPHY_PREFIXES = (
+	"section_label",
+	"field_label",
+	"field_value",
+	"table_header",
+	"table_body",
+)
 
 
 def _build_default_branding_profile_name(company_doc) -> str:
@@ -88,6 +107,7 @@ def on_company_after_insert(doc, method=None) -> None:
 class CrispyBrandingProfile(Document):
 	def validate(self) -> None:
 		self.set_defaults()
+		self.normalize_typography_options()
 		self.validate_code_only()
 		# TODO(CBP code-only): Code-only mode is parked before shipping. Keep normal
 		# profile validation active so hidden stale fields cannot bypass integrity
@@ -109,18 +129,18 @@ class CrispyBrandingProfile(Document):
 			"margin_left_mm": 20,
 			"section_label_font_family": "Arial",
 			"section_label_font_size_pt": 14,
-			"section_label_font_style": "Normal",
-			"section_label_font_weight": "Bold",
+			"section_label_font_style": "normal",
+			"section_label_font_weight": "bold",
 			"section_label_font_color": "#000000",
 			"field_label_font_family": "Arial",
 			"field_label_font_size_pt": 8,
-			"field_label_font_style": "Normal",
-			"field_label_font_weight": "Semibold",
+			"field_label_font_style": "normal",
+			"field_label_font_weight": "semibold",
 			"field_label_font_color": "#64748B",
 			"field_value_font_family": "Arial",
 			"field_value_font_size_pt": 10,
-			"field_value_font_style": "Normal",
-			"field_value_font_weight": "Regular",
+			"field_value_font_style": "normal",
+			"field_value_font_weight": "regular",
 			"field_value_font_color": "#000000",
 			"table_cell_inset_top_pt": 5,
 			"table_cell_inset_right_pt": 5,
@@ -132,17 +152,17 @@ class CrispyBrandingProfile(Document):
 			"table_stripe_color": "#F8FAFC",
 			"table_header_font_family": "Arial",
 			"table_header_font_size_pt": 9,
-			"table_header_font_style": "Normal",
-			"table_header_font_weight": "Semibold",
+			"table_header_font_style": "normal",
+			"table_header_font_weight": "semibold",
 			"table_header_font_color": "#000000",
 			"table_body_font_family": "Arial",
 			"table_body_font_size_pt": 9,
-			"table_body_font_style": "Normal",
-			"table_body_font_weight": "Regular",
+			"table_body_font_style": "normal",
+			"table_body_font_weight": "regular",
 			"table_body_font_color": "#000000",
 			"report_title_font_family": "Arial",
 			"report_title_font_size_pt": 18,
-			"report_title_font_weight": "Bold",
+			"report_title_font_weight": "bold",
 			"report_title_font_color": "#1E293B",
 			"report_context_font_size_pt": 9,
 			"report_context_font_color": "#64748B",
@@ -179,6 +199,18 @@ class CrispyBrandingProfile(Document):
 
 		if self.is_legacy_code_only_template(self.get("custom_typst_code")):
 			self.set("custom_typst_code", CBP_CODE_ONLY_TEMPLATE)
+
+	def normalize_typography_options(self) -> None:
+		for prefix in TYPOGRAPHY_PREFIXES:
+			self._normalize_select_label(f"{prefix}_font_style", FONT_STYLE_OPTIONS)
+			self._normalize_select_label(f"{prefix}_font_weight", FONT_WEIGHT_OPTIONS)
+		self._normalize_select_label("report_title_font_weight", FONT_WEIGHT_OPTIONS)
+
+	def _normalize_select_label(self, fieldname: str, options: tuple[str, ...]) -> None:
+		value = str(self.get(fieldname) or "").strip()
+		match = next((option for option in options if option.casefold() == value.casefold()), None)
+		if match:
+			self.set(fieldname, match)
 
 	def is_legacy_code_only_template(self, code: str | None) -> bool:
 		code = code or ""
@@ -334,7 +366,7 @@ class CrispyBrandingProfile(Document):
 					"fontFamily": self.report_title_font_family or "Arial",
 					"fontSize": f"{flt(self.report_title_font_size_pt)}pt",
 					"fontStyle": "normal",
-					"fontWeight": (self.report_title_font_weight or "Bold").lower(),
+					"fontWeight": self.report_title_font_weight or "bold",
 					"color": self.report_title_font_color or "#1E293B",
 				},
 				"context": {
@@ -427,8 +459,8 @@ class CrispyBrandingProfile(Document):
 		return {
 			"fontFamily": self.get(f"{prefix}_font_family") or "Inter",
 			"fontSize": f"{flt(self.get(f'{prefix}_font_size_pt'))}pt",
-			"fontStyle": (self.get(f"{prefix}_font_style") or "Normal").lower(),
-			"fontWeight": (self.get(f"{prefix}_font_weight") or "Regular").lower(),
+			"fontStyle": self.get(f"{prefix}_font_style") or "normal",
+			"fontWeight": self.get(f"{prefix}_font_weight") or "regular",
 			"color": self.get(f"{prefix}_font_color") or "#000000",
 		}
 

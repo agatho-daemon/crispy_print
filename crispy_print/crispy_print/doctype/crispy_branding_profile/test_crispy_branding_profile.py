@@ -40,6 +40,9 @@ from crispy_print.patches.post_model_sync.add_letterhead_company_lifecycle_field
 from crispy_print.patches.post_model_sync.backfill_default_branding_profiles import (
 	execute as backfill_default_branding_profiles,
 )
+from crispy_print.patches.post_model_sync.normalize_branding_typography_options import (
+	execute as normalize_branding_typography_options,
+)
 
 
 class TestCrispyBrandingProfile(FrappeTestCase):
@@ -83,6 +86,47 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(settings["reportTheme"]["title"]["fontWeight"], "bold")
 		self.assertEqual(settings["reportTheme"]["negativeColor"], "#B91C1C")
 		self.assertEqual(len(settings["reportTheme"]["chartPalette"]), 6)
+
+	def test_normalizes_typography_option_casing_before_save(self):
+		doc = self._insert_profile(
+			section_label_font_style="italic",
+			field_label_font_weight="semibold",
+			report_title_font_weight="bold",
+		)
+
+		self.assertEqual(doc.section_label_font_style, "italic")
+		self.assertEqual(doc.field_label_font_weight, "semibold")
+		self.assertEqual(doc.report_title_font_weight, "bold")
+
+	def test_typography_option_patch_backfills_legacy_values_idempotently(self):
+		doc = self._insert_profile()
+		frappe.db.set_value(
+			"Crispy Branding Profile",
+			doc.name,
+			{
+				"section_label_font_style": "Italic",
+				"field_label_font_weight": "Semibold",
+				"report_title_font_weight": "Bold",
+			},
+			update_modified=False,
+		)
+
+		normalize_branding_typography_options()
+		normalize_branding_typography_options()
+
+		values = frappe.db.get_value(
+			"Crispy Branding Profile",
+			doc.name,
+			[
+				"section_label_font_style",
+				"field_label_font_weight",
+				"report_title_font_weight",
+			],
+			as_dict=True,
+		)
+		self.assertEqual(values.section_label_font_style, "italic")
+		self.assertEqual(values.field_label_font_weight, "semibold")
+		self.assertEqual(values.report_title_font_weight, "bold")
 
 	def test_rejects_negative_position_coordinates(self):
 		doc = self._new_profile(

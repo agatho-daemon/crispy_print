@@ -174,6 +174,27 @@ Inter (Regular, Italic)
 			{"regular", "bold"},
 		)
 
+	def test_variable_font_faces_expand_supported_weight_axis(self):
+		from crispy_print.api.v1.compile import TYPST_FONT_DIR, _variable_font_faces
+
+		faces = _variable_font_faces(TYPST_FONT_DIR / "Inter" / "Inter.ttf")
+
+		self.assertEqual(
+			[face["weight"] for face in faces],
+			[
+				"thin",
+				"extralight",
+				"light",
+				"regular",
+				"medium",
+				"semibold",
+				"bold",
+				"extrabold",
+				"black",
+			],
+		)
+		self.assertEqual({face["style"] for face in faces}, {"normal"})
+
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_get_typst_font_faces(self, mock_run):
 		from crispy_print.api.v1 import get_typst_font_faces

@@ -68,11 +68,16 @@
 			<div class="typography-style-editor__field typography-style-editor__field--color">
 				<label class="typography-style-editor__label">{{ colorLabel }}</label>
 				<div class="typography-style-editor__color-input">
-					<input
-						type="color"
-						:value="modelValue.color || '#000000'"
-						@input="updateFromEvent('color', $event)"
-					/>
+					<span
+						class="typography-style-editor__color-well"
+						:style="{ backgroundColor: modelValue.color || '#000000' }"
+					>
+						<input
+							type="color"
+							:value="modelValue.color || '#000000'"
+							@input="updateFromEvent('color', $event)"
+						/>
+					</span>
 					<input
 						class="form-control"
 						type="text"
@@ -414,31 +419,24 @@ function updateSizeFromEvent(event: Event) {
 	max-width: 230px;
 }
 
-.typography-style-editor__color-input input[type="color"] {
+.typography-style-editor__color-well {
+	position: relative;
+	display: block;
 	width: 36px;
 	height: 36px;
-	padding: 0;
-	border: 0;
 	border-radius: 8px;
-	background: transparent;
-	box-shadow: none;
 	overflow: hidden;
-	appearance: none;
-	-webkit-appearance: none;
+	box-shadow: inset 0 0 0 1px rgb(15 23 42 / 8%);
 }
 
-.typography-style-editor__color-input input[type="color"]::-webkit-color-swatch-wrapper {
+.typography-style-editor__color-well input[type="color"] {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
 	padding: 0;
 	border: 0;
-}
-
-.typography-style-editor__color-input input[type="color"]::-webkit-color-swatch {
-	border: 0;
-	border-radius: 8px;
-}
-
-.typography-style-editor__color-input input[type="color"]::-moz-color-swatch {
-	border: 0;
-	border-radius: 8px;
+	opacity: 0;
+	cursor: pointer;
 }
 </style>
