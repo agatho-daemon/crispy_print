@@ -33,9 +33,9 @@ interface CreateReportStoreOptions {
   reportColumns: Ref<any[]>;
   reportFilterFields: Ref<any[]>;
   reportFilters: Ref<Record<string, any>>;
-	reportPreviewReady: Ref<boolean>;
+  reportPreviewReady: Ref<boolean>;
   getReportColumnConfigFromLayout: () => ColumnConfig;
-	getEffectiveCompany: () => string | null;
+  getEffectiveCompany: () => string | null;
 }
 
 export function createReportStore(options: CreateReportStoreOptions) {
@@ -51,9 +51,9 @@ export function createReportStore(options: CreateReportStoreOptions) {
     reportColumns,
     reportFilterFields,
     reportFilters,
-		reportPreviewReady,
+    reportPreviewReady,
     getReportColumnConfigFromLayout,
-		getEffectiveCompany,
+    getEffectiveCompany,
   } = options;
 
   function buildReportFontPreambleOverride(): string {
@@ -102,7 +102,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
     filters: Record<string, any> = {},
   ) {
     if (!reportName || reportName === "Style Preview") {
-		reportColumns.value = [];
+      reportColumns.value = [];
       return;
     }
     const response = await frappe.call({
@@ -118,28 +118,37 @@ export function createReportStore(options: CreateReportStoreOptions) {
 
   async function loadReportFilterFields(reportName: string) {
     if (!reportName || reportName === "Style Preview") {
-		reportFilterFields.value = [];
+      reportFilterFields.value = [];
       return;
     }
-		const definitions = await frappe.report_utils.get_report_filters(reportName);
-		reportFilterFields.value = Array.isArray(definitions)
-			? definitions.filter((field: any) => field?.fieldname && !field?.hidden)
-			: [];
-		const defaults: Record<string, any> = {};
-		for (const field of reportFilterFields.value) {
-			if (field.default !== undefined && field.default !== null && field.default !== "") {
-				defaults[field.fieldname] = field.default;
-			}
-		}
-		if (reportFilterFields.value.some((field: any) => field.fieldname === "company")) {
-			defaults.company = getEffectiveCompany() || defaults.company || "";
-		}
-		reportFilters.value = defaults;
+    const definitions =
+      await frappe.report_utils.get_report_filters(reportName);
+    reportFilterFields.value = Array.isArray(definitions)
+      ? definitions.filter((field: any) => field?.fieldname && !field?.hidden)
+      : [];
+    const defaults: Record<string, any> = {};
+    for (const field of reportFilterFields.value) {
+      if (
+        field.default !== undefined &&
+        field.default !== null &&
+        field.default !== ""
+      ) {
+        defaults[field.fieldname] = field.default;
+      }
+    }
+    if (
+      reportFilterFields.value.some(
+        (field: any) => field.fieldname === "company",
+      )
+    ) {
+      defaults.company = getEffectiveCompany() || defaults.company || "";
+    }
+    reportFilters.value = defaults;
   }
 
   async function loadSampleReports() {
-		selectedReportName.value = "";
-		reportPreviewReady.value = false;
+    selectedReportName.value = "";
+    reportPreviewReady.value = false;
   }
 
   async function setSelectedReport(
@@ -147,10 +156,10 @@ export function createReportStore(options: CreateReportStoreOptions) {
     options: { refreshKey?: boolean; promptOnCustomized?: boolean } = {},
   ) {
     void options;
-		selectedReportName.value = name || "";
-		reportPreviewReady.value = false;
+    selectedReportName.value = name || "";
+    reportPreviewReady.value = false;
     await loadReportFilterFields(selectedReportName.value);
-		reportColumns.value = [];
+    reportColumns.value = [];
   }
 
   async function compileReportPreview(
@@ -161,6 +170,8 @@ export function createReportStore(options: CreateReportStoreOptions) {
         typst_source?: string;
         truncation?: Record<string, any>;
         asset_files?: string[];
+        chart_spec?: Record<string, any>;
+        chart_render?: import("../api/crispy").ReportChartRender;
       })
     | null
   > {
@@ -207,13 +218,13 @@ export function createReportStore(options: CreateReportStoreOptions) {
       );
       const typst_preamble_override = buildReportFontPreambleOverride();
       const result = await compileReportPreviewApi({
-			report: reportName,
+        report: reportName,
         format_name: formatName.value,
         filters: reportFilters.value || {},
         column_config: effectiveColumnConfig,
         include_filters: includeFilters ? 1 : 0,
         orientation,
-			chart_svg: null,
+        chart_svg: null,
         typst_preamble_override: typst_preamble_override,
         typst_code_override: buildReportTypstOverrideForPreview(
           typstCode.value || "",

@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import json
+import re
 
 import frappe
 from frappe import _
@@ -41,6 +42,12 @@ TYPOGRAPHY_PREFIXES = (
 	"table_header",
 	"table_body",
 )
+CHART_COLOR_FIELDS = (
+	"report_chart_grid_color",
+	"report_chart_axis_color",
+	"report_chart_zero_line_color",
+)
+HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
 def _build_default_branding_profile_name(company_doc) -> str:
@@ -117,6 +124,7 @@ class CrispyBrandingProfile(Document):
 		# 	return
 		self.validate_branding_assets()
 		self.validate_numeric_settings()
+		self.validate_chart_settings()
 		self.clear_other_company_defaults()
 
 	def set_defaults(self) -> None:
@@ -177,6 +185,21 @@ class CrispyBrandingProfile(Document):
 			"report_grand_total_fill_color": "#E2E8F0",
 			"report_hierarchy_indent_pt": 10,
 			"report_chart_palette": "#1E3A8A, #2563EB, #0F766E, #B45309, #7C3AED, #BE123C",
+			"report_chart_horizontal_grid": 1,
+			"report_chart_vertical_grid": 1,
+			"report_chart_minor_grid": 0,
+			"report_chart_grid_color": "#CBD5E1",
+			"report_chart_grid_stroke_pt": 0.4,
+			"report_chart_axis_color": "#64748B",
+			"report_chart_axis_stroke_pt": 0.6,
+			"report_chart_zero_line_color": "#475569",
+			"report_chart_zero_line_stroke_pt": 1,
+			"report_chart_legend_position": "Auto",
+			"report_chart_label_size_pt": 8,
+			"report_chart_data_labels": "Auto",
+			"report_chart_line_stroke_pt": 1.2,
+			"report_chart_marker_size_pt": 4,
+			"report_chart_accessibility_mode": 1,
 			"branding_mode": "None",
 			"branding_logo_source": "Company logo",
 			"branding_logo_width_mm": 20,
@@ -205,6 +228,8 @@ class CrispyBrandingProfile(Document):
 			self._normalize_select_label(f"{prefix}_font_style", FONT_STYLE_OPTIONS)
 			self._normalize_select_label(f"{prefix}_font_weight", FONT_WEIGHT_OPTIONS)
 		self._normalize_select_label("report_title_font_weight", FONT_WEIGHT_OPTIONS)
+		self._normalize_select_label("report_chart_legend_position", ("Auto", "Top", "Bottom", "Hidden"))
+		self._normalize_select_label("report_chart_data_labels", ("Auto", "Always", "Never"))
 
 	def _normalize_select_label(self, fieldname: str, options: tuple[str, ...]) -> None:
 		value = str(self.get(fieldname) or "").strip()
@@ -284,6 +309,31 @@ class CrispyBrandingProfile(Document):
 
 		if flt(self.enable_qr_code) and flt(self.qr_code_size_mm) <= 0:
 			frappe.throw(_("QR Code size must be greater than zero."))
+
+	def validate_chart_settings(self) -> None:
+		for fieldname in CHART_COLOR_FIELDS:
+			value = str(self.get(fieldname) or "").strip()
+			if not HEX_COLOR_RE.fullmatch(value):
+				frappe.throw(
+					_("{0} must be a six-digit hexadecimal color.").format(self.meta.get_label(fieldname))
+				)
+
+		ranges = {
+			"report_chart_grid_stroke_pt": (0, 5),
+			"report_chart_axis_stroke_pt": (0, 5),
+			"report_chart_zero_line_stroke_pt": (0, 5),
+			"report_chart_label_size_pt": (6, 18),
+			"report_chart_line_stroke_pt": (0.25, 8),
+			"report_chart_marker_size_pt": (0, 20),
+		}
+		for fieldname, (minimum, maximum) in ranges.items():
+			value = flt(self.get(fieldname))
+			if not minimum <= value <= maximum:
+				frappe.throw(
+					_("{0} must be between {1} and {2}.").format(
+						self.meta.get_label(fieldname), minimum, maximum
+					)
+				)
 
 	def clear_other_company_defaults(self) -> list[str]:
 		if not flt(self.is_default) or not self.company:
@@ -384,6 +434,23 @@ class CrispyBrandingProfile(Document):
 				},
 				"hierarchyIndentPt": flt(self.report_hierarchy_indent_pt),
 				"chartPalette": self.get_report_chart_palette(),
+				"chart": {
+					"horizontalGrid": bool(flt(self.report_chart_horizontal_grid)),
+					"verticalGrid": bool(flt(self.report_chart_vertical_grid)),
+					"minorGrid": bool(flt(self.report_chart_minor_grid)),
+					"gridColor": self.report_chart_grid_color or "#CBD5E1",
+					"gridStrokePt": flt(self.report_chart_grid_stroke_pt),
+					"axisColor": self.report_chart_axis_color or "#64748B",
+					"axisStrokePt": flt(self.report_chart_axis_stroke_pt),
+					"zeroLineColor": self.report_chart_zero_line_color or "#475569",
+					"zeroLineStrokePt": flt(self.report_chart_zero_line_stroke_pt),
+					"legendPosition": (self.report_chart_legend_position or "Auto").lower(),
+					"labelSizePt": flt(self.report_chart_label_size_pt),
+					"dataLabels": (self.report_chart_data_labels or "Auto").lower(),
+					"lineStrokePt": flt(self.report_chart_line_stroke_pt),
+					"markerSizePt": flt(self.report_chart_marker_size_pt),
+					"accessibilityMode": bool(flt(self.report_chart_accessibility_mode)),
+				},
 			},
 			"qr": {
 				"enabled": bool(flt(self.enable_qr_code)),

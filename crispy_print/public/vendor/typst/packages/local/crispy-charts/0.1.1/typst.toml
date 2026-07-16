@@ -1,0 +1,7 @@
+[package]
+name = "crispy-charts"
+version = "0.1.1"
+entrypoint = "src/lib.typ"
+authors = ["Agathodaemon"]
+license = "MIT"
+description = "Pinned, Lilaq-backed accounting charts for Crispy Print."

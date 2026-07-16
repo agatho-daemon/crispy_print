@@ -13,6 +13,7 @@ import {
 
 export interface CbpPreviewTypstContext {
   model: CrispyBrandingProfileDoc;
+  installedFonts?: string[];
   profileName: string;
   isDefault: boolean;
   effectiveCodeOnly: boolean;
@@ -33,7 +34,7 @@ export function buildCodePreviewTypst(
 }
 
 export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
-  const { model } = context;
+  const model = previewModelWithInstalledFonts(context);
   const page = pageDimensions(
     model.page_size || "A4",
     model.orientation || "portrait",
@@ -57,15 +58,40 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
     ? `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) } else if y == 2 { rgb(${toTypstValue(model.table_stripe_color || "#F8FAFC")}) }`
     : `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) }`;
   const chartPalette = parseChartPalette(model.report_chart_palette);
-  const chartHeights = [15, 24, 19, 30, 22, 27, 17, 25, 20, 29, 18, 26];
-  const chartBars = chartPalette
+  const chartSeries = chartPalette
     .map(
-      (color, index) =>
-        `grid.cell(align: bottom)[#rect(width: 100%, height: ${chartHeights[index] || 20}mm, fill: rgb(${toTypstValue(color)}), radius: 2pt)]`,
+      (_color, index) =>
+        `(name: "Series ${index + 1}", kind: "line", values: (${[18, 24, 20, 29]
+          .map(
+            (value, quarter) => value + index * 3 + quarter * ((index % 2) + 1),
+          )
+          .join(", ")}))`,
     )
-    .join(",\n  ");
+    .join(",\n      ");
+  const chartTheme = `(
+  palette: (${chartPalette.map(toTypstValue).join(", ")}),
+  horizontal_grid: ${Boolean(model.report_chart_horizontal_grid)},
+  vertical_grid: ${Boolean(model.report_chart_vertical_grid)},
+  minor_grid: ${Boolean(model.report_chart_minor_grid)},
+  grid_color: ${toTypstValue(model.report_chart_grid_color || "#CBD5E1")},
+  grid_stroke_pt: ${num(model.report_chart_grid_stroke_pt)},
+  axis_color: ${toTypstValue(model.report_chart_axis_color || "#64748B")},
+  axis_stroke_pt: ${num(model.report_chart_axis_stroke_pt)},
+  zero_line_color: ${toTypstValue(model.report_chart_zero_line_color || "#475569")},
+  zero_line_stroke_pt: ${num(model.report_chart_zero_line_stroke_pt)},
+  legend_position: ${toTypstValue(String(model.report_chart_legend_position || "Auto").toLowerCase())},
+  label_size_pt: ${num(model.report_chart_label_size_pt)},
+  data_labels: ${toTypstValue(String(model.report_chart_data_labels || "Auto").toLowerCase())},
+  line_stroke_pt: ${num(model.report_chart_line_stroke_pt)},
+  marker_size_pt: ${num(model.report_chart_marker_size_pt)},
+  accessibility_mode: ${Boolean(model.report_chart_accessibility_mode)},
+  negative_color: ${toTypstValue(model.report_negative_color || "#B91C1C")},
+  muted_color: ${toTypstValue(model.report_muted_color || "#64748B")},
+)`;
 
-  return `#set page(
+  return `#import "@local/crispy-charts:0.1.1": crispy-chart
+
+#set page(
   width: ${page.width}mm,
   height: ${page.height}mm,
   margin: (
@@ -139,19 +165,53 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 #text(size: ${num(model.report_context_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_muted_color || "#64748B")}))[Comparative figures are unaudited.]
 
 #section[Performance Overview]
-#text(size: ${num(model.report_context_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_muted_color || "#64748B")}))[Quarterly comparison]
-#v(0.55em)
-#grid(
-  columns: (1fr,) * ${chartPalette.length},
-  align: bottom,
-  column-gutter: 5pt,
-  ${chartBars}
+#crispy-chart(
+  (
+    kind: "line",
+    labels: ("Q1", "Q2", "Q3", "Q4"),
+    series: (
+      ${chartSeries}
+    ),
+    options: (:),
+    accessibility: (summary: "Quarterly performance comparison across ${chartPalette.length} series."),
+  ),
+  theme: ${chartTheme},
+  width: 100%,
+  height: 150pt,
 )
-#line(length: 100%, stroke: 0.45pt + rgb(${toTypstValue(model.report_muted_color || "#64748B")}))
 
 #v(0.65em)
 #text(size: ${num(model.report_footer_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_footer_font_color || "#64748B")}))[Report footer · Page 1]
 `;
+}
+
+function previewModelWithInstalledFonts(
+  context: CbpPreviewTypstContext,
+): CrispyBrandingProfileDoc {
+  const installed = context.installedFonts || [];
+  if (!installed.length) return context.model;
+
+  const canonicalFonts = new Map(
+    installed.map((font) => [font.trim().toLowerCase(), font]),
+  );
+  const fallback =
+    canonicalFonts.get("inter") ||
+    installed.find((font) => font.trim()) ||
+    "Inter";
+  const model = { ...context.model } as CrispyBrandingProfileDoc;
+  for (const field of [
+    "section_label_font_family",
+    "field_label_font_family",
+    "field_value_font_family",
+    "table_header_font_family",
+    "table_body_font_family",
+    "report_title_font_family",
+  ]) {
+    const requested = String((context.model as any)[field] || "").trim();
+    (model as any)[field] =
+      canonicalFonts.get(requested.toLowerCase()) || fallback;
+  }
+  return model;
 }
 
 function buildSpecimenDictionary(context: CbpPreviewTypstContext) {

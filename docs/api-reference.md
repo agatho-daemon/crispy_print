@@ -164,7 +164,7 @@ this policy metadata.
 ### `get_sample_report_data(report, filters=None, limit=50)`
 
 - Args: `report: str`, optional `filters`, `limit: int`
-- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, chart data, and compatibility aliases
+- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, unchanged upstream `chart`, printable `chart_spec`, and compatibility aliases
 
 ### `get_report_typst_source(report, format_name=None, ..., limit=50)`
 
@@ -174,12 +174,12 @@ this policy metadata.
   - optional toggles: `include_filters`, `include_summary`, `include_total_row`, `include_chart`
   - optional overrides: `typst_preamble_override`, `typst_code_override`, `page_settings`, `preview_data`
   - `limit: int` (preview row cap)
-- Returns: Typst source + payload metadata used for preview/printing
+- Returns: Typst source + payload metadata used for preview/printing, including `chart_render` engine/status/reason and pinned helper versions
 
 ### `compile_report_preview(report, format_name=None, ..., limit=50, asset_files=None)`
 
 - Args: same core arguments as `get_report_typst_source`, plus optional approved `asset_files`
-- Returns: compiled SVG preview payload and report metadata
+- Returns: compiled SVG preview payload and report metadata, including native, fallback, empty, or omitted `chart_render` diagnostics
 
 ### `generate_report_pdf(report, filters=None, format_name=None, orientation='landscape', include_filters=0, column_config=None)`
 

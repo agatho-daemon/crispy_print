@@ -117,6 +117,14 @@
 					</div>
 
 					<span id="typst-status" class="preview-status">{{ __("idle") }}</span>
+					<span
+						v-if="isReportMode && chartRenderLabel"
+						class="preview-status preview-chart-engine"
+						:class="`is-${chartRenderStatus.status}`"
+						:title="chartRenderStatus.message || chartRenderStatus.reason"
+					>
+						{{ chartRenderLabel }}
+					</span>
 
 					<div class="preview-pane__spacer"></div>
 
@@ -165,7 +173,8 @@
 import PreviewRenderer from "./PreviewRenderer.vue";
 import ReportPreviewVariables from "./ReportPreviewVariables.vue";
 import { useStore } from "../composables/useStore";
-import { computed, onBeforeUnmount, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import type { ReportChartRender } from "../api/crispy";
 import { getLogger } from "../logger";
 import { __ } from "../utils/i18n";
 
@@ -194,6 +203,15 @@ const emit = defineEmits<{
 
 const store = useStore();
 const logger = getLogger({ component: "PreviewPane" });
+const chartRenderStatus = ref<ReportChartRender | null>(null);
+const chartRenderLabel = computed(() => {
+	const chart = chartRenderStatus.value;
+	if (!chart) return "";
+	if (chart.engine === "lilaq") return `Lilaq ${chart.lilaq_version || ""}`.trim();
+	if (chart.engine === "frappe_svg") return __("Frappe SVG fallback");
+	if (chart.status === "omitted") return __("Chart omitted");
+	return "";
+});
 const qrEnabled = computed(() => store.qrEnabled.value);
 let reportCompileRequestSeq = 0;
 const previewMode = computed(() => props.previewMode);
@@ -225,6 +243,7 @@ async function compileSelectedReport(reportName: string) {
 
 		// Trigger preview compilation via store
 		const result = await store.compileReportPreview(reportName, []);
+		chartRenderStatus.value = result?.chart_render || null;
 		if (requestSeq !== reportCompileRequestSeq) {
 			return;
 		}
@@ -247,6 +266,7 @@ async function compileSelectedReport(reportName: string) {
 			return;
 		}
 		logger.error("Preview compilation failed", error);
+		chartRenderStatus.value = null;
 		const statusEl = document.getElementById("typst-status");
 		if (statusEl) statusEl.textContent = __("Error");
 		frappe.show_alert({ message: __("Preview compilation failed"), indicator: "red" });

@@ -246,6 +246,103 @@
 					v-model="model.report_chart_palette"
 					:default-palette="defaultReportChartPalette"
 				/>
+				<div class="cbp-section-heading">{{ __("Chart appearance") }}</div>
+				<div class="cbp-grid cbp-grid--two">
+					<label class="cbp-check">
+						<input v-model="model.report_chart_horizontal_grid" type="checkbox" />
+						<span>{{ __("Horizontal major grid") }}</span>
+					</label>
+					<label class="cbp-check">
+						<input v-model="model.report_chart_vertical_grid" type="checkbox" />
+						<span>{{ __("Vertical major grid") }}</span>
+					</label>
+					<label class="cbp-check">
+						<input v-model="model.report_chart_minor_grid" type="checkbox" />
+						<span>{{ __("Minor grids") }}</span>
+					</label>
+					<label class="cbp-check">
+						<input v-model="model.report_chart_accessibility_mode" type="checkbox" />
+						<span>{{ __("Accessibility distinctions") }}</span>
+					</label>
+					<color-field
+						v-model="model.report_chart_grid_color"
+						:label="__('Grid Color')"
+					/>
+					<number-field
+						v-model="model.report_chart_grid_stroke_pt"
+						:label="__('Grid Line Width')"
+						:min="0"
+						:max="5"
+						:step="0.1"
+					/>
+					<color-field
+						v-model="model.report_chart_axis_color"
+						:label="__('Axis Color')"
+					/>
+					<number-field
+						v-model="model.report_chart_axis_stroke_pt"
+						:label="__('Axis Line Width')"
+						:min="0"
+						:max="5"
+						:step="0.1"
+					/>
+					<color-field
+						v-model="model.report_chart_zero_line_color"
+						:label="__('Zero Line Color')"
+					/>
+					<number-field
+						v-model="model.report_chart_zero_line_stroke_pt"
+						:label="__('Zero Line Width')"
+						:min="0"
+						:max="5"
+						:step="0.1"
+					/>
+					<label>
+						<span>{{ __("Legend Position") }}</span>
+						<select v-model="model.report_chart_legend_position" class="form-control">
+							<option
+								v-for="option in ['Auto', 'Top', 'Bottom', 'Hidden']"
+								:key="option"
+								:value="option"
+							>
+								{{ __(option) }}
+							</option>
+						</select>
+					</label>
+					<number-field
+						v-model="model.report_chart_label_size_pt"
+						:label="__('Label Size')"
+						:min="6"
+						:max="18"
+						:step="0.5"
+					/>
+					<label>
+						<span>{{ __("Data Labels") }}</span>
+						<select v-model="model.report_chart_data_labels" class="form-control">
+							<option
+								v-for="option in ['Auto', 'Always', 'Never']"
+								:key="option"
+								:value="option"
+							>
+								{{ __(option) }}
+							</option>
+						</select>
+					</label>
+					<number-field
+						v-model="model.report_chart_line_stroke_pt"
+						:label="__('Series Line Width')"
+						:min="0.25"
+						:max="8"
+						:step="0.25"
+					/>
+					<number-field
+						v-model="model.report_chart_marker_size_pt"
+						:label="__('Data Point Size')"
+						:min="0"
+						:max="20"
+						:step="0.5"
+					/>
+				</div>
 			</section>
 
 			<section v-if="!effectiveCodeOnly" class="cbp-panel">
@@ -520,6 +617,7 @@ const codeReferenceComment = defaultCodeOnlyTypst.split("*/")[0] + "*/";
 const model = reactive<CrispyBrandingProfileDoc>({ ...fallbackModel });
 const companies = ref<CompanyOption[]>([]);
 const availableFonts = ref<string[]>([]);
+const installedFonts = ref<string[]>([]);
 const fontFaces = ref<TypstFontFamilyFaces[]>([]);
 const letterheads = ref<string[]>([]);
 const selectedLetterheadImage = ref("");
@@ -772,6 +870,7 @@ function handlePreviewShortcut(event: KeyboardEvent) {
 function previewTypstContext(): CbpPreviewTypstContext {
 	return {
 		model,
+		installedFonts: installedFonts.value,
 		profileName: props.profileName,
 		isDefault: isDefault.value,
 		effectiveCodeOnly: effectiveCodeOnly.value,
@@ -846,9 +945,10 @@ async function load() {
 async function loadFonts() {
 	const [fonts, faces] = await Promise.all([fetchTypstFonts(), fetchTypstFontFaces()]);
 	fontFaces.value = faces;
-	availableFonts.value = Array.from(
+	installedFonts.value = Array.from(
 		new Set([...fonts, ...faces.map((face) => face.family)].filter(Boolean))
 	).sort((a, b) => a.localeCompare(b));
+	availableFonts.value = [...installedFonts.value];
 }
 
 function includeConfiguredFonts() {

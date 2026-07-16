@@ -29,6 +29,8 @@ MIN_TYPST_VERSION = (0, 15, 0)
 MIN_TYPST_VERSION_LABEL = ".".join(str(part) for part in MIN_TYPST_VERSION)
 MAX_TYPST_SOURCE_BYTES = 512 * 1024
 MAX_CHART_SVG_BYTES = 512 * 1024
+MAX_CHART_SVG_ELEMENTS = 5_000
+MAX_CHART_SVG_PATH_BYTES = 256 * 1024
 MAX_QR_DATA_BYTES = 16 * 1024
 MAX_INLINE_DATA_URI_BYTES = 256 * 1024
 COMPILE_CACHE_TTL_SECONDS = 5 * 60
@@ -129,6 +131,78 @@ BARCODE_SYMBOLOGY_ALIASES = {
 	"datamatrix": "DataMatrix",
 	"data matrix": "DataMatrix",
 	"data_matrix": "DataMatrix",
+}
+
+_SVG_NAMESPACE = "http://www.w3.org/2000/svg"
+_XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
+_ALLOWED_SVG_ELEMENTS = {
+	"svg",
+	"g",
+	"defs",
+	"clipPath",
+	"mask",
+	"linearGradient",
+	"radialGradient",
+	"stop",
+	"path",
+	"line",
+	"rect",
+	"circle",
+	"ellipse",
+	"polyline",
+	"polygon",
+	"text",
+	"tspan",
+}
+_ALLOWED_SVG_ATTRIBUTES = {
+	"xmlns",
+	"viewBox",
+	"width",
+	"height",
+	"preserveAspectRatio",
+	"fill",
+	"fill-opacity",
+	"stroke",
+	"stroke-width",
+	"stroke-opacity",
+	"stroke-dasharray",
+	"stroke-linecap",
+	"stroke-linejoin",
+	"opacity",
+	"transform",
+	"d",
+	"x",
+	"y",
+	"x1",
+	"y1",
+	"x2",
+	"y2",
+	"cx",
+	"cy",
+	"r",
+	"rx",
+	"ry",
+	"points",
+	"dx",
+	"dy",
+	"text-anchor",
+	"font-family",
+	"font-size",
+	"font-style",
+	"font-weight",
+	"dominant-baseline",
+	"alignment-baseline",
+	"class",
+	"id",
+	"clip-path",
+	"mask",
+	"offset",
+	"stop-color",
+	"stop-opacity",
+	"gradientUnits",
+	"gradientTransform",
+	"spreadMethod",
+	"href",
 }
 
 
@@ -1108,47 +1182,99 @@ def _write_qr_svg(qr_data, qr_filename, temp_dir, barcode_options: dict | None =
 		frappe.throw(_("Failed to generate QR SVG: {0}").format(e))
 
 
-def _write_chart_svg(chart_svg: str, temp_dir: str, filename: str = "report_chart.svg"):
-	"""Write report chart SVG to temp directory for Typst image() usage."""
-	if not chart_svg:
-		return
-	# Extract the first <svg>...</svg> block to avoid HTML wrappers.
+def sanitize_chart_svg(chart_svg: str | None) -> str | None:
+	"""Return a constrained Frappe chart SVG or ``None`` when it is unsafe/invalid."""
+	if not isinstance(chart_svg, str) or not chart_svg.strip():
+		return None
 	from xml.etree import ElementTree as ET
 
 	match = re.search(r"<svg\b[^>]*>.*?</svg>", chart_svg, re.DOTALL | re.IGNORECASE)
 	svg = (match.group(0) if match else chart_svg).strip()
-
-	# Ensure SVG has the XML namespace (Typst requires a proper root node).
-	if "<svg" in svg and "xmlns=" not in svg:
+	if "<svg" not in svg.lower():
+		return None
+	if "xmlns=" not in svg:
 		svg = re.sub(
 			r"<svg\b",
-			'<svg xmlns="http://www.w3.org/2000/svg"',
+			f'<svg xmlns="{_SVG_NAMESPACE}"',
 			svg,
 			count=1,
 			flags=re.IGNORECASE,
 		)
-
-	# Add xlink namespace if needed
 	if "xlink:" in svg and "xmlns:xlink=" not in svg:
 		svg = re.sub(
 			r"<svg\b",
-			'<svg xmlns:xlink="http://www.w3.org/1999/xlink"',
+			f'<svg xmlns:xlink="{_XLINK_NAMESPACE}"',
 			svg,
 			count=1,
 			flags=re.IGNORECASE,
 		)
-
-	# Escape stray & that can break XML parsing.
 	svg = re.sub(r"&(?!(?:[a-zA-Z]+|#\d+|#x[0-9a-fA-F]+);)", "&amp;", svg)
 
-	# Validate XML; if invalid, fall back to minimal SVG to avoid Typst error.
-	fallback = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'
 	try:
-		ET.fromstring(svg)
-	except Exception as e:
-		frappe.log_error(f"Invalid chart SVG, using fallback: {e}", "Chart SVG Error")
-		svg = fallback
+		root = ET.fromstring(svg)
+	except Exception:
+		return None
+	if _svg_local_name(root.tag) != "svg" or _svg_namespace(root.tag) not in {"", _SVG_NAMESPACE}:
+		return None
 
+	element_count = 0
+	path_bytes = 0
+	for parent in list(root.iter()):
+		for child in list(parent):
+			name = _svg_local_name(child.tag)
+			namespace = _svg_namespace(child.tag)
+			if namespace not in {"", _SVG_NAMESPACE} or name not in _ALLOWED_SVG_ELEMENTS:
+				parent.remove(child)
+	for element in root.iter():
+		element_count += 1
+		if element_count > MAX_CHART_SVG_ELEMENTS:
+			return None
+		if _svg_local_name(element.tag) == "path":
+			path_bytes += len(str(element.attrib.get("d") or "").encode("utf-8"))
+			if path_bytes > MAX_CHART_SVG_PATH_BYTES:
+				return None
+		for raw_name, raw_value in list(element.attrib.items()):
+			name = _svg_local_name(raw_name)
+			namespace = _svg_namespace(raw_name)
+			value = str(raw_value or "").strip()
+			if name.lower().startswith("on"):
+				del element.attrib[raw_name]
+				continue
+			if namespace not in {"", _XLINK_NAMESPACE} or name not in _ALLOWED_SVG_ATTRIBUTES:
+				del element.attrib[raw_name]
+				continue
+			if name == "href" and value and not value.startswith("#"):
+				del element.attrib[raw_name]
+				continue
+			if "url(" in value.lower() and not re.fullmatch(r"url\(\s*#[A-Za-z0-9_.:-]+\s*\)", value):
+				del element.attrib[raw_name]
+
+	visible = any(
+		_svg_local_name(element.tag)
+		in {"path", "line", "rect", "circle", "ellipse", "polyline", "polygon", "text"}
+		for element in root.iter()
+	)
+	if not visible:
+		return None
+	ET.register_namespace("", _SVG_NAMESPACE)
+	ET.register_namespace("xlink", _XLINK_NAMESPACE)
+	return ET.tostring(root, encoding="unicode")
+
+
+def _svg_local_name(value: str) -> str:
+	return value.rsplit("}", 1)[-1] if "}" in value else value
+
+
+def _svg_namespace(value: str) -> str:
+	return value[1:].split("}", 1)[0] if value.startswith("{") and "}" in value else ""
+
+
+def _write_chart_svg(chart_svg: str, temp_dir: str, filename: str = "report_chart.svg"):
+	"""Write a sanitized report chart SVG to the Typst working directory."""
+	svg = sanitize_chart_svg(chart_svg)
+	if not svg:
+		frappe.log_error("Invalid or unsafe chart SVG omitted.", "Chart SVG Error")
+		return None
 	dest_path = Path(temp_dir) / Path(filename).name
 	dest_path.write_text(svg, encoding="utf-8")
 	return filename

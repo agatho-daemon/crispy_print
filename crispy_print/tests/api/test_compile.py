@@ -124,7 +124,7 @@ Liberation Sans
 		mock_result.stdout = """
 Libre Baskerville (Regular)
 Noto Naskh Arabic (Regular)
-Shippori Mincho (Regular)
+STIX Two Text (Regular, Bold)
 Eurostile (Regular, Bold)
 """
 		mock_result.returncode = 0
@@ -134,11 +134,11 @@ Eurostile (Regular, Bold)
 
 		self.assertIn("Libre Baskerville", fonts)
 		self.assertIn("Noto Naskh Arabic", fonts)
-		self.assertIn("Shippori Mincho", fonts)
+		self.assertIn("STIX Two Text", fonts)
 		self.assertIn("Eurostile", fonts)
 		self.assertNotIn("LibreBaskerville", fonts)
 		self.assertNotIn("NotoNaskhArabic", fonts)
-		self.assertNotIn("ShipporiMincho", fonts)
+		self.assertNotIn("STIXTwoText", fonts)
 		self.assertNotIn("EurostileBold", fonts)
 
 	def test_parse_typst_font_faces(self):

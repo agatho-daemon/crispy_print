@@ -304,6 +304,18 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(settings["page"]["orientation"], "landscape")
 		self.assertEqual(settings["language"], "ar")
 		self.assertEqual(settings["report"]["mode"], "basic")
+		self.assertTrue(settings["reportTheme"]["chart"]["horizontalGrid"])
+		self.assertEqual(settings["reportTheme"]["chart"]["legendPosition"], "auto")
+		self.assertEqual(settings["reportTheme"]["chart"]["lineStrokePt"], 1.2)
+
+	def test_validates_report_chart_ranges(self):
+		doc = self._new_profile(report_chart_label_size_pt=5)
+		with self.assertRaisesRegex(Exception, "Label size.*between 6 and 18"):
+			doc.validate()
+
+		doc = self._new_profile(report_chart_grid_color="not-a-color")
+		with self.assertRaisesRegex(Exception, "Grid color.*hexadecimal color"):
+			doc.validate()
 
 	def test_exports_document_code_profile_qr_mode(self):
 		doc = self._insert_profile(

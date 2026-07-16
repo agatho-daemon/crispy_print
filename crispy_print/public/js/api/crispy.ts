@@ -450,6 +450,21 @@ export interface CrispyBrandingProfileDoc extends CrispyBrandingProfileOption {
   report_grand_total_fill_color?: string;
   report_hierarchy_indent_pt?: number;
   report_chart_palette?: string;
+  report_chart_horizontal_grid?: number;
+  report_chart_vertical_grid?: number;
+  report_chart_minor_grid?: number;
+  report_chart_grid_color?: string;
+  report_chart_grid_stroke_pt?: number;
+  report_chart_axis_color?: string;
+  report_chart_axis_stroke_pt?: number;
+  report_chart_zero_line_color?: string;
+  report_chart_zero_line_stroke_pt?: number;
+  report_chart_legend_position?: "Auto" | "Top" | "Bottom" | "Hidden";
+  report_chart_label_size_pt?: number;
+  report_chart_data_labels?: "Auto" | "Always" | "Never";
+  report_chart_line_stroke_pt?: number;
+  report_chart_marker_size_pt?: number;
+  report_chart_accessibility_mode?: number;
   branding_logo_source?: "Company logo" | "Upload image";
   branding_logo_upload?: string;
   branding_logo_width_mm?: number;
@@ -667,6 +682,16 @@ export interface TypstCompileResult {
   pdf_standard?: string | null;
 }
 
+export interface ReportChartRender {
+  engine: "lilaq" | "frappe_svg" | "none";
+  status: "ready" | "fallback" | "empty" | "omitted";
+  reason: string;
+  message?: string;
+  lilaq_version?: string;
+  native_package_version?: string;
+  helper_version?: string;
+}
+
 export interface BarcodeOptions {
   symbology?: "QR Code" | "DataMatrix";
   code_symbology?: "QR Code" | "DataMatrix" | string;
@@ -719,6 +744,8 @@ export async function compileReportPreview(args: Record<string, any>): Promise<
     typst_source?: string;
     truncation?: Record<string, any>;
     asset_files?: string[];
+    chart_spec?: Record<string, any>;
+    chart_render?: ReportChartRender;
   }
 > {
   const res = await call<
@@ -726,6 +753,8 @@ export async function compileReportPreview(args: Record<string, any>): Promise<
       typst_source?: string;
       truncation?: Record<string, any>;
       asset_files?: string[];
+      chart_spec?: Record<string, any>;
+      chart_render?: ReportChartRender;
     }
   >({
     method: "crispy_print.api.v1.compile_report_preview",

@@ -31,14 +31,66 @@ describe("Branding Profile visual specimen", () => {
     expect(source).toContain("Warning · Provisional figures");
     expect(source).toContain("Comparative figures are unaudited");
     expect(source).toContain("#section[Performance Overview]");
-    expect(source).toContain('fill: rgb("#112233")');
-    expect(source).toContain('fill: rgb("#445566")');
-    expect(source).toContain('fill: rgb("#778899")');
+    expect(source).toContain(
+      '#import "@local/crispy-charts:0.1.1": crispy-chart',
+    );
+    expect(source).toContain("#crispy-chart(");
+    expect(source).toContain('palette: ("#112233", "#445566", "#778899")');
     expect(source).not.toContain("Page Settings");
     expect(source).not.toContain("Typography Settings");
     expect(source).not.toContain("Table Settings");
     expect(source).not.toContain("#section[Report Theme]");
     expect(source).not.toContain("#section[Branding]");
     expect(source).not.toContain("#section[QR Code]");
+  });
+
+  it("uses an installed font fallback without changing the saved profile choice", () => {
+    const model = createFallbackModel("Default Branding Profile");
+    model.field_value_font_family = "Arial";
+    model.report_title_font_family = "Arial";
+
+    const source = buildVisualPreviewTypst({
+      model,
+      installedFonts: ["Inter", "Noto Sans Arabic"],
+      profileName: "Default Branding Profile",
+      isDefault: true,
+      effectiveCodeOnly: false,
+      tableStriping: false,
+      qrEnabled: false,
+      usesLogo: false,
+      logoImage: "",
+      letterheadImage: "",
+      letterheadLabel: "",
+      letterheadSourceLabel: "",
+    });
+
+    expect(source).toContain('#set text(font: "Inter"');
+    expect(source).not.toContain('font: "Arial"');
+    expect(model.report_title_font_family).toBe("Arial");
+  });
+
+  it("passes disabled chart grid controls through as false", () => {
+    const model = createFallbackModel("Default Branding Profile");
+    model.report_chart_horizontal_grid = 0;
+    model.report_chart_vertical_grid = 0;
+    model.report_chart_minor_grid = 0;
+
+    const source = buildVisualPreviewTypst({
+      model,
+      profileName: "Default Branding Profile",
+      isDefault: true,
+      effectiveCodeOnly: false,
+      tableStriping: false,
+      qrEnabled: false,
+      usesLogo: false,
+      logoImage: "",
+      letterheadImage: "",
+      letterheadLabel: "",
+      letterheadSourceLabel: "",
+    });
+
+    expect(source).toContain("horizontal_grid: false");
+    expect(source).toContain("vertical_grid: false");
+    expect(source).toContain("minor_grid: false");
   });
 });

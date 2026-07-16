@@ -49,12 +49,17 @@ Use these snippets inside `typst_code` for report-mode formats.
 ## 4) Chart block (if present)
 
 ```typst
+#import "@local/crispy-charts:0.1.1": crispy-chart
+
+#if "chart_spec" in data and data.chart_spec.engine == "lilaq" [
+  #crispy-chart(data.chart_spec, theme: data.chart_theme, width: 100%, height: 210pt)
+]
 #if "chart_svg" in data and data.chart_svg != "" [
-  #block(stroke: 0.5pt + rgb("#e5e7eb"), inset: 8pt, radius: 4pt)[
-    #align(center)[#image(data.chart_svg, width: 100%, height: 210pt, fit: "contain")]
-  ]
+  #align(center)[#image(data.chart_svg, width: 100%, height: 210pt, fit: "contain")]
 ]
 ```
+
+Basic mode generates this policy automatically. In Advanced mode, `chart` is the unchanged ERPNext object, `chart_spec` is the normalized printable contract, and `chart_svg` is present only when sanitized fallback rendering was selected.
 
 ## 5) Main table with numeric alignment
 

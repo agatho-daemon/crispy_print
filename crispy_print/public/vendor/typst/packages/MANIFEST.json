@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "hash_method": "SHA-256 of the sorted per-file SHA-256 manifest, including relative paths",
+  "packages": [
+    {
+      "namespace": "preview",
+      "name": "lilaq",
+      "version": "0.6.0",
+      "license": "MIT",
+      "source": "https://github.com/lilaq-project/lilaq",
+      "sha256": "efb148550308fc16a49f85cec369ce415e44e13dc9b5ed319e02aae1e6a31816"
+    },
+    {
+      "namespace": "preview",
+      "name": "elembic",
+      "version": "1.1.1",
+      "license": "MIT OR Apache-2.0",
+      "source": "https://github.com/PgBiel/elembic",
+      "sha256": "f4fed3d1a1a51381754d7f647357615765cb3e550c270e78ae2ded2df1c72a04"
+    },
+    {
+      "namespace": "preview",
+      "name": "zero",
+      "version": "0.6.1",
+      "license": "MIT",
+      "source": "https://github.com/Mc-Zen/zero",
+      "sha256": "5281f02800c87fccdf67fdfed35984d23cccc6afad531ae53744fc5d854310e0"
+    },
+    {
+      "namespace": "preview",
+      "name": "tiptoe",
+      "version": "0.4.0",
+      "license": "MIT",
+      "source": "https://github.com/Mc-Zen/tiptoe",
+      "sha256": "1b46a4551dcc6d347a3992a35a52662e6b1c7bbb67320846d932fc82dcc10cad"
+    },
+    {
+      "namespace": "local",
+      "name": "crispy-charts",
+      "version": "0.1.1",
+      "license": "AGPL-3.0-or-later",
+      "source": "Crispy Print repository",
+      "sha256": "cb58214bbcc5868cb3075aabc0664d8548f86222999a22858cb1fea146f52628"
+    }
+  ],
+  "upgrade_policy": "Vendored package versions are immutable. Upgrades must use a new version directory."
+}

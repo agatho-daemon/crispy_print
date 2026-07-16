@@ -352,7 +352,7 @@ def get_default_report_builder_config(report_renderer: str | None = None) -> dic
 		"chart_enabled": True,
 		"chart_width_percent": 100,
 		"chart_max_height_pt": 220,
-		"chart_card_border": True,
+		"chart_card_border": False,
 		"chart_spacing_top_pt": 0,
 		"chart_spacing_bottom_pt": 12,
 		"header_fill": "#B3D7FF",

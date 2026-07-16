@@ -9,6 +9,11 @@ from frappe import _
 from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
 	resolve_effective_presentation_settings,
 )
+from crispy_print.report_charts import (
+	normalize_chart_theme,
+	normalize_report_chart,
+	resolve_chart_render,
+)
 from crispy_print.report_renderers import get_renderer_metadata, infer_report_renderer
 
 from .company_context import (
@@ -16,7 +21,7 @@ from .company_context import (
 	extract_presentation_settings_company,
 	resolve_effective_company,
 )
-from .compile import compile_typst
+from .compile import compile_typst, sanitize_chart_svg
 from .formats import get_custom_report_formats
 from .security import enforce_rate_limit
 from .typst_doc import _build_typst_document
@@ -156,6 +161,66 @@ def _normalize_image_assets(data: dict | list | str | int | float | bool | None)
 	return normalize(data), collected
 
 
+def _is_basic_report_format(format_doc) -> bool:
+	return not bool(getattr(format_doc, "raw_typst", 0) or getattr(format_doc, "is_advanced", 0))
+
+
+def _prepare_basic_chart_source(
+	code: str,
+	typst_data: dict,
+	presentation_settings: dict,
+) -> str:
+	"""Add a deterministic chart section to Basic sources only once."""
+	report_settings = presentation_settings.get("report") or {}
+	if not bool(report_settings.get("chart_enabled", True)):
+		return code
+
+	chart_spec = typst_data.get("chart_spec") or {}
+	engine = chart_spec.get("engine") or "none"
+	if engine == "none":
+		return code
+	if engine == "lilaq" and (
+		"crispy-chart(" in code or "data.chart_spec" in code or "CRISPY-CHART-SECTION" in code
+	):
+		return code
+	if engine == "frappe_svg" and "data.chart_svg" in code:
+		return code
+
+	width = max(10, min(100, int(report_settings.get("chart_width_percent", 100) or 100)))
+	height = max(60, min(600, int(report_settings.get("chart_max_height_pt", 220) or 220)))
+	spacing_top = max(0, min(120, int(report_settings.get("chart_spacing_top_pt", 0) or 0)))
+	spacing_bottom = max(0, min(120, int(report_settings.get("chart_spacing_bottom_pt", 12) or 12)))
+	top = f"#v({spacing_top}pt)\n" if spacing_top else ""
+	bottom = f"#v({spacing_bottom}pt)\n" if spacing_bottom else ""
+	if engine == "lilaq":
+		chart_body = (
+			'#import "@local/crispy-charts:0.1.1": crispy-chart\n'
+			'#if "chart_spec" in data and data.chart_spec.engine == "lilaq" [\n'
+			f"{top}"
+			"#align(center)[\n"
+			f"  #crispy-chart(data.chart_spec, theme: data.chart_theme, width: {width}%, height: {height}pt)\n"
+			"]\n"
+			f"{bottom}"
+			"]\n"
+		)
+	else:
+		chart_body = (
+			'#if "chart_svg" in data and data.chart_svg != "" [\n'
+			f"{top}"
+			"#align(center)[\n"
+			f'  #image(data.chart_svg, width: {width}%, height: {height}pt, fit: "contain")\n'
+			"]\n"
+			f"{bottom}"
+			"]\n"
+		)
+	chart_block = f"\n// CRISPY-CHART-SECTION v2\n{chart_body}// /CRISPY-CHART-SECTION\n"
+	for marker in ("// TABLE SETUP", "#table("):
+		position = code.find(marker)
+		if position != -1:
+			return code[:position] + chart_block + code[position:]
+	return code + chart_block
+
+
 def generate_report_pdf(
 	report: str,
 	filters: dict | str | None = None,
@@ -242,11 +307,20 @@ def generate_report_pdf(
 	format_presentation_settings["page"]["orientation"] = orientation.lower() if orientation else "landscape"
 	report_presentation_settings = _normalize_report_presentation_settings(format_presentation_settings)
 	typst_data["presentation_settings"] = report_presentation_settings
+	typst_data["chart_theme"] = normalize_chart_theme(report_presentation_settings)
+	typst_data["chart_spec"], chart_render = resolve_chart_render(typst_data.get("chart_spec"), None)
+	format_doc_for_render = copy(format_doc)
+	if _is_basic_report_format(format_doc_for_render):
+		format_doc_for_render.typst_code = _prepare_basic_chart_source(
+			format_doc_for_render.typst_code or "",
+			typst_data,
+			report_presentation_settings,
+		)
 	normalized_typst_data, asset_files = _normalize_image_assets(typst_data)
 
 	# Build Typst document using unified compilation
 	typst_source = _build_typst_document(
-		format_doc=format_doc,
+		format_doc=format_doc_for_render,
 		data_dict=normalized_typst_data,
 		variable_name="data",  # Reports use #data.* namespace
 	)
@@ -264,6 +338,7 @@ def generate_report_pdf(
 	return {
 		"pdf_url": result.get("pdf_url"),
 		"status": "success",
+		"chart_render": chart_render,
 		"truncation": _build_truncation_payload(
 			original_rows=normalized_typst_data.get(
 				"original_row_count", len(normalized_typst_data.get("rows") or [])
@@ -429,6 +504,7 @@ def get_report_typst_source(
 		typst_data.setdefault("returned_row_count", len(typst_data.get("rows") or []))
 		typst_data.setdefault("max_rows", None)
 		typst_data.setdefault("chart", {})
+		typst_data.setdefault("chart_spec", normalize_report_chart(typst_data.get("chart"), report or None))
 		typst_data.setdefault("skip_total_row", False)
 		typst_data["columns"] = [
 			{**col, **_normalize_typst_column_width_parts(col.get("width", "auto"))}
@@ -466,62 +542,30 @@ def get_report_typst_source(
 	)
 	typst_data["presentation_settings"] = presentation_settings_dict
 
-	# Attach chart placeholder for Typst if chart rendering is enabled and SVG is provided.
+	# Resolve the chart independently of report execution. Native Lilaq wins;
+	# sanitized Frappe SVG is retained only as a compatibility fallback.
+	typst_data["chart_theme"] = normalize_chart_theme(presentation_settings_dict)
+	sanitized_chart_svg = None
 	if bool(cint(include_chart)) and isinstance(chart_svg, str) and chart_svg.strip():
+		sanitized_chart_svg = sanitize_chart_svg(chart_svg)
+	typst_data["chart_spec"], chart_render = resolve_chart_render(
+		typst_data.get("chart_spec"),
+		sanitized_chart_svg if bool(cint(include_chart)) else None,
+	)
+	if not bool(cint(include_chart)):
+		typst_data["chart_spec"]["engine"] = "none"
+		chart_render.update({"engine": "none", "status": "omitted", "reason": "chart_section_disabled"})
+	is_basic_format = _is_basic_report_format(format_doc_for_render)
+	if sanitized_chart_svg and (chart_render.get("engine") == "frappe_svg" or not is_basic_format):
 		typst_data["chart_svg"] = "report_chart.svg"
-		code = format_doc_for_render.typst_code or ""
-		if "data.chart_svg" not in code:
-			report_settings = presentation_settings_dict.get("report") or {}
-			chart_enabled = bool(report_settings.get("chart_enabled", True))
-			chart_card_border = bool(report_settings.get("chart_card_border", True))
-			chart_width_percent = max(
-				10,
-				min(100, int(report_settings.get("chart_width_percent", 100) or 100)),
-			)
-			chart_max_height_pt = max(
-				60,
-				min(600, int(report_settings.get("chart_max_height_pt", 220) or 220)),
-			)
-			chart_spacing_top_pt = max(
-				0,
-				min(120, int(report_settings.get("chart_spacing_top_pt", 0) or 0)),
-			)
-			chart_spacing_bottom_pt = max(
-				0,
-				min(120, int(report_settings.get("chart_spacing_bottom_pt", 12) or 12)),
-			)
-
-			if chart_enabled:
-				top_spacing_line = f"  #v({chart_spacing_top_pt}pt)\n" if chart_spacing_top_pt > 0 else ""
-				bottom_spacing_line = (
-					f"  #v({chart_spacing_bottom_pt}pt)\n" if chart_spacing_bottom_pt > 0 else ""
-				)
-				stroke_value = '(paint: rgb("#E5E7EB"), thickness: 0.5pt)' if chart_card_border else "none"
-				chart_block = (
-					"\n// Report chart\n"
-					'#if "chart_svg" in data and data.chart_svg != "" [\n'
-					f"{top_spacing_line}"
-					"  #block(\n"
-					f"    stroke: {stroke_value},\n"
-					"    inset: (x: 8pt, y: 8pt),\n"
-					"    radius: 2pt,\n"
-					"  )[\n"
-					"    #align(center)[\n"
-					f'      #image(data.chart_svg, width: {chart_width_percent}%, height: {chart_max_height_pt}pt, fit: "contain")\n'
-					"    ]\n"
-					"  ]\n"
-					f"{bottom_spacing_line}"
-					"]\n"
-				)
-				inserted = False
-				for marker in ("// TABLE SETUP", "#table("):
-					pos = code.find(marker)
-					if pos != -1:
-						format_doc_for_render.typst_code = code[:pos] + chart_block + code[pos:]
-						inserted = True
-						break
-				if not inserted:
-					format_doc_for_render.typst_code = code + chart_block
+	else:
+		typst_data.pop("chart_svg", None)
+	if is_basic_format:
+		format_doc_for_render.typst_code = _prepare_basic_chart_source(
+			format_doc_for_render.typst_code or "",
+			typst_data,
+			presentation_settings_dict,
+		)
 
 	# Build Typst document using unified compilation
 	preamble_override = (
@@ -577,6 +621,9 @@ def get_report_typst_source(
 			truncated_fieldnames=report_truncation.get("truncated_fieldnames") or [],
 		),
 		"asset_files": asset_files,
+		"chart_spec": normalized_typst_data.get("chart_spec") or {},
+		"chart_render": chart_render,
+		"chart_svg": sanitized_chart_svg if typst_data.get("chart_svg") else None,
 	}
 
 
@@ -630,13 +677,15 @@ def compile_report_preview(
 		source_payload.get("typst_source") or "",
 		output_format="svg",
 		asset_files=compile_asset_files,
-		chart_svg=chart_svg,
+		chart_svg=source_payload.get("chart_svg"),
 	)
 	return {
 		**result,
 		"typst_source": source_payload.get("typst_source") or "",
 		"truncation": source_payload.get("truncation") or {},
 		"asset_files": compile_asset_files,
+		"chart_spec": source_payload.get("chart_spec") or {},
+		"chart_render": source_payload.get("chart_render") or {},
 	}
 
 
@@ -878,6 +927,7 @@ def _prepare_typst_report_data(
 
 	# Get report chart if any
 	report_chart = report_data.get("chart") or {}
+	chart_spec = normalize_report_chart(report_chart, report)
 	report_summary = _normalize_report_summary_for_typst(report_data.get("report_summary") or [])
 	if not include_summary:
 		report_summary = []
@@ -903,6 +953,7 @@ def _prepare_typst_report_data(
 		"title": report_title,
 		"subtitle": "",
 		"chart": report_chart,
+		"chart_spec": chart_spec,
 		"report_summary": report_summary,
 		"skip_total_row": skip_total_row,
 		"report_name": report,

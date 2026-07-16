@@ -172,12 +172,16 @@ Renderer metadata is application-owned, but report formats are not provisioned a
 
 Until acceptance testing is complete, test every intended report with representative filters, long values, multiple pages, totals, empty results, branding, and the target PDF standard.
 
+Report charts use the vendored Lilaq engine by default and compile without network access. Basic formats insert native charts automatically when `chart_spec` is supported. Unsupported or invalid charts use a sanitized Frappe SVG only when the browser supplied one; background rendering otherwise omits the chart and reports a diagnostic without failing the report. Empty charts are omitted silently. The site-level emergency setting `CRISPY_PRINT_REPORT_CHART_ENGINE=frappe_svg` disables native chart selection; it is intentionally not a designer control.
+
+Advanced report formats receive `chart`, `chart_spec`, and `chart_svg`, but Crispy Print does not insert a chart automatically. Advanced authors may call `crispy-chart` explicitly or render the supplied fallback SVG.
+
 ### Branding Profile Workflow
 
 Branding Profiles centralize presentation settings that should not be duplicated across every format:
 
 1. Create a **Crispy Branding Profile** for the company.
-2. Configure page size, margins, typography, table style, letterhead, logo, QR defaults, and reusable report-theme tokens.
+2. Configure page size, margins, typography, table style, letterhead, logo, QR defaults, reusable report-theme tokens, and chart appearance.
 3. Open the Branding Profile Builder to preview the generated Typst specimen.
 4. Attach the profile to Crispy Formats that should inherit the same presentation system.
 

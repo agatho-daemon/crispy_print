@@ -138,6 +138,8 @@ Backend:
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
 - **`api/v1/reports.py`** - Report sample data, Typst source generation, combined preview compilation, and report PDF helpers.
 - **`report_renderers.py`** - Report-family registry, renderer compatibility, curated sections, and upstream structural-source fingerprints. Report rendering remains WIP pending full acceptance testing.
+- **`report_charts.py`** - Stable chart-spec normalization, accounting chart limits, accessibility summaries, theme normalization, and deterministic Lilaq/Frappe-SVG/omission policy.
+- **`@local/crispy-charts:0.1.1`** - The only report-template chart API. It wraps vendored Lilaq 0.6.0 and compiles exclusively through the application package path.
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
 - **`api/v1/company_context.py`** - Shared company extraction, presentation-settings company parsing, and final effective-company resolution for backend render paths.
 - **`api/v1/_common.py`** - Small shared API helpers for string cleanup, truth coercion, version parsing, and target-company validation.

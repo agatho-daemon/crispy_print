@@ -15,6 +15,11 @@ describe("reportBuilder utils", () => {
     const typst = buildReportTypstFromConfig(config);
 
     expect(typst).toContain("CRISPY_REPORT_BASIC_SIGNATURE:");
+    expect(typst).toContain("CRISPY_REPORT_BASIC_GENERATOR:2");
+    expect(typst).toContain(
+      '#import "@local/crispy-charts:0.1.1": crispy-chart',
+    );
+    expect(typst).toContain("#crispy-chart(data.chart_spec");
     expect(typst).toContain("data.columns");
     expect(typst).toContain("data.columns.map(cp_column_width)");
     expect(typst).not.toContain("eval(col.width)");
@@ -118,8 +123,6 @@ describe("reportBuilder utils", () => {
     expect(typst).toContain(
       'if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
     );
-    expect(typst).toContain(
-      "box(inset: (left: row.indent * 10pt))[#content]",
-    );
+    expect(typst).toContain("box(inset: (left: row.indent * 10pt))[#content]");
   });
 });

@@ -107,6 +107,23 @@ export interface ReportThemeSettings {
   };
   hierarchyIndentPt: number;
   chartPalette: string[];
+  chart: {
+    horizontalGrid: boolean;
+    verticalGrid: boolean;
+    minorGrid: boolean;
+    gridColor: string;
+    gridStrokePt: number;
+    axisColor: string;
+    axisStrokePt: number;
+    zeroLineColor: string;
+    zeroLineStrokePt: number;
+    legendPosition: "auto" | "top" | "bottom" | "hidden";
+    labelSizePt: number;
+    dataLabels: "auto" | "always" | "never";
+    lineStrokePt: number;
+    markerSizePt: number;
+    accessibilityMode: boolean;
+  };
 }
 
 export interface BrandingPresentationSettings {
@@ -160,6 +177,23 @@ export const defaultReportTheme: ReportThemeSettings = {
     "#7c3aed",
     "#be123c",
   ],
+  chart: {
+    horizontalGrid: true,
+    verticalGrid: true,
+    minorGrid: false,
+    gridColor: "#cbd5e1",
+    gridStrokePt: 0.4,
+    axisColor: "#64748b",
+    axisStrokePt: 0.6,
+    zeroLineColor: "#475569",
+    zeroLineStrokePt: 1,
+    legendPosition: "auto",
+    labelSizePt: 8,
+    dataLabels: "auto",
+    lineStrokePt: 1.2,
+    markerSizePt: 4,
+    accessibilityMode: true,
+  },
 };
 
 export const defaultTypography: TypographySettings = {
@@ -485,6 +519,10 @@ export function merge_presentation_settings(
       rows: {
         ...(base.reportTheme?.rows || defaultReportTheme.rows),
         ...(safeOverrides.reportTheme?.rows || {}),
+      },
+      chart: {
+        ...(base.reportTheme?.chart || defaultReportTheme.chart),
+        ...(safeOverrides.reportTheme?.chart || {}),
       },
       chartPalette: [
         ...(safeOverrides.reportTheme?.chartPalette ||
