@@ -992,6 +992,14 @@ defineExpose({ save, dirty });
 	font-weight: 600;
 }
 
+.cbp-panel__hint {
+	margin: 0;
+	padding: 10px 12px 0;
+	font-size: 11px;
+	line-height: 1.45;
+	color: #64748b;
+}
+
 .cbp-section-heading {
 	padding: 12px 12px 0;
 	color: #111827;

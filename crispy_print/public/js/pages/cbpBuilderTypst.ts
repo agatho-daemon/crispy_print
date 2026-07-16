@@ -4,7 +4,12 @@ import {
   cbpTypographySpecimen,
   cbpTypographyStyle,
 } from "./cbpTypographyAdapter";
-import { num, pageDimensions, specimenRows } from "./cbpBuilderSupport";
+import {
+  defaultReportChartPalette,
+  num,
+  pageDimensions,
+  specimenRows,
+} from "./cbpBuilderSupport";
 
 export interface CbpPreviewTypstContext {
   model: CrispyBrandingProfileDoc;
@@ -51,6 +56,14 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
   const tableFill = context.tableStriping
     ? `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) } else if y == 2 { rgb(${toTypstValue(model.table_stripe_color || "#F8FAFC")}) }`
     : `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) }`;
+  const chartPalette = parseChartPalette(model.report_chart_palette);
+  const chartHeights = [15, 24, 19, 30, 22, 27, 17, 25, 20, 29, 18, 26];
+  const chartBars = chartPalette
+    .map(
+      (color, index) =>
+        `grid.cell(align: bottom)[#rect(width: 100%, height: ${chartHeights[index] || 20}mm, fill: rgb(${toTypstValue(color)}), radius: 2pt)]`,
+    )
+    .join(",\n  ");
 
   return `#set page(
   width: ${page.width}mm,
@@ -75,7 +88,7 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
   #v(1.75em)
   #text(..sectionStyle)[#title]
   #v(-0.50em)
-  #line(length: 100%, stroke: 0.45pt + rgb("#E5E7EB"))
+  #line(length: 100%, stroke: 0.8pt + rgb(${toTypstValue(model.report_accent_color || "#1E3A8A")}))
   #v(0.20em)
 ]
 
@@ -116,15 +129,27 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 )
 
 #v(0.85em)
-#grid(
-  columns: (1fr,) * 4,
-  column-gutter: 8pt,
-  block(fill: rgb(${toTypstValue(model.report_group_fill_color || "#EFF6FF")}), inset: 6pt)[Group row],
-  block(fill: rgb(${toTypstValue(model.report_subtotal_fill_color || "#F8FAFC")}), inset: 6pt)[Subtotal],
-  block(fill: rgb(${toTypstValue(model.report_grand_total_fill_color || "#E2E8F0")}), inset: 6pt)[Grand total],
-  block(inset: 6pt)[#text(fill: rgb(${toTypstValue(model.report_negative_color || "#B91C1C")}))[-1,250.000]],
-)
+#block(width: 100%, fill: rgb(${toTypstValue(model.report_group_fill_color || "#EFF6FF")}), inset: 6pt)[#text(weight: "semibold")[Assets]]
+#block(width: 100%, inset: (top: 5pt, right: 6pt, bottom: 5pt, left: ${num(model.report_hierarchy_indent_pt) + 6}pt))[#grid(columns: (1fr, auto), [Cash and Bank], [KWD 125.000])]
+#block(width: 100%, fill: rgb(${toTypstValue(model.report_subtotal_fill_color || "#F8FAFC")}), inset: 6pt)[#grid(columns: (1fr, auto), [Subtotal], [KWD 173.000])]
+#block(width: 100%, fill: rgb(${toTypstValue(model.report_grand_total_fill_color || "#E2E8F0")}), inset: 6pt)[#grid(columns: (1fr, auto), [#text(weight: "bold")[Grand total]], [#text(weight: "bold", fill: rgb(${toTypstValue(model.report_negative_color || "#B91C1C")}))[-1,250.000]])]
 #v(0.45em)
+#text(size: ${num(model.report_context_font_size_pt)}pt, weight: "semibold", fill: rgb(${toTypstValue(model.report_warning_color || "#B45309")}))[Warning · Provisional figures]
+#linebreak()
+#text(size: ${num(model.report_context_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_muted_color || "#64748B")}))[Comparative figures are unaudited.]
+
+#section[Performance Overview]
+#text(size: ${num(model.report_context_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_muted_color || "#64748B")}))[Quarterly comparison]
+#v(0.55em)
+#grid(
+  columns: (1fr,) * ${chartPalette.length},
+  align: bottom,
+  column-gutter: 5pt,
+  ${chartBars}
+)
+#line(length: 100%, stroke: 0.45pt + rgb(${toTypstValue(model.report_muted_color || "#64748B")}))
+
+#v(0.65em)
 #text(size: ${num(model.report_footer_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_footer_font_color || "#64748B")}))[Report footer · Page 1]
 `;
 }
@@ -214,4 +239,13 @@ function assetFilename(path: string) {
   if (!path) return "";
   const clean = String(path).split("?")[0].split("#")[0];
   return decodeURIComponent(clean.split("/").filter(Boolean).at(-1) || "");
+}
+
+function parseChartPalette(value: unknown) {
+  const colors = String(value || "")
+    .split(",")
+    .map((color) => color.trim().toUpperCase())
+    .filter((color) => /^#[0-9A-F]{6}$/.test(color))
+    .slice(0, 12);
+  return colors.length ? colors : defaultReportChartPalette;
 }

@@ -9,7 +9,7 @@ describe("ChartPaletteField", () => {
     });
 
     expect(wrapper.findAll(".chart-palette-field__color")).toHaveLength(3);
-    expect(wrapper.findAll(".chart-palette-field__bars i")).toHaveLength(3);
+    expect(wrapper.find(".chart-palette-field__preview").exists()).toBe(false);
 
     await wrapper.findAll(".chart-palette-field__swatch")[1].trigger("click");
     await wrapper

@@ -97,20 +97,6 @@
 			</div>
 		</div>
 		<p v-if="hexError" class="chart-palette-field__error">{{ hexError }}</p>
-
-		<div class="chart-palette-field__preview" aria-hidden="true">
-			<span>{{ __("Chart preview") }}</span>
-			<div class="chart-palette-field__bars">
-				<i
-					v-for="(color, index) in palette"
-					:key="`bar-${index}`"
-					:style="{
-						backgroundColor: validColor(color) ? color : '#e2e8f0',
-						height: `${previewHeight(index)}%`,
-					}"
-				></i>
-			</div>
-		</div>
 	</div>
 </template>
 
@@ -272,10 +258,6 @@ function resetPalette() {
 function seriesLabel(index: number, color: string): string {
 	return `${__("Series")} ${index + 1}: ${color}`;
 }
-
-function previewHeight(index: number): number {
-	return [48, 78, 60, 92, 68, 84, 55, 73, 64, 88, 58, 80][index] || 60;
-}
 </script>
 
 <style scoped>
@@ -414,36 +396,6 @@ function previewHeight(index: number): number {
 	margin: 6px 0 0;
 	font-size: 11px;
 	color: #b91c1c;
-}
-
-.chart-palette-field__preview {
-	margin-top: 12px;
-	padding-top: 10px;
-}
-
-.chart-palette-field__preview > span {
-	display: block;
-	margin-bottom: 6px;
-	font-size: 10px;
-	font-weight: 600;
-	color: #64748b;
-}
-
-.chart-palette-field__bars {
-	display: flex;
-	align-items: flex-end;
-	gap: 4px;
-	height: 46px;
-	padding: 5px 7px 0;
-	border-bottom: 1px solid #cbd5e1;
-	background: repeating-linear-gradient(to top, #e2e8f0 0 1px, transparent 1px 14px);
-}
-
-.chart-palette-field__bars i {
-	flex: 1;
-	min-width: 8px;
-	max-width: 42px;
-	border-radius: 3px 3px 0 0;
 }
 
 @media (max-width: 760px) {
