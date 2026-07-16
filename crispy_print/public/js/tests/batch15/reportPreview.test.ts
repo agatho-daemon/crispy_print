@@ -70,13 +70,13 @@ describe("useStore report preview", () => {
       ],
     } as any;
 
-    const result = await store.compileReportPreview("Style Preview");
+    const result = await store.compileReportPreview("Sales Order");
 
     expect(result).toEqual({ success: true, typst_source: "#typst" });
     expect((globalThis as any).frappe.call).toHaveBeenCalledTimes(1);
     const first = (globalThis as any).frappe.call.mock.calls[0][0];
     expect(first.method).toBe("crispy_print.api.v1.compile_report_preview");
-    expect(first.args.report).toBe("Style Preview");
+		expect(first.args.report).toBe("Sales Order");
     expect(first.args.format_name).toBe("Format-1");
     expect(first.args.filters).toEqual({});
     expect(first.args.column_config).toEqual([
@@ -92,12 +92,9 @@ describe("useStore report preview", () => {
       '#set text(font: "Inter"',
     );
     expect(first.args.typst_code_override).toBe("#show heading: it => it");
-    expect(first.args.preview_data?.title).toBe("Style Preview");
-    expect(Array.isArray(first.args.preview_data?.columns)).toBe(true);
-    expect(Array.isArray(first.args.preview_data?.rows)).toBe(true);
-    expect(first.args.preview_data?.chart_svg).toBe("report_chart.svg");
+		expect(first.args.preview_data).toBeUndefined();
     expect(first.args.limit).toBe(50);
-    expect(first.args.chart_svg).toContain("Placeholder Chart");
+		expect(first.args.chart_svg).toBeNull();
   });
 
   it("compileReportPreview throws when source is missing", async () => {
@@ -217,7 +214,7 @@ describe("useStore report preview", () => {
       ],
     } as any;
 
-    await store.compileReportPreview("Style Preview");
+		await store.compileReportPreview("Sales Order");
 
     const first = (globalThis as any).frappe.call.mock.calls[0][0];
     expect(first.args.column_config).toEqual([
@@ -259,7 +256,7 @@ describe("useStore report preview", () => {
       },
     } as any;
 
-    await store.compileReportPreview("Style Preview");
+		await store.compileReportPreview("Sales Order");
 
     const firstSource = (globalThis as any).frappe.call.mock.calls[0][0];
     expect(

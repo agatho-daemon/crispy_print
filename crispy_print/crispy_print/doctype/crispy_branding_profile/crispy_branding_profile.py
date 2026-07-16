@@ -9,6 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 from crispy_print.defaults import enforce_single_default
+from crispy_print.report_renderers import get_renderer_presentation_defaults
 
 CBP_CODE_ONLY_TEMPLATE_PATH = ("public", "js", "templates", "cbp_code_only_template.json")
 
@@ -139,6 +140,23 @@ class CrispyBrandingProfile(Document):
 			"table_body_font_style": "Normal",
 			"table_body_font_weight": "Regular",
 			"table_body_font_color": "#000000",
+			"report_title_font_family": "Arial",
+			"report_title_font_size_pt": 18,
+			"report_title_font_weight": "Bold",
+			"report_title_font_color": "#1E293B",
+			"report_context_font_size_pt": 9,
+			"report_context_font_color": "#64748B",
+			"report_footer_font_size_pt": 8,
+			"report_footer_font_color": "#64748B",
+			"report_accent_color": "#1E3A8A",
+			"report_muted_color": "#64748B",
+			"report_negative_color": "#B91C1C",
+			"report_warning_color": "#B45309",
+			"report_group_fill_color": "#EFF6FF",
+			"report_subtotal_fill_color": "#F8FAFC",
+			"report_grand_total_fill_color": "#E2E8F0",
+			"report_hierarchy_indent_pt": 10,
+			"report_chart_palette": "#1E3A8A, #2563EB, #0F766E, #B45309, #7C3AED, #BE123C",
 			"branding_mode": "None",
 			"branding_logo_source": "Company logo",
 			"branding_logo_width_mm": 20,
@@ -205,6 +223,9 @@ class CrispyBrandingProfile(Document):
 			"field_value_font_size_pt": _("Field value font size"),
 			"table_header_font_size_pt": _("Table header font size"),
 			"table_body_font_size_pt": _("Table body font size"),
+			"report_title_font_size_pt": _("Report title font size"),
+			"report_context_font_size_pt": _("Report context font size"),
+			"report_footer_font_size_pt": _("Report footer font size"),
 		}
 		for fieldname, label in positive_values.items():
 			if flt(self.get(fieldname)) <= 0:
@@ -220,6 +241,7 @@ class CrispyBrandingProfile(Document):
 			"table_cell_inset_bottom_pt": _("Table cell bottom inset"),
 			"table_cell_inset_left_pt": _("Table cell left inset"),
 			"table_border_stroke_width_pt": _("Table border stroke thickness"),
+			"report_hierarchy_indent_pt": _("Report hierarchy indent"),
 			"branding_logo_offset_x_mm": _("Logo X position"),
 			"branding_logo_offset_y_mm": _("Logo Y position"),
 			"qr_dx_mm": _("QR Code X position"),
@@ -252,7 +274,7 @@ class CrispyBrandingProfile(Document):
 		"""Return the normalized presentation payload used by the builder."""
 		settings = {
 			"codeOnly": bool(flt(self.get("code_only"))),
-			"typstCode": self.get("custom_typst_code") or "",
+			"typstCode": (self.get("custom_typst_code") or "") if flt(self.get("code_only")) else "",
 			"page": {
 				"size": self.page_size,
 				"orientation": self.orientation,
@@ -303,6 +325,34 @@ class CrispyBrandingProfile(Document):
 					"body": self.get_typography_style("table_body"),
 				},
 			},
+			"reportTheme": {
+				"accentColor": self.report_accent_color or "#1E3A8A",
+				"mutedColor": self.report_muted_color or "#64748B",
+				"negativeColor": self.report_negative_color or "#B91C1C",
+				"warningColor": self.report_warning_color or "#B45309",
+				"title": {
+					"fontFamily": self.report_title_font_family or "Arial",
+					"fontSize": f"{flt(self.report_title_font_size_pt)}pt",
+					"fontStyle": "normal",
+					"fontWeight": (self.report_title_font_weight or "Bold").lower(),
+					"color": self.report_title_font_color or "#1E293B",
+				},
+				"context": {
+					"fontSize": f"{flt(self.report_context_font_size_pt)}pt",
+					"color": self.report_context_font_color or "#64748B",
+				},
+				"footer": {
+					"fontSize": f"{flt(self.report_footer_font_size_pt)}pt",
+					"color": self.report_footer_font_color or "#64748B",
+				},
+				"rows": {
+					"groupFill": self.report_group_fill_color or "#EFF6FF",
+					"subtotalFill": self.report_subtotal_fill_color or "#F8FAFC",
+					"grandTotalFill": self.report_grand_total_fill_color or "#E2E8F0",
+				},
+				"hierarchyIndentPt": flt(self.report_hierarchy_indent_pt),
+				"chartPalette": self.get_report_chart_palette(),
+			},
 			"qr": {
 				"enabled": bool(flt(self.enable_qr_code)),
 				"size": flt(self.qr_code_size_mm),
@@ -319,6 +369,9 @@ class CrispyBrandingProfile(Document):
 			},
 		}
 		return settings
+
+	def get_report_chart_palette(self) -> list[str]:
+		return [color.strip() for color in (self.report_chart_palette or "").split(",") if color.strip()]
 
 	def get_qr_source_mode(self) -> str:
 		return {
@@ -412,14 +465,15 @@ def get_branding_profile_presentation_settings(name: str) -> dict:
 def resolve_effective_presentation_settings(
 	presentation_settings: dict | None,
 	company: str | None = None,
+	runtime_overrides: dict | None = None,
 ) -> dict:
-	"""Resolve selected Crispy Branding Profile into effective presentation settings."""
+	"""Resolve profile, renderer, format override, and runtime presentation layers."""
 	settings = dict(presentation_settings or {})
 	branding = dict(settings.get("branding") or {})
 	profile_name = (branding.get("profile") or "").strip()
 
 	if settings.get("source") != "branding_profile" or not profile_name:
-		return settings
+		return _deep_merge_settings(settings, runtime_overrides or {})
 
 	profile = get_branding_profile(profile_name)
 	profile.check_permission("read")
@@ -434,16 +488,27 @@ def resolve_effective_presentation_settings(
 	profile_settings = profile.to_presentation_settings()
 	profile_branding = dict(profile_settings.get("branding") or {})
 	profile_branding["profile"] = profile_name
+	profile_settings["branding"] = profile_branding
+	profile_settings["source"] = "branding_profile"
 
-	effective = {
-		**profile_settings,
-		"source": "branding_profile",
-		"branding": profile_branding,
-	}
+	report_settings = dict(settings.get("report") or {})
+	renderer_defaults = get_renderer_presentation_defaults(report_settings.get("renderer"))
+	effective = _deep_merge_settings(profile_settings, renderer_defaults)
+	effective = _deep_merge_settings(effective, settings.get("overrides") or {})
 
 	if settings.get("language"):
 		effective["language"] = settings.get("language")
-	if settings.get("report"):
-		effective["report"] = settings.get("report")
+	if report_settings:
+		effective["report"] = _deep_merge_settings(effective.get("report") or {}, report_settings)
 
-	return effective
+	return _deep_merge_settings(effective, runtime_overrides or {})
+
+
+def _deep_merge_settings(base: dict, overrides: dict) -> dict:
+	merged = dict(base or {})
+	for key, value in (overrides or {}).items():
+		if isinstance(value, dict) and isinstance(merged.get(key), dict):
+			merged[key] = _deep_merge_settings(merged[key], value)
+		else:
+			merged[key] = value
+	return merged

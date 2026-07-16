@@ -25,6 +25,8 @@ vi.mock("../../composables/useStore", () => ({
     docType: ref(null),
     presentation_settings: ref({}),
     previewRevision,
+		reportPreviewReady: ref(false),
+		selectedReportName: ref("Accounts Receivable"),
     crispyFormat: ref({ crispy_format_type: "Report", is_generic: 1 }),
     reportBuilderConfig: ref({
       show_filters: true,
@@ -64,6 +66,7 @@ describe("PreviewPane report mode", () => {
     const wrapper = mount(PreviewPane, {
       global: {
         stubs: {
+			ReportPreviewVariables: true,
           PreviewRenderer: PreviewRendererStub,
         },
       },
@@ -72,10 +75,11 @@ describe("PreviewPane report mode", () => {
     expect(wrapper.find("[data-watch='false']").exists()).toBe(true);
   });
 
-  it("renders style-preview note and does not render report selector", async () => {
+  it("does not compile until preview variables have been applied", async () => {
     const wrapper = mount(PreviewPane, {
       global: {
         stubs: {
+			ReportPreviewVariables: true,
           PreviewRenderer: {
             template: "<div><slot name='menu'></slot></div>",
           },
@@ -84,7 +88,7 @@ describe("PreviewPane report mode", () => {
     });
 
     expect(wrapper.find("#sample-report-select").exists()).toBe(false);
-    expect(wrapper.text()).toContain("Style preview with placeholder data");
-    expect(compileReportPreview).toHaveBeenCalledWith("Style Preview", []);
+		expect(wrapper.text()).toContain("Set report variables");
+		expect(compileReportPreview).not.toHaveBeenCalled();
   });
 });

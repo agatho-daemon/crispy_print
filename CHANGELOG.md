@@ -18,7 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a report-renderer registry for generic reports, receivables/payables, financial statements, General Ledger, Bank Reconciliation, and explicit custom formats.
 - Added renderer-owned report families, curated semantic sections, source HTML fingerprints, compatibility metadata, row-role enrichment, and a native renderer-aware Typst baseline.
 - Added live selected-report preview execution and renderer source status reporting in the Format Builder.
-- Added report migration and setup patches for legacy format conversion, mixed-family splitting, renderer seeding, test-company cleanup, and safe refresh of untouched fallback templates.
+- Added report migration support for legacy format conversion and mixed-family splitting. Renderer definitions remain application metadata; report formats are never seeded into site data.
+- Added Branding Profile report-theme tokens for report titles, context, semantic row fills, negative/warning colors, hierarchy indentation, chart palettes, and report footers.
+- Added layered report presentation resolution: Branding Profile defaults, renderer structural defaults, explicit format overrides, and runtime preview overrides.
+- Added transient unsaved report preview support for permitted designers using the current renderer, Branding Profile, filters, columns, and in-memory Typst.
 - Added the `Crispy Print Designer` role for company-scoped template authors who can edit formats, branding profiles, Typst blocks, document-code profiles, and publish templates without manager bypass privileges.
 - Added a file-based **Sample Format Catalog** under `crispy_print/examples/formats/` so example formats can ship with the app without being installed as site data.
 - Added builder **Examples** workflow for creating a company-scoped Crispy Format from a curated sample only when a user explicitly chooses it.
@@ -37,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed report format discovery to return specialized and generic alternatives in one ordered collection using selected-report, company/global, compatible-renderer, and generic fallback precedence.
 - Upgraded portable Crispy Format exports to schema v2 while retaining import-only conversion for legacy v1 payloads.
 - Changed Basic report authoring to use renderer-defined layout styles and curated sections; Advanced mode remains a complete Typst override over the normalized report payload.
+- Changed report authoring to remain transient until an explicit Save; opening a new Builder layout no longer writes generated layout data automatically.
+- Removed renderer preset seeding and its cleanup/refresh patches. Installing or migrating Crispy Print no longer creates report `Crispy Format` records for companies.
 - Removed automatic `Crispy Format` fixture shipping. Sample formats now live as app-owned JSON examples and are copied into site data only through the explicit Examples workflow.
 - Tightened company permission boundaries for company-scoped Crispy Print records. Branding Profile reads now use permission-aware list/read checks, and Duplicate/Create-from-Sample target-company inserts require manager access or matching Company User Permission access before internal `ignore_permissions=True` writes run.
 - Added explicit, auditable facade policies to all whitelisted `crispy_print.api.v1` endpoints so rate limits, permission gates, delegated deeper checks, and low-risk exemptions are declared consistently.

@@ -5,7 +5,7 @@
 			<p class="report-template-pane__hint">
 				{{
 					__(
-						"Basic mode is style-preview only. Real report output is rendered by raw Typst templates (CrispyPP/runtime)."
+						"Choose the report variables below, then run a live preview using ERPNext data."
 					)
 				}}
 			</p>

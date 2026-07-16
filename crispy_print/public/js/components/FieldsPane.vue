@@ -3,7 +3,7 @@
 		<div class="section-head fields-pane__header">
 			<div class="section-head-content fields-pane__header-row">
 				<h3 class="section-title fields-pane__title">
-					{{ isReportMode ? __("Report Fields") : __("Fields") }}
+					{{ __("Fields") }}
 				</h3>
 				<div class="fields-pane__spacer"></div>
 				<div class="fields-pane__help">

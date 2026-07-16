@@ -25,6 +25,8 @@ vi.mock("../../composables/useStore", () => ({
 		letterhead: ref(null),
 		docType: ref("Report"),
 		previewRevision: ref(0),
+		reportPreviewReady: ref(true),
+		selectedReportName: ref("Accounts Receivable"),
 		crispyFormat,
 		effective_presentation_settings: ref({
 			page: {
@@ -58,6 +60,7 @@ describe("PreviewPane refresh shortcut", () => {
 			attachTo: target,
 			global: {
 				stubs: {
+					ReportPreviewVariables: true,
 					PreviewRenderer: {
 						template: '<div><slot name="menu" /></div>',
 					},
@@ -69,7 +72,7 @@ describe("PreviewPane refresh shortcut", () => {
 		window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true }))
 		await Promise.resolve()
 
-		expect(compileReportPreview).toHaveBeenCalledWith("Style Preview", [])
+		expect(compileReportPreview).toHaveBeenCalledWith("Accounts Receivable", [])
 		expect(requestPreviewRefresh).not.toHaveBeenCalled()
 
 		wrapper.unmount()
@@ -87,12 +90,14 @@ describe("PreviewPane refresh shortcut", () => {
 			attachTo: target,
 			global: {
 				stubs: {
+					ReportPreviewVariables: true,
 					PreviewRenderer: {
 						template: '<div><slot name="menu" /></div>',
 					},
 				},
 			},
 		})
+		requestPreviewRefresh.mockClear()
 
 		await wrapper.find("#typst-refresh").trigger("click")
 		window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true }))

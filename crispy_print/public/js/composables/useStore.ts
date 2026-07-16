@@ -25,6 +25,7 @@ import {
   duplicateCrispyFormatForCompany,
   duplicateCrispyTemplateForCompany,
   publishTemplateFromCrispyFormat,
+  createCrispyFormat,
   saveCrispyFormat,
   type CrispyFormatDuplicateResult,
   type CrispyTemplateDuplicateResult,
@@ -42,10 +43,6 @@ import {
   type ReportBuilderMode,
   type ReportBuilderConfig,
 } from "../utils/reportBuilder";
-import {
-  getDummyReportFilterColumns,
-  getDummyReportTableColumns,
-} from "../utils/reportPreviewDummy";
 import { createReportStore } from "./useReportStore";
 import { createLayoutStore } from "./useLayoutStore";
 import { createSettingsStore } from "./useSettingsStore";
@@ -60,6 +57,7 @@ const logger = getLogger({ module: "Store" });
 
 interface CrispyFormat {
   name: string;
+  __islocal?: number;
   doc_type?: string;
   // TODO: investigate the possibility of having a dynamic crispy_format_type for future.
   crispy_format_type?: string;
@@ -77,6 +75,7 @@ interface CrispyFormat {
   typst_preamble?: string;
   typst_code?: string;
   pdf_standard?: string;
+  default_print_language?: string;
   layout_json?: string;
   presentation_settings?: string;
   compact_item_print?: number;
@@ -99,18 +98,12 @@ function buildStore() {
   const meta = ref<any>(null);
   const fields = ref<DocField[]>([]);
   const typstBlocks = ref<CrispyTypstBlockOption[]>([]);
-  const reportColumns = ref<any[]>(getDummyReportTableColumns());
-  const reportFilterFields = ref<any[]>(
-    getDummyReportFilterColumns().map((col) => ({
-      fieldname: col.fieldname,
-      label: col.label,
-      fieldtype: col.fieldtype || "Data",
-      reqd: false,
-    })),
-  );
+  const reportColumns = ref<any[]>([]);
+  const reportFilterFields = ref<any[]>([]);
   const reportFilters = ref<Record<string, any>>({});
-  const sampleReports = ref<any[]>([{ name: "Style Preview" }]);
-  const selectedReportName = ref("Style Preview");
+  const reportPreviewReady = ref(false);
+  const sampleReports = ref<any[]>([]);
+  const selectedReportName = ref("");
   const letterhead = ref<any>(null);
   const dirty = ref(false);
   const loading = ref(false);
@@ -150,7 +143,9 @@ function buildStore() {
   });
 
   // Computed
-  const formatName = computed(() => crispyFormat.value?.name || null);
+  const formatName = computed(() =>
+    crispyFormat.value?.__islocal ? null : crispyFormat.value?.name || null,
+  );
   const docType = computed(() => crispyFormat.value?.doc_type || null);
   const formatType = computed(
     () => crispyFormat.value?.crispy_format_type || "DocType",
@@ -439,15 +434,12 @@ function buildStore() {
     meta.value = null;
     fields.value = [];
     typstBlocks.value = [];
-    reportColumns.value = getDummyReportTableColumns();
-    reportFilterFields.value = getDummyReportFilterColumns().map((col) => ({
-      fieldname: col.fieldname,
-      label: col.label,
-      fieldtype: col.fieldtype || "Data",
-      reqd: false,
-    }));
+    reportColumns.value = [];
+    reportFilterFields.value = [];
     reportFilters.value = {};
-    selectedReportName.value = "Style Preview";
+    reportPreviewReady.value = false;
+    sampleReports.value = [];
+    selectedReportName.value = "";
     letterhead.value = null;
     typstCode.value = "";
     rawTypst.value = false;
@@ -553,6 +545,9 @@ function buildStore() {
     );
     if (requestSeq !== effectiveSettingsRequestSeq) return;
     effective_presentation_settings.value = resolved;
+    if (isReportMode.value && reportBuilderConfig.value.mode === "basic") {
+      syncReportBasicTypst();
+    }
   }
 
   function getEffectiveCompany(): string | null {
@@ -570,6 +565,17 @@ function buildStore() {
   ) {
     await refreshEffectivePresentationSettings();
     return reportStore.compileReportPreview(reportName, columnConfig);
+  }
+
+  async function runSelectedReportPreview() {
+    const reportName = selectedReportName.value;
+    if (!reportName)
+      throw new Error("Select a report before running the preview");
+    const resolved = await resolveReportFiltersForCompile(reportName);
+    await reportStore.loadReportColumns(reportName, resolved);
+    layoutStore.hydrateReportLayoutFromRuntime();
+    reportPreviewReady.value = true;
+    previewRevision.value += 1;
   }
 
   function undo() {
@@ -1207,10 +1213,76 @@ function buildStore() {
     reportColumns,
     reportFilterFields,
     reportFilters,
+    reportPreviewReady,
     getReportColumnConfigFromLayout,
-    getReportTableColumnsForPreview:
-      layoutStore.getReportTableColumnsForPreview,
+    getEffectiveCompany,
   });
+
+  async function initializeTransientReport(draft: CrispyFormat) {
+    reset();
+    initializing.value = true;
+    try {
+      crispyFormat.value = {
+        ...draft,
+        __islocal: 1,
+        crispy_format_type: "Report",
+      };
+      const renderer = draft.report_renderer || "generic_report";
+      const linkedReports = (draft.report || [])
+        .filter((row) => row?.report && !row?.disabled)
+        .map((row) => ({ name: row.report }));
+      sampleReports.value = linkedReports;
+      selectedReportName.value = linkedReports[0]?.name || "";
+      if (selectedReportName.value) {
+        await reportStore.loadReportFilterFields(selectedReportName.value);
+      }
+
+      const catalogResponse = await frappe.call({
+        method: "crispy_print.api.v1.get_report_renderer_catalog",
+      });
+      reportRendererMetadata.value = (
+        catalogResponse?.message?.renderers || []
+      ).find((item: any) => item.key === renderer);
+      if (!sampleReports.value.length) {
+        sampleReports.value = (reportRendererMetadata.value?.reports || []).map(
+          (name: string) => ({ name }),
+        );
+      }
+
+      presentation_settings.value = merge_presentation_settings(
+        default_presentation_settings,
+        {
+          branding: {
+            ...default_presentation_settings.branding,
+            company: draft.company || "",
+            logo: {
+              ...default_presentation_settings.branding.logo,
+              company: draft.company || "",
+            },
+          },
+        },
+      );
+      const serverDefaults = await getServerReportBuilderConfig(renderer);
+      reportBuilderConfig.value = normalizeReportBuilderConfig(
+        {
+          ...serverDefaults,
+          renderer,
+          sections:
+            reportRendererMetadata.value?.sections || serverDefaults.sections,
+        },
+        renderer,
+      );
+      assignReportBuilderConfigToPresentationSettings();
+      layout.value = layoutStore.getDefaultLayout();
+      await refreshEffectivePresentationSettings();
+      syncReportBasicTypst();
+      dirty.value = true;
+      resetHistory(false);
+    } finally {
+      await nextTick();
+      initializing.value = false;
+    }
+  }
 
   /**
    * Fetch Crispy Format document and load DocType metadata
@@ -1258,17 +1330,25 @@ function buildStore() {
         sampleReports.value =
           doc.report_scope === "Selected Reports" && linkedReports.length
             ? linkedReports
-            : [{ name: "Style Preview" }];
+            : [];
         logger.info("Sample reports loaded", sampleReports.value);
-        selectedReportName.value = sampleReports.value[0].name;
-        await reportStore.loadReportFilterFields(selectedReportName.value);
-        await reportStore.loadReportColumns(selectedReportName.value, {});
+        selectedReportName.value = sampleReports.value[0]?.name || "";
+        reportPreviewReady.value = false;
+        if (selectedReportName.value) {
+          await reportStore.loadReportFilterFields(selectedReportName.value);
+        }
+        reportColumns.value = [];
         try {
           const metadataResponse = await frappe.call({
             method: "crispy_print.api.v1.get_report_renderer_metadata",
             args: { format_name: doc.name },
           });
           reportRendererMetadata.value = metadataResponse?.message || null;
+          if (!sampleReports.value.length) {
+            sampleReports.value = (
+              reportRendererMetadata.value?.preview_candidates || []
+            ).map((name: string) => ({ name }));
+          }
         } catch (error) {
           logger.warn("Failed to load report renderer metadata", error);
           reportRendererMetadata.value = null;
@@ -1359,7 +1439,6 @@ function buildStore() {
 
       // Load or create layout
       const persistedLayout = parsed.layout;
-      const hadNoLayout = !persistedLayout;
       layout.value = persistedLayout || layoutStore.getDefaultLayout();
 
       // Load page settings (already merged with defaults by parser)
@@ -1434,10 +1513,6 @@ function buildStore() {
         );
       }
 
-      // Auto-save if this was the first time (no layout_json in DB)
-      if (hadNoLayout && layout.value) {
-        await saveChanges();
-      }
       resetHistory(true);
     } catch (error) {
       logger.error("Failed to fetch Crispy Format", error);
@@ -1493,7 +1568,40 @@ function buildStore() {
           : 0,
       };
 
-      await saveCrispyFormat(crispyFormat.value.name, updateData);
+      if (crispyFormat.value.__islocal) {
+        const created = await createCrispyFormat({
+          name: crispyFormat.value.name,
+          __newname: crispyFormat.value.name,
+          company: updateData.company,
+          crispy_format_type: "Report",
+          report_scope: crispyFormat.value.report_scope || "Selected Reports",
+          report_renderer:
+            crispyFormat.value.report_renderer ||
+            reportBuilderConfig.value.renderer,
+          report_source_fingerprint:
+            crispyFormat.value.report_source_fingerprint || "",
+          report: (crispyFormat.value.report || []).map((row) => ({
+            report: row.report,
+            disabled: row.disabled || 0,
+          })),
+          is_default: crispyFormat.value.is_default || 0,
+          pdf_standard: crispyFormat.value.pdf_standard || "PDF/A-2u",
+          default_print_language:
+            crispyFormat.value.default_print_language || "",
+          typst_preamble: crispyFormat.value.typst_preamble || "",
+          ...updateData,
+        });
+        crispyFormat.value = {
+          ...crispyFormat.value,
+          ...created,
+          __islocal: 0,
+        };
+        if (typeof frappe !== "undefined" && frappe?.set_route) {
+          frappe.set_route("crispy-format-builder", created.name);
+        }
+      } else {
+        await saveCrispyFormat(crispyFormat.value.name, updateData);
+      }
 
       frappe.show_alert({
         message: __("Crispy Format saved"),
@@ -1653,6 +1761,7 @@ function buildStore() {
     if (reportBasicReadOnly.value) return;
     const generated = buildReportTypstFromConfig(reportBuilderConfig.value, {
       tableSettings: getReportTableSettingsSnapshot(),
+      reportTheme: effective_presentation_settings.value.reportTheme,
     });
     const signature = computeReportBasicSignature(generated);
     reportBuilderConfig.value.raw_signature = signature;
@@ -1720,6 +1829,7 @@ function buildStore() {
     reportBaseFields,
     reportBuilderFields,
     reportFilters,
+    reportPreviewReady,
     sampleReports,
     reportCandidates,
     selectedReportName,
@@ -1755,6 +1865,7 @@ function buildStore() {
 
     // Methods
     fetch,
+    initializeTransientReport,
     saveChanges,
     getTemplatePublishPreview,
     publishTemplate,
@@ -1781,6 +1892,7 @@ function buildStore() {
     loadSampleReports: reportStore.loadSampleReports,
     setSelectedReport: reportStore.setSelectedReport,
     compileReportPreview,
+    runSelectedReportPreview,
     syncReportBasicTypst,
     resetReportBasicTemplate,
     rebuildReportTableColumns: layoutStore.rebuildReportTableColumns,

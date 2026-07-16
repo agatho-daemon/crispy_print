@@ -288,7 +288,7 @@ def generate_report_pdf(
 
 def get_report_typst_source(
 	report: str,
-	format_name: str,
+	format_name: str | None = None,
 	filters: dict | str | None = None,
 	column_config: list | str | None = None,
 	include_filters: int = 0,
@@ -369,9 +369,28 @@ def get_report_typst_source(
 		elif isinstance(presentation_settings, dict):
 			presentation_settings_dict = presentation_settings
 
-	# Get format document
-	format_doc = frappe.get_doc("Crispy Format", format_name)
-	format_doc.check_permission("read")
+	# Saved formats are optional in the Builder. A transient preview requires
+	# create permission and explicit Typst supplied by the current editor state.
+	if format_name:
+		format_doc = frappe.get_doc("Crispy Format", format_name)
+		format_doc.check_permission("read")
+	else:
+		if not frappe.has_permission("Crispy Format", "create"):
+			frappe.throw(
+				_("You need permission to create Crispy Format before previewing an unsaved report.")
+			)
+		if not isinstance(typst_code_override, str) or not typst_code_override.strip():
+			frappe.throw(_("Typst code is required for an unsaved report preview."))
+		format_doc = frappe._dict(
+			name="",
+			company="",
+			typst_code=typst_code_override,
+			typst_preamble="",
+			doc_header="",
+			doc_footer="",
+			raw_typst=0,
+			is_advanced=0,
+		)
 	effective_company = resolve_effective_company(
 		report_filters=filters,
 		explicit_company=extract_presentation_settings_company(presentation_settings_dict)
@@ -391,7 +410,8 @@ def get_report_typst_source(
 		# Raw Typst overrides are trusted editor input. They are concatenated
 		# directly into the generated Typst, but only writable callers can supply
 		# them and Typst execution remains sandboxed.
-		format_doc.check_permission("write")
+		if format_name:
+			format_doc.check_permission("write")
 		format_doc_for_render.typst_code = typst_code_override
 
 	# Prepare data for Typst
@@ -562,7 +582,7 @@ def get_report_typst_source(
 
 def compile_report_preview(
 	report: str,
-	format_name: str,
+	format_name: str | None = None,
 	filters: dict | str | None = None,
 	column_config: list | str | None = None,
 	include_filters: int = 0,

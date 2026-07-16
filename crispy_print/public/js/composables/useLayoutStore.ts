@@ -87,6 +87,35 @@ export function createLayoutStore(options: CreateLayoutStoreOptions) {
     return true;
   }
 
+	function hydrateReportLayoutFromRuntime(): boolean {
+		if (!isReportMode.value) return false;
+		const runtimeColumns = buildReportTableColumns();
+		if (!layout.value?.sections?.length || !findReportTableField()) {
+			layout.value = getDefaultLayout();
+			markDirty();
+			return true;
+		}
+
+		const tableField = findReportTableField();
+		const existing: TableColumn[] = Array.isArray(tableField?.table_columns)
+			? (tableField.table_columns as TableColumn[])
+			: [];
+		const runtimeByName = new Map(runtimeColumns.map((column) => [column.fieldname, column]));
+		const merged = existing
+			.filter((column) => runtimeByName.has(column.fieldname))
+			.map((column) => ({ ...runtimeByName.get(column.fieldname), ...column }));
+		const existingNames = new Set(merged.map((column) => column.fieldname));
+		for (const column of runtimeColumns) {
+			if (!existingNames.has(column.fieldname)) merged.push(column);
+		}
+		tableField.table_columns = merged;
+		reportBuilderConfig.value.report_table_sync_signature = computeColumnsSignature(merged);
+		presentation_settings.value.report = { ...reportBuilderConfig.value };
+		syncFiltersBlockColumns();
+		markDirty();
+		return true;
+	}
+
   function syncFiltersBlockColumns(): boolean {
     if (!isReportMode.value) return false;
     const filtersField = findReportLayoutField("data.filters");
@@ -170,6 +199,7 @@ export function createLayoutStore(options: CreateLayoutStoreOptions) {
     findReportTableField,
     isReportTableCustomized,
     rebuildReportTableColumns,
+		hydrateReportLayoutFromRuntime,
     syncFiltersBlockColumns,
     getDefaultLayout,
     resetLayout,

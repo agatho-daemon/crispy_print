@@ -63,7 +63,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Native PDF Generation** - Uses the Typst CLI for publication-grade PDF generation instead of browser printing or wkhtmltopdf.
 - **Live SVG Preview** - Server-rendered preview flow for format design, document previews, and report previews without relying on browser print layout.
 - **Frappe Print Engine Adapter** - Registers Crispy Print as a client-renderer print engine when the proposed Frappe Print Engine extension is available, allowing Frappe's Print button to hand document printing directly to the Typst preview route.
-- **Reusable Branding Profiles** - Centralized page, typography, table, logo, letterhead, QR, and spacing settings for consistent company-wide document output.
+- **Reusable Branding Profiles** - Centralized page, typography, table, logo, letterhead, QR, spacing, and semantic report-theme settings for consistent company-wide output.
 - **Branding Profile Builder** - Dedicated visual builder for reusable presentation systems with generated Typst preview and controlled profile publication.
 - **Crispy Print Workspace** - Desk workspace with grouped shortcuts and cards for builders, core format records, reusable libraries, issued documents, reports, and regulatory setup.
 - **Reusable Typst Blocks** - Governed snippets for repeatable custom document fragments, scoped by category and linked DocType usage, with generated snake_case reference keys, explicit major/minor versions, and a dedicated compile/preview builder.
@@ -75,7 +75,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Crispy Issued Document Registry (CID)** - Immutable issued-document snapshots linked to frozen templates, with opaque verification tokens, render-hash facts, artifact tracking, trust-event and regulatory-submission child tables, and revocation/supersession state.
 - **Per-Format PDF Standard** - Output standard selection with a PDF/A-2u default plus PDF/A-3u, PDF/A-4, PDF 1.7, and PDF 2.0.
 - **Global Print Settings** - Crispy Print Settings DocType for font configuration (uploaded/system fonts, search paths, font discovery refresh), render timeout, and draft/cancelled print policy.
-- **Report Renderer Infrastructure (WIP)** - Renderer-based formats for generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation, with curated Basic-mode sections and guarded Advanced Typst overrides. This architecture is implemented for testing but has not completed report-family acceptance testing and is not production-ready.
+- **Report Renderer Infrastructure (WIP)** - Renderer-based formats for generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation, with curated Basic-mode sections, Branding Profile inheritance, transient live-data preview, and guarded Advanced Typst overrides. Report formats are created only by an explicit designer action and are never seeded during migration.
 - **Contract Format Foundation (WIP)** - Contract format support is reserved for future structured contract publishing workflows.
 - **Regulatory QR Layer** - QR Regulatory Profiles, Fiscal Credentials, and helper APIs for building machine-verifiable fiscal and compliance QR payloads.
 - **Document Code Infrastructure** - Document Code Profiles and Rules for deterministic reference codes, naming patterns, and compliance-oriented document identifiers.

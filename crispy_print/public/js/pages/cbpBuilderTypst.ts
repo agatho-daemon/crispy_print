@@ -150,6 +150,27 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
   ${specimenRows.map((row) => `[#text(..tableBodyStyle)[${typstContent(row.label)}]], [#text(..tableBodyStyle)[${typstContent(row.value)}]], [#align(right)[#text(..tableBodyStyle)[${typstContent(row.amount)}]]], [#text(..tableBodyStyle)[${typstContent(row.status)}]],`).join("\n  ")}
 )
 
+#section[Report Theme]
+#text(
+  font: ${toTypstValue(model.report_title_font_family || "Arial")},
+  size: ${num(model.report_title_font_size_pt)}pt,
+  weight: ${toTypstValue(String(model.report_title_font_weight || "Bold").toLowerCase())},
+  fill: rgb(${toTypstValue(model.report_title_font_color || "#1E293B")}),
+)[Financial Statement Title]
+#v(0.35em)
+#text(size: ${num(model.report_context_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_context_font_color || "#64748B")}))[Company · Fiscal Year · Currency]
+#v(0.65em)
+#grid(
+  columns: (1fr,) * 4,
+  column-gutter: 8pt,
+  block(fill: rgb(${toTypstValue(model.report_group_fill_color || "#EFF6FF")}), inset: 6pt)[Group row],
+  block(fill: rgb(${toTypstValue(model.report_subtotal_fill_color || "#F8FAFC")}), inset: 6pt)[Subtotal],
+  block(fill: rgb(${toTypstValue(model.report_grand_total_fill_color || "#E2E8F0")}), inset: 6pt)[Grand total],
+  block(inset: 6pt)[#text(fill: rgb(${toTypstValue(model.report_negative_color || "#B91C1C")}))[-1,250.000]],
+)
+#v(0.45em)
+#text(size: ${num(model.report_footer_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_footer_font_color || "#64748B")}))[Report footer · Page 1]
+
 #section[Branding]
 #grid(
   columns: (1fr,) * 4,

@@ -166,7 +166,9 @@ Report formats now select a coverage scope and renderer:
 - Unknown reports use the generic renderer, based on Frappe's report-grid structure.
 - **Custom** permits deliberate cross-family or fully bespoke Typst implementations.
 
-Basic mode offers renderer-curated sections and Standard, Compact, Minimal, and Summary Focus layout styles. Selected-report formats can execute a linked report for preview; all-compatible generic formats retain a dummy design preview. A source status warning indicates when the upstream Frappe or ERPNext HTML structural reference has changed. The warning does not modify approved Typst automatically.
+Basic mode offers renderer-curated sections and Standard, Compact, Minimal, and Summary Focus layout styles. The preview panel loads the selected report's real filters and executes live report data only after the designer supplies the required values and chooses **Run Preview**. No dummy report dataset is used. A source status warning indicates when the upstream Frappe or ERPNext HTML structural reference has changed. The warning does not modify approved Typst automatically.
+
+Renderer metadata is application-owned, but report formats are not provisioned automatically. Opening a new layout, selecting a renderer, choosing a Branding Profile, and running a preview remain transient until the designer explicitly saves the Crispy Format.
 
 Until acceptance testing is complete, test every intended report with representative filters, long values, multiple pages, totals, empty results, branding, and the target PDF standard.
 
@@ -175,9 +177,11 @@ Until acceptance testing is complete, test every intended report with representa
 Branding Profiles centralize presentation settings that should not be duplicated across every format:
 
 1. Create a **Crispy Branding Profile** for the company.
-2. Configure page size, margins, typography, table style, letterhead, logo, and QR defaults.
+2. Configure page size, margins, typography, table style, letterhead, logo, QR defaults, and reusable report-theme tokens.
 3. Open the Branding Profile Builder to preview the generated Typst specimen.
 4. Attach the profile to Crispy Formats that should inherit the same presentation system.
+
+Report presentation resolves from least to most specific: system defaults, Branding Profile, renderer structural defaults, Crispy Format overrides, then runtime-only preview overrides. Branding owns visual identity; report filters, sections, columns, widths, totals logic, and other structural choices remain format or renderer concerns.
 
 ### Compact Table Labels
 

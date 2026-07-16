@@ -118,6 +118,8 @@ describe("reportBuilder utils", () => {
     expect(typst).toContain(
       'if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
     );
-    expect(typst).toContain("box(inset: (left: row.indent * 2em))[#content]");
+    expect(typst).toContain(
+      "box(inset: (left: row.indent * 10pt))[#content]",
+    );
   });
 });

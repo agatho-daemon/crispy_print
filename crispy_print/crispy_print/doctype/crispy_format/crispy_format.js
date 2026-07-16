@@ -39,7 +39,30 @@ frappe.ui.form.on("Crispy Format", {
 				}
 			}
 
-			// Navigate to builder page
+			if (frm.is_new()) {
+				frappe.prompt(
+					{
+						fieldname: "format_name",
+						fieldtype: "Data",
+						label: __("Format Name"),
+						reqd: 1,
+					},
+					(values) => {
+						frappe.route_options = {
+							crispy_format_draft: {
+								...frm.doc,
+								name: String(values.format_name || "").trim(),
+								__islocal: 1,
+							},
+						};
+						frappe.set_route("crispy-format-builder", "new");
+					},
+					__("Preview Unsaved Format"),
+					__("Open Builder")
+				);
+				return;
+			}
+
 			frappe.set_route("crispy-format-builder", frm.doc.name);
 		});
 

@@ -65,6 +65,26 @@
   "table_body_font_style",
   "table_body_font_weight",
   "table_body_font_color",
+  "report_theme_section",
+  "report_title_font_family",
+  "report_title_font_size_pt",
+  "report_title_font_weight",
+  "report_title_font_color",
+  "report_theme_context_column",
+  "report_context_font_size_pt",
+  "report_context_font_color",
+  "report_footer_font_size_pt",
+  "report_footer_font_color",
+  "report_theme_colors_column",
+  "report_accent_color",
+  "report_muted_color",
+  "report_negative_color",
+  "report_warning_color",
+  "report_group_fill_color",
+  "report_subtotal_fill_color",
+  "report_grand_total_fill_color",
+  "report_hierarchy_indent_pt",
+  "report_chart_palette",
   "branding_section",
   "branding_mode_choices",
   "branding_mode",
@@ -443,6 +463,130 @@
    "fieldname": "table_body_font_color",
    "fieldtype": "Color",
    "label": "Color"
+  },
+  {
+   "depends_on": "eval:doc.code_only != 1",
+   "fieldname": "report_theme_section",
+   "fieldtype": "Section Break",
+   "label": "Report Theme"
+  },
+  {
+   "default": "Arial",
+   "fieldname": "report_title_font_family",
+   "fieldtype": "Data",
+   "label": "Report title font"
+  },
+  {
+   "default": "18",
+   "fieldname": "report_title_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Report title size (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "Bold",
+   "fieldname": "report_title_font_weight",
+   "fieldtype": "Select",
+   "label": "Report title weight",
+   "options": "Thin\nExtralight\nLight\nRegular\nMedium\nSemibold\nBold\nExtrabold\nBlack"
+  },
+  {
+   "default": "#1E293B",
+   "fieldname": "report_title_font_color",
+   "fieldtype": "Color",
+   "label": "Report title color"
+  },
+  {
+   "fieldname": "report_theme_context_column",
+   "fieldtype": "Column Break",
+   "label": "Context and footer"
+  },
+  {
+   "default": "9",
+   "fieldname": "report_context_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Context size (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "#64748B",
+   "fieldname": "report_context_font_color",
+   "fieldtype": "Color",
+   "label": "Context color"
+  },
+  {
+   "default": "8",
+   "fieldname": "report_footer_font_size_pt",
+   "fieldtype": "Float",
+   "label": "Footer size (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "#64748B",
+   "fieldname": "report_footer_font_color",
+   "fieldtype": "Color",
+   "label": "Footer color"
+  },
+  {
+   "fieldname": "report_theme_colors_column",
+   "fieldtype": "Column Break",
+   "label": "Semantic colors"
+  },
+  {
+   "default": "#1E3A8A",
+   "fieldname": "report_accent_color",
+   "fieldtype": "Color",
+   "label": "Accent color"
+  },
+  {
+   "default": "#64748B",
+   "fieldname": "report_muted_color",
+   "fieldtype": "Color",
+   "label": "Muted color"
+  },
+  {
+   "default": "#B91C1C",
+   "fieldname": "report_negative_color",
+   "fieldtype": "Color",
+   "label": "Negative value color"
+  },
+  {
+   "default": "#B45309",
+   "fieldname": "report_warning_color",
+   "fieldtype": "Color",
+   "label": "Warning color"
+  },
+  {
+   "default": "#EFF6FF",
+   "fieldname": "report_group_fill_color",
+   "fieldtype": "Color",
+   "label": "Group row fill"
+  },
+  {
+   "default": "#F8FAFC",
+   "fieldname": "report_subtotal_fill_color",
+   "fieldtype": "Color",
+   "label": "Subtotal row fill"
+  },
+  {
+   "default": "#E2E8F0",
+   "fieldname": "report_grand_total_fill_color",
+   "fieldtype": "Color",
+   "label": "Grand total row fill"
+  },
+  {
+   "default": "10",
+   "fieldname": "report_hierarchy_indent_pt",
+   "fieldtype": "Float",
+   "label": "Hierarchy indent (pt)",
+   "non_negative": 1
+  },
+  {
+   "default": "#1E3A8A, #2563EB, #0F766E, #B45309, #7C3AED, #BE123C",
+   "description": "Comma-separated colors used by report charts.",
+   "fieldname": "report_chart_palette",
+   "fieldtype": "Small Text",
+   "label": "Chart palette"
   },
   {
    "depends_on": "eval:doc.code_only != 1",

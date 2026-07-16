@@ -80,6 +80,9 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertTrue(settings["qr"]["enabled"])
 		self.assertEqual(settings["qr"]["dy"], 4)
 		self.assertEqual(settings["qr"]["sourceMode"], "basic")
+		self.assertEqual(settings["reportTheme"]["title"]["fontWeight"], "bold")
+		self.assertEqual(settings["reportTheme"]["negativeColor"], "#B91C1C")
+		self.assertEqual(len(settings["reportTheme"]["chartPalette"]), 6)
 
 	def test_rejects_negative_position_coordinates(self):
 		doc = self._new_profile(
@@ -243,7 +246,8 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 				"source": "branding_profile",
 				"language": "ar",
 				"branding": {"profile": doc.name, "mode": "none"},
-				"report": {"mode": "basic"},
+				"report": {"mode": "basic", "renderer": "financial_statement"},
+				"overrides": {"page": {"margins": {"left": 7}}},
 			}
 		)
 
@@ -252,6 +256,8 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(settings["branding"]["mode"], "logo")
 		self.assertEqual(settings["branding"]["logo"]["image"], "/files/cbp-effective-logo.png")
 		self.assertEqual(settings["page"]["margins"]["top"], 9)
+		self.assertEqual(settings["page"]["margins"]["left"], 7)
+		self.assertEqual(settings["page"]["orientation"], "landscape")
 		self.assertEqual(settings["language"], "ar")
 		self.assertEqual(settings["report"]["mode"], "basic")
 

@@ -128,7 +128,7 @@
 					</label>
 				</SettingsSection>
 
-				<template v-if="is_custom_profile">
+				<template>
 					<SettingsSection
 						v-if="!isRawTypst"
 						v-model="isPresentationSettingsExpanded"
@@ -659,7 +659,11 @@
 						/>
 					</SettingsSection>
 
-					<SettingsSection v-model="isBrandingExpanded" :title="__('Branding')">
+					<SettingsSection
+						v-if="is_custom_profile"
+						v-model="isBrandingExpanded"
+						:title="__('Branding')"
+					>
 						<div class="settings-pane__field">
 							<label class="settings-pane__label">{{ __("Type") }}</label>
 							<select
@@ -948,7 +952,7 @@
 			</div>
 		</div>
 		<QrFieldsDialog
-			v-if="is_custom_profile && showQrDialog"
+			v-if="showQrDialog"
 			:fields="qrAvailableFields"
 			:model-value="qrSettings.fields"
 			@update:model-value="updateQrFields"
@@ -963,6 +967,7 @@ import {
 	ensure_qr_settings,
 	ensure_table_settings,
 	ensure_typography,
+	merge_presentation_settings,
 	type PresentationSettings,
 	type TableSettings,
 	type TypographySettings,
@@ -975,7 +980,11 @@ import { useBrandingData } from "../composables/useBrandingData";
 import { useStore, type MarkDirtyOptions } from "../composables/useStore";
 import QrFieldsDialog from "./QrFieldsDialog.vue";
 import { getLogger } from "../logger";
-import { getBrandingProfiles, type CrispyBrandingProfileOption } from "../api/crispy";
+import {
+	getBrandingProfilePresentationSettings,
+	getBrandingProfiles,
+	type CrispyBrandingProfileOption,
+} from "../api/crispy";
 import { getDefaultReportBuilderConfig, type ReportBuilderConfig } from "../utils/reportBuilder";
 import { FONT_WEIGHT_OPTIONS } from "../utils/typographyOptions";
 import type { TypstFontFamilyFaces } from "../api/crispy";
@@ -1003,6 +1012,7 @@ const availableFonts = computed(() => props.availableFonts || []);
 const fontFaces = computed(() => props.fontFaces || []);
 const loadingFonts = computed(() => props.loadingFonts);
 const branding_profiles = ref<CrispyBrandingProfileOption[]>([]);
+const branding_profile_baseline = ref<Partial<PresentationSettings> | null>(null);
 const loading_branding_profiles = ref(false);
 const {
 	availableLetterheads,
@@ -1067,7 +1077,9 @@ const selected_company = computed<string>({
 		markSettingsDirty("live");
 	},
 });
-const is_custom_profile = computed(() => props.presentation_settings.source === "custom");
+const is_custom_profile = computed(
+	() => props.presentation_settings.source !== "branding_profile"
+);
 const branding_profile_selection = computed<string>({
 	get: () => {
 		if (props.presentation_settings.source === "custom") return "custom";
@@ -1080,6 +1092,8 @@ const branding_profile_selection = computed<string>({
 		if (value === "custom") {
 			props.presentation_settings.source = "custom";
 			props.presentation_settings.branding.profile = "";
+			props.presentation_settings.overrides = undefined;
+			branding_profile_baseline.value = null;
 		} else if (value) {
 			props.presentation_settings.source = "branding_profile";
 			props.presentation_settings.branding.profile = value;
@@ -1091,11 +1105,12 @@ const branding_profile_selection = computed<string>({
 				logo_settings.value.company = selectedProfile.company;
 				logo_settings.value.image = resolveCompanyLogo(selectedProfile.company);
 			}
+			void applyBrandingProfileBase(value);
 		} else {
 			props.presentation_settings.source = "";
 			props.presentation_settings.branding.profile = "";
 		}
-		markSettingsDirty("live");
+		markSettingsDirty("live", false);
 	},
 });
 
@@ -1118,9 +1133,69 @@ const qrFieldsSummary = computed(() => {
 	return __("{0} fields selected", [count]);
 });
 
-function markSettingsDirty(policy: MarkDirtyOptions["preview"] = "live") {
+function markSettingsDirty(policy: MarkDirtyOptions["preview"] = "live", captureOverrides = true) {
 	if (store.loading.value || store.initializing.value) return;
+	if (
+		captureOverrides &&
+		props.presentation_settings.source === "branding_profile" &&
+		branding_profile_baseline.value
+	) {
+		props.presentation_settings.overrides =
+			deepDifference(
+				branding_profile_baseline.value,
+				extractOverrideableSettings(props.presentation_settings)
+			) || {};
+	}
 	props.markDirty({ preview: policy });
+}
+
+async function applyBrandingProfileBase(profile: string) {
+	try {
+		const profileSettings = await getBrandingProfilePresentationSettings(profile);
+		if (props.presentation_settings.branding.profile !== profile) return;
+		const baseline = extractOverrideableSettings(profileSettings as PresentationSettings);
+		branding_profile_baseline.value = cloneValue(baseline);
+		const effective = merge_presentation_settings(
+			profileSettings as PresentationSettings,
+			(props.presentation_settings.overrides || {}) as Partial<PresentationSettings>
+		);
+		for (const key of ["page", "typography", "table", "qr", "reportTheme"] as const) {
+			if (effective[key] !== undefined) {
+				(props.presentation_settings as any)[key] = cloneValue(effective[key]);
+			}
+		}
+	} catch (error) {
+		logger.warn("Failed to load Branding Profile base settings", error);
+	}
+}
+
+function extractOverrideableSettings(settings: PresentationSettings) {
+	return {
+		page: cloneValue(settings.page),
+		typography: cloneValue(settings.typography),
+		table: cloneValue(settings.table),
+		qr: cloneValue(settings.qr),
+		reportTheme: cloneValue(settings.reportTheme),
+	};
+}
+
+function deepDifference(base: any, current: any): any {
+	if (Array.isArray(base) || Array.isArray(current)) {
+		return JSON.stringify(base) === JSON.stringify(current) ? undefined : cloneValue(current);
+	}
+	if (base && current && typeof base === "object" && typeof current === "object") {
+		const out: Record<string, any> = {};
+		for (const key of Object.keys(current)) {
+			const difference = deepDifference(base[key], current[key]);
+			if (difference !== undefined) out[key] = difference;
+		}
+		return Object.keys(out).length ? out : undefined;
+	}
+	return Object.is(base, current) ? undefined : current;
+}
+
+function cloneValue<T>(value: T): T {
+	return value === undefined ? value : JSON.parse(JSON.stringify(value));
 }
 
 const updateQrFields = (fields: string[]) => {
@@ -1243,6 +1318,10 @@ async function fetch_branding_profiles() {
 			company: selected_company.value || null,
 		});
 		emit("branding-profiles-change", branding_profiles.value);
+		const selectedProfileName = props.presentation_settings.branding.profile;
+		if (props.presentation_settings.source === "branding_profile" && selectedProfileName) {
+			void applyBrandingProfileBase(selectedProfileName);
+		}
 		if (!props.presentation_settings.source && !props.presentation_settings.branding.profile) {
 			const default_profile = branding_profiles.value.find((profile) =>
 				Number(profile.is_default)
@@ -1255,7 +1334,8 @@ async function fetch_branding_profiles() {
 					logo_settings.value.company = default_profile.company;
 					logo_settings.value.image = resolveCompanyLogo(default_profile.company);
 				}
-				markSettingsDirty("live");
+				void applyBrandingProfileBase(default_profile.name);
+				markSettingsDirty("live", false);
 			}
 		}
 	} catch (error) {

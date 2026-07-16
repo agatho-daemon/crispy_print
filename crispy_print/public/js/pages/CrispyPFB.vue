@@ -27,9 +27,7 @@
 						</svg>
 					</span>
 				</button>
-				<span class="pane-rail__label">{{
-					store.isReportMode.value ? __("Report Fields") : __("Fields")
-				}}</span>
+				<span class="pane-rail__label">{{ __("Fields") }}</span>
 			</div>
 			<FieldsPane
 				v-else
@@ -379,10 +377,25 @@ const formatHealthItems = computed<FormatHealthItem[]>(() => {
 onMounted(async () => {
 	loadLayoutState();
 	await fetchFonts();
-	const formatName = getCrispyBuilderFormatName();
-	if (formatName) await store.fetch(formatName);
+	await loadBuilderRoute();
 	window.addEventListener("keydown", handleHistoryShortcuts);
 });
+
+async function loadBuilderRoute() {
+	const formatName = getCrispyBuilderFormatName();
+	if (!formatName) return;
+	if (formatName === "new") {
+		const draft = frappe?.route_options?.crispy_format_draft;
+		if (!draft || draft.crispy_format_type !== "Report") {
+			frappe.msgprint(__("Unsaved report configuration is no longer available."));
+			return;
+		}
+		await store.initializeTransientReport(draft);
+		delete frappe.route_options.crispy_format_draft;
+		return;
+	}
+	await store.fetch(formatName);
+}
 
 async function fetchFonts() {
 	loadingFonts.value = true;
@@ -445,7 +458,8 @@ function isGeneratedReportTypstStale(): boolean {
 	if (store.reportBuilderConfig.value?.mode !== "basic") return false;
 	if (store.reportBasicReadOnly.value) return false;
 	const expected = buildReportTypstFromConfig(store.reportBuilderConfig.value, {
-		tableSettings: presentation_settings.value?.table,
+		tableSettings: store.effective_presentation_settings.value?.table,
+		reportTheme: store.effective_presentation_settings.value?.reportTheme,
 	});
 	return Boolean(store.typstCode.value.trim()) && store.typstCode.value !== expected;
 }
@@ -709,8 +723,7 @@ function onResizePointerDown(event: PointerEvent) {
 // Watch for route changes
 if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	frappe.router.on("change", async () => {
-		const formatName = getCrispyBuilderFormatName();
-		if (formatName) await store.fetch(formatName);
+		await loadBuilderRoute();
 	});
 }
 </script>

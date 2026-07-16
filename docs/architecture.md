@@ -162,7 +162,7 @@ Data model:
 - **`Crispy Format`** - Format registry for DocType, Report, and Contract format records.
 - **`Crispy Template`** - Frozen, versioned approved render contract published from a Crispy Format.
 - **`Crispy Issued Document`** - Immutable issued-document registry (CID) with verification tokens and revocation/supersession state, plus artifact, trust-event, and regulatory-submission child tables.
-- **`Crispy Branding Profile`** - Reusable company presentation profile.
+- **`Crispy Branding Profile`** - Reusable company presentation profile, including semantic report-theme tokens that do not depend on a specific report family.
 - **`Crispy Typst Block`** - Governed reusable Typst snippet library with generated snake_case reference keys, major/minor versions, company-aware override support, and a preview-only authoring builder.
 - **Report renderer fields on `Crispy Format`** - `report_scope`, `report_renderer`, linked report rows, and source fingerprint replace the removed `Crispy Generic Report` classification model.
 - **`Crispy Print Settings`** - Single DocType for global font, rendering, and print-policy configuration.
@@ -171,6 +171,7 @@ Data model:
 Sample data policy:
 
 - **No production `Crispy Format` fixtures** - The app intentionally does not export `Crispy Format` records through `hooks.py` fixtures.
+- **No report-format seeding** - Renderer metadata and native templates ship as application code, but installation and migration do not create report formats for any company.
 - **`examples/formats/`** - Curated sample payloads are app-owned JSON files and become site data only when a user creates a format from the builder Examples dialog or sample catalog API.
 - **`dev_utils/`** - Rich local demo-data generation remains developer-only and is not treated as production app surface.
 
@@ -187,6 +188,8 @@ Default policy:
 - **Dynamic format scopes** - Report resolution considers exact linked reports, company/global scope, compatible renderer formats, and generic fallbacks; linked report defaults compete when their report rows overlap.
 
 Render payload policy:
+
+- **Layered presentation** - Effective report presentation resolves through system, Branding Profile, renderer, explicit format override, and runtime layers. Report structure remains separate from brand identity.
 
 - **Requested fields first** - Builder preview requests only the document fields referenced by the current layout or raw Typst source before loading the source document.
 - **Safe essentials** - `get_formatted_doc` always includes `doctype`, `name`, `docstatus`, `modified`, and the Crispy print context needed by render helpers.

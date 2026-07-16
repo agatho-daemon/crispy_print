@@ -92,6 +92,23 @@ export interface PagePresentationSettings {
   };
 }
 
+export interface ReportThemeSettings {
+  accentColor: string;
+  mutedColor: string;
+  negativeColor: string;
+  warningColor: string;
+  title: TypographyStyle;
+  context: { fontSize: string; color: string };
+  footer: { fontSize: string; color: string };
+  rows: {
+    groupFill: string;
+    subtotalFill: string;
+    grandTotalFill: string;
+  };
+  hierarchyIndentPt: number;
+  chartPalette: string[];
+}
+
 export interface BrandingPresentationSettings {
   profile?: string;
   company?: string;
@@ -111,7 +128,39 @@ export interface PresentationSettings {
   table?: TableSettings;
   qr?: QrSettings;
   report?: ReportBuilderConfig;
+  reportTheme?: ReportThemeSettings;
+  overrides?: Partial<PresentationSettings>;
 }
+
+export const defaultReportTheme: ReportThemeSettings = {
+  accentColor: "#1e3a8a",
+  mutedColor: "#64748b",
+  negativeColor: "#b91c1c",
+  warningColor: "#b45309",
+  title: {
+    fontFamily: "Inter",
+    fontSize: "18pt",
+    fontStyle: "normal",
+    fontWeight: "bold",
+    color: "#1e293b",
+  },
+  context: { fontSize: "9pt", color: "#64748b" },
+  footer: { fontSize: "8pt", color: "#64748b" },
+  rows: {
+    groupFill: "#eff6ff",
+    subtotalFill: "#f8fafc",
+    grandTotalFill: "#e2e8f0",
+  },
+  hierarchyIndentPt: 10,
+  chartPalette: [
+    "#1e3a8a",
+    "#2563eb",
+    "#0f766e",
+    "#b45309",
+    "#7c3aed",
+    "#be123c",
+  ],
+};
 
 export const defaultTypography: TypographySettings = {
   fieldLabel: {
@@ -200,6 +249,7 @@ export const default_presentation_settings: PresentationSettings = {
     moduleSize: 3,
   },
   report: getDefaultReportBuilderConfig(),
+  reportTheme: defaultReportTheme,
 };
 
 function ensure_presentation_shape(settings: any): PresentationSettings {
@@ -417,6 +467,32 @@ export function merge_presentation_settings(
       safeOverrides.report || base.report || {},
       safeOverrides.report_renderer || (base as any)?.report_renderer,
     ),
+    reportTheme: {
+      ...(base.reportTheme || defaultReportTheme),
+      ...(safeOverrides.reportTheme || {}),
+      title: {
+        ...(base.reportTheme?.title || defaultReportTheme.title),
+        ...(safeOverrides.reportTheme?.title || {}),
+      },
+      context: {
+        ...(base.reportTheme?.context || defaultReportTheme.context),
+        ...(safeOverrides.reportTheme?.context || {}),
+      },
+      footer: {
+        ...(base.reportTheme?.footer || defaultReportTheme.footer),
+        ...(safeOverrides.reportTheme?.footer || {}),
+      },
+      rows: {
+        ...(base.reportTheme?.rows || defaultReportTheme.rows),
+        ...(safeOverrides.reportTheme?.rows || {}),
+      },
+      chartPalette: [
+        ...(safeOverrides.reportTheme?.chartPalette ||
+          base.reportTheme?.chartPalette ||
+          defaultReportTheme.chartPalette),
+      ],
+    },
+    overrides: safeOverrides.overrides,
   };
 
   return merged;

@@ -9,12 +9,6 @@ import type {
   ReportBuilderConfig,
   ReportBuilderMode,
 } from "../utils/reportBuilder";
-import {
-  buildDummyReportPreviewData,
-  getDummyReportFilterColumns,
-  getDummyReportTableColumns,
-  renderDummyReportChartSvg,
-} from "../utils/reportPreviewDummy";
 import { dispatchCrispyPreviewSource } from "../utils/events";
 import { escapeTypstString } from "../utils/typstEscape";
 import {
@@ -39,8 +33,9 @@ interface CreateReportStoreOptions {
   reportColumns: Ref<any[]>;
   reportFilterFields: Ref<any[]>;
   reportFilters: Ref<Record<string, any>>;
+	reportPreviewReady: Ref<boolean>;
   getReportColumnConfigFromLayout: () => ColumnConfig;
-  getReportTableColumnsForPreview: () => any[];
+	getEffectiveCompany: () => string | null;
 }
 
 export function createReportStore(options: CreateReportStoreOptions) {
@@ -56,8 +51,9 @@ export function createReportStore(options: CreateReportStoreOptions) {
     reportColumns,
     reportFilterFields,
     reportFilters,
+		reportPreviewReady,
     getReportColumnConfigFromLayout,
-    getReportTableColumnsForPreview,
+		getEffectiveCompany,
   } = options;
 
   function buildReportFontPreambleOverride(): string {
@@ -106,7 +102,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
     filters: Record<string, any> = {},
   ) {
     if (!reportName || reportName === "Style Preview") {
-      reportColumns.value = getDummyReportTableColumns();
+		reportColumns.value = [];
       return;
     }
     const response = await frappe.call({
@@ -122,19 +118,28 @@ export function createReportStore(options: CreateReportStoreOptions) {
 
   async function loadReportFilterFields(reportName: string) {
     if (!reportName || reportName === "Style Preview") {
-      reportFilterFields.value = getDummyReportFilterColumns().map((col) => ({
-        fieldname: col.fieldname,
-        label: col.label,
-        fieldtype: col.fieldtype || "Data",
-        reqd: false,
-      }));
+		reportFilterFields.value = [];
       return;
     }
-    reportFilterFields.value = [];
+		const definitions = await frappe.report_utils.get_report_filters(reportName);
+		reportFilterFields.value = Array.isArray(definitions)
+			? definitions.filter((field: any) => field?.fieldname && !field?.hidden)
+			: [];
+		const defaults: Record<string, any> = {};
+		for (const field of reportFilterFields.value) {
+			if (field.default !== undefined && field.default !== null && field.default !== "") {
+				defaults[field.fieldname] = field.default;
+			}
+		}
+		if (reportFilterFields.value.some((field: any) => field.fieldname === "company")) {
+			defaults.company = getEffectiveCompany() || defaults.company || "";
+		}
+		reportFilters.value = defaults;
   }
 
   async function loadSampleReports() {
-    selectedReportName.value = "Style Preview";
+		selectedReportName.value = "";
+		reportPreviewReady.value = false;
   }
 
   async function setSelectedReport(
@@ -142,12 +147,10 @@ export function createReportStore(options: CreateReportStoreOptions) {
     options: { refreshKey?: boolean; promptOnCustomized?: boolean } = {},
   ) {
     void options;
-    selectedReportName.value = name || "Style Preview";
+		selectedReportName.value = name || "";
+		reportPreviewReady.value = false;
     await loadReportFilterFields(selectedReportName.value);
-    await loadReportColumns(
-      selectedReportName.value,
-      reportFilters.value || {},
-    );
+		reportColumns.value = [];
   }
 
   async function compileReportPreview(
@@ -203,51 +206,18 @@ export function createReportStore(options: CreateReportStoreOptions) {
         (value): value is string => Boolean(value),
       );
       const typst_preamble_override = buildReportFontPreambleOverride();
-      const table_columns = getReportTableColumnsForPreview();
-      const useDummyData = !reportName || reportName === "Style Preview";
-      const preview_data = buildDummyReportPreviewData({
-        title: reportName || selectedReportName.value || "Style Preview",
-        includeFilters,
-        includeSummary: Boolean(reportBuilderConfig.value.show_summary),
-        includeTotalRow: Boolean(reportBuilderConfig.value.include_total_row),
-        tableColumns: table_columns,
-        columnConfig: effectiveColumnConfig,
-      });
-      const chart_enabled = Boolean(reportBuilderConfig.value.chart_enabled);
-      const preview_chart_svg = chart_enabled
-        ? await renderDummyReportChartSvg({
-            height: Math.max(
-              140,
-              Math.min(
-                600,
-                Math.round(
-                  Number(reportBuilderConfig.value.chart_max_height_pt) || 220,
-                ),
-              ),
-            ),
-            axisOptions: {
-              yAxisMode: "span",
-            },
-          })
-        : null;
-      const preview_data_payload = {
-        ...preview_data,
-        chart_svg: preview_chart_svg ? "report_chart.svg" : "",
-      };
-
       const result = await compileReportPreviewApi({
-        report: reportName || "Style Preview",
+			report: reportName,
         format_name: formatName.value,
         filters: reportFilters.value || {},
         column_config: effectiveColumnConfig,
         include_filters: includeFilters ? 1 : 0,
         orientation,
-        chart_svg: preview_chart_svg,
+			chart_svg: null,
         typst_preamble_override: typst_preamble_override,
         typst_code_override: buildReportTypstOverrideForPreview(
           typstCode.value || "",
         ),
-        preview_data: useDummyData ? preview_data_payload : undefined,
         presentation_settings: {
           ...presentation_settings_payload,
           branding: {

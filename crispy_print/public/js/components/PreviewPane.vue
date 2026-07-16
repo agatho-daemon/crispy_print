@@ -33,7 +33,7 @@
 		<template #menu>
 			<div class="section-head preview-pane__header">
 				<div class="section-head-content preview-pane__header-row">
-					<h3 class="section-title preview-pane__title">{{ __("Typst Preview") }}</h3>
+					<h3 class="section-title preview-pane__title">{{ __("Preview") }}</h3>
 					<div class="preview-pane__spacer"></div>
 					<div
 						class="preview-mode-toggle"
@@ -73,7 +73,11 @@
 						>
 							<ul class="preview-pane__help-list">
 								<li v-if="isReportMode">
-									{{ __("Style preview uses deterministic sample data.") }}
+									{{
+										__(
+											"Set report variables in the Report Template panel, then run a live preview."
+										)
+									}}
 								</li>
 								<li v-else>{{ __("Pick a document to preview.") }}</li>
 								<li>{{ __("Refresh regenerates the preview.") }}</li>
@@ -83,14 +87,18 @@
 					</div>
 				</div>
 			</div>
+			<ReportPreviewVariables v-if="isReportMode" />
 
 			<div class="preview-pane__controls card">
 				<div class="preview-pane__controls-row">
-					<!-- Sample Report Selector (shared with LayoutPane for Report formats) -->
 					<div v-if="isReportMode" class="preview-search">
 						<div class="preview-search__input-wrap">
 							<span class="preview-search__note">
-								{{ __("Style preview with placeholder data") }}
+								{{
+									store.reportPreviewReady?.value
+										? __("Live report preview")
+										: __("Waiting for preview variables")
+								}}
 							</span>
 						</div>
 					</div>
@@ -155,6 +163,7 @@
 
 <script setup lang="ts">
 import PreviewRenderer from "./PreviewRenderer.vue";
+import ReportPreviewVariables from "./ReportPreviewVariables.vue";
 import { useStore } from "../composables/useStore";
 import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { getLogger } from "../logger";
@@ -246,7 +255,14 @@ async function compileSelectedReport(reportName: string) {
 
 function onRefreshClick() {
 	if (isReportMode.value) {
-		void compileSelectedReport("Style Preview");
+		if (store.reportPreviewReady?.value && store.selectedReportName?.value) {
+			void compileSelectedReport(store.selectedReportName.value);
+		} else {
+			frappe.show_alert({
+				message: __("Set preview variables and run the report first"),
+				indicator: "blue",
+			});
+		}
 		return;
 	}
 	store.requestPreviewRefresh?.();
@@ -269,12 +285,19 @@ onBeforeUnmount(() => {
 });
 
 watch(
-	() => [isReportMode.value, store.previewRevision.value] as const,
+	() =>
+		[
+			isReportMode.value,
+			store.previewRevision.value,
+			store.reportPreviewReady?.value,
+			store.selectedReportName?.value,
+		] as const,
 	([reportMode]) => {
-		if (!reportMode) return;
-		void compileSelectedReport("Style Preview");
+		if (!reportMode || !store.reportPreviewReady?.value || !store.selectedReportName?.value)
+			return;
+		void compileSelectedReport(store.selectedReportName.value);
 	},
-	{ immediate: true }
+	{ immediate: false }
 );
 </script>
 

@@ -147,6 +147,97 @@
 			</section>
 
 			<section v-if="!effectiveCodeOnly" class="cbp-panel">
+				<h3>{{ __("Report Theme") }}</h3>
+				<p class="cbp-panel__hint">
+					{{
+						__(
+							"Reusable visual defaults for every report renderer. Report filters, columns, and calculations remain format-specific."
+						)
+					}}
+				</p>
+				<div class="cbp-grid cbp-grid--two">
+					<label>
+						<span>{{ __("Title Font") }}</span>
+						<input
+							v-model="model.report_title_font_family"
+							class="form-control"
+							type="text"
+						/>
+					</label>
+					<number-field
+						v-model="model.report_title_font_size_pt"
+						:label="__('Title Size')"
+					/>
+					<label>
+						<span>{{ __("Title Weight") }}</span>
+						<select v-model="model.report_title_font_weight" class="form-control">
+							<option
+								v-for="weight in reportFontWeights"
+								:key="weight"
+								:value="weight"
+							>
+								{{ weight }}
+							</option>
+						</select>
+					</label>
+					<color-field
+						v-model="model.report_title_font_color"
+						:label="__('Title Color')"
+					/>
+					<number-field
+						v-model="model.report_context_font_size_pt"
+						:label="__('Context Size')"
+					/>
+					<color-field
+						v-model="model.report_context_font_color"
+						:label="__('Context Color')"
+					/>
+					<number-field
+						v-model="model.report_footer_font_size_pt"
+						:label="__('Footer Size')"
+					/>
+					<color-field
+						v-model="model.report_footer_font_color"
+						:label="__('Footer Color')"
+					/>
+				</div>
+				<div class="cbp-section-heading">{{ __("Semantic colors") }}</div>
+				<div class="cbp-grid cbp-grid--two">
+					<color-field v-model="model.report_accent_color" :label="__('Accent')" />
+					<color-field v-model="model.report_muted_color" :label="__('Muted')" />
+					<color-field
+						v-model="model.report_negative_color"
+						:label="__('Negative Value')"
+					/>
+					<color-field v-model="model.report_warning_color" :label="__('Warning')" />
+					<color-field
+						v-model="model.report_group_fill_color"
+						:label="__('Group Row Fill')"
+					/>
+					<color-field
+						v-model="model.report_subtotal_fill_color"
+						:label="__('Subtotal Fill')"
+					/>
+					<color-field
+						v-model="model.report_grand_total_fill_color"
+						:label="__('Grand Total Fill')"
+					/>
+					<number-field
+						v-model="model.report_hierarchy_indent_pt"
+						:label="__('Hierarchy Indent')"
+					/>
+				</div>
+				<label>
+					<span>{{ __("Chart Palette") }}</span>
+					<textarea
+						v-model="model.report_chart_palette"
+						class="form-control"
+						rows="2"
+					></textarea>
+				</label>
+			</section>
+
+			<section v-if="!effectiveCodeOnly" class="cbp-panel">
 				<h3>{{ __("Branding") }}</h3>
 				<div class="cbp-grid">
 					<label>
@@ -397,6 +488,17 @@ import NumberField from "./cbpFields/NumberField";
 
 const props = defineProps<{ profileName: string }>();
 const emit = defineEmits<{ (event: "dirty", value: boolean): void }>();
+const reportFontWeights = [
+	"Thin",
+	"Extralight",
+	"Light",
+	"Regular",
+	"Medium",
+	"Semibold",
+	"Bold",
+	"Extrabold",
+	"Black",
+];
 
 const fallbackModel = createFallbackModel(props.profileName);
 const codeReferenceComment = defaultCodeOnlyTypst.split("*/")[0] + "*/";

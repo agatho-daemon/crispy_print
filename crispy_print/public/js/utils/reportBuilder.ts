@@ -1,4 +1,7 @@
-import type { TableSettings } from "./presentation_settings";
+import type {
+  ReportThemeSettings,
+  TableSettings,
+} from "./presentation_settings";
 import { typstTextStyle } from "../typst/textStyles";
 import { escapeTypstString } from "./typstEscape";
 
@@ -54,6 +57,7 @@ export interface ReportBuilderConfig {
 
 interface ReportTypstBuildOptions {
   tableSettings?: TableSettings | null;
+  reportTheme?: ReportThemeSettings | null;
 }
 
 export function getDefaultReportBuilderConfig(
@@ -252,6 +256,46 @@ export function buildReportTypstFromConfig(
   const tableHeaderAlign = resolveHeaderAlign(config.column_align_strategy);
   const tableBodyAlign = resolveBodyAlign(config.column_align_strategy);
   const tableSettings = options.tableSettings || null;
+  const reportTheme = options.reportTheme || null;
+  const titleFontFamily = asString(
+    reportTheme?.title?.fontFamily,
+    config.font_family,
+  );
+  const titleFontSize = formatPt(
+    toPointNumber(reportTheme?.title?.fontSize, 16),
+  );
+  const titleFontWeight = asString(reportTheme?.title?.fontWeight, "bold");
+  const titleFontColor = asHexColor(
+    reportTheme?.title?.color || "#1e293b",
+    "#1e293b",
+  );
+  const contextFontSize = formatPt(
+    toPointNumber(reportTheme?.context?.fontSize, 9),
+  );
+  const contextFontColor = asHexColor(
+    reportTheme?.context?.color || "#64748b",
+    "#64748b",
+  );
+  const footerFontSize = formatPt(
+    toPointNumber(reportTheme?.footer?.fontSize, 8),
+  );
+  const footerFontColor = asHexColor(
+    reportTheme?.footer?.color || "#64748b",
+    "#64748b",
+  );
+  const hierarchyIndentPt = toNumber(reportTheme?.hierarchyIndentPt, 10);
+  const groupFill = asHexColor(
+    reportTheme?.rows?.groupFill || "#eff6ff",
+    "#eff6ff",
+  );
+  const subtotalFill = asHexColor(
+    reportTheme?.rows?.subtotalFill || "#f8fafc",
+    "#f8fafc",
+  );
+  const grandTotalFill = asHexColor(
+    reportTheme?.rows?.grandTotalFill || "#e2e8f0",
+    "#e2e8f0",
+  );
   const stripeEnabled = tableSettings
     ? Boolean(tableSettings.stripe.enabled)
     : config.row_striping;
@@ -363,9 +407,13 @@ export function buildReportTypstFromConfig(
   lines.push("");
   if (sectionVisible("heading")) {
     lines.push("#align(center)[");
-    lines.push('  #text(size: 16pt, weight: "bold")[#data.title]');
+    lines.push(
+      `  #text(font: "${escapeTypstString(titleFontFamily)}", size: ${titleFontSize}, weight: "${escapeTypstString(titleFontWeight)}", fill: rgb("${titleFontColor}"))[#data.title]`,
+    );
     lines.push("  #v(0.3em)");
-    lines.push('  #text(size: 9pt, fill: rgb("#666"))[#data.subtitle]');
+    lines.push(
+      `  #text(size: ${contextFontSize}, fill: rgb("${contextFontColor}"))[#data.subtitle]`,
+    );
     lines.push("]");
     lines.push("");
     lines.push("#v(1em)");
@@ -567,6 +615,9 @@ export function buildReportTypstFromConfig(
       lines.push("    .filter(row => row.is_total_row != true)");
     }
     lines.push("    .map(row => {");
+    lines.push(
+      `      let row-fill = if row.role == "section" { rgb("${groupFill}") } else if row.role == "calculation" { rgb("${subtotalFill}") } else if row.role == "grand_total" { rgb("${grandTotalFill}") } else { none }`,
+    );
     lines.push("      row.cells.enumerate().map(cell_entry => {");
     lines.push("        let idx = cell_entry.at(0)");
     lines.push("        let cell = cell_entry.at(1)");
@@ -578,9 +629,11 @@ export function buildReportTypstFromConfig(
     lines.push(
       '        if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
     );
-    lines.push("          box(inset: (left: row.indent * 2em))[#content]");
+    lines.push(
+      `          table.cell(fill: row-fill)[#box(inset: (left: row.indent * ${formatPt(hierarchyIndentPt)}))[#content]]`,
+    );
     lines.push("        } else {");
-    lines.push("          content");
+    lines.push("          table.cell(fill: row-fill)[#content]");
     lines.push("        }");
     lines.push("      })");
     lines.push("    })");
@@ -592,7 +645,9 @@ export function buildReportTypstFromConfig(
     lines.push("");
     lines.push("#v(1em)");
     lines.push("#align(right)[");
-    lines.push('  #text(size: 8pt, fill: rgb("#666"))[');
+    lines.push(
+      `  #text(size: ${footerFontSize}, fill: rgb("${footerFontColor}"))[`,
+    );
     lines.push("    Total Records: #data.total_rows");
     lines.push("  ]");
     lines.push("]");

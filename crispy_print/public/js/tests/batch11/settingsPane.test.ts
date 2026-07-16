@@ -203,7 +203,7 @@ describe("SettingsPane", () => {
     hoisted.storeMock.isReportMode.value = false;
   });
 
-  it("hides manual settings when a branding profile is selected", async () => {
+  it("keeps format override settings available with a branding profile", async () => {
     const presentation_settings = reactive({
       source: "custom",
       page: {
@@ -244,9 +244,10 @@ describe("SettingsPane", () => {
     await nextTick();
 
     expect(presentation_settings.branding.profile).toBe("CBP-1");
-    expect(wrapper.text()).not.toContain("Page Settings");
-    expect(wrapper.text()).not.toContain("Typography");
-    expect(wrapper.text()).not.toContain("Enable QR Code");
+    expect(wrapper.text()).toContain("Page Settings");
+    expect(wrapper.text()).toContain("Typography");
+    expect(wrapper.text()).toContain("Enable QR Code");
+    // Company identity remains owned by the Branding Profile.
     expect(wrapper.find('option[value="logo"]').exists()).toBe(false);
 
     await profileSelect!.setValue("custom");

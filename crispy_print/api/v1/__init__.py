@@ -8,6 +8,7 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	get_applicable_typst_blocks as _get_applicable_typst_blocks,
 )
 from crispy_print.report_renderers import get_renderer_metadata as _get_renderer_metadata
+from crispy_print.report_renderers import infer_report_renderer
 
 from .branding_profiles import (
 	get_branding_profile_presentation_settings as _get_branding_profile_presentation_settings,
@@ -275,7 +276,22 @@ def get_default_report_builder_config(report_renderer: str | None = None) -> JSO
 def get_report_renderer_metadata(format_name: str) -> JSONDict:
 	doc = frappe.get_doc("Crispy Format", format_name)
 	doc.check_permission("read")
-	return _get_renderer_metadata(doc.report_renderer, doc.report_source_fingerprint)
+	metadata = _get_renderer_metadata(doc.report_renderer, doc.report_source_fingerprint)
+	if doc.report_scope == "Selected Reports":
+		metadata["preview_candidates"] = [
+			row.report for row in (doc.report or []) if row.report and not row.disabled
+		]
+	else:
+		reports = frappe.get_list(
+			"Report",
+			filters={"disabled": 0, "report_type": ["in", ["Script Report", "Query Report"]]},
+			pluck="name",
+			order_by="name asc",
+		)
+		metadata["preview_candidates"] = [
+			report for report in reports if infer_report_renderer(report) == doc.report_renderer
+		]
+	return metadata
 
 
 @frappe.whitelist()
@@ -630,7 +646,7 @@ def get_report_renderer_catalog() -> JSONDict:
 )
 def get_report_typst_source(
 	report: str,
-	format_name: str,
+	format_name: str | None = None,
 	filters: JSONDict | str | None = None,
 	column_config: list[JSONDict] | str | None = None,
 	include_filters: int = 0,
@@ -671,7 +687,7 @@ def get_report_typst_source(
 )
 def compile_report_preview(
 	report: str,
-	format_name: str,
+	format_name: str | None = None,
 	filters: JSONDict | str | None = None,
 	column_config: list[JSONDict] | str | None = None,
 	include_filters: int = 0,

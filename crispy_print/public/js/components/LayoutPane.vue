@@ -3,7 +3,7 @@
 		<div class="section-head layout-pane__header">
 			<div class="section-head-content layout-pane__header-row">
 				<div class="layout-pane__title-wrap">
-					<h3 class="section-title layout-pane__title">{{ __("Layout Builder") }}</h3>
+					<h3 class="section-title layout-pane__title">{{ __("Builder") }}</h3>
 					<span
 						v-if="showGenericReportTypeBadge"
 						class="layout-pane__generic-type-badge"

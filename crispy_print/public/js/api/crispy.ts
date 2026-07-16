@@ -433,6 +433,23 @@ export interface CrispyBrandingProfileDoc extends CrispyBrandingProfileOption {
   table_body_font_style?: string;
   table_body_font_weight?: string;
   table_body_font_color?: string;
+  report_title_font_family?: string;
+  report_title_font_size_pt?: number;
+  report_title_font_weight?: string;
+  report_title_font_color?: string;
+  report_context_font_size_pt?: number;
+  report_context_font_color?: string;
+  report_footer_font_size_pt?: number;
+  report_footer_font_color?: string;
+  report_accent_color?: string;
+  report_muted_color?: string;
+  report_negative_color?: string;
+  report_warning_color?: string;
+  report_group_fill_color?: string;
+  report_subtotal_fill_color?: string;
+  report_grand_total_fill_color?: string;
+  report_hierarchy_indent_pt?: number;
+  report_chart_palette?: string;
   branding_logo_source?: "Company logo" | "Upload image";
   branding_logo_upload?: string;
   branding_logo_width_mm?: number;
@@ -757,6 +774,17 @@ export async function saveCrispyFormat(
   },
 ): Promise<void> {
   await setValue("Crispy Format", name, values);
+}
+
+export async function createCrispyFormat(
+  values: Record<string, any>,
+): Promise<CrispyFormatDoc> {
+  const res = await call<CrispyFormatDoc>({
+    method: "frappe.client.insert",
+    args: { doc: { ...values, doctype: "Crispy Format" } },
+  });
+  if (!res.message) throw new Error("Missing created Crispy Format");
+  return res.message;
 }
 
 export async function getCrispyTemplatePublishPreview(args: {

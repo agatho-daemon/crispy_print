@@ -118,6 +118,14 @@ RENDERERS: tuple[ReportRenderer, ...] = (
 
 RENDERER_BY_KEY = {renderer.key: renderer for renderer in RENDERERS}
 REPORT_TO_RENDERER = {report: renderer.key for renderer in RENDERERS for report in renderer.reports}
+RENDERER_PRESENTATION_DEFAULTS: dict[str, dict[str, Any]] = {
+	"receivable_payable": {"page": {"orientation": "landscape"}},
+	"financial_statement": {"page": {"orientation": "landscape"}},
+	"general_ledger": {"page": {"orientation": "landscape"}},
+	"bank_reconciliation": {"page": {"orientation": "landscape"}},
+	"generic_report": {},
+	"custom": {},
+}
 
 
 def infer_report_renderer(report: str | None) -> str:
@@ -133,6 +141,11 @@ def validate_renderer_reports(renderer: str, reports: list[str]) -> bool:
 	if renderer == "custom":
 		return True
 	return all(infer_report_renderer(report) == renderer for report in reports)
+
+
+def get_renderer_presentation_defaults(renderer_key: str | None) -> dict[str, Any]:
+	"""Return structural defaults applied after the Branding Profile layer."""
+	return dict(RENDERER_PRESENTATION_DEFAULTS.get(renderer_key or "generic_report", {}))
 
 
 def _source_file(renderer: ReportRenderer) -> Path | None:
@@ -169,6 +182,7 @@ def get_renderer_metadata(renderer_key: str, expected_fingerprint: str | None = 
 		"label": renderer.label,
 		"reports": list(renderer.reports),
 		"sections": [dict(section) for section in renderer.sections],
+		"presentation_defaults": get_renderer_presentation_defaults(renderer.key),
 		"source": source,
 	}
 

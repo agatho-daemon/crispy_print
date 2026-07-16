@@ -23,13 +23,17 @@ export async function resolve_effective_presentation_settings(
   ).trim();
 
   if (source !== "branding_profile" || !profile) {
-    return merge_presentation_settings(default_presentation_settings, presentation_settings || {});
+    return merge_presentation_settings(
+      default_presentation_settings,
+      presentation_settings || {},
+    );
   }
 
   try {
     let profile_settings_request = inflightBrandingProfileRequests.get(profile);
     if (!profile_settings_request) {
-      profile_settings_request = getBrandingProfilePresentationSettings(profile);
+      profile_settings_request =
+        getBrandingProfilePresentationSettings(profile);
       inflightBrandingProfileRequests.set(profile, profile_settings_request);
     }
     const profile_settings = await profile_settings_request.finally(() => {
@@ -40,13 +44,23 @@ export async function resolve_effective_presentation_settings(
         profile_settings?.branding?.logo?.company ||
         "",
     ).trim();
-    if (expectedCompany && profileCompany && profileCompany !== expectedCompany) {
-      logger.warn("Crispy Branding Profile company does not match render company; using format settings", {
-        profile,
-        profileCompany,
-        expectedCompany,
-      });
-      const fallback = merge_presentation_settings(default_presentation_settings, presentation_settings || {});
+    if (
+      expectedCompany &&
+      profileCompany &&
+      profileCompany !== expectedCompany
+    ) {
+      logger.warn(
+        "Crispy Branding Profile company does not match render company; using format settings",
+        {
+          profile,
+          profileCompany,
+          expectedCompany,
+        },
+      );
+      const fallback = merge_presentation_settings(
+        default_presentation_settings,
+        presentation_settings || {},
+      );
       fallback.source = "custom";
       fallback.branding.profile = "";
       fallback.branding.company = expectedCompany;
@@ -54,9 +68,17 @@ export async function resolve_effective_presentation_settings(
       return fallback;
     }
 
-    const effective = merge_presentation_settings(
+    let effective = merge_presentation_settings(
       default_presentation_settings,
       profile_settings || {},
+    );
+    effective = merge_presentation_settings(
+      effective,
+      getRendererPresentationDefaults(presentation_settings.report?.renderer),
+    );
+    effective = merge_presentation_settings(
+      effective,
+      presentation_settings.overrides || {},
     );
     effective.source = "branding_profile";
     effective.branding.profile = profile;
@@ -70,7 +92,29 @@ export async function resolve_effective_presentation_settings(
     }
     return effective;
   } catch (error) {
-    logger.warn("Failed to resolve Crispy Branding Profile; using format settings", error);
-    return merge_presentation_settings(default_presentation_settings, presentation_settings || {});
+    logger.warn(
+      "Failed to resolve Crispy Branding Profile; using format settings",
+      error,
+    );
+    return merge_presentation_settings(
+      default_presentation_settings,
+      presentation_settings || {},
+    );
   }
+}
+
+function getRendererPresentationDefaults(
+  renderer?: string,
+): Partial<PresentationSettings> {
+  if (
+    renderer === "receivable_payable" ||
+    renderer === "financial_statement" ||
+    renderer === "general_ledger" ||
+    renderer === "bank_reconciliation"
+  ) {
+    return {
+      page: { orientation: "landscape" },
+    } as Partial<PresentationSettings>;
+  }
+  return {};
 }
