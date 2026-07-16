@@ -70,12 +70,10 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 #let fieldValueStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "field_value"), 10)}
 #let tableHeaderStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "table_header"), 9)}
 #let tableBodyStyle = ${renderTypstTextStyle(cbpTypographyStyle(model, "table_body"), 9)}
-#let specimenSectionStyle = (size: 14pt, weight: "bold", fill: black)
-#let specimenSampleHeadingStyle = (size: 10pt, weight: "bold", fill: rgb("#334155"))
 
 #let section(title) = [
   #v(1.75em)
-  #text(..specimenSectionStyle)[#title]
+  #text(..sectionStyle)[#title]
   #v(-0.50em)
   #line(length: 100%, stroke: 0.45pt + rgb("#E5E7EB"))
   #v(0.20em)
@@ -85,52 +83,19 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
   #text(..fieldLabelStyle)[#label]#linebreak()#text(..fieldValueStyle)[#value]
 ]
 
-#section[Page Settings]
-#grid(
-  columns: (1fr,) * 4,
-  column-gutter: 12pt,
-  row-gutter: 8pt,
-  field[Profile Name][${typstContent(model.profile_name || context.profileName)}],
-  field[Company][${typstContent(model.company || "Not selected")}],
-  field[Default][${typstContent(context.isDefault ? "Yes" : "No")}],
-  field[Page Size][${typstContent(model.page_size || "A4")}],
-  field[Orientation][${typstContent(titleCase(model.orientation || "portrait"))}],
-  field[Margin Top][${typstContent(mmValue(model.margin_top_mm))}],
-  field[Margin Right][${typstContent(mmValue(model.margin_right_mm))}],
-  field[Margin Bottom][${typstContent(mmValue(model.margin_bottom_mm))}],
-  field[Margin Left][${typstContent(mmValue(model.margin_left_mm))}],
-)
+#field[Company][${typstContent(model.company || "Company Name")}]
 
-#section[Typography Settings]
-#grid(
-  columns: (1fr,) * 3,
-  column-gutter: 16pt,
-  row-gutter: 1.50em,
-  [#text(..fieldLabelStyle)[Section Label]],
-  [#text(..fieldLabelStyle)[Field Label]],
-  [#text(..fieldLabelStyle)[Field Value]],
-  grid.cell(align: bottom)[#text(..sectionStyle)[Section Label]],
-  grid.cell(align: bottom)[#text(..fieldLabelStyle)[Field Label]],
-  grid.cell(align: bottom)[#text(..fieldValueStyle)[Field Value]],
-)
+#v(1.25em)
+#text(
+  font: ${toTypstValue(model.report_title_font_family || "Arial")},
+  size: ${num(model.report_title_font_size_pt)}pt,
+  weight: ${toTypstValue(String(model.report_title_font_weight || "bold"))},
+  fill: rgb(${toTypstValue(model.report_title_font_color || "#1E293B")}),
+)[Financial Statement Title]
+#v(0.35em)
+#text(size: ${num(model.report_context_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_context_font_color || "#64748B")}))[Fiscal Year 2026 · KWD]
 
-#section[Table Settings]
-#grid(
-  columns: (1fr,) * 4,
-  column-gutter: 12pt,
-  row-gutter: 8pt,
-  field[Cell Top][${typstContent(ptValue(model.table_cell_inset_top_pt))}],
-  field[Cell Right][${typstContent(ptValue(model.table_cell_inset_right_pt))}],
-  field[Cell Bottom][${typstContent(ptValue(model.table_cell_inset_bottom_pt))}],
-  field[Cell Left][${typstContent(ptValue(model.table_cell_inset_left_pt))}],
-  field[Border Stroke][${typstContent(ptValue(model.table_border_stroke_width_pt))}],
-  field[Border Color][${typstContent(model.table_border_color || "#E2E8F0")}],
-  field[Header Fill][${typstContent(model.table_header_background_color || "#F1F5F9")}],
-  field[Striping][${typstContent(context.tableStriping ? "Enabled" : "Disabled")}],
-  field[Stripe Fill][${typstContent(model.table_stripe_color || "#F8FAFC")}],
-)
-
-#v(0.65em)
+#section[Account Summary]
 #table(
   columns: (1fr, 1.7fr, auto, auto),
   inset: (
@@ -142,24 +107,15 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
   stroke: (paint: rgb(${toTypstValue(model.table_border_color || "#E2E8F0")}), thickness: ${num(model.table_border_stroke_width_pt)}pt),
   fill: ${tableFill},
   table.header(
-    [#text(..tableHeaderStyle)[Column 1]],
-    [#text(..tableHeaderStyle)[Column 2]],
-    [#align(right)[#text(..tableHeaderStyle)[Column 3]]],
-    [#text(..tableHeaderStyle)[Column 4]],
+    [#text(..tableHeaderStyle)[Account]],
+    [#text(..tableHeaderStyle)[Description]],
+    [#align(right)[#text(..tableHeaderStyle)[Balance]]],
+    [#text(..tableHeaderStyle)[Class]],
   ),
   ${specimenRows.map((row) => `[#text(..tableBodyStyle)[${typstContent(row.label)}]], [#text(..tableBodyStyle)[${typstContent(row.value)}]], [#align(right)[#text(..tableBodyStyle)[${typstContent(row.amount)}]]], [#text(..tableBodyStyle)[${typstContent(row.status)}]],`).join("\n  ")}
 )
 
-#section[Report Theme]
-#text(
-  font: ${toTypstValue(model.report_title_font_family || "Arial")},
-  size: ${num(model.report_title_font_size_pt)}pt,
-  weight: ${toTypstValue(String(model.report_title_font_weight || "bold"))},
-  fill: rgb(${toTypstValue(model.report_title_font_color || "#1E293B")}),
-)[Financial Statement Title]
-#v(0.35em)
-#text(size: ${num(model.report_context_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_context_font_color || "#64748B")}))[Company · Fiscal Year · Currency]
-#v(0.65em)
+#v(0.85em)
 #grid(
   columns: (1fr,) * 4,
   column-gutter: 8pt,
@@ -170,31 +126,6 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 )
 #v(0.45em)
 #text(size: ${num(model.report_footer_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_footer_font_color || "#64748B")}))[Report footer · Page 1]
-
-#section[Branding]
-#grid(
-  columns: (1fr,) * 4,
-  column-gutter: 12pt,
-  row-gutter: 8pt,
-  field[Mode][${typstContent(model.branding_mode || "None")}],
-  field[Logo Source][${typstContent(model.branding_logo_source || "Company logo")}],
-  field[Logo Width][${typstContent(mmValue(model.branding_logo_width_mm))}],
-  field[Logo X][${typstContent(mmValue(model.branding_logo_offset_x_mm))}],
-  field[Logo Y][${typstContent(mmValue(model.branding_logo_offset_y_mm))}],
-  field[Letterhead Source][${typstContent(context.letterheadSourceLabel)}],
-  field[Letterhead][${typstContent(context.letterheadLabel)}],
-)
-
-#section[QR Code]
-#grid(
-  columns: (1fr,) * 4,
-  column-gutter: 12pt,
-  row-gutter: 8pt,
-  field[Enabled][${typstContent(context.qrEnabled ? "Yes" : "No")}],
-  field[Size][${typstContent(mmValue(model.qr_code_size_mm))}],
-  field[X][${typstContent(mmValue(model.qr_dx_mm))}],
-  field[Y][${typstContent(mmValue(model.qr_dy_mm))}],
-)
 `;
 }
 
@@ -283,16 +214,4 @@ function assetFilename(path: string) {
   if (!path) return "";
   const clean = String(path).split("?")[0].split("#")[0];
   return decodeURIComponent(clean.split("/").filter(Boolean).at(-1) || "");
-}
-
-function mmValue(value: any) {
-  return `${num(value)} mm`;
-}
-
-function ptValue(value: any) {
-  return `${num(value)} pt`;
-}
-
-function titleCase(value: string) {
-  return value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
 }

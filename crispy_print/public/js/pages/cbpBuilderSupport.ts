@@ -25,22 +25,22 @@ const codeReferenceComment = defaultCodeOnlyTypst.split("*/")[0] + "*/";
 
 export const specimenRows = [
   {
-    label: "Row 1",
-    value: "Cell 1",
+    label: "1100",
+    value: "Cash and Bank",
     amount: "KWD 125.000",
-    status: "Open",
+    status: "Asset",
   },
   {
-    label: "Row 2",
-    value: "Cell 2",
+    label: "2100",
+    value: "Accounts Payable",
     amount: "KWD 48.000",
-    status: "Pending",
+    status: "Liability",
   },
   {
-    label: "Row 3",
-    value: "Cell 3",
+    label: "4100",
+    value: "Service Revenue",
     amount: "KWD 6.500",
-    status: "Closed",
+    status: "Income",
   },
 ];
 
