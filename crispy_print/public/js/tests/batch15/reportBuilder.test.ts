@@ -56,6 +56,7 @@ describe("reportBuilder utils", () => {
         preset: "summary",
         font_size_pt: "11",
         column_align_strategy: "center",
+        chart_representation: "Horizontal Bar",
       },
       "Grid",
     );
@@ -64,6 +65,11 @@ describe("reportBuilder utils", () => {
     expect(config.preset).toBe("summary");
     expect(config.font_size_pt).toBe(11);
     expect(config.column_align_strategy).toBe("center");
+    expect(config.chart_representation).toBe("horizontal_bar");
+    expect(
+      normalizeReportBuilderConfig({ chart_representation: "pie" })
+        .chart_representation,
+    ).toBe("auto");
     expect(typeof computeReportBasicSignature("x")).toBe("string");
   });
 

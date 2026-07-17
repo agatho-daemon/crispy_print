@@ -38,6 +38,8 @@ this policy metadata.
 ]
 ```
 
+- Notes: TTC collections are inspected face by face so embedded weights and styles are included even when the Typst family listing reports only Regular
+
 - Notes: used by builder typography controls to restrict style/weight choices to faces Typst can resolve for the selected family
 
 ### `compile_typst(typst_source, output_format='svg', pdf_standard=None, asset_files=None, chart_svg=None, qr_data=None, qr_filename=None, barcode_options=None, output_filename=None, return_url=0)`
@@ -164,7 +166,7 @@ this policy metadata.
 ### `get_sample_report_data(report, filters=None, limit=50)`
 
 - Args: `report: str`, optional `filters`, `limit: int`
-- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, unchanged upstream `chart`, printable `chart_spec`, and compatibility aliases
+- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, unchanged upstream `chart`, printable `chart_spec`, and compatibility aliases. Render-time `chart_spec.representation` records the requested, source, applied, and resolved chart kinds when a Basic format requests a compatible representation override.
 
 ### `get_report_typst_source(report, format_name=None, ..., limit=50)`
 

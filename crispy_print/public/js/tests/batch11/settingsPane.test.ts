@@ -20,6 +20,7 @@ const hoisted = vi.hoisted(() => ({
         show_summary: true,
         include_total_row: true,
         chart_enabled: true,
+        chart_representation: "auto",
         chart_card_border: true,
         chart_width_percent: 100,
         chart_max_height_pt: 220,
@@ -198,7 +199,17 @@ describe("SettingsPane", () => {
     await chartHeader!.trigger("click");
     await nextTick();
     expect(wrapper.text()).toContain("Enable Chart");
+    expect(wrapper.text()).toContain("Chart Representation");
     expect(wrapper.text()).toContain("Show Summary");
+    const representationSelect = wrapper
+      .findAll("select")
+      .find((select) => select.find('option[value="horizontal_bar"]').exists());
+    expect(representationSelect).toBeTruthy();
+    await representationSelect!.setValue("bar");
+    expect(hoisted.storeMock.updateReportBuilderConfig).toHaveBeenCalledWith(
+      { chart_representation: "bar" },
+      { preview: "live" },
+    );
 
     hoisted.storeMock.isReportMode.value = false;
   });

@@ -246,6 +246,23 @@
 					v-model="model.report_chart_palette"
 					:default-palette="defaultReportChartPalette"
 				/>
+				<div class="cbp-grid cbp-grid--two cbp-chart-preview-choice">
+					<label>
+						<span>{{ __("Preview chart") }}</span>
+						<select v-model="previewChartKind" class="form-control">
+							<option
+								v-for="option in previewChartOptions"
+								:key="option.value"
+								:value="option.value"
+							>
+								{{ __(option.label) }}
+							</option>
+						</select>
+						<small>{{
+							__("Changes only this specimen, not saved report behavior.")
+						}}</small>
+					</label>
+				</div>
 				<div class="cbp-section-heading">{{ __("Chart appearance") }}</div>
 				<div class="cbp-grid cbp-grid--two">
 					<label class="cbp-check">
@@ -257,7 +274,11 @@
 						<span>{{ __("Vertical major grid") }}</span>
 					</label>
 					<label class="cbp-check">
-						<input v-model="model.report_chart_minor_grid" type="checkbox" />
+						<input
+							v-model="model.report_chart_minor_grid"
+							type="checkbox"
+							:disabled="!horizontalGridEnabled"
+						/>
 						<span>{{ __("Minor grids") }}</span>
 					</label>
 					<label class="cbp-check">
@@ -592,6 +613,7 @@ import {
 import {
 	buildCodePreviewTypst as renderCodePreviewTypst,
 	buildVisualPreviewTypst as renderVisualPreviewTypst,
+	type CbpPreviewChartKind,
 	type CbpPreviewTypstContext,
 } from "./cbpBuilderTypst";
 import ColorField from "./cbpFields/ColorField";
@@ -626,6 +648,16 @@ const saving = ref(false);
 const codePreviewStatus = ref<"idle" | "compiling" | "ready" | "error">("idle");
 const codePreviewPages = ref<string[]>([]);
 const codePreviewError = ref("");
+const previewChartKind = ref<CbpPreviewChartKind>("line");
+const previewChartOptions: Array<{ value: CbpPreviewChartKind; label: string }> = [
+	{ value: "line", label: "Line" },
+	{ value: "bar", label: "Bar" },
+	{ value: "grouped_bar", label: "Grouped Bar" },
+	{ value: "mixed", label: "Mixed Bar and Line" },
+	{ value: "horizontal_bar", label: "Horizontal Bar" },
+	{ value: "percentage_stacked", label: "100% Aging Distribution" },
+	{ value: "waterfall", label: "Waterfall" },
+];
 let codePreviewTimer: ReturnType<typeof setTimeout> | null = null;
 let codePreviewSeq = 0;
 
@@ -647,6 +679,9 @@ const tableStriping = computed({
 	get: () => Boolean(Number(model.table_row_striping || 0)),
 	set: (value: boolean) => (model.table_row_striping = value ? 1 : 0),
 });
+const horizontalGridEnabled = computed(() =>
+	Boolean(Number(model.report_chart_horizontal_grid || 0))
+);
 const sectionLabelTypography = cbpTypographyModel(model, "section_label");
 const fieldLabelTypography = cbpTypographyModel(model, "field_label");
 const fieldValueTypography = cbpTypographyModel(model, "field_value");
@@ -685,6 +720,9 @@ watch(
 		refreshLetterheadOptions();
 	}
 );
+watch(horizontalGridEnabled, (enabled) => {
+	if (!enabled) model.report_chart_minor_grid = 0;
+});
 watch(
 	() => [model.branding_mode, model.branding_logo_source, model.branding_letterhead_source],
 	() => {
@@ -773,6 +811,7 @@ watch(
 	() =>
 		JSON.stringify({
 			codeOnly: effectiveCodeOnly.value,
+			previewChartKind: previewChartKind.value,
 			settings: previewTriggerModel(),
 			logo: logoImage.value,
 			letterhead: letterheadImage.value,
@@ -881,6 +920,7 @@ function previewTypstContext(): CbpPreviewTypstContext {
 		letterheadImage: letterheadImage.value,
 		letterheadLabel: letterheadLabel.value,
 		letterheadSourceLabel: letterheadSourceLabel.value,
+		previewChartKind: previewChartKind.value,
 	};
 }
 
@@ -917,6 +957,7 @@ function uploadImage(target: "logo" | "letterhead") {
 }
 
 function resetPreviewDefaults() {
+	previewChartKind.value = "line";
 	model.page_size = "A4";
 	model.orientation = "portrait";
 	model.margin_top_mm = 20;

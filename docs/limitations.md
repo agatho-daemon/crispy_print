@@ -21,7 +21,7 @@ As a **beta release**, Crispy Print has several known limitations:
 - **Report Family Coverage**: Known renderer mappings are curated. New or renamed ERPNext reports fall back to the generic renderer until deliberately classified and tested.
 - **Upstream Report Changes**: Source fingerprints warn when referenced Frappe/ERPNext HTML changes, but native Typst renderers are not automatically regenerated. A designer must review and approve corresponding renderer changes.
 - **Report Edge Cases**: Dynamic columns, unusual filters, empty datasets, very wide reports, long values, multiple pages, charts, totals, RTL content, and custom ERPNext modifications require report-specific testing. Advanced Raw Typst may still be necessary.
-- **Native Chart Coverage (WIP)**: Lilaq rendering is limited to accounting-core bar, grouped bar, line, mixed, horizontal bar, percentage aging, and waterfall specs. Unsupported browser charts may use sanitized Frappe SVG; unsupported background charts are omitted with diagnostics.
+- **Native Chart Coverage (WIP)**: Lilaq rendering is limited to accounting-core bar, grouped bar, line, mixed, horizontal bar, percentage aging, and waterfall specs. Basic formats may request compatible bar, line, or single-series horizontal-bar representations, but percentage-aging and waterfall semantics cannot be overridden. Unsupported browser charts may use sanitized Frappe SVG; unsupported background charts are omitted with diagnostics.
 - **Contract Scope**: Contract format type exists as a foundation, but contract authoring workflows are WIP.
 
 ### Typst Integration

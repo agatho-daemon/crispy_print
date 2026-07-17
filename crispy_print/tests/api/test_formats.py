@@ -571,6 +571,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 		self.assertEqual(unknown["preset"], "grid")
 		self.assertIn("show_filters", grid)
 		self.assertIn("chart_enabled", grid)
+		self.assertEqual(grid["chart_representation"], "auto")
 		self.assertIn("font_family", grid)
 
 	def test_get_available_formats_filters_custom_report_formats_by_company(self):

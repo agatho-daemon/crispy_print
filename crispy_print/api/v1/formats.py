@@ -350,6 +350,7 @@ def get_default_report_builder_config(report_renderer: str | None = None) -> dic
 		"include_total_row": True,
 		"show_footer_total": True,
 		"chart_enabled": True,
+		"chart_representation": "auto",
 		"chart_width_percent": 100,
 		"chart_max_height_pt": 220,
 		"chart_card_border": False,

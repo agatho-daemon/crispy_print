@@ -712,6 +712,42 @@ def _variable_font_faces(font_path: Path) -> list[dict[str, str]]:
 	return faces
 
 
+def _ttc_font_faces(font_path: Path) -> list[tuple[str, dict[str, str]]]:
+	if font_path.suffix.lower() != ".ttc":
+		return []
+
+	try:
+		from fontTools.ttLib import TTCollection
+
+		collection = TTCollection(font_path, lazy=True)
+	except Exception:
+		return []
+
+	faces = []
+	try:
+		for font in collection.fonts:
+			name_table = font.get("name")
+			family = ""
+			subfamily = ""
+			if name_table:
+				family = name_table.getDebugName(16) or name_table.getDebugName(1) or ""
+				subfamily = name_table.getDebugName(17) or name_table.getDebugName(2) or ""
+			if not family:
+				continue
+
+			weight_number = int(getattr(font.get("OS/2"), "usWeightClass", 400))
+			weight = min(FONT_WEIGHT_ORDER, key=lambda name: abs(FONT_WEIGHT_ORDER[name] - weight_number))
+			style = _normalize_font_style(subfamily)
+			if style == "normal" and int(getattr(font.get("head"), "macStyle", 0)) & 0b10:
+				style = "italic"
+			label = subfamily.strip() or weight.capitalize()
+			faces.append((family, {"label": label, "style": style, "weight": weight}))
+	finally:
+		collection.close()
+
+	return faces
+
+
 def _empty_font_family_faces(family: str) -> dict[str, object]:
 	return {"family": family, "faces": [], "styles": [], "weights": []}
 
@@ -780,6 +816,11 @@ def _add_font_file_faces(families: dict[str, dict[str, object]]) -> None:
 			*font_dir.rglob("*.woff"),
 			*font_dir.rglob("*.woff2"),
 		]:
+			collection_faces = _ttc_font_faces(font_file)
+			if collection_faces:
+				for family, face in collection_faces:
+					_add_font_face(families, family, face)
+				continue
 			family = _font_family_from_filename(font_file)
 			variable_faces = _variable_font_faces(font_file)
 			if variable_faces:
@@ -798,7 +839,7 @@ def get_typst_font_faces() -> list[dict[str, object]]:
 	ensure_compile_typst_permission()
 	enforce_rate_limit("typst_font_faces", limit=20, window_seconds=60)
 
-	cache_key = "crispy_print:typst_font_faces:v3"
+	cache_key = "crispy_print:typst_font_faces:v4"
 	cached_faces = frappe.cache().get_value(cache_key, expires=True)
 	if isinstance(cached_faces, list):
 		return cached_faces

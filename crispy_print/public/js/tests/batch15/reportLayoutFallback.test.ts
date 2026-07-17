@@ -34,6 +34,7 @@ vi.mock("../../api/crispy", () => ({
       include_total_row: true,
       show_footer_total: true,
       chart_enabled: true,
+      chart_representation: "auto",
       chart_width_percent: 100,
       chart_max_height_pt: 220,
       chart_card_border: true,

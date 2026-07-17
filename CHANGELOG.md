@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the site-level `CRISPY_PRINT_REPORT_CHART_ENGINE` emergency override for switching native chart selection to sanitized Frappe SVG fallback without exposing renderer selection to designers.
 - Added Branding Profile controls for horizontal, vertical, and minor grids; axes and zero baselines; legend and data-label policies; label, series-line, and marker sizing; and accessibility distinctions. A post-model-sync patch fills only blank chart settings on existing profiles.
 - Added production-rendered chart, semantic-color, hierarchy, warning, negative-value, subtotal, and grand-total specimens to the Branding Profile preview so report-theme changes are demonstrated visually rather than as static setting summaries.
+- Added a non-persistent Branding Profile specimen selector for previewing line, bar, grouped-bar, mixed, horizontal-bar, aging-distribution, and waterfall chart appearances without changing saved report behavior.
 - Added allowlist-based Frappe SVG sanitization with active-content, external-resource, namespace, size, element-count, and path-complexity defenses.
 - Added a report-renderer registry for generic reports, receivables/payables, financial statements, General Ledger, Bank Reconciliation, and explicit custom formats.
 - Added renderer-owned report families, curated semantic sections, source HTML fingerprints, compatibility metadata, row-role enrichment, and a native renderer-aware Typst baseline.
@@ -49,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed Basic report authoring to use renderer-defined layout styles and curated sections; Advanced mode remains a complete Typst override over the normalized report payload.
 - Changed the Basic report generator to signature version 2 with explicit native-chart section markers and `crispy-chart` calls. Existing Basic sources receive compatibility injection without duplicate SVG/native charts, while Advanced Typst remains untouched and receives `chart`, `chart_spec`, and `chart_svg` explicitly.
 - Changed report preview and PDF payloads to preserve the original ERPNext chart while returning the printable chart specification, selected engine, fallback/omission reason, helper version, and Lilaq version.
-- Replaced five bundled Shippori Mincho static faces, which consumed about 41 MiB and were used only for classic numerals, with the roughly 0.4 MiB STIX Two Text Roman variable font. STIX Two Text retains a classic serif numeral treatment, financial-friendly lining/tabular figures, and a 400–700 weight axis at a substantially smaller installation cost.
+- Changed Basic report chart settings to default to the ERPNext chart representation while allowing compatible Bar, Line, and Horizontal Bar format-level overrides. Aging-distribution and waterfall semantics remain protected, and incompatible overrides retain the source chart with a diagnostic.
+- Replaced five full-CJK Shippori Mincho static faces, which consumed about 41 MiB, with a renamed roughly 0.24 MiB `CrispyShipporiMincho.ttc` Latin/financial-symbol subset containing the original 400–800 Roman weights. STIX Two Text remains available for financial-friendly lining and tabular figures.
 - Changed report authoring to remain transient until an explicit Save; opening a new Builder layout no longer writes generated layout data automatically.
 - Removed renderer preset seeding and its cleanup/refresh patches. Installing or migrating Crispy Print no longer creates report `Crispy Format` records for companies.
 - Removed automatic `Crispy Format` fixture shipping. Sample formats now live as app-owned JSON examples and are copied into site data only through the explicit Examples workflow.
@@ -77,9 +79,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed uploaded site font discovery by passing absolute private font directories to Typst.
 - Fixed duplicate font-family entries caused by combining Typst-reported family names with filename-derived fallback names.
 - Fixed typography fallback caused by selecting unavailable weights or styles for a chosen font family.
+- Fixed TTC font discovery so the Builder exposes every embedded family face and weight instead of treating the collection as Regular-only.
 - Fixed regular-mode preview refresh behavior around keystroke-heavy controls by keeping invalid intermediate values from compiling until they become valid.
 - Fixed Lilaq chart compilation for the sixth accessibility series by using the package's case-sensitive diamond marker name.
-- Fixed Branding Profile chart controls so horizontal, vertical, and minor-grid toggles independently control the rendered specimen instead of inheriting Lilaq's default grid strokes.
+- Fixed Branding Profile chart controls so horizontal and vertical major-grid toggles control the rendered specimen instead of inheriting Lilaq's default grid strokes; Minor grids is disabled and cleared until Horizontal major grid is enabled.
 - Fixed Branding Profile specimen compilation when a saved font is unavailable by using an installed preview fallback without overwriting the saved profile choice.
 - Fixed Raw Typst helper source generation so reusable block bodies are not injected unless referenced by `crispy_block("...")`.
 - Fixed raw private image handling so `crispy_image()` resolves only approved private uploaded filenames and rejects public paths, traversal, nested paths, URLs, unsupported extensions, and missing files.
@@ -91,7 +94,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the `Crispy Generic Report` DocType and its runtime generic-type classification model.
 - Removed the production `fixtures/` sample data path, including the old `fixtures/crispy_format.json` file and `fixtures = [{"dt": "Crispy Format"}]` hook.
 - Removed company-specific demo/sample data from the install/migrate surface. Existing sites keep their already-created `Crispy Format` records, but future installs and migrations no longer import or overwrite sample formats automatically.
-- Removed the five large Shippori Mincho font files after migrating the shipped receipt-voucher example and font-discovery expectations to STIX Two Text.
+- Removed the five large full-CJK Shippori Mincho font files after migrating the shipped receipt-voucher example to STIX Two Text; the compact renamed subset is retained separately for classic numeral styling.
+- Removed the redundant `public/.gitkeep`; tracked public assets already preserve the directory.
 
 ### Tests
 
@@ -105,8 +109,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added backend coverage for chart normalization, missing/zero/negative/non-finite values, size limits, Lilaq/SVG/omission policy, theme bounds, malicious SVG rejection, legitimate Frappe SVG preservation, and legacy Basic chart injection.
 - Added real-Typst integration coverage for multi-series accessibility markers and independently switched horizontal, vertical, and minor grids.
 - Added frontend coverage for Basic generator v2, native chart source generation, Branding Profile production-chart specimens, disabled-grid propagation, and non-persistent preview font fallback.
+- Added backend and frontend coverage for TTC face discovery, safe chart-representation overrides, protected accounting chart semantics, report chart controls, and every Branding Profile specimen chart kind.
 - Added CI coverage for the vendored Typst package checksum and license inventory.
-- Focused validation for this WIP round passed 10 frontend tests covering report/Branding chart generation and 92 backend tests covering chart contracts, compilation/font discovery, and Branding Profile behavior.
+- Focused validation for this round passed 26 frontend tests covering report/Branding chart controls and generation, 42 compile/font API tests, 14 chart contract tests, and the changed format-default test.
 - The full frontend and backend application suites have not yet been rerun after the Lilaq-first chart changes.
 
 ## [0.2.0-beta.1] - 2026-07-01

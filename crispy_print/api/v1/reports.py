@@ -10,6 +10,7 @@ from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_p
 	resolve_effective_presentation_settings,
 )
 from crispy_print.report_charts import (
+	apply_chart_representation,
 	normalize_chart_theme,
 	normalize_report_chart,
 	resolve_chart_render,
@@ -308,6 +309,10 @@ def generate_report_pdf(
 	report_presentation_settings = _normalize_report_presentation_settings(format_presentation_settings)
 	typst_data["presentation_settings"] = report_presentation_settings
 	typst_data["chart_theme"] = normalize_chart_theme(report_presentation_settings)
+	typst_data["chart_spec"] = apply_chart_representation(
+		typst_data.get("chart_spec"),
+		(report_presentation_settings.get("report") or {}).get("chart_representation"),
+	)
 	typst_data["chart_spec"], chart_render = resolve_chart_render(typst_data.get("chart_spec"), None)
 	format_doc_for_render = copy(format_doc)
 	if _is_basic_report_format(format_doc_for_render):
@@ -545,6 +550,10 @@ def get_report_typst_source(
 	# Resolve the chart independently of report execution. Native Lilaq wins;
 	# sanitized Frappe SVG is retained only as a compatibility fallback.
 	typst_data["chart_theme"] = normalize_chart_theme(presentation_settings_dict)
+	typst_data["chart_spec"] = apply_chart_representation(
+		typst_data.get("chart_spec"),
+		(presentation_settings_dict.get("report") or {}).get("chart_representation"),
+	)
 	sanitized_chart_svg = None
 	if bool(cint(include_chart)) and isinstance(chart_svg, str) and chart_svg.strip():
 		sanitized_chart_svg = sanitize_chart_svg(chart_svg)

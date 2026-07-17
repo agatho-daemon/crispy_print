@@ -316,6 +316,38 @@
 						:title="__('Chart Settings')"
 					>
 						<div class="settings-pane__grid">
+							<div class="settings-pane__field settings-pane__field--span">
+								<label class="settings-pane__sublabel">{{
+									__("Chart Representation")
+								}}</label>
+								<select
+									:value="reportBuilderConfig.chart_representation"
+									class="form-control"
+									:disabled="
+										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+									"
+									@change="
+										updateReportSettingFromEvent(
+											'chart_representation',
+											$event
+										)
+									"
+								>
+									<option value="auto">
+										{{ __("Auto — use report chart") }}
+									</option>
+									<option value="bar">{{ __("Bar") }}</option>
+									<option value="line">{{ __("Line") }}</option>
+									<option value="horizontal_bar">
+										{{ __("Horizontal Bar") }}
+									</option>
+								</select>
+								<small class="settings-pane__hint">{{
+									__(
+										"Auto preserves the report's intended chart. Incompatible overrides keep the original chart."
+									)
+								}}</small>
+							</div>
 							<div class="settings-pane__field settings-pane__field--toggle">
 								<label class="settings-pane__sublabel">{{
 									__("Enable Chart")

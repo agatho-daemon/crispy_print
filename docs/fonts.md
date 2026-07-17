@@ -4,7 +4,9 @@ _Part of the [Crispy Print documentation](README.md)._
 
 ### Bundled Fonts
 
-The app automatically includes fonts from `crispy_print/public/vendor/fonts/`. These fonts are available to all print formats without additional configuration. Bundled fonts may be organized in family subdirectories.
+The app automatically includes fonts from `crispy_print/public/vendor/fonts/`. These fonts are available to all print formats without additional configuration. Bundled fonts may be organized in family subdirectories or TrueType Collections (`.ttc`).
+
+`CrispyShipporiMincho.ttc` is a renamed, compact Latin/financial-symbol subset of Shippori Mincho. It retains the original upright Regular, Medium, SemiBold, Bold, and ExtraBold faces (400–800) while omitting the large CJK repertoire. Its proportional classic numerals are intended for prominent amounts and decorative financial typography; use STIX Two Text when tabular figures are required for aligned numeric columns.
 
 ### System Fonts
 
@@ -78,6 +80,10 @@ family, the available style and weight controls are limited to the faces discove
 for that family. If a saved format references a weight/style that is not available
 for the selected family, the builder normalizes it to the closest available face
 instead of compiling with an unexpected fallback font.
+
+For `.ttc` files, Crispy Print also inspects each embedded face so the Builder can
+offer every available weight and style even when the basic `typst fonts` family list
+does not enumerate collection members.
 
 ### Crispy Print Settings (Global)
 

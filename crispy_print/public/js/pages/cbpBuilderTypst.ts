@@ -11,6 +11,15 @@ import {
   specimenRows,
 } from "./cbpBuilderSupport";
 
+export type CbpPreviewChartKind =
+  | "line"
+  | "bar"
+  | "grouped_bar"
+  | "mixed"
+  | "horizontal_bar"
+  | "percentage_stacked"
+  | "waterfall";
+
 export interface CbpPreviewTypstContext {
   model: CrispyBrandingProfileDoc;
   installedFonts?: string[];
@@ -24,6 +33,7 @@ export interface CbpPreviewTypstContext {
   letterheadImage: string;
   letterheadLabel: string;
   letterheadSourceLabel: string;
+  previewChartKind?: CbpPreviewChartKind;
 }
 
 export function buildCodePreviewTypst(
@@ -58,16 +68,10 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
     ? `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) } else if y == 2 { rgb(${toTypstValue(model.table_stripe_color || "#F8FAFC")}) }`
     : `(x, y) => if y == 0 { rgb(${toTypstValue(model.table_header_background_color || "#F1F5F9")}) }`;
   const chartPalette = parseChartPalette(model.report_chart_palette);
-  const chartSeries = chartPalette
-    .map(
-      (_color, index) =>
-        `(name: "Series ${index + 1}", kind: "line", values: (${[18, 24, 20, 29]
-          .map(
-            (value, quarter) => value + index * 3 + quarter * ((index % 2) + 1),
-          )
-          .join(", ")}))`,
-    )
-    .join(",\n      ");
+  const previewChart = buildPreviewChartSpec(
+    context.previewChartKind || "line",
+    chartPalette.length,
+  );
   const chartTheme = `(
   palette: (${chartPalette.map(toTypstValue).join(", ")}),
   horizontal_grid: ${Boolean(model.report_chart_horizontal_grid)},
@@ -167,10 +171,10 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 #section[Performance Overview]
 #crispy-chart(
   (
-    kind: "line",
-    labels: ("Q1", "Q2", "Q3", "Q4"),
+    kind: ${toTypstValue(previewChart.kind)},
+    labels: (${previewChart.labels.map(toTypstValue).join(", ")},),
     series: (
-      ${chartSeries}
+      ${previewChart.series.join(",\n      ")},
     ),
     options: (:),
     accessibility: (summary: "Quarterly performance comparison across ${chartPalette.length} series."),
@@ -183,6 +187,71 @@ export function buildVisualPreviewTypst(context: CbpPreviewTypstContext) {
 #v(0.65em)
 #text(size: ${num(model.report_footer_font_size_pt)}pt, fill: rgb(${toTypstValue(model.report_footer_font_color || "#64748B")}))[Report footer · Page 1]
 `;
+}
+
+function buildPreviewChartSpec(
+  kind: CbpPreviewChartKind,
+  paletteLength: number,
+) {
+  const seriesCount = Math.max(1, paletteLength);
+  const quarterValues = (index: number) =>
+    [18, 24, 20, 29].map(
+      (value, quarter) => value + index * 3 + quarter * ((index % 2) + 1),
+    );
+  const renderSeries = (
+    name: string,
+    seriesKind: "line" | "bar",
+    values: number[],
+  ) =>
+    `(name: ${toTypstValue(name)}, kind: ${toTypstValue(seriesKind)}, values: (${values.join(", ")},))`;
+
+  if (kind === "horizontal_bar") {
+    return {
+      kind,
+      labels: ["Cash", "Receivables", "Inventory", "Equipment"],
+      series: [renderSeries("Balance", "bar", [42, 31, 25, 18])],
+    };
+  }
+  if (kind === "percentage_stacked") {
+    const values = [38, 27, 18, 10, 5, 2];
+    return {
+      kind,
+      labels: ["Aging distribution"],
+      series: Array.from({ length: seriesCount }, (_item, index) =>
+        renderSeries(`Bucket ${index + 1}`, "bar", [
+          values[index % values.length],
+        ]),
+      ),
+    };
+  }
+  if (kind === "waterfall") {
+    return {
+      kind,
+      labels: ["Opening", "Income", "Expenses", "Closing"],
+      series: [renderSeries("Movement", "bar", [36, 24, -18, 12])],
+    };
+  }
+  if (kind === "bar") {
+    return {
+      kind,
+      labels: ["Q1", "Q2", "Q3", "Q4"],
+      series: [renderSeries("Actual", "bar", quarterValues(0))],
+    };
+  }
+
+  return {
+    kind,
+    labels: ["Q1", "Q2", "Q3", "Q4"],
+    series: Array.from({ length: seriesCount }, (_item, index) =>
+      renderSeries(
+        `Series ${index + 1}`,
+        kind === "grouped_bar" || (kind === "mixed" && index % 2 === 0)
+          ? "bar"
+          : "line",
+        quarterValues(index),
+      ),
+    ),
+  };
 }
 
 function previewModelWithInstalledFonts(

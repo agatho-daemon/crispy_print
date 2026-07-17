@@ -4,6 +4,7 @@ from crispy_print.api.v1.compile import sanitize_chart_svg
 from crispy_print.api.v1.reports import _is_basic_report_format, _prepare_basic_chart_source
 from crispy_print.report_charts import (
 	MAX_NATIVE_CHART_POINTS,
+	apply_chart_representation,
 	normalize_chart_theme,
 	normalize_report_chart,
 	resolve_chart_render,
@@ -11,6 +12,61 @@ from crispy_print.report_charts import (
 
 
 class TestReportChartNormalization(FrappeTestCase):
+	def test_applies_safe_chart_representation_overrides(self):
+		spec = normalize_report_chart(
+			{
+				"type": "axis-mixed",
+				"data": {
+					"labels": ["Jan", "Feb"],
+					"datasets": [
+						{"name": "Actual", "chartType": "bar", "values": [10, 12]},
+						{"name": "Rate", "chartType": "line", "values": [2, 3]},
+					],
+				},
+			}
+		)
+
+		as_bars = apply_chart_representation(spec, "bar")
+		self.assertEqual(as_bars["kind"], "grouped_bar")
+		self.assertEqual([item["kind"] for item in as_bars["series"]], ["bar", "bar"])
+		self.assertTrue(as_bars["representation"]["applied"])
+
+		as_lines = apply_chart_representation(spec, "line")
+		self.assertEqual(as_lines["kind"], "line")
+		self.assertEqual([item["kind"] for item in as_lines["series"]], ["line", "line"])
+		self.assertEqual(spec["kind"], "mixed")
+
+	def test_rejects_incompatible_chart_representation_overrides(self):
+		grouped = normalize_report_chart(
+			{
+				"type": "bar",
+				"data": {
+					"labels": ["Jan"],
+					"datasets": [
+						{"name": "Actual", "values": [10]},
+						{"name": "Budget", "values": [12]},
+					],
+				},
+			}
+		)
+		rejected = apply_chart_representation(grouped, "horizontal_bar")
+		self.assertEqual(rejected["kind"], "grouped_bar")
+		self.assertFalse(rejected["representation"]["applied"])
+		self.assertEqual(rejected["diagnostic"]["code"], "incompatible_chart_representation")
+
+		aging = normalize_report_chart(
+			{
+				"type": "percentage",
+				"data": {
+					"labels": ["Current"],
+					"datasets": [{"name": "Customer", "values": [100]}],
+				},
+			}
+		)
+		protected = apply_chart_representation(aging, "line")
+		self.assertEqual(protected["kind"], "percentage_stacked")
+		self.assertFalse(protected["representation"]["applied"])
+
 	def test_normalizes_grouped_bar_and_preserves_zero_and_missing_values(self):
 		spec = normalize_report_chart(
 			{

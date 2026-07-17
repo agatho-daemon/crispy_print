@@ -61,6 +61,8 @@ class TestTypstAPI(FrappeTestCase):
 		frappe.cache().delete_value("crispy_print:typst_local_fonts:v4")  # type: ignore[operator]
 		frappe.cache().delete_value("crispy_print:typst_font_faces:v1")  # type: ignore[operator]
 		frappe.cache().delete_value("crispy_print:typst_font_faces:v2")  # type: ignore[operator]
+		frappe.cache().delete_value("crispy_print:typst_font_faces:v3")  # type: ignore[operator]
+		frappe.cache().delete_value("crispy_print:typst_font_faces:v4")  # type: ignore[operator]
 		self.typst_version_patcher = patch("crispy_print.api.v1.compile._ensure_typst_minimum_version")
 		self.typst_version_patcher.start()
 		self.addCleanup(self.typst_version_patcher.stop)
@@ -194,6 +196,18 @@ Inter (Regular, Italic)
 			],
 		)
 		self.assertEqual({face["style"] for face in faces}, {"normal"})
+
+	def test_ttc_font_faces_include_each_collection_weight(self):
+		from crispy_print.api.v1.compile import TYPST_FONT_DIR, _ttc_font_faces
+
+		faces = _ttc_font_faces(TYPST_FONT_DIR / "CrispyShipporiMincho.ttc")
+
+		self.assertEqual({family for family, _face in faces}, {"CrispyShipporiMincho"})
+		self.assertEqual(
+			[face["weight"] for _family, face in faces],
+			["regular", "medium", "semibold", "bold", "extrabold"],
+		)
+		self.assertEqual({face["style"] for _family, face in faces}, {"normal"})
 
 	@patch("crispy_print.api.v1.compile.subprocess.run")
 	def test_get_typst_font_faces(self, mock_run):

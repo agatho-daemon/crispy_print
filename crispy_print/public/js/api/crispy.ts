@@ -122,6 +122,7 @@ export interface ReportBuilderDefaults {
   include_total_row: boolean;
   show_footer_total: boolean;
   chart_enabled: boolean;
+  chart_representation: "auto" | "bar" | "line" | "horizontal_bar";
   chart_width_percent: number;
   chart_max_height_pt: number;
   chart_card_border: boolean;

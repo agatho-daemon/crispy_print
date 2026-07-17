@@ -93,4 +93,32 @@ describe("Branding Profile visual specimen", () => {
     expect(source).toContain("vertical_grid: false");
     expect(source).toContain("minor_grid: false");
   });
+
+  it.each([
+    "line",
+    "bar",
+    "grouped_bar",
+    "mixed",
+    "horizontal_bar",
+    "percentage_stacked",
+    "waterfall",
+  ] as const)("renders the %s chart specimen", (previewChartKind) => {
+    const model = createFallbackModel("Default Branding Profile");
+    const source = buildVisualPreviewTypst({
+      model,
+      profileName: "Default Branding Profile",
+      isDefault: true,
+      effectiveCodeOnly: false,
+      tableStriping: false,
+      qrEnabled: false,
+      usesLogo: false,
+      logoImage: "",
+      letterheadImage: "",
+      letterheadLabel: "",
+      letterheadSourceLabel: "",
+      previewChartKind,
+    });
+
+    expect(source).toContain(`kind: "${previewChartKind}"`);
+  });
 });

@@ -22,6 +22,8 @@ SUPPORTED_KINDS = {
 	"percentage_stacked",
 	"waterfall",
 }
+CHART_REPRESENTATIONS = {"auto", "bar", "line", "horizontal_bar"}
+PROTECTED_CHART_KINDS = {"percentage_stacked", "waterfall"}
 
 DEFAULT_CHART_THEME = {
 	"horizontal_grid": True,
@@ -109,6 +111,68 @@ def normalize_report_chart(raw_chart: Any, report_name: str | None = None) -> di
 		}
 	)
 	return _finalize_ready(base, report_name)
+
+
+def apply_chart_representation(
+	spec: dict[str, Any] | None,
+	representation: str | None,
+) -> dict[str, Any]:
+	"""Apply a safe format-level chart representation without changing source data."""
+	result = deepcopy(spec or _base_spec({}))
+	requested = str(representation or "auto").strip().lower().replace(" ", "_")
+	if requested not in CHART_REPRESENTATIONS:
+		requested = "auto"
+	result["representation"] = {
+		"requested": requested,
+		"applied": False,
+		"source_kind": str(result.get("kind") or ""),
+	}
+	if requested == "auto" or result.get("status") != "ready":
+		return result
+
+	source_kind = str(result.get("kind") or "")
+	series = result.get("series") if isinstance(result.get("series"), list) else []
+	if source_kind in PROTECTED_CHART_KINDS:
+		return _reject_chart_representation(
+			result,
+			requested,
+			f"{source_kind.replace('_', ' ').title()} charts preserve their accounting meaning and cannot be overridden.",
+		)
+	if requested == "horizontal_bar" and len(series) != 1:
+		return _reject_chart_representation(
+			result,
+			requested,
+			"Horizontal bar representation requires exactly one data series.",
+		)
+
+	if requested == "bar":
+		result["kind"] = "grouped_bar" if len(series) > 1 else "bar"
+		for item in series:
+			if isinstance(item, dict):
+				item["kind"] = "bar"
+	elif requested == "line":
+		result["kind"] = "line"
+		for item in series:
+			if isinstance(item, dict):
+				item["kind"] = "line"
+	else:
+		result["kind"] = "horizontal_bar"
+		for item in series:
+			if isinstance(item, dict):
+				item["kind"] = "bar"
+
+	result["representation"].update({"applied": True, "resolved_kind": result["kind"]})
+	return result
+
+
+def _reject_chart_representation(result: dict[str, Any], requested: str, message: str) -> dict[str, Any]:
+	result["representation"].update({"reason": "incompatible_chart_representation"})
+	result["diagnostic"] = {
+		"code": "incompatible_chart_representation",
+		"message": f"{message} The original chart representation is used.",
+		"requested": requested,
+	}
+	return result
 
 
 def resolve_chart_render(

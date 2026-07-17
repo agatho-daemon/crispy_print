@@ -15,7 +15,7 @@
 >
 > A migration patch is provided to convert existing formats to the new structure, but complex custom layouts may require manual adjustments in the builder after migration.
 >
-> Typst CLI `0.15.0` or newer is required because Crispy Print ships variable fonts, and Typst supports variable fonts starting in `0.15.0`. Upgrade Typst before running previews, PDF generation, or migration verification; older Typst versions are rejected at compile time.
+> Typst CLI `0.15.0` or newer is required because Crispy Print ships variable fonts alongside static and TrueType Collection fonts, and Typst supports variable fonts starting in `0.15.0`. Upgrade Typst before running previews, PDF generation, or migration verification; older Typst versions are rejected at compile time.
 >
 > After update run `bench migrate` to apply database changes and data migration. Then open each format in the builder and verify that the layout is correct. Some fields may need to be re-dragged or reconfigured due to changes in field properties and layout structure.
 >
@@ -75,7 +75,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Crispy Issued Document Registry (CID)** - Immutable issued-document snapshots linked to frozen templates, with opaque verification tokens, render-hash facts, artifact tracking, trust-event and regulatory-submission child tables, and revocation/supersession state.
 - **Per-Format PDF Standard** - Output standard selection with a PDF/A-2u default plus PDF/A-3u, PDF/A-4, PDF 1.7, and PDF 2.0.
 - **Global Print Settings** - Crispy Print Settings DocType for font configuration (uploaded/system fonts, search paths, font discovery refresh), render timeout, and draft/cancelled print policy.
-- **Report Renderer Infrastructure (WIP)** - Renderer-based formats for generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation, with curated Basic-mode sections, Branding Profile inheritance, transient live-data preview, guarded Advanced Typst overrides, and offline Lilaq-first accounting charts with sanitized Frappe SVG fallback. Report formats are created only by an explicit designer action and are never seeded during migration.
+- **Report Renderer Infrastructure (WIP)** - Renderer-based formats for generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation, with curated Basic-mode sections, Branding Profile inheritance, transient live-data preview, guarded Advanced Typst overrides, and offline Lilaq-first accounting charts with sanitized Frappe SVG fallback. Branding designers can cycle through supported specimen chart kinds, while Basic report formats may retain the ERPNext chart or request a compatible bar, line, or horizontal-bar representation. Report formats are created only by an explicit designer action and are never seeded during migration.
 - **Contract Format Foundation (WIP)** - Contract format support is reserved for future structured contract publishing workflows.
 - **Regulatory QR Layer** - QR Regulatory Profiles, Fiscal Credentials, and helper APIs for building machine-verifiable fiscal and compliance QR payloads.
 - **Document Code Infrastructure** - Document Code Profiles and Rules for deterministic reference codes, naming patterns, and compliance-oriented document identifiers.
@@ -117,7 +117,7 @@ typst --version
 # Should output: typst 0.15.0 or higher
 ```
 
-Crispy Print ships variable fonts to avoid maintaining separate font files for every style and weight. Typst CLI `0.15.0` or newer is required for variable font support.
+Crispy Print ships a compact mix of variable, static, and collection fonts. Variable families avoid maintaining separate files for every style and weight, while the compact `CrispyShipporiMincho` collection retains five classic Roman numeral weights without the original full-CJK footprint. Typst CLI `0.15.0` or newer is required for variable font support.
 
 ### Frappe Compatibility
 

@@ -172,7 +172,9 @@ Renderer metadata is application-owned, but report formats are not provisioned a
 
 Until acceptance testing is complete, test every intended report with representative filters, long values, multiple pages, totals, empty results, branding, and the target PDF standard.
 
-Report charts use the vendored Lilaq engine by default and compile without network access. Basic formats insert native charts automatically when `chart_spec` is supported. Unsupported or invalid charts use a sanitized Frappe SVG only when the browser supplied one; background rendering otherwise omits the chart and reports a diagnostic without failing the report. Empty charts are omitted silently. The site-level emergency setting `CRISPY_PRINT_REPORT_CHART_ENGINE=frappe_svg` disables native chart selection; it is intentionally not a designer control.
+Report charts use the vendored Lilaq engine by default and compile without network access. Basic formats insert native charts automatically when `chart_spec` is supported. Under **Chart Settings → Chart Representation**, **Auto** preserves the ERPNext report chart; compatible datasets may instead be rendered as Bar, Line, or Horizontal Bar. Multiple bar series become grouped bars. Horizontal bars require one series, while aging-distribution and waterfall charts preserve their accounting semantics and reject incompatible overrides with a diagnostic.
+
+Unsupported or invalid charts use a sanitized Frappe SVG only when the browser supplied one; background rendering otherwise omits the chart and reports a diagnostic without failing the report. Empty charts are omitted silently. The site-level emergency setting `CRISPY_PRINT_REPORT_CHART_ENGINE=frappe_svg` disables native chart selection; it is intentionally not a designer control.
 
 Advanced report formats receive `chart`, `chart_spec`, and `chart_svg`, but Crispy Print does not insert a chart automatically. Advanced authors may call `crispy-chart` explicitly or render the supplied fallback SVG.
 
@@ -182,8 +184,12 @@ Branding Profiles centralize presentation settings that should not be duplicated
 
 1. Create a **Crispy Branding Profile** for the company.
 2. Configure page size, margins, typography, table style, letterhead, logo, QR defaults, reusable report-theme tokens, and chart appearance.
-3. Open the Branding Profile Builder to preview the generated Typst specimen.
+3. Open the Branding Profile Builder to preview the generated Typst specimen. The **Preview chart** selector cycles through line, bar, grouped-bar, mixed, horizontal-bar, aging-distribution, and waterfall specimens without becoming a saved branding or report choice.
 4. Attach the profile to Crispy Formats that should inherit the same presentation system.
+
+In chart appearance settings, **Minor grids** becomes available only when
+**Horizontal major grid** is enabled because the current line/bar specimen uses
+minor subdivisions on its numeric Y-axis.
 
 Report presentation resolves from least to most specific: system defaults, Branding Profile, renderer structural defaults, Crispy Format overrides, then runtime-only preview overrides. Branding owns visual identity; report filters, sections, columns, widths, totals logic, and other structural choices remain format or renderer concerns.
 

@@ -11,6 +11,7 @@ export const REPORT_BASIC_GENERATOR_VERSION = 2;
 export type ReportBuilderMode = "basic" | "advanced";
 export type ReportBuilderPreset = "grid" | "tree" | "summary" | "minimal";
 export type ColumnAlignStrategy = "auto" | "left" | "center" | "right";
+export type ChartRepresentation = "auto" | "bar" | "line" | "horizontal_bar";
 export type ReportLayoutStyle =
   | "Standard"
   | "Compact"
@@ -36,6 +37,7 @@ export interface ReportBuilderConfig {
   include_total_row: boolean;
   show_footer_total: boolean;
   chart_enabled: boolean;
+  chart_representation: ChartRepresentation;
   chart_width_percent: number;
   chart_max_height_pt: number;
   chart_card_border: boolean;
@@ -78,6 +80,7 @@ export function getDefaultReportBuilderConfig(
     include_total_row: true,
     show_footer_total: true,
     chart_enabled: true,
+    chart_representation: "auto",
     chart_width_percent: 100,
     chart_max_height_pt: 220,
     chart_card_border: false,
@@ -133,6 +136,18 @@ export function normalizeReportBuilderConfig(
     raw.include_total_row,
     toBool(raw.show_footer_total, defaults.include_total_row),
   );
+  const chartRepresentationCandidate = String(
+    raw.chart_representation || defaults.chart_representation,
+  )
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+  const chart_representation: ChartRepresentation =
+    chartRepresentationCandidate === "bar" ||
+    chartRepresentationCandidate === "line" ||
+    chartRepresentationCandidate === "horizontal_bar"
+      ? chartRepresentationCandidate
+      : "auto";
 
   return {
     ...defaults,
@@ -146,6 +161,7 @@ export function normalizeReportBuilderConfig(
     include_total_row: includeTotalRow,
     show_footer_total: includeTotalRow,
     chart_enabled: toBool(raw.chart_enabled, defaults.chart_enabled),
+    chart_representation,
     chart_width_percent: clamp(
       toNumber(raw.chart_width_percent, defaults.chart_width_percent),
       10,
