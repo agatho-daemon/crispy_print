@@ -15,6 +15,7 @@ import { getLogger } from "../logger"
 import { sanitizeSvg } from "../utils/safeSvg"
 import { createSampleDocAutocomplete } from "./workerAutocomplete"
 import {
+	buildRawQrBlock,
 	normalizeDocImageAssets,
 	parseTypstError,
 } from "./workerCompilation"
@@ -839,6 +840,15 @@ export function setupWorker(
 				const parts: string[] = []
 				parts.push(buildDocDictionary(normalizedDoc, printFormatName))
 				parts.push(buildRawTypstHelperBlock(typstBlocks, typstCode))
+				const rawQrBlock = buildRawQrBlock({
+					qrEnabled,
+					qrData: docNameForQr,
+					qrFilename,
+					qrSettings: qrPayload.qrSettings,
+				})
+				if (rawQrBlock) {
+					parts.push(rawQrBlock)
+				}
 				if (typstCode && typstCode.trim()) {
 					parts.push(typstCode.trim())
 				}

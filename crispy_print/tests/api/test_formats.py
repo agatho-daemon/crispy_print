@@ -546,7 +546,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 				"report_scope": "All Compatible Reports",
 				"report_renderer": "generic_report",
 				"typst_code": "#text[Report]",
-				"is_advanced": 1,
+				"raw_typst": 1,
 			}
 		)
 		format_report.insert()
@@ -735,7 +735,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 				"name": custom_name,
 				"crispy_format_type": "Report",
 				"report_scope": "Selected Reports",
-				"report_renderer": "generic_report",
+				"report_renderer": "custom",
 				"module": "Crispy Print",
 				"report": [{"report": report_name, "disabled": 0}],
 			}
@@ -809,11 +809,12 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self._insert_format("Test ImportExport Export")
 		payload = export_crispy_format("Test ImportExport Export")
 
-		self.assertEqual(payload["schema_version"], 2)
+		self.assertEqual(payload["schema_version"], 3)
 		self.assertEqual(payload["app"], "crispy_print")
 		self.assertIn("exported_at", payload)
 		self.assertIn("format", payload)
 		self.assertEqual(payload["format"]["name"], "Test ImportExport Export")
+		self.assertNotIn("is_advanced", payload["format"])
 		self.assertNotIn("is_default", payload["format"])
 		self.assertIn("metadata", payload)
 		self.assertIn("company", payload["metadata"])
@@ -895,7 +896,27 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self.assertEqual(imported.crispy_format_type, "Report")
 		self.assertEqual(imported.report_scope, "All Compatible Reports")
 		self.assertEqual(imported.report_renderer, "generic_report")
-		self.assertEqual(imported.is_advanced, 1)
+		self.assertEqual(imported.raw_typst, 1)
+
+	def test_import_schema_v2_maps_is_advanced_to_raw_typst(self):
+		from crispy_print.api.v1 import import_crispy_format
+
+		payload = {
+			"schema_version": 2,
+			"format": {
+				"name": "Test ImportExport V2 Advanced Report",
+				"crispy_format_type": "Report",
+				"report_scope": "All Compatible Reports",
+				"report_renderer": "generic_report",
+				"raw_typst": 0,
+				"is_advanced": 1,
+				"typst_code": "#text[Legacy advanced report]",
+				"presentation_settings": json.dumps({"report": {"mode": "advanced"}}),
+			},
+		}
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		imported = frappe.get_doc("Crispy Format", result["name"])
 		self.assertEqual(imported.raw_typst, 1)
 
 	def test_import_old_payload_without_metadata_is_compatible(self):

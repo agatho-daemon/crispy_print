@@ -1,3 +1,5 @@
+import { flushPromises } from "@vue/test-utils";
+import { nextTick } from "vue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../api/frappe", () => ({
@@ -7,6 +9,17 @@ vi.mock("../../api/frappe", () => ({
 vi.mock("../../api/crispy", () => ({
   getCrispyFormat: vi.fn(),
   getDefaultReportBuilderConfig: vi.fn(async () => ({})),
+  getBrandingProfilePresentationSettings: vi.fn(async () => ({
+    source: "branding_profile",
+    branding: {
+      profile: "CBP-1",
+      company: "ACME",
+      mode: "none",
+      letterhead: "",
+      letterhead_image: "",
+      logo: { company: "ACME", image: "", size: 25, dx: 0, dy: 0 },
+    },
+  })),
   duplicateCrispyFormatForCompany: vi.fn(),
   duplicateCrispyTemplateForCompany: vi.fn(),
   saveCrispyFormat: vi.fn(async () => {}),
@@ -37,7 +50,6 @@ describe("useStore report builder table style sync", () => {
       crispy_format_type: "Report",
       generic_report_type: "Grid",
       raw_typst: 0,
-      is_advanced: 0,
       typst_code: "",
     });
     (parseCrispyFormatDoc as any).mockReturnValue({
@@ -88,7 +100,6 @@ describe("useStore report builder table style sync", () => {
       crispy_format_type: "Report",
       generic_report_type: "Grid",
       raw_typst: 0,
-      is_advanced: 0,
       typst_code: "",
     });
     (parseCrispyFormatDoc as any).mockReturnValue({
@@ -148,6 +159,38 @@ describe("useStore report builder table style sync", () => {
     expect(store.presentation_settings.value.table?.stripe.enabled).toBe(false);
     expect(store.presentation_settings.value.table?.stripe.color).toBe(
       "#00bb00",
+    );
+  });
+
+  it("does not loop branding-profile requests when basic report Typst synchronizes", async () => {
+    const { getBrandingProfilePresentationSettings } = await import("../../api/crispy");
+    const { useStore } = await import("../../composables/useStore");
+    const store = useStore();
+
+    store.crispyFormat.value = {
+      name: "FMT-BRANDING",
+      crispy_format_type: "Report",
+      raw_typst: 0,
+    } as any;
+    store.presentation_settings.value.source = "branding_profile";
+    store.presentation_settings.value.branding.profile = "CBP-1";
+    store.presentation_settings.value.branding.company = "ACME";
+
+    for (let index = 0; index < 5; index += 1) {
+      await flushPromises();
+      await nextTick();
+    }
+    const settledRequestCount = vi.mocked(getBrandingProfilePresentationSettings).mock.calls.length;
+
+    for (let index = 0; index < 5; index += 1) {
+      await flushPromises();
+      await nextTick();
+    }
+
+    expect(settledRequestCount).toBeGreaterThan(0);
+    expect(settledRequestCount).toBeLessThanOrEqual(2);
+    expect(getBrandingProfilePresentationSettings).toHaveBeenCalledTimes(
+      settledRequestCount,
     );
   });
 });

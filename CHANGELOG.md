@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Working Beta Changes
 
+- Report raw-code mode now uses the existing `raw_typst` flag as its single persisted source of truth. The redundant `is_advanced` field was removed while Advanced remains the Report Builder's direct-Typst editing mode, with schema v1/v2 import compatibility retained.
 - Raw Typst document authoring is now a working beta path for authors who want full Typst control: builder-owned presentation controls are hidden, raw code refresh is explicit, and compile helpers are constrained to the author-facing raw API.
 - Regular builder image insertion, private uploaded image lookup, font-face-aware typography controls, and menu layering fixes are working beta changes intended for real template testing during stabilization.
 - Report usage remains **WIP**. The renderer architecture and migration path are available for development and acceptance testing, but the supported ERPNext report families have not yet completed representative data, layout, pagination, RTL, and PDF acceptance testing.
@@ -44,9 +45,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Upgraded portable Crispy Format exports to schema v3. Schema v1 and v2 imports remain supported and migrate the former Report `is_advanced` value into `raw_typst`.
+- Changed Report Basic/Advanced mode persistence to use only `raw_typst`. A pre-model-sync migration preserves existing advanced Report formats and normalizes their persisted Builder mode before the obsolete field is removed.
+- Changed live Report preview execution to retain the complete prepared ERPNext result in a user-bound, 15-minute server snapshot. Builder-only column, width, filter-display, summary, total-row, typography, layout, and presentation changes project and recompile that snapshot instead of rerunning the report.
+- Changed Report preview and PDF compilation to write the normalized result to a private temporary `crispy-report-data.json` input and load it with Typst `json()`. The generated Typst source therefore remains small while the data-file content hash participates in compile-cache identity.
+- Removed Crispy-owned default output truncation from Report previews and PDFs. Rows, columns, grouped subtotals, final totals, and long cell values now follow the complete ERPNext report result unless a caller explicitly supplies an optional row limit.
+- Changed Report company resolution so the Crispy Format's exact `company.name` is authoritative for report filters, Branding Profile selection, logo resolution, transient previews, and saved previews. Company selectors now display the canonical name without synthesizing an abbreviation-prefixed label.
+- Changed live Basic Report recompilation to use a longer debounce and coalesce changes made while a compile is in flight into one latest pending compile.
 - Replaced the legacy `is_generic` / `generic_report_type` model with `report_scope`, `report_renderer`, and `report_source_fingerprint`.
 - Changed report format discovery to return specialized and generic alternatives in one ordered collection using selected-report, company/global, compatible-renderer, and generic fallback precedence.
-- Upgraded portable Crispy Format exports to schema v2 while retaining import-only conversion for legacy v1 payloads.
 - Changed Basic report authoring to use renderer-defined layout styles and curated sections; Advanced mode remains a complete Typst override over the normalized report payload.
 - Changed the Basic report generator to signature version 2 with explicit native-chart section markers and `crispy-chart` calls. Existing Basic sources receive compatibility injection without duplicate SVG/native charts, while Advanced Typst remains untouched and receives `chart`, `chart_spec`, and `chart_svg` explicitly.
 - Changed report preview and PDF payloads to preserve the original ERPNext chart while returning the printable chart specification, selected engine, fallback/omission reason, helper version, and Lilaq version.
@@ -75,6 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed missing last-group subtotals and final report totals caused by preview row slicing.
+- Fixed Report Builder column removal and visibility changes so they project the retained report rows and cells without executing the ERPNext report again.
+- Fixed report filter state so changing a preview variable invalidates the retained snapshot, while the format-owned Company field remains read-only and cannot drift from the Crispy Format company.
+- Fixed Branding Profile request loops and stale async profile responses during Basic Report Typst synchronization and format initialization.
+- Fixed raw Typst QR settings so enabled QR output, selected fields, symbology, placement, and payload are included in worker compilation even though builder-owned Branding, page, typography, and table settings remain hidden.
+- Fixed Typst document serialization for dictionary keys that are valid identifiers but reserved Typst keywords.
 - Fixed stale preview reuse when opening multiple documents in the same Desk session by clearing consumed `frappe.route_options` and remounting the preview for each new document/format context.
 - Fixed uploaded site font discovery by passing absolute private font directories to Typst.
 - Fixed duplicate font-family entries caused by combining Typst-reported family names with filename-derived fallback names.
@@ -91,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed the redundant Report `is_advanced` DocField, API/export/template contract field, frontend state, and sample-format property. `raw_typst` is now the single raw-code toggle for every Crispy Format type.
 - Removed the `Crispy Generic Report` DocType and its runtime generic-type classification model.
 - Removed the production `fixtures/` sample data path, including the old `fixtures/crispy_format.json` file and `fixtures = [{"dt": "Crispy Format"}]` hook.
 - Removed company-specific demo/sample data from the install/migrate surface. Existing sites keep their already-created `Crispy Format` records, but future installs and migrations no longer import or overwrite sample formats automatically.
@@ -99,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 
+- Added backend and frontend regression coverage for schema-v2 mode migration, `raw_typst` normalization, canonical format-company locking, retained report snapshots, no-rerun Builder projection, full-result preservation, temporary JSON compile inputs, cache-key separation, in-flight compile coalescing, Branding Profile request stabilization, raw QR generation, and reserved Typst keys.
 - Added backend and frontend coverage for the Sample Format Catalog, explicit sample creation, fixture removal, and builder Examples flow.
 - Added backend coverage for Company User Permission query conditions, manager bypass, Branding Profile read checks, and target-company duplicate authorization.
 - Added backend coverage that audits every whitelisted v1 facade endpoint for explicit policy metadata and checks representative rate/permission gates.

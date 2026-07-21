@@ -130,6 +130,24 @@ class TestCrispyFormat(FrappeTestCase):
 		doc.before_insert()
 		self.assertFalse(doc.typst_code)
 
+	def test_report_builder_mode_is_normalized_from_raw_typst(self):
+		doc = self._new_format(
+			"Test Format Report Raw Mode",
+			crispy_format_type="Report",
+			doc_type=None,
+			report_scope="All Compatible Reports",
+			report_renderer="generic_report",
+			raw_typst=1,
+			typst_code="#text[Advanced]",
+			presentation_settings=json.dumps({"report": {"mode": "basic"}}),
+		)
+		doc.validate()
+		self.assertEqual(json.loads(doc.presentation_settings)["report"]["mode"], "advanced")
+
+		doc.raw_typst = 0
+		doc.validate()
+		self.assertEqual(json.loads(doc.presentation_settings)["report"]["mode"], "basic")
+
 	def test_raw_typst_hides_author_owned_form_fields(self):
 		json_path = frappe.get_app_path(
 			"crispy_print",
@@ -141,6 +159,7 @@ class TestCrispyFormat(FrappeTestCase):
 		with open(json_path, encoding="utf-8") as handle:
 			meta = json.load(handle)
 		fields = {field["fieldname"]: field for field in meta["fields"]}
+		self.assertNotIn("is_advanced", fields)
 		self.assertEqual(fields["print_behavior_section"].get("depends_on"), "eval:!doc.raw_typst")
 		self.assertEqual(fields["typst_preamble"].get("depends_on"), "eval:!doc.raw_typst")
 		self.assertEqual(fields["doc_header"].get("depends_on"), "eval:!doc.raw_typst")

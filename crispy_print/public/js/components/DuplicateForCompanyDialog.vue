@@ -53,7 +53,7 @@
 							:key="company.name"
 							:value="company.name"
 						>
-							{{ company.abbr ? `${company.abbr} - ${company.name}` : company.name }}
+							{{ company.name }}
 						</option>
 					</select>
 				</div>

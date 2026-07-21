@@ -52,6 +52,7 @@ const MAX_HISTORY_ENTRIES = 100;
 const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
 const HISTORY_DEBOUNCE_MS = 250;
 const PREVIEW_DEBOUNCE_MS = 350;
+const REPORT_PREVIEW_DEBOUNCE_MS = 650;
 
 const logger = getLogger({ module: "Store" });
 
@@ -66,7 +67,6 @@ interface CrispyFormat {
   company?: string;
   is_default?: number;
   report_scope?: "All Compatible Reports" | "Selected Reports";
-  is_advanced?: number;
   report_renderer?: string;
   report_source_fingerprint?: string;
   doc_header?: string;
@@ -101,6 +101,7 @@ function buildStore() {
   const reportColumns = ref<any[]>([]);
   const reportFilterFields = ref<any[]>([]);
   const reportFilters = ref<Record<string, any>>({});
+  const reportPreviewData = ref<Record<string, any> | null>(null);
   const reportPreviewReady = ref(false);
   const sampleReports = ref<any[]>([]);
   const selectedReportName = ref("");
@@ -147,6 +148,9 @@ function buildStore() {
     crispyFormat.value?.__islocal ? null : crispyFormat.value?.name || null,
   );
   const docType = computed(() => crispyFormat.value?.doc_type || null);
+  const formatCompany = computed(() =>
+    String(crispyFormat.value?.company || "").trim(),
+  );
   const formatType = computed(
     () => crispyFormat.value?.crispy_format_type || "DocType",
   );
@@ -190,7 +194,7 @@ function buildStore() {
       reportModeNotice.value = "";
       rawTypst.value = nextMode === "advanced";
       if (crispyFormat.value) {
-        crispyFormat.value.is_advanced = nextMode === "advanced" ? 1 : 0;
+        crispyFormat.value.raw_typst = nextMode === "advanced" ? 1 : 0;
       }
     },
   });
@@ -220,7 +224,16 @@ function buildStore() {
   }
 
   function assignReportBuilderConfigToPresentationSettings() {
-    presentation_settings.value.report = { ...reportBuilderConfig.value };
+    const nextReport = { ...reportBuilderConfig.value };
+    const currentReport = presentation_settings.value.report;
+    if (
+      currentReport &&
+      JSON.stringify(currentReport) === JSON.stringify(nextReport)
+    ) {
+      return false;
+    }
+    presentation_settings.value.report = nextReport;
+    return true;
   }
 
   function normalizeReportBuilderConfigLinks(
@@ -437,6 +450,7 @@ function buildStore() {
     reportColumns.value = [];
     reportFilterFields.value = [];
     reportFilters.value = {};
+    reportPreviewData.value = null;
     reportPreviewReady.value = false;
     sampleReports.value = [];
     selectedReportName.value = "";
@@ -499,6 +513,10 @@ function buildStore() {
   function applyPreviewRefreshPolicy(policy: PreviewRefreshPolicy) {
     if (policy === "none") return;
     if (previewTriggerMode.value === "manual") return;
+    if (isReportMode.value && reportPreviewReady.value) {
+      schedulePreviewRefresh(REPORT_PREVIEW_DEBOUNCE_MS);
+      return;
+    }
     if (policy === "debounce") {
       schedulePreviewRefresh();
       return;
@@ -506,14 +524,14 @@ function buildStore() {
     requestPreviewRefresh();
   }
 
-  function schedulePreviewRefresh() {
+  function schedulePreviewRefresh(delay = PREVIEW_DEBOUNCE_MS) {
     if (previewDebounceTimer !== null) {
       clearTimeout(previewDebounceTimer);
     }
     previewDebounceTimer = setTimeout(() => {
       previewDebounceTimer = null;
       requestPreviewRefresh();
-    }, PREVIEW_DEBOUNCE_MS);
+    }, delay);
   }
 
   let effectiveSettingsRequestSeq = 0;
@@ -552,8 +570,8 @@ function buildStore() {
 
   function getEffectiveCompany(): string | null {
     return (
+      formatCompany.value ||
       presentation_settings.value?.branding?.company ||
-      crispyFormat.value?.company ||
       builderContext.value?.company ||
       null
     );
@@ -932,6 +950,12 @@ function buildStore() {
     baseFilters: Record<string, any>,
   ): Record<string, any> {
     const merged = { ...(baseFilters || {}) };
+    if (
+      formatCompany.value &&
+      reportFilterFields.value.some((def: any) => def?.fieldname === "company")
+    ) {
+      merged.company = formatCompany.value;
+    }
     for (const def of reportFilterFields.value || []) {
       if (!def?.fieldname) continue;
       if (hasValue(merged[def.fieldname])) continue;
@@ -1213,9 +1237,11 @@ function buildStore() {
     reportColumns,
     reportFilterFields,
     reportFilters,
+    reportPreviewData,
     reportPreviewReady,
     getReportColumnConfigFromLayout,
     getEffectiveCompany,
+    getFormatCompany: () => formatCompany.value || null,
   });
 
   async function initializeTransientReport(draft: CrispyFormat) {
@@ -1311,10 +1337,7 @@ function buildStore() {
 
       // Report mode is always Typst-backed in builder (Basic generates Typst).
       rawTypst.value =
-        (doc.crispy_format_type || builderContext.value?.crispy_format_type) ===
-        "Report"
-          ? Boolean(doc.is_advanced || doc.raw_typst)
-          : builderMode.mode === "code" || Boolean(doc.raw_typst);
+        builderMode.mode === "code" || Boolean(doc.raw_typst);
       typstCode.value = doc.typst_code || "";
 
       const formatType =
@@ -1471,7 +1494,7 @@ function buildStore() {
         }
       }
 
-      const reportAdvancedMode = Boolean(doc.is_advanced || doc.raw_typst);
+      const reportAdvancedMode = Boolean(doc.raw_typst);
       const report_settings =
         (presentation_settings.value as any)?.report || {};
       const normalizedReportBuilder = normalizeReportBuilderConfig(
@@ -1553,11 +1576,6 @@ function buildStore() {
           : rawTypst.value
             ? 1
             : 0,
-        is_advanced: isReportMode.value
-          ? reportBuilderMode.value === "advanced"
-            ? 1
-            : 0
-          : 0,
         compact_item_print: crispyFormat.value.compact_item_print ? 1 : 0,
         print_uom_after_quantity: crispyFormat.value.print_uom_after_quantity
           ? 1
@@ -1572,7 +1590,6 @@ function buildStore() {
         const created = await createCrispyFormat({
           name: crispyFormat.value.name,
           __newname: crispyFormat.value.name,
-          company: updateData.company,
           crispy_format_type: "Report",
           report_scope: crispyFormat.value.report_scope || "Selected Reports",
           report_renderer:
@@ -1741,7 +1758,7 @@ function buildStore() {
 
   function initializeReportBuilderMode(doc: CrispyFormat) {
     if (!isReportMode.value) return;
-    const advancedMode = Boolean(doc.is_advanced || doc.raw_typst);
+    const advancedMode = Boolean(doc.raw_typst);
     reportBuilderConfig.value.mode = advancedMode ? "advanced" : "basic";
     rawTypst.value = advancedMode;
 
@@ -1829,6 +1846,7 @@ function buildStore() {
     reportBaseFields,
     reportBuilderFields,
     reportFilters,
+    reportPreviewData,
     reportPreviewReady,
     sampleReports,
     reportCandidates,
@@ -1847,6 +1865,7 @@ function buildStore() {
 
     // Computed
     formatName,
+    formatCompany,
     docType,
     formatType,
     isReportMode,
@@ -1893,6 +1912,7 @@ function buildStore() {
     setSelectedReport: reportStore.setSelectedReport,
     compileReportPreview,
     runSelectedReportPreview,
+    invalidateReportPreviewData: reportStore.invalidateReportPreviewData,
     syncReportBasicTypst,
     resetReportBasicTemplate,
     rebuildReportTableColumns: layoutStore.rebuildReportTableColumns,

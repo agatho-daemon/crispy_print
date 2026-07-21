@@ -33,7 +33,11 @@
 				<div class="settings-pane__identity-row">
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">{{ __("Company") }}</label>
-						<select v-model="selected_company" class="form-control">
+						<select
+							v-model="selected_company"
+							class="form-control"
+							:disabled="Boolean(formatCompany)"
+						>
 							<option value="">{{ __("Select company") }}</option>
 							<option v-if="loadingCompanies" disabled>
 								{{ __("Loading companies...") }}
@@ -43,11 +47,7 @@
 								:key="company.name"
 								:value="company.name"
 							>
-								{{
-									company.abbr
-										? `${company.abbr} - ${company.name}`
-										: company.name
-								}}
+								{{ company.name }}
 							</option>
 						</select>
 					</div>
@@ -128,782 +128,588 @@
 					</label>
 				</SettingsSection>
 
-				<template>
-					<SettingsSection
-						v-if="!isRawTypst"
-						v-model="isPresentationSettingsExpanded"
-						:title="__('Page Settings')"
-					>
-						<div class="settings-pane__field">
-							<label class="settings-pane__label">{{ __("Size") }}</label>
-							<select
-								v-model="presentation_settings.page.size"
-								class="form-control"
-								@change="markSettingsDirty('live')"
-							>
-								<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
-								<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
-								<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
-								<option value="Letter">
-									{{ __("Letter (8.5 × 11 in)") }}
-								</option>
-								<option value="Legal">{{ __("Legal (8.5 × 14 in)") }}</option>
-								<option value="Tabloid">
-									{{ __("Tabloid (11 × 17 in)") }}
-								</option>
-								<option value="Executive">
-									{{ __("Executive (7.25 × 10.5 in)") }}
-								</option>
-							</select>
-						</div>
+				<SettingsSection
+					v-if="!isRawTypst"
+					v-model="isPresentationSettingsExpanded"
+					:title="__('Page Settings')"
+				>
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Size") }}</label>
+						<select
+							v-model="presentation_settings.page.size"
+							class="form-control"
+							@change="markSettingsDirty('live')"
+						>
+							<option value="A3">{{ __("A3 (297 × 420 mm)") }}</option>
+							<option value="A4">{{ __("A4 (210 × 297 mm)") }}</option>
+							<option value="A5">{{ __("A5 (148 × 210 mm)") }}</option>
+							<option value="Letter">
+								{{ __("Letter (8.5 × 11 in)") }}
+							</option>
+							<option value="Legal">{{ __("Legal (8.5 × 14 in)") }}</option>
+							<option value="Tabloid">
+								{{ __("Tabloid (11 × 17 in)") }}
+							</option>
+							<option value="Executive">
+								{{ __("Executive (7.25 × 10.5 in)") }}
+							</option>
+						</select>
+					</div>
 
-						<div class="settings-pane__field">
-							<label class="settings-pane__label">{{ __("Orientation") }}</label>
-							<select
-								v-model="presentation_settings.page.orientation"
-								class="form-control"
-								@change="markSettingsDirty('live')"
-							>
-								<option value="portrait">{{ __("Portrait") }}</option>
-								<option value="landscape">{{ __("Landscape") }}</option>
-							</select>
-						</div>
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Orientation") }}</label>
+						<select
+							v-model="presentation_settings.page.orientation"
+							class="form-control"
+							@change="markSettingsDirty('live')"
+						>
+							<option value="portrait">{{ __("Portrait") }}</option>
+							<option value="landscape">{{ __("Landscape") }}</option>
+						</select>
+					</div>
 
-						<BoxSidesEditor
-							v-model="presentation_settings.page.margins"
-							:label="__('Margins (mm)')"
-							@update:model-value="markSettingsDirty('debounce')"
-						/>
-					</SettingsSection>
-					<SettingsSection
-						v-if="isReportMode"
-						v-model="isReportTemplateExpanded"
-						:title="__('Report Template')"
-					>
+					<BoxSidesEditor
+						v-model="presentation_settings.page.margins"
+						:label="__('Margins (mm)')"
+						@update:model-value="markSettingsDirty('debounce')"
+					/>
+				</SettingsSection>
+				<SettingsSection
+					v-if="isReportMode"
+					v-model="isReportTemplateExpanded"
+					:title="__('Report Template')"
+				>
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Layout Style") }}</label>
+						<select
+							:value="reportBuilderConfig.layout_style"
+							class="form-control"
+							:disabled="reportBasicReadOnly"
+							@change="updateReportSettingFromEvent('layout_style', $event)"
+						>
+							<option value="Standard">{{ __("Standard") }}</option>
+							<option value="Compact">{{ __("Compact") }}</option>
+							<option value="Minimal">{{ __("Minimal") }}</option>
+							<option value="Summary Focus">{{ __("Summary Focus") }}</option>
+						</select>
+					</div>
+					<div class="settings-pane__grid">
 						<div class="settings-pane__field">
-							<label class="settings-pane__label">{{ __("Layout Style") }}</label>
+							<label class="settings-pane__sublabel">{{ __("Font Family") }}</label>
 							<select
-								:value="reportBuilderConfig.layout_style"
+								:value="reportBuilderConfig.font_family"
 								class="form-control"
 								:disabled="reportBasicReadOnly"
-								@change="updateReportSettingFromEvent('layout_style', $event)"
+								@change="updateReportSettingFromEvent('font_family', $event)"
 							>
-								<option value="Standard">{{ __("Standard") }}</option>
-								<option value="Compact">{{ __("Compact") }}</option>
-								<option value="Minimal">{{ __("Minimal") }}</option>
-								<option value="Summary Focus">{{ __("Summary Focus") }}</option>
+								<option v-for="font in availableFonts" :key="font" :value="font">
+									{{ font }}
+								</option>
 							</select>
 						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{
+								__("Font Size (pt)")
+							}}</label>
+							<input
+								:value="reportBuilderConfig.font_size_pt"
+								type="number"
+								min="1"
+								step="1"
+								class="form-control"
+								:disabled="reportBasicReadOnly"
+								@input="updateReportNumberSettingFromEvent('font_size_pt', $event)"
+							/>
+						</div>
+					</div>
+					<div class="settings-pane__grid settings-pane__grid--stripe">
+						<div class="settings-pane__field settings-pane__field--toggle">
+							<label class="settings-pane__sublabel">{{ __("Show Filters") }}</label>
+							<div class="settings-pane__checkbox-wrap">
+								<input
+									:checked="reportBuilderConfig.show_filters"
+									type="checkbox"
+									class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+									:disabled="reportBasicReadOnly"
+									@change="
+										updateReportCheckedSettingFromEvent('show_filters', $event)
+									"
+								/>
+							</div>
+						</div>
+						<div class="settings-pane__field settings-pane__field--toggle">
+							<label class="settings-pane__sublabel">{{ __("Show Summary") }}</label>
+							<div class="settings-pane__checkbox-wrap">
+								<input
+									:checked="reportBuilderConfig.show_summary"
+									type="checkbox"
+									class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+									:disabled="reportBasicReadOnly"
+									@change="
+										updateReportCheckedSettingFromEvent('show_summary', $event)
+									"
+								/>
+							</div>
+						</div>
+						<div class="settings-pane__field settings-pane__field--toggle">
+							<label class="settings-pane__sublabel">{{
+								__("Show Total Row")
+							}}</label>
+							<div class="settings-pane__checkbox-wrap">
+								<input
+									:checked="reportBuilderConfig.include_total_row"
+									type="checkbox"
+									class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+									:disabled="reportBasicReadOnly"
+									@change="
+										updateReportCheckedSettingFromEvent(
+											'include_total_row',
+											$event
+										)
+									"
+								/>
+							</div>
+						</div>
+					</div>
+					<div v-if="reportBuilderConfig.sections?.length" class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Report Sections") }}</label>
+						<label
+							v-for="section in reportBuilderConfig.sections"
+							:key="section.key"
+							class="settings-pane__checkbox-row"
+						>
+							<input
+								:checked="section.visible"
+								type="checkbox"
+								:disabled="reportBasicReadOnly || !section.optional"
+								@change="updateReportSectionVisibility(section.key, $event)"
+							/>
+							<span>{{ section.label }}</span>
+						</label>
+					</div>
+				</SettingsSection>
+				<SettingsSection
+					v-if="isReportMode"
+					v-model="isChartExpanded"
+					:title="__('Chart Settings')"
+				>
+					<div class="settings-pane__grid">
+						<div class="settings-pane__field settings-pane__field--span">
+							<label class="settings-pane__sublabel">{{
+								__("Chart Representation")
+							}}</label>
+							<select
+								:value="reportBuilderConfig.chart_representation"
+								class="form-control"
+								:disabled="
+									reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+								"
+								@change="
+									updateReportSettingFromEvent('chart_representation', $event)
+								"
+							>
+								<option value="auto">
+									{{ __("Auto — use report chart") }}
+								</option>
+								<option value="bar">{{ __("Bar") }}</option>
+								<option value="line">{{ __("Line") }}</option>
+								<option value="horizontal_bar">
+									{{ __("Horizontal Bar") }}
+								</option>
+							</select>
+							<small class="settings-pane__hint">{{
+								__(
+									"Auto preserves the report's intended chart. Incompatible overrides keep the original chart."
+								)
+							}}</small>
+						</div>
+						<div class="settings-pane__field settings-pane__field--toggle">
+							<label class="settings-pane__sublabel">{{ __("Enable Chart") }}</label>
+							<div class="settings-pane__checkbox-wrap">
+								<input
+									:checked="reportBuilderConfig.chart_enabled"
+									type="checkbox"
+									class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+									:disabled="reportBasicReadOnly"
+									@change="
+										updateReportCheckedSettingFromEvent(
+											'chart_enabled',
+											$event
+										)
+									"
+								/>
+							</div>
+						</div>
+						<div class="settings-pane__field settings-pane__field--toggle">
+							<label class="settings-pane__sublabel">{{ __("Card Border") }}</label>
+							<div class="settings-pane__checkbox-wrap">
+								<input
+									:checked="reportBuilderConfig.chart_card_border"
+									type="checkbox"
+									class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+									:disabled="
+										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+									"
+									@change="
+										updateReportCheckedSettingFromEvent(
+											'chart_card_border',
+											$event
+										)
+									"
+								/>
+							</div>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{
+								__("Chart Width (%)")
+							}}</label>
+							<input
+								:value="reportBuilderConfig.chart_width_percent"
+								type="number"
+								min="10"
+								max="100"
+								step="1"
+								class="form-control"
+								:disabled="
+									reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+								"
+								@input="
+									updateReportNumberSettingFromEvent(
+										'chart_width_percent',
+										$event
+									)
+								"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{
+								__("Max Height (pt)")
+							}}</label>
+							<input
+								:value="reportBuilderConfig.chart_max_height_pt"
+								type="number"
+								min="60"
+								max="600"
+								step="1"
+								class="form-control"
+								:disabled="
+									reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+								"
+								@input="
+									updateReportNumberSettingFromEvent(
+										'chart_max_height_pt',
+										$event
+									)
+								"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{
+								__("Spacing Top (pt)")
+							}}</label>
+							<input
+								:value="reportBuilderConfig.chart_spacing_top_pt"
+								type="number"
+								min="0"
+								max="120"
+								step="1"
+								class="form-control"
+								:disabled="
+									reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+								"
+								@input="
+									updateReportNumberSettingFromEvent(
+										'chart_spacing_top_pt',
+										$event
+									)
+								"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{
+								__("Spacing Bottom (pt)")
+							}}</label>
+							<input
+								:value="reportBuilderConfig.chart_spacing_bottom_pt"
+								type="number"
+								min="0"
+								max="120"
+								step="1"
+								class="form-control"
+								:disabled="
+									reportBasicReadOnly || !reportBuilderConfig.chart_enabled
+								"
+								@input="
+									updateReportNumberSettingFromEvent(
+										'chart_spacing_bottom_pt',
+										$event
+									)
+								"
+							/>
+						</div>
+					</div>
+				</SettingsSection>
+				<SettingsSection
+					v-if="!isReportMode && !isRawTypst"
+					v-model="isTypographyExpanded"
+					:title="__('Typography')"
+				>
+					<TypographyStyleEditor
+						v-model="typography.sectionLabel"
+						:title="__('Section Labels')"
+						:available-fonts="availableFonts"
+						:font-faces="fontFaces"
+						@update:model-value="markSettingsDirty('debounce')"
+					/>
+					<TypographyStyleEditor
+						v-model="typography.fieldLabel"
+						:title="__('Field Labels')"
+						:available-fonts="availableFonts"
+						:font-faces="fontFaces"
+						@update:model-value="markSettingsDirty('debounce')"
+					/>
+					<TypographyStyleEditor
+						v-model="typography.fieldValue"
+						:title="__('Field Values')"
+						:available-fonts="availableFonts"
+						:font-faces="fontFaces"
+						@update:model-value="markSettingsDirty('debounce')"
+					/>
+				</SettingsSection>
+				<SettingsSection
+					v-if="!isRawTypst"
+					v-model="isTableExpanded"
+					:title="__('Table Settings')"
+				>
+					<div class="settings-pane__subsection">
+						<BoxSidesEditor
+							v-model="tableSettings.inset"
+							:label="__('Spacing (pt)')"
+							@update:model-value="markSettingsDirty('debounce')"
+						/>
+					</div>
+
+					<div class="settings-pane__subsection">
+						<label class="settings-pane__label">{{ __("Borders") }}</label>
 						<div class="settings-pane__grid">
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{
-									__("Font Family")
-								}}</label>
-								<select
-									:value="reportBuilderConfig.font_family"
-									class="form-control"
-									:disabled="reportBasicReadOnly"
-									@change="updateReportSettingFromEvent('font_family', $event)"
-								>
-									<option
-										v-for="font in availableFonts"
-										:key="font"
-										:value="font"
-									>
-										{{ font }}
-									</option>
-								</select>
-							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("Font Size (pt)")
+									__("Stroke (pt)")
 								}}</label>
 								<input
-									:value="reportBuilderConfig.font_size_pt"
+									v-model.number="tableSettings.stroke.width"
 									type="number"
-									min="1"
-									step="1"
+									min="0"
+									step="0.1"
 									class="form-control"
-									:disabled="reportBasicReadOnly"
-									@input="
-										updateReportNumberSettingFromEvent('font_size_pt', $event)
-									"
+									@input="markSettingsDirty('debounce')"
+								/>
+							</div>
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">{{ __("Color") }}</label>
+								<ColorInput
+									v-model="tableSettings.stroke.color"
+									@update:model-value="markSettingsDirty('live')"
+								/>
+							</div>
+						</div>
+					</div>
+
+					<div class="settings-pane__subsection">
+						<label class="settings-pane__label">{{ __("Colors") }}</label>
+						<div class="settings-pane__grid settings-pane__grid--colors">
+							<div class="settings-pane__field settings-pane__field--span">
+								<label class="settings-pane__sublabel">{{
+									__("Header Background")
+								}}</label>
+								<ColorInput
+									v-model="tableSettings.header.backgroundColor"
+									@update:model-value="markSettingsDirty('live')"
 								/>
 							</div>
 						</div>
 						<div class="settings-pane__grid settings-pane__grid--stripe">
 							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">{{
-									__("Show Filters")
-								}}</label>
+								<label class="settings-pane__sublabel">{{ __("Striping") }}</label>
 								<div class="settings-pane__checkbox-wrap">
 									<input
-										:checked="reportBuilderConfig.show_filters"
+										v-model="tableSettings.stripe.enabled"
 										type="checkbox"
 										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
-										:disabled="reportBasicReadOnly"
-										@change="
-											updateReportCheckedSettingFromEvent(
-												'show_filters',
-												$event
-											)
-										"
-									/>
-								</div>
-							</div>
-							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">{{
-									__("Show Summary")
-								}}</label>
-								<div class="settings-pane__checkbox-wrap">
-									<input
-										:checked="reportBuilderConfig.show_summary"
-										type="checkbox"
-										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
-										:disabled="reportBasicReadOnly"
-										@change="
-											updateReportCheckedSettingFromEvent(
-												'show_summary',
-												$event
-											)
-										"
-									/>
-								</div>
-							</div>
-							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">{{
-									__("Show Total Row")
-								}}</label>
-								<div class="settings-pane__checkbox-wrap">
-									<input
-										:checked="reportBuilderConfig.include_total_row"
-										type="checkbox"
-										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
-										:disabled="reportBasicReadOnly"
-										@change="
-											updateReportCheckedSettingFromEvent(
-												'include_total_row',
-												$event
-											)
-										"
-									/>
-								</div>
-							</div>
-						</div>
-						<div
-							v-if="reportBuilderConfig.sections?.length"
-							class="settings-pane__field"
-						>
-							<label class="settings-pane__label">{{ __("Report Sections") }}</label>
-							<label
-								v-for="section in reportBuilderConfig.sections"
-								:key="section.key"
-								class="settings-pane__checkbox-row"
-							>
-								<input
-									:checked="section.visible"
-									type="checkbox"
-									:disabled="reportBasicReadOnly || !section.optional"
-									@change="updateReportSectionVisibility(section.key, $event)"
-								/>
-								<span>{{ section.label }}</span>
-							</label>
-						</div>
-					</SettingsSection>
-					<SettingsSection
-						v-if="isReportMode"
-						v-model="isChartExpanded"
-						:title="__('Chart Settings')"
-					>
-						<div class="settings-pane__grid">
-							<div class="settings-pane__field settings-pane__field--span">
-								<label class="settings-pane__sublabel">{{
-									__("Chart Representation")
-								}}</label>
-								<select
-									:value="reportBuilderConfig.chart_representation"
-									class="form-control"
-									:disabled="
-										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
-									"
-									@change="
-										updateReportSettingFromEvent(
-											'chart_representation',
-											$event
-										)
-									"
-								>
-									<option value="auto">
-										{{ __("Auto — use report chart") }}
-									</option>
-									<option value="bar">{{ __("Bar") }}</option>
-									<option value="line">{{ __("Line") }}</option>
-									<option value="horizontal_bar">
-										{{ __("Horizontal Bar") }}
-									</option>
-								</select>
-								<small class="settings-pane__hint">{{
-									__(
-										"Auto preserves the report's intended chart. Incompatible overrides keep the original chart."
-									)
-								}}</small>
-							</div>
-							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">{{
-									__("Enable Chart")
-								}}</label>
-								<div class="settings-pane__checkbox-wrap">
-									<input
-										:checked="reportBuilderConfig.chart_enabled"
-										type="checkbox"
-										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
-										:disabled="reportBasicReadOnly"
-										@change="
-											updateReportCheckedSettingFromEvent(
-												'chart_enabled',
-												$event
-											)
-										"
-									/>
-								</div>
-							</div>
-							<div class="settings-pane__field settings-pane__field--toggle">
-								<label class="settings-pane__sublabel">{{
-									__("Card Border")
-								}}</label>
-								<div class="settings-pane__checkbox-wrap">
-									<input
-										:checked="reportBuilderConfig.chart_card_border"
-										type="checkbox"
-										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
-										:disabled="
-											reportBasicReadOnly ||
-											!reportBuilderConfig.chart_enabled
-										"
-										@change="
-											updateReportCheckedSettingFromEvent(
-												'chart_card_border',
-												$event
-											)
-										"
-									/>
-								</div>
-							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("Chart Width (%)")
-								}}</label>
-								<input
-									:value="reportBuilderConfig.chart_width_percent"
-									type="number"
-									min="10"
-									max="100"
-									step="1"
-									class="form-control"
-									:disabled="
-										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
-									"
-									@input="
-										updateReportNumberSettingFromEvent(
-											'chart_width_percent',
-											$event
-										)
-									"
-								/>
-							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("Max Height (pt)")
-								}}</label>
-								<input
-									:value="reportBuilderConfig.chart_max_height_pt"
-									type="number"
-									min="60"
-									max="600"
-									step="1"
-									class="form-control"
-									:disabled="
-										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
-									"
-									@input="
-										updateReportNumberSettingFromEvent(
-											'chart_max_height_pt',
-											$event
-										)
-									"
-								/>
-							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("Spacing Top (pt)")
-								}}</label>
-								<input
-									:value="reportBuilderConfig.chart_spacing_top_pt"
-									type="number"
-									min="0"
-									max="120"
-									step="1"
-									class="form-control"
-									:disabled="
-										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
-									"
-									@input="
-										updateReportNumberSettingFromEvent(
-											'chart_spacing_top_pt',
-											$event
-										)
-									"
-								/>
-							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("Spacing Bottom (pt)")
-								}}</label>
-								<input
-									:value="reportBuilderConfig.chart_spacing_bottom_pt"
-									type="number"
-									min="0"
-									max="120"
-									step="1"
-									class="form-control"
-									:disabled="
-										reportBasicReadOnly || !reportBuilderConfig.chart_enabled
-									"
-									@input="
-										updateReportNumberSettingFromEvent(
-											'chart_spacing_bottom_pt',
-											$event
-										)
-									"
-								/>
-							</div>
-						</div>
-					</SettingsSection>
-					<SettingsSection
-						v-if="!isReportMode && !isRawTypst"
-						v-model="isTypographyExpanded"
-						:title="__('Typography')"
-					>
-						<TypographyStyleEditor
-							v-model="typography.sectionLabel"
-							:title="__('Section Labels')"
-							:available-fonts="availableFonts"
-							:font-faces="fontFaces"
-							@update:model-value="markSettingsDirty('debounce')"
-						/>
-						<TypographyStyleEditor
-							v-model="typography.fieldLabel"
-							:title="__('Field Labels')"
-							:available-fonts="availableFonts"
-							:font-faces="fontFaces"
-							@update:model-value="markSettingsDirty('debounce')"
-						/>
-						<TypographyStyleEditor
-							v-model="typography.fieldValue"
-							:title="__('Field Values')"
-							:available-fonts="availableFonts"
-							:font-faces="fontFaces"
-							@update:model-value="markSettingsDirty('debounce')"
-						/>
-					</SettingsSection>
-					<SettingsSection
-						v-if="!isRawTypst"
-						v-model="isTableExpanded"
-						:title="__('Table Settings')"
-					>
-						<div class="settings-pane__subsection">
-							<BoxSidesEditor
-								v-model="tableSettings.inset"
-								:label="__('Spacing (pt)')"
-								@update:model-value="markSettingsDirty('debounce')"
-							/>
-						</div>
-
-						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">{{ __("Borders") }}</label>
-							<div class="settings-pane__grid">
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("Stroke (pt)")
-									}}</label>
-									<input
-										v-model.number="tableSettings.stroke.width"
-										type="number"
-										min="0"
-										step="0.1"
-										class="form-control"
-										@input="markSettingsDirty('debounce')"
-									/>
-								</div>
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("Color")
-									}}</label>
-									<ColorInput
-										v-model="tableSettings.stroke.color"
-										@update:model-value="markSettingsDirty('live')"
-									/>
-								</div>
-							</div>
-						</div>
-
-						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">{{ __("Colors") }}</label>
-							<div class="settings-pane__grid settings-pane__grid--colors">
-								<div class="settings-pane__field settings-pane__field--span">
-									<label class="settings-pane__sublabel">{{
-										__("Header Background")
-									}}</label>
-									<ColorInput
-										v-model="tableSettings.header.backgroundColor"
-										@update:model-value="markSettingsDirty('live')"
-									/>
-								</div>
-							</div>
-							<div class="settings-pane__grid settings-pane__grid--stripe">
-								<div class="settings-pane__field settings-pane__field--toggle">
-									<label class="settings-pane__sublabel">{{
-										__("Striping")
-									}}</label>
-									<div class="settings-pane__checkbox-wrap">
-										<input
-											v-model="tableSettings.stripe.enabled"
-											type="checkbox"
-											class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
-											@change="markSettingsDirty('live')"
-										/>
-									</div>
-								</div>
-								<div class="settings-pane__field settings-pane__field--color">
-									<label class="settings-pane__sublabel">{{
-										__("Stripe Color")
-									}}</label>
-									<ColorInput
-										v-model="tableSettings.stripe.color"
-										:disabled="!tableSettings.stripe.enabled"
-										@update:model-value="markSettingsDirty('live')"
-									/>
-								</div>
-							</div>
-						</div>
-
-						<div class="settings-pane__subsection">
-							<label class="settings-pane__label">{{
-								__("Cell Label Settings")
-							}}</label>
-							<div class="settings-pane__grid settings-pane__grid--stripe">
-								<div class="settings-pane__field settings-pane__field--toggle">
-									<label class="settings-pane__sublabel">{{
-										__("Compact Labels")
-									}}</label>
-									<div class="settings-pane__checkbox-wrap">
-										<input
-											v-model="tableSettings.cellLabel.enabled"
-											type="checkbox"
-											class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
-											@change="markSettingsDirty('live')"
-										/>
-									</div>
-								</div>
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("Size (pt)")
-									}}</label>
-									<input
-										v-model="tableSettings.cellLabel.fontSize"
-										type="text"
-										class="form-control"
-										:disabled="!tableSettings.cellLabel.enabled"
-										@input="markSettingsDirty('debounce')"
-									/>
-								</div>
-							</div>
-							<div class="settings-pane__grid">
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("Weight")
-									}}</label>
-									<select
-										v-model="tableSettings.cellLabel.fontWeight"
-										class="form-control"
-										:disabled="!tableSettings.cellLabel.enabled"
 										@change="markSettingsDirty('live')"
-									>
-										<option
-											v-for="option in weightOptions"
-											:key="option.value"
-											:value="option.value"
-										>
-											{{ __(option.label) }}
-										</option>
-									</select>
-								</div>
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("Baseline Shift (pt)")
-									}}</label>
-									<input
-										v-model.number="tableSettings.cellLabel.baselineShift"
-										type="number"
-										min="-24"
-										max="24"
-										step="0.5"
-										class="form-control"
-										:disabled="!tableSettings.cellLabel.enabled"
-										@input="markSettingsDirty('debounce')"
 									/>
 								</div>
 							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{ __("Color") }}</label>
+							<div class="settings-pane__field settings-pane__field--color">
+								<label class="settings-pane__sublabel">{{
+									__("Stripe Color")
+								}}</label>
 								<ColorInput
-									v-model="tableSettings.cellLabel.color"
-									:disabled="!tableSettings.cellLabel.enabled"
+									v-model="tableSettings.stripe.color"
+									:disabled="!tableSettings.stripe.enabled"
 									@update:model-value="markSettingsDirty('live')"
 								/>
 							</div>
 						</div>
+					</div>
 
-						<TypographyStyleEditor
-							v-model="tableSettings.typography.header"
-							:title="__('Header Typography')"
-							:available-fonts="availableFonts"
-							:font-faces="fontFaces"
-							:family-label="__('Header Family')"
-							:size-label="__('Header Size (pt)')"
-							:style-label="__('Header Style')"
-							:weight-label="__('Header Weight')"
-							:color-label="__('Header Color')"
-							@update:model-value="markSettingsDirty('debounce')"
-						/>
-
-						<TypographyStyleEditor
-							v-model="tableSettings.typography.body"
-							:title="__('Body Typography')"
-							:available-fonts="availableFonts"
-							:font-faces="fontFaces"
-							:family-label="__('Body Family')"
-							:size-label="__('Body Size (pt)')"
-							:style-label="__('Body Style')"
-							:weight-label="__('Body Weight')"
-							:color-label="__('Body Color')"
-							@update:model-value="markSettingsDirty('debounce')"
-						/>
-					</SettingsSection>
-
-					<SettingsSection
-						v-if="is_custom_profile"
-						v-model="isBrandingExpanded"
-						:title="__('Branding')"
-					>
-						<div class="settings-pane__field">
-							<label class="settings-pane__label">{{ __("Type") }}</label>
-							<select
-								v-model="branding_mode"
-								class="form-control"
-								@change="markSettingsDirty('live')"
-							>
-								<option value="none">{{ __("None") }}</option>
-								<option value="letterhead">{{ __("Letterhead") }}</option>
-								<option value="logo">{{ __("Logo") }}</option>
-							</select>
-						</div>
-
-						<div v-if="branding_mode === 'letterhead'" class="settings-pane__field">
-							<label class="settings-pane__label">{{ __("Letterhead") }}</label>
-							<select
-								v-model="presentation_settings.branding.letterhead"
-								class="form-control"
-								@change="markSettingsDirty('live')"
-							>
-								<option value="">{{ __("None") }}</option>
-								<option v-if="loadingLetterheads" disabled>
-									{{ __("Loading letterheads...") }}
-								</option>
-								<option
-									v-for="letterhead in availableLetterheads"
-									:key="letterhead"
-									:value="letterhead"
-								>
-									{{ letterhead }}
-								</option>
-							</select>
-						</div>
-
-						<div v-if="branding_mode === 'logo'">
-							<p class="settings-pane__hint">
-								{{ __("Logo is anchored to top-left using #place().") }}
-							</p>
-							<p
-								v-if="selected_company && !logo_settings.image"
-								class="settings-pane__hint"
-							>
-								{{ __("Selected company has no logo set.") }}
-							</p>
-							<div class="settings-pane__grid">
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("Size (mm)")
-									}}</label>
+					<div class="settings-pane__subsection">
+						<label class="settings-pane__label">{{ __("Cell Label Settings") }}</label>
+						<div class="settings-pane__grid settings-pane__grid--stripe">
+							<div class="settings-pane__field settings-pane__field--toggle">
+								<label class="settings-pane__sublabel">{{
+									__("Compact Labels")
+								}}</label>
+								<div class="settings-pane__checkbox-wrap">
 									<input
-										v-model.number="logo_settings.size"
-										type="number"
-										class="form-control"
-										@input="markSettingsDirty('debounce')"
-									/>
-								</div>
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("dx (mm)")
-									}}</label>
-									<input
-										v-model.number="logo_settings.dx"
-										type="number"
-										class="form-control"
-										@input="markSettingsDirty('debounce')"
-									/>
-								</div>
-								<div class="settings-pane__field">
-									<label class="settings-pane__sublabel">{{
-										__("dy (mm)")
-									}}</label>
-									<input
-										v-model.number="logo_settings.dy"
-										type="number"
-										class="form-control"
-										@input="markSettingsDirty('debounce')"
+										v-model="tableSettings.cellLabel.enabled"
+										type="checkbox"
+										class="form-check-input settings-pane__checkbox settings-pane__checkbox--inline"
+										@change="markSettingsDirty('live')"
 									/>
 								</div>
 							</div>
-						</div>
-					</SettingsSection>
-
-					<label v-if="!isReportMode" class="settings-pane__checkbox-row">
-						<span class="input-area">
-							<input
-								v-model="qrSettings.enabled"
-								type="checkbox"
-								autocomplete="off"
-								class="input-with-feedback"
-								data-fieldtype="Check"
-								data-fieldname="qr_enabled"
-								@change="markSettingsDirty('live')"
-							/>
-						</span>
-						<span class="disp-area" style="display: none">
-							<input type="checkbox" disabled class="disabled-deselected" />
-						</span>
-						<span class="label-area settings-pane__label">{{
-							__("Enable QR Code")
-						}}</span>
-						<span class="ml-1 help"></span>
-					</label>
-
-					<div v-if="!isReportMode && qrSettings.enabled" class="settings-pane__section">
-						<SettingsSection v-model="isQrExpanded" :title="__('QR-Code')">
-							<p class="settings-pane__hint">
-								{{ __("QR Code is anchored to bottom-left using #place().") }}
-							</p>
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{
-									__("Symbology")
+									__("Size (pt)")
 								}}</label>
-								<select
-									v-model="qrSettings.symbology"
+								<input
+									v-model="tableSettings.cellLabel.fontSize"
+									type="text"
 									class="form-control"
+									:disabled="!tableSettings.cellLabel.enabled"
+									@input="markSettingsDirty('debounce')"
+								/>
+							</div>
+						</div>
+						<div class="settings-pane__grid">
+							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">{{ __("Weight") }}</label>
+								<select
+									v-model="tableSettings.cellLabel.fontWeight"
+									class="form-control"
+									:disabled="!tableSettings.cellLabel.enabled"
 									@change="markSettingsDirty('live')"
 								>
-									<option value="QR Code">{{ __("QR Code") }}</option>
-									<option value="DataMatrix">{{ __("DataMatrix") }}</option>
+									<option
+										v-for="option in weightOptions"
+										:key="option.value"
+										:value="option.value"
+									>
+										{{ __(option.label) }}
+									</option>
 								</select>
 							</div>
-							<div
-								v-if="qrSettings.symbology !== 'DataMatrix'"
-								class="settings-pane__field"
-							>
+							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{
-									__("Error correction")
+									__("Baseline Shift (pt)")
 								}}</label>
-								<select
-									v-model="qrSettings.errorCorrection"
+								<input
+									v-model.number="tableSettings.cellLabel.baselineShift"
+									type="number"
+									min="-24"
+									max="24"
+									step="0.5"
 									class="form-control"
-									@change="markSettingsDirty('live')"
-								>
-									<option value="Low">{{ __("Low") }}</option>
-									<option value="Medium">{{ __("Medium") }}</option>
-									<option value="Quartile">{{ __("Quartile") }}</option>
-									<option value="High">{{ __("High") }}</option>
-								</select>
+									:disabled="!tableSettings.cellLabel.enabled"
+									@input="markSettingsDirty('debounce')"
+								/>
 							</div>
-							<div
-								v-if="qrSettings.symbology === 'DataMatrix'"
-								class="settings-pane__field"
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("Color") }}</label>
+							<ColorInput
+								v-model="tableSettings.cellLabel.color"
+								:disabled="!tableSettings.cellLabel.enabled"
+								@update:model-value="markSettingsDirty('live')"
+							/>
+						</div>
+					</div>
+
+					<TypographyStyleEditor
+						v-model="tableSettings.typography.header"
+						:title="__('Header Typography')"
+						:available-fonts="availableFonts"
+						:font-faces="fontFaces"
+						:family-label="__('Header Family')"
+						:size-label="__('Header Size (pt)')"
+						:style-label="__('Header Style')"
+						:weight-label="__('Header Weight')"
+						:color-label="__('Header Color')"
+						@update:model-value="markSettingsDirty('debounce')"
+					/>
+
+					<TypographyStyleEditor
+						v-model="tableSettings.typography.body"
+						:title="__('Body Typography')"
+						:available-fonts="availableFonts"
+						:font-faces="fontFaces"
+						:family-label="__('Body Family')"
+						:size-label="__('Body Size (pt)')"
+						:style-label="__('Body Style')"
+						:weight-label="__('Body Weight')"
+						:color-label="__('Body Color')"
+						@update:model-value="markSettingsDirty('debounce')"
+					/>
+				</SettingsSection>
+
+				<SettingsSection
+					v-if="is_custom_profile && !isRawTypst"
+					v-model="isBrandingExpanded"
+					:title="__('Branding')"
+				>
+					<div class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Type") }}</label>
+						<select
+							v-model="branding_mode"
+							class="form-control"
+							@change="markSettingsDirty('live')"
+						>
+							<option value="none">{{ __("None") }}</option>
+							<option value="letterhead">{{ __("Letterhead") }}</option>
+							<option value="logo">{{ __("Logo") }}</option>
+						</select>
+					</div>
+
+					<div v-if="branding_mode === 'letterhead'" class="settings-pane__field">
+						<label class="settings-pane__label">{{ __("Letterhead") }}</label>
+						<select
+							v-model="presentation_settings.branding.letterhead"
+							class="form-control"
+							@change="markSettingsDirty('live')"
+						>
+							<option value="">{{ __("None") }}</option>
+							<option v-if="loadingLetterheads" disabled>
+								{{ __("Loading letterheads...") }}
+							</option>
+							<option
+								v-for="letterhead in availableLetterheads"
+								:key="letterhead"
+								:value="letterhead"
 							>
-								<label class="settings-pane__sublabel">{{
-									__("DataMatrix encodation")
-								}}</label>
-								<select
-									v-model="qrSettings.datamatrixEncodation"
-									class="form-control"
-									@change="markSettingsDirty('live')"
-								>
-									<option value="">{{ __("Auto") }}</option>
-									<option value="ascii">ASCII</option>
-									<option value="c40">C40</option>
-									<option value="text">Text</option>
-									<option value="x12">X12</option>
-									<option value="edifact">EDIFACT</option>
-									<option value="base256">Base256</option>
-								</select>
-							</div>
-							<div
-								v-if="qrSettings.symbology === 'DataMatrix'"
-								class="settings-pane__field"
-							>
-								<label class="settings-pane__sublabel">{{
-									__("DataMatrix symbols")
-								}}</label>
-								<select
-									v-model="qrSettings.datamatrixSymbols"
-									class="form-control"
-									@change="markSettingsDirty('live')"
-								>
-									<option value="">{{ __("Square") }}</option>
-									<option value="rect">{{ __("Rectangular") }}</option>
-									<option value="rect-ext">DMRE</option>
-								</select>
-							</div>
+								{{ letterhead }}
+							</option>
+						</select>
+					</div>
+
+					<div v-if="branding_mode === 'logo'">
+						<p class="settings-pane__hint">
+							{{ __("Logo is anchored to top-left using #place().") }}
+						</p>
+						<p
+							v-if="selected_company && !logo_settings.image"
+							class="settings-pane__hint"
+						>
+							{{ __("Selected company has no logo set.") }}
+						</p>
+						<div class="settings-pane__grid">
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{
 									__("Size (mm)")
 								}}</label>
 								<input
-									v-model.number="qrSettings.size"
+									v-model.number="logo_settings.size"
 									type="number"
-									class="form-control"
-									@input="markSettingsDirty('debounce')"
-								/>
-							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("Quiet zone")
-								}}</label>
-								<input
-									v-model.number="qrSettings.quietZone"
-									type="number"
-									min="0"
-									class="form-control"
-									@input="markSettingsDirty('debounce')"
-								/>
-							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("Module size")
-								}}</label>
-								<input
-									v-model.number="qrSettings.moduleSize"
-									type="number"
-									min="0"
 									class="form-control"
 									@input="markSettingsDirty('debounce')"
 								/>
@@ -911,7 +717,7 @@
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{ __("dx (mm)") }}</label>
 								<input
-									v-model.number="qrSettings.dx"
+									v-model.number="logo_settings.dx"
 									type="number"
 									class="form-control"
 									@input="markSettingsDirty('debounce')"
@@ -920,67 +726,204 @@
 							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{ __("dy (mm)") }}</label>
 								<input
-									v-model.number="qrSettings.dy"
+									v-model.number="logo_settings.dy"
 									type="number"
 									class="form-control"
 									@input="markSettingsDirty('debounce')"
 								/>
 							</div>
-							<div class="settings-pane__field">
-								<label class="settings-pane__sublabel">{{
-									__("QR source")
-								}}</label>
-								<select
-									v-model="qrSettings.sourceMode"
-									class="form-control"
-									@change="markSettingsDirty('live')"
-								>
-									<option value="">
-										{{ __("Inherit branding default") }}
-									</option>
-									<option value="basic">{{ __("Basic QR") }}</option>
-									<option value="document_code_profile">
-										{{ __("Document Code Profile") }}
-									</option>
-								</select>
-								<p class="settings-pane__hint">
-									{{
-										__(
-											"Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
-										)
-									}}
-								</p>
-							</div>
-							<div
-								v-if="qrSettings.sourceMode !== 'document_code_profile'"
-								class="settings-pane__field"
+						</div>
+					</div>
+				</SettingsSection>
+
+				<label v-if="!isReportMode" class="settings-pane__checkbox-row">
+					<span class="input-area">
+						<input
+							v-model="qrSettings.enabled"
+							type="checkbox"
+							autocomplete="off"
+							class="input-with-feedback"
+							data-fieldtype="Check"
+							data-fieldname="qr_enabled"
+							@change="markSettingsDirty('live')"
+						/>
+					</span>
+					<span class="disp-area" style="display: none">
+						<input type="checkbox" disabled class="disabled-deselected" />
+					</span>
+					<span class="label-area settings-pane__label">{{ __("Enable QR Code") }}</span>
+					<span class="ml-1 help"></span>
+				</label>
+
+				<div v-if="!isReportMode && qrSettings.enabled" class="settings-pane__section">
+					<SettingsSection v-model="isQrExpanded" :title="__('QR-Code')">
+						<p class="settings-pane__hint">
+							{{ __("QR Code is anchored to bottom-left using #place().") }}
+						</p>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("Symbology") }}</label>
+							<select
+								v-model="qrSettings.symbology"
+								class="form-control"
+								@change="markSettingsDirty('live')"
 							>
-								<label class="settings-pane__sublabel">{{
-									__("QR fields")
-								}}</label>
-								<div class="settings-pane__qr-row">
-									<button
-										type="button"
-										class="btn btn-default btn-xs settings-pane__qr-btn"
-										@click="showQrDialog = true"
-									>
-										{{ __("Select fields") }}
-									</button>
-									<span class="settings-pane__qr-summary">{{
-										qrFieldsSummary
-									}}</span>
-								</div>
-							</div>
-							<p v-else class="settings-pane__hint">
+								<option value="QR Code">{{ __("QR Code") }}</option>
+								<option value="DataMatrix">{{ __("DataMatrix") }}</option>
+							</select>
+						</div>
+						<div
+							v-if="qrSettings.symbology !== 'DataMatrix'"
+							class="settings-pane__field"
+						>
+							<label class="settings-pane__sublabel">{{
+								__("Error correction")
+							}}</label>
+							<select
+								v-model="qrSettings.errorCorrection"
+								class="form-control"
+								@change="markSettingsDirty('live')"
+							>
+								<option value="Low">{{ __("Low") }}</option>
+								<option value="Medium">{{ __("Medium") }}</option>
+								<option value="Quartile">{{ __("Quartile") }}</option>
+								<option value="High">{{ __("High") }}</option>
+							</select>
+						</div>
+						<div
+							v-if="qrSettings.symbology === 'DataMatrix'"
+							class="settings-pane__field"
+						>
+							<label class="settings-pane__sublabel">{{
+								__("DataMatrix encodation")
+							}}</label>
+							<select
+								v-model="qrSettings.datamatrixEncodation"
+								class="form-control"
+								@change="markSettingsDirty('live')"
+							>
+								<option value="">{{ __("Auto") }}</option>
+								<option value="ascii">ASCII</option>
+								<option value="c40">C40</option>
+								<option value="text">Text</option>
+								<option value="x12">X12</option>
+								<option value="edifact">EDIFACT</option>
+								<option value="base256">Base256</option>
+							</select>
+						</div>
+						<div
+							v-if="qrSettings.symbology === 'DataMatrix'"
+							class="settings-pane__field"
+						>
+							<label class="settings-pane__sublabel">{{
+								__("DataMatrix symbols")
+							}}</label>
+							<select
+								v-model="qrSettings.datamatrixSymbols"
+								class="form-control"
+								@change="markSettingsDirty('live')"
+							>
+								<option value="">{{ __("Square") }}</option>
+								<option value="rect">{{ __("Rectangular") }}</option>
+								<option value="rect-ext">DMRE</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("Size (mm)") }}</label>
+							<input
+								v-model.number="qrSettings.size"
+								type="number"
+								class="form-control"
+								@input="markSettingsDirty('debounce')"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("Quiet zone") }}</label>
+							<input
+								v-model.number="qrSettings.quietZone"
+								type="number"
+								min="0"
+								class="form-control"
+								@input="markSettingsDirty('debounce')"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("Module size") }}</label>
+							<input
+								v-model.number="qrSettings.moduleSize"
+								type="number"
+								min="0"
+								class="form-control"
+								@input="markSettingsDirty('debounce')"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("dx (mm)") }}</label>
+							<input
+								v-model.number="qrSettings.dx"
+								type="number"
+								class="form-control"
+								@input="markSettingsDirty('debounce')"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("dy (mm)") }}</label>
+							<input
+								v-model.number="qrSettings.dy"
+								type="number"
+								class="form-control"
+								@input="markSettingsDirty('debounce')"
+							/>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("QR source") }}</label>
+							<select
+								v-model="qrSettings.sourceMode"
+								class="form-control"
+								@change="markSettingsDirty('live')"
+							>
+								<option value="">
+									{{ __("Inherit branding default") }}
+								</option>
+								<option value="basic">{{ __("Basic QR") }}</option>
+								<option value="document_code_profile">
+									{{ __("Document Code Profile") }}
+								</option>
+							</select>
+							<p class="settings-pane__hint">
 								{{
 									__(
-										"QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
+										"Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
 									)
 								}}
 							</p>
-						</SettingsSection>
-					</div>
-				</template>
+						</div>
+						<div
+							v-if="qrSettings.sourceMode !== 'document_code_profile'"
+							class="settings-pane__field"
+						>
+							<label class="settings-pane__sublabel">{{ __("QR fields") }}</label>
+							<div class="settings-pane__qr-row">
+								<button
+									type="button"
+									class="btn btn-default btn-xs settings-pane__qr-btn"
+									@click="showQrDialog = true"
+								>
+									{{ __("Select fields") }}
+								</button>
+								<span class="settings-pane__qr-summary">{{
+									qrFieldsSummary
+								}}</span>
+							</div>
+						</div>
+						<p v-else class="settings-pane__hint">
+							{{
+								__(
+									"QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
+								)
+							}}
+						</p>
+					</SettingsSection>
+				</div>
 			</div>
 		</div>
 		<QrFieldsDialog
@@ -1046,6 +989,7 @@ const loadingFonts = computed(() => props.loadingFonts);
 const branding_profiles = ref<CrispyBrandingProfileOption[]>([]);
 const branding_profile_baseline = ref<Partial<PresentationSettings> | null>(null);
 const loading_branding_profiles = ref(false);
+let brandingProfilesRequestSeq = 0;
 const {
 	availableLetterheads,
 	loadingLetterheads,
@@ -1068,6 +1012,10 @@ const showQrDialog = ref(false);
 const fallbackReportBuilder = ref(getDefaultReportBuilderConfig());
 const isReportMode = computed(() => Boolean(store.isReportMode?.value));
 const isRawTypst = computed(() => Boolean(store.rawTypst?.value));
+const formatCompany = computed(() => String(store.formatCompany?.value || "").trim());
+const formatReady = computed(() =>
+	store.crispyFormat ? Boolean(store.crispyFormat.value) : true
+);
 const reportBuilderConfig = computed({
 	get: () => store.reportBuilderConfig?.value || fallbackReportBuilder.value,
 	set: (nextValue) => {
@@ -1095,10 +1043,12 @@ const printTaxesWithZeroAmount = computed<boolean>({
 const logo_settings = computed(() => ensure_logo_settings(props.presentation_settings));
 const selected_company = computed<string>({
 	get: () =>
+		formatCompany.value ||
 		props.presentation_settings.branding.company ||
 		props.presentation_settings.branding.logo?.company ||
 		"",
 	set: (value) => {
+		if (formatCompany.value) return;
 		props.presentation_settings.branding.company = value || "";
 		logo_settings.value.company = value || "";
 		logo_settings.value.image = resolveCompanyLogo(value || "");
@@ -1132,10 +1082,11 @@ const branding_profile_selection = computed<string>({
 			const selectedProfile = branding_profiles.value.find(
 				(profile) => profile.name === value
 			);
-			if (selectedProfile?.company) {
-				props.presentation_settings.branding.company = selectedProfile.company;
-				logo_settings.value.company = selectedProfile.company;
-				logo_settings.value.image = resolveCompanyLogo(selectedProfile.company);
+			const company = formatCompany.value || selectedProfile?.company || "";
+			if (company) {
+				props.presentation_settings.branding.company = company;
+				logo_settings.value.company = company;
+				logo_settings.value.image = resolveCompanyLogo(company);
 			}
 			void applyBrandingProfileBase(value);
 		} else {
@@ -1344,11 +1295,15 @@ const branding_mode = computed<string>({
 });
 
 async function fetch_branding_profiles() {
+	const requestSeq = ++brandingProfilesRequestSeq;
+	const company = selected_company.value || null;
 	loading_branding_profiles.value = true;
 	try {
-		branding_profiles.value = await getBrandingProfiles({
-			company: selected_company.value || null,
+		const profiles = await getBrandingProfiles({
+			company,
 		});
+		if (requestSeq !== brandingProfilesRequestSeq) return;
+		branding_profiles.value = profiles;
 		emit("branding-profiles-change", branding_profiles.value);
 		const selectedProfileName = props.presentation_settings.branding.profile;
 		if (props.presentation_settings.source === "branding_profile" && selectedProfileName) {
@@ -1371,18 +1326,21 @@ async function fetch_branding_profiles() {
 			}
 		}
 	} catch (error) {
+		if (requestSeq !== brandingProfilesRequestSeq) return;
 		logger.warn("Failed to load Crispy Branding Profiles", error);
 		branding_profiles.value = [];
 		emit("branding-profiles-change", []);
 	} finally {
-		loading_branding_profiles.value = false;
+		if (requestSeq === brandingProfilesRequestSeq) {
+			loading_branding_profiles.value = false;
+		}
 	}
 }
 
 onMounted(() => {
 	fetchScopedLetterheads();
 	fetchCompanies({ include_current: selected_company.value || null });
-	fetch_branding_profiles();
+	if (formatReady.value) fetch_branding_profiles();
 });
 
 function fetchScopedLetterheads() {
@@ -1420,12 +1378,22 @@ watch(availableCompanies, () => {
 });
 
 watch(
-	() => selected_company.value,
-	() => {
-		fetchScopedLetterheads();
-		fetch_branding_profiles();
-	}
+	formatCompany,
+	(company) => {
+		if (!company) return;
+		props.presentation_settings.branding.company = company;
+		logo_settings.value.company = company;
+		logo_settings.value.image = resolveCompanyLogo(company);
+		void fetchCompanies({ include_current: company });
+	},
+	{ immediate: true }
 );
+
+watch([formatReady, () => selected_company.value], ([ready]) => {
+	if (!ready) return;
+	fetchScopedLetterheads();
+	fetch_branding_profiles();
+});
 
 watch(branding_profiles, (profiles) => {
 	const currentProfile = props.presentation_settings.branding.profile;

@@ -9,6 +9,8 @@ const hoisted = vi.hoisted(() => ({
     fields: { value: [] as unknown[] },
     loading: { value: false },
     initializing: { value: false },
+    crispyFormat: { value: { name: "FMT-1", company: "" } as any },
+    formatCompany: { value: "" },
     isReportMode: { value: false },
     rawTypst: { value: false },
     reportBuilderConfig: {
@@ -44,6 +46,17 @@ vi.mock("../../api/crispy", () => ({
       is_default: 1,
     },
   ]),
+  getBrandingProfilePresentationSettings: vi.fn(async () => ({
+    source: "branding_profile",
+    branding: {
+      profile: "CBP-1",
+      company: "ACME",
+      mode: "none",
+      letterhead: "",
+      letterhead_image: "",
+      logo: { company: "ACME", image: "", size: 20, dx: 0, dy: 0 },
+    },
+  })),
 }));
 
 vi.mock("../../composables/useBrandingData", () => ({
@@ -65,8 +78,12 @@ vi.mock("../../composables/useStore", () => ({
 
 describe("SettingsPane", () => {
   beforeEach(() => {
+	(hoisted.storeMock as any).crispyFormat = ref({ name: "FMT-1", company: "" });
+	(hoisted.storeMock as any).formatCompany = ref("");
     hoisted.storeMock.isReportMode.value = false;
     hoisted.storeMock.rawTypst.value = false;
+    hoisted.storeMock.crispyFormat.value = { name: "FMT-1", company: "" };
+    hoisted.storeMock.formatCompany.value = "";
     hoisted.storeMock.updateReportBuilderConfig.mockClear();
   });
 
@@ -246,6 +263,7 @@ describe("SettingsPane", () => {
     await flushPromises();
     await nextTick();
 
+    expect(wrapper.find("template").exists()).toBe(false);
     expect(wrapper.text()).toContain("Page Settings");
     const profileSelect = wrapper
       .findAll("select")
@@ -448,7 +466,11 @@ describe("SettingsPane", () => {
     expect(wrapper.text()).not.toContain("Page Settings");
     expect(wrapper.text()).not.toContain("Typography");
     expect(wrapper.text()).not.toContain("Table Settings");
-    expect(wrapper.text()).toContain("Branding");
+    expect(
+      wrapper
+        .findAll("button.settings-pane__section-header")
+        .some((button) => button.text().trim() === "Branding"),
+    ).toBe(false);
     expect(wrapper.text()).toContain("Enable QR Code");
   });
 
@@ -487,6 +509,96 @@ describe("SettingsPane", () => {
     expect(presentation_settings.source).toBe("branding_profile");
     expect(presentation_settings.branding.profile).toBe("CBP-1");
     expect(markDirty).toHaveBeenCalled();
+  });
+
+  it("locks presentation company to the Crispy Format company", async () => {
+    const { getBrandingProfiles } = await import("../../api/crispy");
+    hoisted.storeMock.formatCompany.value = "ACME";
+    vi.mocked(getBrandingProfiles).mockClear();
+    const presentation_settings = reactive({
+      source: "custom",
+      page: {
+        size: "A4",
+        orientation: "portrait",
+        margins: { top: 10, bottom: 10, left: 10, right: 10 },
+      },
+      branding: {
+        profile: "",
+        company: "Wrong Company",
+        mode: "none",
+        letterhead: "",
+        letterhead_image: "",
+        logo: { company: "Wrong Company", image: "", size: 20, dx: 0, dy: 0 },
+      },
+      typography: {},
+      qr: {},
+    }) as any;
+
+    const wrapper = mount(SettingsPane, {
+      props: { presentation_settings, markDirty: vi.fn() },
+      global: {
+        stubs: {
+          ColorInput: true,
+          QrFieldsDialog: true,
+        },
+      },
+    });
+    await flushPromises();
+    await nextTick();
+
+    expect(presentation_settings.branding.company).toBe("ACME");
+    expect(presentation_settings.branding.logo.company).toBe("ACME");
+    expect(wrapper.find("select").attributes("disabled")).toBeDefined();
+    expect(wrapper.text()).not.toContain("AC - ACME");
+    expect(getBrandingProfiles).toHaveBeenCalledWith({ company: "ACME" });
+  });
+
+  it("waits for format context before loading Branding Profiles", async () => {
+    const { getBrandingProfiles } = await import("../../api/crispy");
+    hoisted.storeMock.crispyFormat.value = null as any;
+    hoisted.storeMock.formatCompany.value = "Wasaq Group General Trading";
+    vi.mocked(getBrandingProfiles).mockClear();
+    const presentation_settings = reactive({
+      source: "custom",
+      page: {
+        size: "A4",
+        orientation: "portrait",
+        margins: { top: 10, bottom: 10, left: 10, right: 10 },
+      },
+      branding: {
+        profile: "",
+        company: "",
+        mode: "none",
+        letterhead: "",
+        letterhead_image: "",
+        logo: { company: "", image: "", size: 20, dx: 0, dy: 0 },
+      },
+      typography: {},
+      qr: {},
+    }) as any;
+
+    mount(SettingsPane, {
+      props: { presentation_settings, markDirty: vi.fn() },
+      global: {
+        stubs: {
+          ColorInput: true,
+          QrFieldsDialog: true,
+        },
+      },
+    });
+    await flushPromises();
+    expect(getBrandingProfiles).not.toHaveBeenCalled();
+
+    hoisted.storeMock.crispyFormat.value = {
+      name: "FMT-WSQG",
+      company: "Wasaq Group General Trading",
+    };
+    await nextTick();
+    await flushPromises();
+
+    expect(getBrandingProfiles).toHaveBeenCalledWith({
+      company: "Wasaq Group General Trading",
+    });
   });
 
   it("restricts typography weight and style options to the selected font faces", async () => {

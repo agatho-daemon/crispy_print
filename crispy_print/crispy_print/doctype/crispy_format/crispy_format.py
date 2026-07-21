@@ -1,6 +1,8 @@
 # Copyright (c) 2025, Agathodaemon and contributors
 # For license information, please see license.txt
 
+import json
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -55,7 +57,7 @@ class CrispyFormat(Document):
 		)
 
 	def validate(self):
-		"""Validate field combinations and keep report raw mode aligned with is_advanced."""
+		"""Validate field combinations for the selected format type."""
 		self._set_default_company_if_missing()
 		if not self.company and self.crispy_format_type != "Report":
 			frappe.throw(_("Company is required for Crispy Format. Set a Default Company first."))
@@ -88,9 +90,7 @@ class CrispyFormat(Document):
 			fingerprint = get_source_fingerprint(self.report_renderer).get("fingerprint")
 			if fingerprint and not self.report_source_fingerprint:
 				self.report_source_fingerprint = fingerprint
-
-			# Report mode source of truth: is_advanced drives raw_typst.
-			self.raw_typst = 1 if self.is_advanced else 0
+			self._normalize_report_builder_mode()
 
 		# Validate DocType mode
 		elif self.crispy_format_type == "DocType":
@@ -102,7 +102,6 @@ class CrispyFormat(Document):
 			self.report_renderer = None
 			self.report_source_fingerprint = None
 			self.set("report", [])
-			self.is_advanced = 0
 
 		# Validate Contract mode
 		elif self.crispy_format_type == "Contract":
@@ -114,7 +113,6 @@ class CrispyFormat(Document):
 			self.report_renderer = None
 			self.report_source_fingerprint = None
 			self.set("report", [])
-			self.is_advanced = 0
 
 		# Clear other defaults when this format is set as default
 		if self.is_default:
@@ -124,6 +122,19 @@ class CrispyFormat(Document):
 				message = f"Replaced {frappe.bold(cleared_defaults[0])} as default for {frappe.bold(self._get_default_scope_label())}"
 
 				frappe.msgprint(message, indicator="blue")
+
+	def _normalize_report_builder_mode(self) -> None:
+		try:
+			settings = json.loads(self.presentation_settings or "{}")
+		except (TypeError, json.JSONDecodeError):
+			return
+		if not isinstance(settings, dict):
+			return
+		report = settings.get("report")
+		if not isinstance(report, dict):
+			return
+		report["mode"] = "advanced" if self.raw_typst else "basic"
+		self.presentation_settings = json.dumps(settings, separators=(",", ":"))
 
 	def on_update(self):
 		self._invalidate_doctype_formats_cache()

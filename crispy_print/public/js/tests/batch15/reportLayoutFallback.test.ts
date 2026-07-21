@@ -6,7 +6,6 @@ vi.mock("../../api/crispy", () => ({
       name: "Generic Report Format",
       crispy_format_type: "Report",
       report_scope: "All Compatible Reports",
-      is_advanced: 0,
       report_renderer: "generic_report",
       report: [],
       doc_type: null as unknown,

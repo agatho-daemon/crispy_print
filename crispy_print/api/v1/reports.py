@@ -1,6 +1,6 @@
 import json
 import re
-from copy import copy
+from copy import copy, deepcopy
 from pathlib import Path
 
 import frappe
@@ -19,6 +19,7 @@ from crispy_print.report_renderers import get_renderer_metadata, infer_report_re
 
 from .company_context import (
 	apply_effective_company_to_presentation_settings,
+	clean_company,
 	extract_presentation_settings_company,
 	resolve_effective_company,
 )
@@ -27,10 +28,8 @@ from .formats import get_custom_report_formats
 from .security import enforce_rate_limit
 from .typst_doc import _build_typst_document
 
-MAX_REPORT_RESULT_ROWS = 5000
-MAX_REPORT_COLUMNS = 100
-MAX_REPORT_CELL_BYTES = 2 * 1024
-MAX_REPORT_PAYLOAD_BYTES = 512 * 1024
+REPORT_PREVIEW_SNAPSHOT_TTL_SECONDS = 15 * 60
+REPORT_DATA_FILENAME = "crispy-report-data.json"
 IMAGE_EXTENSIONS = {
 	"png",
 	"jpg",
@@ -104,22 +103,42 @@ def _build_truncation_payload(
 			"truncated": bool(columns_truncated),
 			"original": int(original_column_count),
 			"returned": int(returned_column_count),
-			"max": MAX_REPORT_COLUMNS,
+			"max": None,
 		},
 		"cells_truncated_count": int(cells_truncated_count),
 		"truncated_fieldnames": list(truncated_fieldnames or []),
 	}
 
 
-def _throw_if_report_payload_too_large(payload: object, label: str = "Report payload") -> None:
-	try:
-		size = len(json.dumps(payload, default=str, separators=(",", ":")).encode("utf-8"))
-	except Exception:
-		size = len(str(payload).encode("utf-8"))
-	if size > MAX_REPORT_PAYLOAD_BYTES:
-		frappe.throw(
-			_("{0} exceeds the maximum size of {1} KB.").format(label, MAX_REPORT_PAYLOAD_BYTES // 1024)
-		)
+def _store_report_preview_snapshot(report: str, typst_data: dict) -> str:
+	snapshot_id = frappe.generate_hash(length=32)
+	frappe.cache.set_value(
+		f"crispy_report_preview:{snapshot_id}",
+		{"report": report, "data": typst_data},
+		user=True,
+		expires_in_sec=REPORT_PREVIEW_SNAPSHOT_TTL_SECONDS,
+	)
+	return snapshot_id
+
+
+def _load_report_preview_snapshot(report: str, snapshot_id: str | None) -> dict | None:
+	if not snapshot_id:
+		return None
+	payload = frappe.cache.get_value(
+		f"crispy_report_preview:{snapshot_id}",
+		user=True,
+		expires=True,
+	)
+	if not isinstance(payload, dict) or payload.get("report") != report:
+		frappe.throw(_("Report preview data has expired. Run Preview again."))
+	data = payload.get("data")
+	if not isinstance(data, dict):
+		frappe.throw(_("Report preview data has expired. Run Preview again."))
+	return data
+
+
+def _serialize_report_data_file(data: dict) -> str:
+	return json.dumps(data, ensure_ascii=False, separators=(",", ":"), default=str)
 
 
 def _is_image_asset_value(value: str) -> bool:
@@ -163,7 +182,7 @@ def _normalize_image_assets(data: dict | list | str | int | float | bool | None)
 
 
 def _is_basic_report_format(format_doc) -> bool:
-	return not bool(getattr(format_doc, "raw_typst", 0) or getattr(format_doc, "is_advanced", 0))
+	return not bool(getattr(format_doc, "raw_typst", 0))
 
 
 def _prepare_basic_chart_source(
@@ -282,7 +301,6 @@ def generate_report_pdf(
 	typst_data = _prepare_typst_report_data(
 		report, report_data, filters if cint(include_filters) else None, column_filter
 	)
-	_throw_if_report_payload_too_large(typst_data)
 
 	# Add canonical presentation settings.
 	format_presentation_settings = {}
@@ -326,8 +344,9 @@ def generate_report_pdf(
 	# Build Typst document using unified compilation
 	typst_source = _build_typst_document(
 		format_doc=format_doc_for_render,
-		data_dict=normalized_typst_data,
+		data_dict=None,
 		variable_name="data",  # Reports use #data.* namespace
+		data_file=REPORT_DATA_FILENAME,
 	)
 
 	# Compile to PDF (write to public files and return URL)
@@ -337,6 +356,7 @@ def generate_report_pdf(
 		pdf_standard=format_doc.get("pdf_standard") or "PDF/A-2u",
 		asset_files=asset_files,
 		return_url=1,
+		_trusted_data_files={REPORT_DATA_FILENAME: _serialize_report_data_file(normalized_typst_data)},
 	)
 
 	report_truncation = normalized_typst_data.get("truncation") or {}
@@ -369,6 +389,7 @@ def generate_report_pdf(
 def get_report_typst_source(
 	report: str,
 	format_name: str | None = None,
+	format_company: str | None = None,
 	filters: dict | str | None = None,
 	column_config: list | str | None = None,
 	include_filters: int = 0,
@@ -381,7 +402,9 @@ def get_report_typst_source(
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
 	preview_data: dict | str | None = None,
-	limit: int = 50,
+	preview_snapshot_id: str | None = None,
+	limit: int = 0,
+	_externalize_data: bool = False,
 ) -> dict:
 	"""
 	Build Typst source for report preview.
@@ -394,7 +417,7 @@ def get_report_typst_source(
 		format_name: Crispy Format name
 		filters: Report filters (dict or JSON string, optional)
 		column_config: Column configuration with widths (optional)
-		limit: Maximum rows for preview (default: 50)
+		limit: Optional caller-requested row limit. Zero returns the complete ERPNext result.
 
 	Returns:
 		dict: {"typst_source": str, "truncation": dict}
@@ -411,6 +434,8 @@ def get_report_typst_source(
 				preview_data_dict = None
 		elif isinstance(preview_data, dict):
 			preview_data_dict = preview_data
+	if preview_snapshot_id:
+		preview_data_dict = _load_report_preview_snapshot(report, preview_snapshot_id)
 
 	# Parse filters if string
 	if isinstance(filters, str):
@@ -454,6 +479,7 @@ def get_report_typst_source(
 	if format_name:
 		format_doc = frappe.get_doc("Crispy Format", format_name)
 		format_doc.check_permission("read")
+		canonical_format_company = clean_company(getattr(format_doc, "company", None))
 	else:
 		if not frappe.has_permission("Crispy Format", "create"):
 			frappe.throw(
@@ -463,15 +489,18 @@ def get_report_typst_source(
 			frappe.throw(_("Typst code is required for an unsaved report preview."))
 		format_doc = frappe._dict(
 			name="",
-			company="",
+			company=clean_company(format_company) or "",
 			typst_code=typst_code_override,
 			typst_preamble="",
 			doc_header="",
 			doc_footer="",
 			raw_typst=0,
-			is_advanced=0,
 		)
+		canonical_format_company = clean_company(format_company)
+	if canonical_format_company:
+		filters = {**filters, "company": canonical_format_company}
 	effective_company = resolve_effective_company(
+		source_doc={"company": canonical_format_company} if canonical_format_company else None,
 		report_filters=filters,
 		explicit_company=extract_presentation_settings_company(presentation_settings_dict)
 		or getattr(format_doc, "company", None),
@@ -496,7 +525,13 @@ def get_report_typst_source(
 
 	# Prepare data for Typst
 	if preview_data_dict:
-		typst_data = dict(preview_data_dict)
+		typst_data = _project_report_preview_data(
+			preview_data_dict,
+			column_filter,
+			include_filters=bool(cint(include_filters)),
+			include_summary=bool(cint(include_summary)),
+			include_total_row=bool(cint(include_total_row)),
+		)
 		typst_data.setdefault("title", report or "Style Preview")
 		typst_data.setdefault("subtitle", "")
 		typst_data.setdefault("filters", [])
@@ -511,16 +546,8 @@ def get_report_typst_source(
 		typst_data.setdefault("chart", {})
 		typst_data.setdefault("chart_spec", normalize_report_chart(typst_data.get("chart"), report or None))
 		typst_data.setdefault("skip_total_row", False)
-		typst_data["columns"] = [
-			{**col, **_normalize_typst_column_width_parts(col.get("width", "auto"))}
-			if isinstance(col, dict)
-			else col
-			for col in typst_data.get("columns") or []
-		]
 	else:
-		report_data = _get_report_data(
-			report, filters or {}, max_rows=limit if limit else MAX_REPORT_RESULT_ROWS
-		)
+		report_data = _get_report_data(report, filters or {}, max_rows=limit or None)
 		typst_data = _prepare_typst_report_data(
 			report,
 			report_data,
@@ -529,8 +556,6 @@ def get_report_typst_source(
 			include_summary=bool(cint(include_summary)),
 			include_total_row=bool(cint(include_total_row)),
 		)
-
-	_throw_if_report_payload_too_large(typst_data)
 
 	# Limit rows for preview
 	preview_truncated = False
@@ -599,16 +624,17 @@ def get_report_typst_source(
 	)
 	typst_source = _build_typst_document(
 		format_doc=format_doc_for_render,
-		data_dict=normalized_typst_data,
+		data_dict=None if _externalize_data else normalized_typst_data,
 		variable_name="data",  # Reports use #data.* namespace
 		presentation_settings_block=presentation_settings_block,
 		preamble_override=preamble_override,
+		data_file=REPORT_DATA_FILENAME if _externalize_data else None,
 	)
 
 	report_truncation = normalized_typst_data.get("truncation") or {}
 	result_truncated = bool(preview_truncated or normalized_typst_data.get("result_truncated"))
 
-	return {
+	payload = {
 		"typst_source": typst_source,
 		"truncation": _build_truncation_payload(
 			original_rows=normalized_typst_data.get("original_row_count", preview_original_rows),
@@ -634,11 +660,17 @@ def get_report_typst_source(
 		"chart_render": chart_render,
 		"chart_svg": sanitized_chart_svg if typst_data.get("chart_svg") else None,
 	}
+	if _externalize_data:
+		payload["_generated_data_files"] = {
+			REPORT_DATA_FILENAME: _serialize_report_data_file(normalized_typst_data)
+		}
+	return payload
 
 
 def compile_report_preview(
 	report: str,
 	format_name: str | None = None,
+	format_company: str | None = None,
 	filters: dict | str | None = None,
 	column_config: list | str | None = None,
 	include_filters: int = 0,
@@ -651,13 +683,15 @@ def compile_report_preview(
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
 	preview_data: dict | str | None = None,
-	limit: int = 50,
+	preview_snapshot_id: str | None = None,
+	limit: int = 0,
 	asset_files: list | str | None = None,
 ) -> dict:
 	"""Build and compile report preview SVG in one request."""
 	source_payload = get_report_typst_source(
 		report=report,
 		format_name=format_name,
+		format_company=format_company,
 		filters=filters,
 		column_config=column_config,
 		include_filters=include_filters,
@@ -670,7 +704,9 @@ def compile_report_preview(
 		typst_preamble_override=typst_preamble_override,
 		typst_code_override=typst_code_override,
 		preview_data=preview_data,
+		preview_snapshot_id=preview_snapshot_id,
 		limit=limit,
+		_externalize_data=True,
 	)
 	compile_asset_files = list(source_payload.get("asset_files") or [])
 	if asset_files:
@@ -687,6 +723,7 @@ def compile_report_preview(
 		output_format="svg",
 		asset_files=compile_asset_files,
 		chart_svg=source_payload.get("chart_svg"),
+		_trusted_data_files=source_payload.get("_generated_data_files"),
 	)
 	return {
 		**result,
@@ -698,14 +735,20 @@ def compile_report_preview(
 	}
 
 
-def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
+def get_sample_report_data(
+	report: str,
+	filters=None,
+	limit: int = 0,
+	store_snapshot: int = 0,
+) -> dict:
 	"""
 	Get sample data from a report for preview purposes.
 
 	Args:
 		report: Report name
 		filters: Report filters (dict or JSON string, optional)
-		limit: Maximum rows to return (default: 50)
+		limit: Optional caller-requested row limit. Zero returns the complete ERPNext result.
+		store_snapshot: Store prepared report data server-side and return a lightweight handle.
 
 	Returns:
 		dict: {
@@ -729,20 +772,103 @@ def get_sample_report_data(report: str, filters=None, limit: int = 50) -> dict:
 	filters = _fill_default_report_filters(report, filters)
 
 	# Get report data
-	report_data = _get_report_data(report, filters, max_rows=limit if limit else MAX_REPORT_RESULT_ROWS)
+	report_data = _get_report_data(report, filters, max_rows=limit or None)
 
 	# Prepare for Typst
-	typst_data = _prepare_typst_report_data(report, report_data, filters=None, column_filter=None)
+	typst_data = _prepare_typst_report_data(report, report_data, filters=filters, column_filter=None)
 
 	# Limit rows
 	if limit and len(typst_data["rows"]) > limit:
 		typst_data["rows"] = typst_data["rows"][:limit]
 		typst_data["total_rows"] = limit
 
+	if store_snapshot:
+		snapshot_id = _store_report_preview_snapshot(report, typst_data)
+		row_count = len(typst_data.get("rows") or [])
+		return {
+			"preview_snapshot_id": snapshot_id,
+			"columns": typst_data.get("columns") or [],
+			"title": typst_data.get("title") or report,
+			"subtitle": typst_data.get("subtitle") or "",
+			"total_rows": typst_data.get("total_rows", row_count),
+			"original_row_count": typst_data.get("original_row_count", row_count),
+			"returned_row_count": typst_data.get("returned_row_count", row_count),
+			"result_truncated": bool(typst_data.get("result_truncated")),
+			"max_rows": typst_data.get("max_rows"),
+		}
+
 	return typst_data
 
 
-def _get_report_data(report: str, filters: dict, max_rows: int | None = MAX_REPORT_RESULT_ROWS) -> dict:
+def _project_report_preview_data(
+	preview_data: dict,
+	column_filter: list | None,
+	*,
+	include_filters: bool,
+	include_summary: bool,
+	include_total_row: bool,
+) -> dict:
+	"""Apply Builder presentation choices to an already-executed report snapshot."""
+	typst_data = deepcopy(preview_data)
+	all_columns = [column for column in typst_data.get("columns") or [] if isinstance(column, dict)]
+	visible_columns = all_columns
+
+	if column_filter:
+		columns_by_fieldname = {
+			str(column.get("fieldname") or ""): column for column in all_columns if column.get("fieldname")
+		}
+		visible_columns = []
+		for config in column_filter:
+			if not isinstance(config, dict):
+				continue
+			fieldname = str(config.get("fieldname") or "")
+			column = columns_by_fieldname.get(fieldname)
+			if not column:
+				continue
+			projected = deepcopy(column)
+			projected["width"] = _normalize_typst_column_width(config.get("width", "auto"))
+			visible_columns.append(projected)
+
+	for column in visible_columns:
+		column.update(_normalize_typst_column_width_parts(column.get("width", "auto")))
+	typst_data["columns"] = visible_columns
+
+	visible_fieldnames = [str(column.get("fieldname") or "") for column in visible_columns]
+	for row in typst_data.get("rows") or []:
+		if not isinstance(row, dict):
+			continue
+		cells_by_fieldname = {
+			str(cell.get("fieldname") or ""): cell
+			for cell in row.get("cells") or []
+			if isinstance(cell, dict) and cell.get("fieldname")
+		}
+		row["cells"] = [
+			deepcopy(cells_by_fieldname[fieldname])
+			for fieldname in visible_fieldnames
+			if fieldname in cells_by_fieldname
+		]
+
+	if not include_filters:
+		typst_data["filters"] = []
+	if not include_summary:
+		typst_data["report_summary"] = []
+	if not include_total_row:
+		typst_data["rows"] = [
+			row
+			for row in typst_data.get("rows") or []
+			if not isinstance(row, dict)
+			or (
+				not row.get("is_total_row")
+				and not row.get("is_total_like_row")
+				and not row.get("is_auxiliary_row")
+			)
+		]
+		typst_data["show_totals"] = False
+
+	return typst_data
+
+
+def _get_report_data(report: str, filters: dict, max_rows: int | None = None) -> dict:
 	"""Execute report and return raw data"""
 	_ensure_report_read_permission(report)
 	enforce_rate_limit("report_data", limit=20, window_seconds=60)
@@ -872,12 +998,6 @@ def _prepare_typst_report_data(
 	# Filter visible columns
 	visible_columns = [col for col in columns if col.get("label") and col.get("_id") != "_check"]
 	original_column_count = len(visible_columns)
-	if len(visible_columns) > MAX_REPORT_COLUMNS:
-		frappe.logger().warning(
-			f"[Crispy Print] Report {report} has {len(visible_columns)} visible columns; "
-			f"truncating to {MAX_REPORT_COLUMNS}"
-		)
-		visible_columns = visible_columns[:MAX_REPORT_COLUMNS]
 	truncation_tracker.mark_columns(original_column_count, len(visible_columns))
 	# Default width semantics are backend-owned: report metadata widths are ignored unless
 	# caller provides explicit column_config widths.
@@ -1302,20 +1422,7 @@ def _truncate_report_cell_value(
 	fieldname: str | None = None,
 	truncation_tracker: ReportTruncationTracker | None = None,
 ):
-	if value in (None, ""):
-		return value
-	if isinstance(value, int | float | bool):
-		return value
-	text = str(value)
-	if len(text.encode("utf-8")) <= MAX_REPORT_CELL_BYTES:
-		return value
-	truncated = text.encode("utf-8")[:MAX_REPORT_CELL_BYTES].decode("utf-8", errors="ignore")
-	if truncation_tracker:
-		truncation_tracker.mark_cell(fieldname)
-	frappe.logger().warning(
-		"[Crispy Print] Truncated oversized report cell" + (f" for field {fieldname}" if fieldname else "")
-	)
-	return f"{truncated}..."
+	return value
 
 
 def _apply_tree_indent_to_value(value: str, indent: int, is_first_cell: bool) -> str:

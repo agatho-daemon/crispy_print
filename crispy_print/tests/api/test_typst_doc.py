@@ -19,6 +19,21 @@ class TestTypstDocSerialization(FrappeTestCase):
 		self.assertIn("foo_bar: 3", out)
 		self.assertIn('"foo_bar": 4', out)
 
+	def test_python_to_typst_dict_quotes_typst_keywords_used_as_keys(self):
+		from crispy_print.api.v1.typst_doc import _python_to_typst_dict
+
+		out = _python_to_typst_dict(
+			{
+				"context": {"font_size": "9pt"},
+				"if": True,
+				"normal_key": "value",
+			}
+		)
+
+		self.assertIn('"context": (font_size: "9pt")', out)
+		self.assertIn('"if": true', out)
+		self.assertIn('normal_key: "value"', out)
+
 	def test_quote_typst_string_keeps_existing_fix_for_single_backslashes(self):
 		from crispy_print.api.v1.typst_doc import _quote_typst_string
 

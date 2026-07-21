@@ -118,6 +118,12 @@ dictionary and the minimal helper definitions required for `crispy_block()` and
 `crispy_image()`, but page setup, placement, typography, tables, headers, and
 footers belong to the raw Typst source.
 
+Builder-owned Branding, page, typography, and table controls are hidden in Raw Typst
+mode because the raw source owns those concerns. QR configuration remains available:
+when QR is enabled, Crispy Print injects the configured QR payload, selected fields,
+symbology, and placement into the worker compile source without reintroducing the
+other presentation settings.
+
 ### Regular Builder Images And Typography
 
 In regular builder mode, **Crispy Image** opens a panel for selecting or uploading a
@@ -146,7 +152,7 @@ Use **Duplicate** in the builder preview pane when the same document design shou
 For `Crispy Format Type = Report`, builder now supports two editing modes:
 
 - **Basic mode**: non-technical controls generate a managed Typst report template
-- **Advanced mode**: direct Raw Typst editing
+- **Advanced mode**: direct Raw Typst editing, selected by the format's single **Raw Typst** toggle
 
 Key behavior:
 
@@ -158,6 +164,11 @@ Key behavior:
 
 This keeps report editing accessible while protecting advanced customizations.
 
+`raw_typst` is the only persisted mode flag. Portable exports use schema v3; imports
+from schema v1 and v2 remain accepted and convert the former `is_advanced` value to
+`raw_typst`. Existing sites receive the same conversion through a pre-model-sync
+migration before the obsolete DocField is removed.
+
 Report formats now select a coverage scope and renderer:
 
 - **All Compatible Reports** is intended for generic renderer fallback formats.
@@ -166,7 +177,25 @@ Report formats now select a coverage scope and renderer:
 - Unknown reports use the generic renderer, based on Frappe's report-grid structure.
 - **Custom** permits deliberate cross-family or fully bespoke Typst implementations.
 
-Basic mode offers renderer-curated sections and Standard, Compact, Minimal, and Summary Focus layout styles. The preview panel loads the selected report's real filters and executes live report data only after the designer supplies the required values and chooses **Run Preview**. No dummy report dataset is used. A source status warning indicates when the upstream Frappe or ERPNext HTML structural reference has changed. The warning does not modify approved Typst automatically.
+Basic mode offers renderer-curated sections and Standard, Compact, Minimal, and Summary Focus layout styles. The preview panel loads the selected report's real filters and executes live report data only after the designer supplies the required values and chooses **Run Preview**. No dummy report dataset is used. The Crispy Format company is authoritative: when the ERPNext report exposes a Company filter, preview displays that exact `company.name`, keeps the field read-only, and executes with that value.
+
+**Run Preview** executes the ERPNext report once and retains the complete normalized
+result in a user-bound server snapshot for 15 minutes. Builder-only changes—such as
+adding or removing columns, changing widths, showing filters or summaries, including
+totals, changing typography, or adjusting presentation—reuse that snapshot and do
+not execute the ERPNext report again. Changing a report input invalidates the
+snapshot and requires **Run Preview** again.
+
+Crispy Print does not impose a default row, column, long-cell, or report-payload cap
+on that result. Report-specific ERPNext filters and behavior still apply, and API
+callers may request an explicit optional row limit. Keeping the complete result
+preserves grouped subtotals and the final group/overall totals.
+
+During compilation the normalized result is written to a private temporary
+`crispy-report-data.json` file and loaded by Typst with `json()`. It is not embedded
+in the generated Typst source or exposed as a public asset. A source status warning
+indicates when the upstream Frappe or ERPNext HTML structural reference has changed.
+The warning does not modify approved Typst automatically.
 
 Renderer metadata is application-owned, but report formats are not provisioned automatically. Opening a new layout, selecting a renderer, choosing a Branding Profile, and running a preview remain transient until the designer explicitly saves the Crispy Format.
 

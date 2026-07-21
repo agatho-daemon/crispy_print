@@ -1151,6 +1151,24 @@ def _asset_signature(asset_files: list[str]) -> list[dict[str, str | int]]:
 	return signature
 
 
+def _normalize_trusted_data_files(data_files) -> dict[str, str]:
+	"""Validate server-generated compile inputs that are never exposed by the RPC facade."""
+	if data_files is None:
+		return {}
+	if not isinstance(data_files, dict):
+		frappe.throw(_("Generated data files must be a dictionary."))
+
+	normalized: dict[str, str] = {}
+	for raw_name, content in data_files.items():
+		name = str(raw_name or "").strip()
+		if not name or Path(name).name != name or Path(name).suffix.lower() not in {".json", ".csv"}:
+			frappe.throw(_("Invalid generated data filename: {0}").format(name or "(empty)"))
+		if not isinstance(content, str):
+			frappe.throw(_("Generated data file {0} must contain text.").format(name))
+		normalized[name] = content
+	return normalized
+
+
 def _compile_cache_key(
 	*,
 	typst_source: str,
@@ -1162,12 +1180,17 @@ def _compile_cache_key(
 	qr_filename: str | None,
 	barcode_options: dict | None,
 	typst_bin: str,
+	generated_data_files: dict[str, str] | None = None,
 ) -> str:
 	payload = {
 		"typst_source": typst_source,
 		"output_format": output_format,
 		"pdf_standard": pdf_standard,
 		"assets": _asset_signature(asset_files),
+		"generated_data_files": {
+			name: hashlib.sha256(content.encode("utf-8")).hexdigest()
+			for name, content in sorted((generated_data_files or {}).items())
+		},
 		"chart_svg": chart_svg or "",
 		"qr_data": qr_data or "",
 		"qr_filename": qr_filename or "",
@@ -1332,6 +1355,7 @@ def compile_typst(
 	barcode_options=None,
 	output_filename: str | None = None,
 	return_url: int | bool = 0,
+	_trusted_data_files: dict[str, str] | None = None,
 	**kwargs,
 ):
 	"""
@@ -1374,6 +1398,7 @@ def compile_typst(
 		[*normalized_assets, *literal_asset_files, *crispy_image_asset_files]
 	)
 	normalized_barcode_options = _normalize_barcode_options(barcode_options)
+	generated_data_files = _normalize_trusted_data_files(_trusted_data_files)
 	uses_zebra_barcode = (
 		"@local/crispy-print" in typst_source
 		or "crispy-qrcode" in typst_source
@@ -1418,6 +1443,7 @@ def compile_typst(
 				qr_data=qr_data,
 				qr_filename=qr_filename,
 				barcode_options=normalized_barcode_options,
+				generated_data_files=generated_data_files,
 				typst_bin=typst_bin,
 			)
 		except Exception:
@@ -1435,6 +1461,8 @@ def compile_typst(
 	try:
 		start_time = time.perf_counter()
 		with TemporaryDirectory() as temp_dir:
+			for filename, content in generated_data_files.items():
+				(Path(temp_dir) / filename).write_text(content, encoding="utf-8")
 			asset_index: dict[str, str] = {}
 			if combined_assets:
 				asset_index = _copy_asset_files_to_temp(combined_assets, temp_dir)

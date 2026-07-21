@@ -269,7 +269,6 @@ def _snapshot_format_data(source) -> dict[str, Any]:
 		"contract": source.source_contract,
 		"company": source.company,
 		"raw_typst": 1 if source.raw_typst else 0,
-		"is_advanced": 1 if source.raw_typst else 0,
 		"layout_json": source.layout_json,
 		"presentation_settings": source.presentation_settings_json,
 		"doc_header": source.doc_header,

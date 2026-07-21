@@ -3,7 +3,14 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
-const props = defineProps<{ field: Record<string, any>; modelValue: any }>();
+const props = withDefaults(
+	defineProps<{
+		field: Record<string, any>;
+		modelValue: any;
+		readOnly?: boolean;
+	}>(),
+	{ readOnly: false }
+);
 const emit = defineEmits<{ (event: "update:modelValue", value: any): void }>();
 const host = ref<HTMLElement | null>(null);
 let control: any = null;
@@ -14,6 +21,7 @@ function normalizedDefinition() {
 		fieldname: props.field.fieldname,
 		label: props.field.label || props.field.fieldname,
 		reqd: props.field.reqd ? 1 : 0,
+		read_only: props.readOnly ? 1 : props.field.read_only ? 1 : 0,
 	};
 }
 

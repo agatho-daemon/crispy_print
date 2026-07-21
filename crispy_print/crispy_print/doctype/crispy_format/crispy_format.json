@@ -10,7 +10,6 @@
     "crispy_format_type",
     "raw_typst",
     "report_scope",
-    "is_advanced",
     "report",
     "column_break_gqub",
     "doc_type",
@@ -189,7 +188,7 @@
     },
     {
       "default": "0",
-      "description": "Write Typst code directly (automatically enabled for generic templates)",
+      "description": "Write Typst code directly. For Report formats, this switches between the Basic report builder and Advanced raw Typst editing.",
       "fieldname": "raw_typst",
       "fieldtype": "Check",
       "label": "Raw Typst"
@@ -226,14 +225,6 @@
       "hidden": 1,
       "label": "Report Source Fingerprint",
       "read_only": 1
-    },
-    {
-      "default": "0",
-      "depends_on": "eval:doc.crispy_format_type=='Report'",
-      "description": "Enable raw Typst editing for report format.",
-      "fieldname": "is_advanced",
-      "fieldtype": "Check",
-      "label": "Advanced"
     },
     {
       "depends_on": "eval:doc.crispy_format_type=='Report' && doc.report_scope=='Selected Reports'",

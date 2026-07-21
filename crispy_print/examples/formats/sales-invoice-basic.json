@@ -18,7 +18,6 @@
     "contract": null,
     "company": null,
     "report_scope": null,
-    "is_advanced": 0,
     "report_renderer": null,
     "raw_typst": 0,
     "layout_json": "{\"sections\":[{\"id\":\"header\",\"label\":\"Header\",\"columns\":[{\"id\":\"header-left\",\"width\":1,\"fields\":[{\"fieldname\":\"customer_name\",\"label\":\"Customer\",\"fieldtype\":\"Data\"},{\"fieldname\":\"posting_date\",\"label\":\"Posting Date\",\"fieldtype\":\"Date\"}]},{\"id\":\"header-right\",\"width\":1,\"fields\":[{\"fieldname\":\"due_date\",\"label\":\"Due Date\",\"fieldtype\":\"Date\"},{\"fieldname\":\"grand_total\",\"label\":\"Grand Total\",\"fieldtype\":\"Currency\"}]}]},{\"id\":\"items\",\"label\":\"Items\",\"columns\":[{\"id\":\"items-main\",\"width\":1,\"fields\":[{\"fieldname\":\"items\",\"label\":\"Items\",\"fieldtype\":\"Table\",\"columns\":[{\"fieldname\":\"item_code\",\"label\":\"Item\"},{\"fieldname\":\"description\",\"label\":\"Description\"},{\"fieldname\":\"qty\",\"label\":\"Qty\"},{\"fieldname\":\"rate\",\"label\":\"Rate\"},{\"fieldname\":\"amount\",\"label\":\"Amount\"}]}]}]},{\"id\":\"totals\",\"label\":\"Totals\",\"columns\":[{\"id\":\"totals-left\",\"width\":1,\"fields\":[{\"fieldname\":\"terms\",\"label\":\"Terms\",\"fieldtype\":\"Text Editor\"}]},{\"id\":\"totals-right\",\"width\":1,\"fields\":[{\"fieldname\":\"total\",\"label\":\"Total\",\"fieldtype\":\"Currency\"},{\"fieldname\":\"rounded_total\",\"label\":\"Rounded Total\",\"fieldtype\":\"Currency\"},{\"fieldname\":\"in_words\",\"label\":\"In Words\",\"fieldtype\":\"Data\"}]}]}]}",

@@ -14,7 +14,6 @@ export interface CrispyFormatDoc {
   effective_company?: string | null;
   is_default?: number;
   report_scope?: "All Compatible Reports" | "Selected Reports";
-  is_advanced?: number;
   report_renderer?: string;
   report_source_fingerprint?: string;
   doc_header?: string;
@@ -796,7 +795,6 @@ export async function saveCrispyFormat(
     typst_code?: string;
     typst_preamble?: string;
     raw_typst?: number;
-    is_advanced?: number;
     company?: string | null;
     compact_item_print?: number;
     print_uom_after_quantity?: number;

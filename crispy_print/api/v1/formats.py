@@ -23,7 +23,7 @@ from ._common import require_target_company, truthy
 from .company_context import apply_effective_company_to_presentation_settings, resolve_effective_company
 from .security import ensure_doctype_read_permission
 
-EXPORT_SCHEMA_VERSION = 2
+EXPORT_SCHEMA_VERSION = 3
 ALLOWED_IMPORT_CONFLICT_ACTIONS = {"copy", "overwrite"}
 ALLOWED_DUPLICATE_NAME_STRATEGIES = {"copy", "replace"}
 MAX_IMPORT_FIELD_BYTES = {
@@ -318,19 +318,13 @@ def get_builder_mode(format_name: str) -> dict:
 	# Determine builder mode
 	mode = "visual"  # Default for DocType formats
 
-	# Report formats now use is_advanced as mode source of truth.
-	if format_doc.crispy_format_type == "Report":
-		if getattr(format_doc, "is_advanced", 0) or format_doc.raw_typst:
-			mode = "code"
-	# Raw Typst mode also uses code editor for non-report formats.
-	elif format_doc.raw_typst:
+	if format_doc.raw_typst:
 		mode = "code"
 
 	return {
 		"mode": mode,
 		"format_type": format_doc.crispy_format_type,
 		"report_scope": format_doc.report_scope,
-		"is_advanced": getattr(format_doc, "is_advanced", 0) or 0,
 		"report_renderer": format_doc.report_renderer,
 		"doc_type": format_doc.doc_type,
 		"report": format_doc.report,
@@ -550,7 +544,7 @@ def export_crispy_format(name: str) -> dict:
 def check_import_conflicts(payload: dict | str) -> dict:
 	"""Preflight payload validation and collision check."""
 	_ensure_create_permission()
-	parsed = _convert_v1_import_payload(_parse_import_payload(payload))
+	parsed = _convert_legacy_import_payload(_parse_import_payload(payload))
 	format_data = _validate_import_payload(parsed)
 	name = format_data.get("name")
 	exists = bool(name and frappe.db.exists("Crispy Format", name))
@@ -564,9 +558,9 @@ def check_import_conflicts(payload: dict | str) -> dict:
 
 
 def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict:
-	"""Import a Crispy Format, converting portable schema v1 when necessary."""
+	"""Import a Crispy Format, converting portable schema v1 and v2 when necessary."""
 	parsed = _parse_import_payload(payload)
-	parsed = _convert_v1_import_payload(parsed)
+	parsed = _convert_legacy_import_payload(parsed)
 	format_data = _validate_import_payload(parsed)
 	on_conflict_value = (on_conflict or "copy").strip().lower()
 
@@ -599,27 +593,34 @@ def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict
 	}
 
 
-def _convert_v1_import_payload(payload: dict) -> dict:
-	if payload.get("schema_version") != 1:
+def _convert_legacy_import_payload(payload: dict) -> dict:
+	schema_version = payload.get("schema_version")
+	if schema_version not in {1, 2}:
 		return payload
 	converted = dict(payload)
 	data = dict(converted.get("format") or {})
-	legacy_generic = bool(data.pop("is_generic", 0))
-	legacy_type = data.pop("generic_report_type", None)
-	reports = [
-		row.get("report") for row in (data.get("report") or []) if isinstance(row, dict) and row.get("report")
-	]
-	data["report_scope"] = "All Compatible Reports" if legacy_generic else "Selected Reports"
-	data["report_renderer"] = (
-		"generic_report" if legacy_generic else infer_report_renderer(reports[0] if reports else None)
-	)
-	try:
-		settings = json.loads(data.get("presentation_settings") or "{}")
-	except (TypeError, json.JSONDecodeError):
-		settings = {}
-	style = {"Summary": "Summary Focus", "Minimal": "Minimal"}.get(legacy_type, "Standard")
-	settings.setdefault("report", {})["layout_style"] = style
-	data["presentation_settings"] = json.dumps(settings, separators=(",", ":"))
+	if schema_version == 1:
+		legacy_generic = bool(data.pop("is_generic", 0))
+		legacy_type = data.pop("generic_report_type", None)
+		reports = [
+			row.get("report")
+			for row in (data.get("report") or [])
+			if isinstance(row, dict) and row.get("report")
+		]
+		data["report_scope"] = "All Compatible Reports" if legacy_generic else "Selected Reports"
+		data["report_renderer"] = (
+			"generic_report" if legacy_generic else infer_report_renderer(reports[0] if reports else None)
+		)
+		try:
+			settings = json.loads(data.get("presentation_settings") or "{}")
+		except (TypeError, json.JSONDecodeError):
+			settings = {}
+		style = {"Summary": "Summary Focus", "Minimal": "Minimal"}.get(legacy_type, "Standard")
+		settings.setdefault("report", {})["layout_style"] = style
+		data["presentation_settings"] = json.dumps(settings, separators=(",", ":"))
+
+	legacy_advanced = data.pop("is_advanced", 0)
+	data["raw_typst"] = 1 if truthy(data.get("raw_typst")) or truthy(legacy_advanced) else 0
 	converted["format"] = data
 	converted["schema_version"] = EXPORT_SCHEMA_VERSION
 	return converted

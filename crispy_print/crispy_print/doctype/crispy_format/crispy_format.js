@@ -95,8 +95,6 @@ frappe.ui.form.on("Crispy Format", {
 				"blue"
 			);
 		}
-
-		syncReportRawTypstFromAdvanced(frm);
 	},
 
 	report_scope(frm) {
@@ -109,23 +107,7 @@ frappe.ui.form.on("Crispy Format", {
 			}
 		}
 	},
-
-	crispy_format_type(frm) {
-		syncReportRawTypstFromAdvanced(frm);
-	},
-
-	is_advanced(frm) {
-		syncReportRawTypstFromAdvanced(frm);
-	},
 });
-
-function syncReportRawTypstFromAdvanced(frm) {
-	if (frm.doc.crispy_format_type !== "Report") return;
-	const nextRawTypst = frm.doc.is_advanced ? 1 : 0;
-	if (frm.doc.raw_typst !== nextRawTypst) {
-		frm.set_value("raw_typst", nextRawTypst);
-	}
-}
 
 function getActiveLinkedReports(doc) {
 	return (doc.report || []).filter((row) => row.report && !row.disabled);

@@ -162,6 +162,31 @@ export function buildPresentationSettingsBlock(options: {
 	return lines.join("\n").trim()
 }
 
+export function buildRawQrBlock(options: {
+	qrEnabled?: boolean
+	qrData?: string | null
+	qrFilename?: string | null
+	qrSettings?: Record<string, any> | null
+}): string {
+	const foregroundLines = buildForegroundPlacements({
+		branding_mode: "none",
+		qrEnabled: options.qrEnabled,
+		qrData: options.qrData,
+		qrFilename: options.qrFilename,
+		qrSettings: options.qrSettings,
+	})
+	if (!foregroundLines.length) return ""
+
+	return [
+		"// QR code (from Settings pane)",
+		"#set page(",
+		"  foreground: [",
+		...foregroundLines.map((line) => `    ${line}`),
+		"  ]",
+		")",
+	].join("\n")
+}
+
 export function buildHeaderFooterBlock(options: { docHeader?: string; docFooter?: string }) {
 	const lines: string[] = []
 

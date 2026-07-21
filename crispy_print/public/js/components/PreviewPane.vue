@@ -214,6 +214,8 @@ const chartRenderLabel = computed(() => {
 });
 const qrEnabled = computed(() => store.qrEnabled.value);
 let reportCompileRequestSeq = 0;
+let reportCompileInFlight = false;
+let reportCompilePending = false;
 const previewMode = computed(() => props.previewMode);
 const zoomMode = computed(() => props.zoomMode);
 const zoomPercent = computed(() => props.zoomPercent);
@@ -229,10 +231,15 @@ const isReportMode = computed(() => {
 });
 
 async function compileSelectedReport(reportName: string) {
-	if (!reportName || !store.formatName.value) {
+	if (!reportName) {
 		return;
 	}
 	const requestSeq = ++reportCompileRequestSeq;
+	if (reportCompileInFlight) {
+		reportCompilePending = true;
+		return;
+	}
+	reportCompileInFlight = true;
 
 	logger.info("Selected report", reportName);
 
@@ -270,6 +277,15 @@ async function compileSelectedReport(reportName: string) {
 		const statusEl = document.getElementById("typst-status");
 		if (statusEl) statusEl.textContent = __("Error");
 		frappe.show_alert({ message: __("Preview compilation failed"), indicator: "red" });
+	} finally {
+		reportCompileInFlight = false;
+		if (reportCompilePending) {
+			reportCompilePending = false;
+			const latestReport = store.selectedReportName?.value;
+			if (store.reportPreviewReady?.value && latestReport) {
+				void compileSelectedReport(latestReport);
+			}
+		}
 	}
 }
 

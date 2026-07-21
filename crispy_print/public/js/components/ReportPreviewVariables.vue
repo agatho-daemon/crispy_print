@@ -61,6 +61,7 @@
 					:key="field.fieldname"
 					:field="field"
 					:model-value="store.reportFilters.value[field.fieldname]"
+					:read-only="isLockedCompanyField(field)"
 					@update:model-value="setFilter(field.fieldname, $event)"
 				/>
 			</div>
@@ -94,9 +95,13 @@ const expanded = ref(true);
 function eventValue(event: Event) {
 	return (event.target as HTMLInputElement | HTMLSelectElement | null)?.value || "";
 }
+function isLockedCompanyField(field: Record<string, any>) {
+	return field?.fieldname === "company" && Boolean(store.formatCompany.value);
+}
 function setFilter(fieldname: string, value: any) {
+	if (fieldname === "company" && store.formatCompany.value) return;
 	store.reportFilters.value = { ...store.reportFilters.value, [fieldname]: value };
-	store.reportPreviewReady.value = false;
+	store.invalidateReportPreviewData();
 }
 async function selectReport(event: Event) {
 	runError.value = "";

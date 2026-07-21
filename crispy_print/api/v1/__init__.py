@@ -647,6 +647,7 @@ def get_report_renderer_catalog() -> JSONDict:
 def get_report_typst_source(
 	report: str,
 	format_name: str | None = None,
+	format_company: str | None = None,
 	filters: JSONDict | str | None = None,
 	column_config: list[JSONDict] | str | None = None,
 	include_filters: int = 0,
@@ -659,12 +660,14 @@ def get_report_typst_source(
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
 	preview_data: JSONDict | str | None = None,
-	limit: int = 50,
+	preview_snapshot_id: str | None = None,
+	limit: int = 0,
 ) -> JSONDict:
 	enforce_rate_limit("get_report_typst_source", limit=60, window_seconds=60)
 	return _get_report_typst_source(
 		report=report,
 		format_name=format_name,
+		format_company=format_company,
 		filters=filters,
 		column_config=column_config,
 		include_filters=include_filters,
@@ -677,6 +680,7 @@ def get_report_typst_source(
 		typst_preamble_override=typst_preamble_override,
 		typst_code_override=typst_code_override,
 		preview_data=preview_data,
+		preview_snapshot_id=preview_snapshot_id,
 		limit=limit,
 	)
 
@@ -688,6 +692,7 @@ def get_report_typst_source(
 def compile_report_preview(
 	report: str,
 	format_name: str | None = None,
+	format_company: str | None = None,
 	filters: JSONDict | str | None = None,
 	column_config: list[JSONDict] | str | None = None,
 	include_filters: int = 0,
@@ -700,13 +705,15 @@ def compile_report_preview(
 	typst_preamble_override: str | None = None,
 	typst_code_override: str | None = None,
 	preview_data: JSONDict | str | None = None,
-	limit: int = 50,
+	preview_snapshot_id: str | None = None,
+	limit: int = 0,
 	asset_files: list[str] | str | None = None,
 ) -> JSONDict:
 	enforce_rate_limit("compile_report_preview", limit=60, window_seconds=60)
 	return _compile_report_preview(
 		report=report,
 		format_name=format_name,
+		format_company=format_company,
 		filters=filters,
 		column_config=column_config,
 		include_filters=include_filters,
@@ -719,6 +726,7 @@ def compile_report_preview(
 		typst_preamble_override=typst_preamble_override,
 		typst_code_override=typst_code_override,
 		preview_data=preview_data,
+		preview_snapshot_id=preview_snapshot_id,
 		limit=limit,
 		asset_files=_normalize_rpc_list(asset_files),
 	)
@@ -729,9 +737,19 @@ def compile_report_preview(
 	delegated=True,
 	exempt_reason="Facade body enforces rate; report module checks report permission and internal report rate.",
 )
-def get_sample_report_data(report: str, filters: JSONDict | str | None = None, limit: int = 50) -> JSONDict:
+def get_sample_report_data(
+	report: str,
+	filters: JSONDict | str | None = None,
+	limit: int = 0,
+	store_snapshot: int = 0,
+) -> JSONDict:
 	enforce_rate_limit("get_sample_report_data", limit=60, window_seconds=60)
-	return _get_sample_report_data(report, filters=filters, limit=limit)
+	return _get_sample_report_data(
+		report,
+		filters=filters,
+		limit=limit,
+		store_snapshot=store_snapshot,
+	)
 
 
 @frappe.whitelist()

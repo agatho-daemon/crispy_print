@@ -163,25 +163,27 @@ this policy metadata.
 - Args: `report: str`, optional `company: str`
 - Returns: `{ formats, default_format, renderer }`; each format includes company, scope, renderer, layout style, default status, and compatibility status
 
-### `get_sample_report_data(report, filters=None, limit=50)`
+### `get_sample_report_data(report, filters=None, limit=0, store_snapshot=0)`
 
-- Args: `report: str`, optional `filters`, `limit: int`
-- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, unchanged upstream `chart`, printable `chart_spec`, and compatibility aliases. Render-time `chart_spec.representation` records the requested, source, applied, and resolved chart kinds when a Basic format requests a compatible representation override.
+- Args: `report: str`, optional `filters`, optional explicit `limit: int`; zero keeps the complete ERPNext result. Set `store_snapshot=1` for the Builder workflow.
+- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, unchanged upstream `chart`, printable `chart_spec`, and compatibility aliases. With `store_snapshot=1`, returns lightweight metadata, columns, and a user-bound `preview_snapshot_id` instead of returning all rows to the browser. The complete prepared result remains available for 15 minutes. Render-time `chart_spec.representation` records the requested, source, applied, and resolved chart kinds when a Basic format requests a compatible representation override.
 
-### `get_report_typst_source(report, format_name=None, ..., limit=50)`
+### `get_report_typst_source(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, limit=0)`
 
 - Args (core):
   - `report: str`
   - optional `format_name: str`; when omitted, the caller must have Crispy Format create permission and supply `typst_code_override` for a transient unsaved preview
+  - optional `format_company: str` for a transient format; a saved format always uses its own company as the authoritative report filter/render context
   - optional toggles: `include_filters`, `include_summary`, `include_total_row`, `include_chart`
   - optional overrides: `typst_preamble_override`, `typst_code_override`, `page_settings`, `preview_data`
-  - `limit: int` (preview row cap)
+  - optional `preview_snapshot_id` to project columns and presentation choices from an already-executed report
+  - optional explicit `limit: int`; zero keeps the complete ERPNext result
 - Returns: Typst source + payload metadata used for preview/printing, including `chart_render` engine/status/reason and pinned helper versions
 
-### `compile_report_preview(report, format_name=None, ..., limit=50, asset_files=None)`
+### `compile_report_preview(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, limit=0, asset_files=None)`
 
 - Args: same core arguments as `get_report_typst_source`, plus optional approved `asset_files`
-- Returns: compiled SVG preview payload and report metadata, including native, fallback, empty, or omitted `chart_render` diagnostics
+- Returns: compiled SVG preview payload and report metadata, including native, fallback, empty, or omitted `chart_render` diagnostics. Internally, complete normalized report data is loaded from a private temporary JSON compile input rather than embedded in the Typst source.
 
 ### `generate_report_pdf(report, filters=None, format_name=None, orientation='landscape', include_filters=0, column_config=None)`
 

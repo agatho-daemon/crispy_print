@@ -10,7 +10,6 @@ class TestRawTypstDocumentAssembly(FrappeTestCase):
 
 		format_doc = SimpleNamespace(
 			raw_typst=1,
-			is_advanced=0,
 			doc_type="Sales Invoice",
 			company=None,
 			typst_preamble="#set text(size: 99pt)",
@@ -44,7 +43,6 @@ class TestRawTypstDocumentAssembly(FrappeTestCase):
 
 		format_doc = SimpleNamespace(
 			raw_typst=1,
-			is_advanced=0,
 			doc_type="Payment Entry",
 			company=None,
 			typst_preamble="",

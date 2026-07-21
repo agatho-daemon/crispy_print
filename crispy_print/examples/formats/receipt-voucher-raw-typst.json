@@ -18,7 +18,6 @@
     "contract": null,
     "company": null,
     "report_scope": null,
-    "is_advanced": 0,
     "report_renderer": null,
     "raw_typst": 1,
     "layout_json": "{\"header\":\"\",\"sections\":[{\"id\":\"payment-summary\",\"label\":\"Payment Summary\",\"columns\":[{\"id\":\"payment-summary-left\",\"label\":\"\",\"fields\":[{\"id\":\"posting-date\",\"label\":\"Posting Date\",\"fieldname\":\"posting_date\",\"fieldtype\":\"Date\",\"align\":\"left\"},{\"id\":\"mode-of-payment\",\"label\":\"Mode of Payment\",\"fieldname\":\"mode_of_payment\",\"fieldtype\":\"Link\",\"options\":\"Mode of Payment\",\"align\":\"left\"}]},{\"id\":\"payment-summary-right\",\"label\":\"\",\"fields\":[{\"id\":\"party-name\",\"label\":\"Party Name\",\"fieldname\":\"party_name\",\"fieldtype\":\"Data\",\"align\":\"left\"},{\"id\":\"received-amount\",\"label\":\"Received Amount\",\"fieldname\":\"received_amount\",\"fieldtype\":\"Currency\",\"align\":\"right\"}]}]}]}",

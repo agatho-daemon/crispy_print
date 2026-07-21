@@ -571,7 +571,7 @@ def _snapshot_value_from_source(
 	if template_field == "pdf_standard":
 		return source.get(format_field) or template.pdf_standard or "PDF/A-2u"
 	if template_field == "raw_typst":
-		return 1 if source.get("raw_typst") or source.get("is_advanced") else 0
+		return 1 if source.get("raw_typst") else 0
 	if template_field in {
 		"compact_item_print",
 		"print_uom_after_quantity",

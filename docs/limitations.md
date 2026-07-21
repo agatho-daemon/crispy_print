@@ -61,5 +61,6 @@ As a **beta release**, Crispy Print has several known limitations:
 - **First Compile Cost**: Initial Typst compilation can take longer than cached repeat previews.
 - **SVG Preview Size**: Multi-page SVG previews can be memory-intensive in the browser.
 - **Font Loading**: Large custom font collections may slow down font discovery.
-- **Report Preview Cost**: Report previews may execute report data loading plus Typst compilation.
+- **Report Preview Cost**: **Run Preview** executes and snapshots the complete ERPNext result once; Builder-only changes reuse the snapshot but still require Typst compilation. Very large results can therefore remain expensive to compile even though the report is not rerun.
+- **Large Report Preview Rendering**: The current preview returns and inserts every generated SVG page. Large multi-page reports can produce large responses and block the browser while SVG pages are sanitized and added to the DOM. Review and PDF generation remain complete; preview virtualization/background rendering is not implemented yet.
 - **Render Timeout**: Each Typst render and font-discovery command is bounded by the configurable render timeout in Crispy Print Settings (default 60s).

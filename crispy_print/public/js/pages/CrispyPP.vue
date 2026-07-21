@@ -251,11 +251,7 @@
 										:key="company.name"
 										:value="company.name"
 									>
-										{{
-											company.abbr
-												? `${company.abbr} - ${company.name}`
-												: company.name
-										}}
+										{{ company.name }}
 									</option>
 								</select>
 							</div>
@@ -940,7 +936,7 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 			chart_svg: chartSvgPayload || null,
 			typst_preamble_override: reportFontPreamble.value,
 			typst_code_override: buildReportTypstCodeOverride(),
-			limit: 50,
+			limit: 0,
 			asset_files: brandingAssetFiles,
 		});
 
@@ -956,8 +952,8 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 			throw new Error("No Typst source returned");
 		}
 		if (truncation?.is_truncated) {
-			const originalRows = Number(truncation?.original_rows || 0);
-			const returnedRows = Number(truncation?.returned_rows || 0);
+			const originalRows = Number(truncation?.rows?.original || 0);
+			const returnedRows = Number(truncation?.rows?.returned || 0);
 			reportTruncationWarning.value = __(
 				"Preview truncated to {0} rows (from {1}). PDF output may also be limited.",
 				[String(returnedRows), String(originalRows)]

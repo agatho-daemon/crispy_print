@@ -1,9 +1,13 @@
-import { mount } from "@vue/test-utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent, h, ref } from "vue";
 import PreviewPane from "../../components/PreviewPane.vue";
 
+enableAutoUnmount(afterEach);
+
 const previewRevision = ref(0);
+const reportPreviewReady = ref(false);
+const selectedReportName = ref("Accounts Receivable");
 
 const compileReportPreview = vi.fn(async () => ({
   success: true,
@@ -25,8 +29,8 @@ vi.mock("../../composables/useStore", () => ({
     docType: ref(null),
     presentation_settings: ref({}),
     previewRevision,
-		reportPreviewReady: ref(false),
-		selectedReportName: ref("Accounts Receivable"),
+		reportPreviewReady,
+		selectedReportName,
     crispyFormat: ref({ crispy_format_type: "Report", is_generic: 1 }),
     reportBuilderConfig: ref({
       show_filters: true,
@@ -40,6 +44,8 @@ vi.mock("../../composables/useStore", () => ({
 describe("PreviewPane report mode", () => {
   beforeEach(() => {
     previewRevision.value = 0;
+    reportPreviewReady.value = false;
+    selectedReportName.value = "Accounts Receivable";
     compileReportPreview.mockReset();
     compileReportPreview.mockResolvedValue({
       success: true,
@@ -90,5 +96,47 @@ describe("PreviewPane report mode", () => {
     expect(wrapper.find("#sample-report-select").exists()).toBe(false);
 		expect(wrapper.text()).toContain("Set report variables");
 		expect(compileReportPreview).not.toHaveBeenCalled();
+  });
+
+  it("coalesces changes while a report compile is in flight", async () => {
+    let resolveFirst: ((value: any) => void) | null = null;
+    compileReportPreview
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          }),
+      )
+      .mockResolvedValue({
+        success: true,
+        svg_pages: [],
+        page_count: 1,
+      });
+    reportPreviewReady.value = true;
+
+    mount(PreviewPane, {
+      global: {
+        stubs: {
+          ReportPreviewVariables: true,
+          PreviewRenderer: {
+            template: "<div><slot name='menu'></slot></div>",
+          },
+        },
+      },
+    });
+
+    previewRevision.value += 1;
+    await flushPromises();
+    expect(compileReportPreview).toHaveBeenCalledTimes(1);
+
+    previewRevision.value += 1;
+    previewRevision.value += 1;
+    previewRevision.value += 1;
+    await flushPromises();
+    expect(compileReportPreview).toHaveBeenCalledTimes(1);
+
+    resolveFirst?.({ success: true, svg_pages: [], page_count: 1 });
+    await flushPromises();
+    expect(compileReportPreview).toHaveBeenCalledTimes(2);
   });
 });

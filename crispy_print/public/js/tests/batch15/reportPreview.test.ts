@@ -16,6 +16,13 @@ vi.mock("../../api/crispy", () => ({
   compileTypstSvg: vi.fn(),
 }));
 
+function primeReportSnapshot(store: any) {
+  store.reportPreviewData.value = {
+    preview_snapshot_id: "snapshot-1",
+    columns: [],
+  };
+}
+
 describe("useStore report preview", () => {
   it("compileReportPreview builds and compiles source in one request", async () => {
     vi.resetModules();
@@ -28,6 +35,7 @@ describe("useStore report preview", () => {
 
     const { useStore } = await import("../../composables/useStore");
     const store = useStore();
+    primeReportSnapshot(store);
     store.crispyFormat.value = { name: "Format-1" } as any;
     store.presentation_settings.value = {
       page: {
@@ -92,9 +100,82 @@ describe("useStore report preview", () => {
       '#set text(font: "Inter"',
     );
     expect(first.args.typst_code_override).toBe("#show heading: it => it");
-		expect(first.args.preview_data).toBeUndefined();
-    expect(first.args.limit).toBe(50);
+		expect(first.args.preview_snapshot_id).toBe("snapshot-1");
+    expect(first.args.preview_data).toBeUndefined();
+    expect(first.args.limit).toBe(0);
 		expect(first.args.chart_svg).toBeNull();
+  });
+
+  it("locks preview company to the Crispy Format company", async () => {
+    vi.resetModules();
+    (globalThis as any).__ = (msg: string) => msg;
+    (globalThis as any).frappe = {
+      call: vi.fn().mockResolvedValueOnce({
+        message: { success: true, typst_source: "#typst" },
+      }),
+    };
+
+    const { useStore } = await import("../../composables/useStore");
+    const store = useStore();
+    primeReportSnapshot(store);
+    store.crispyFormat.value = {
+      name: "Format-1",
+      company: "Format Company",
+      crispy_format_type: "Report",
+    } as any;
+    store.reportFilterFields.value = [
+      { fieldname: "company", fieldtype: "Link", options: "Company" },
+    ];
+    store.reportFilters.value = { company: "Wrong Company" };
+
+    await store.compileReportPreview("Accounts Receivable");
+
+    const request = (globalThis as any).frappe.call.mock.calls[0][0];
+    expect(request.args.format_company).toBe("Format Company");
+    expect(request.args.filters.company).toBe("Format Company");
+    expect(store.reportFilters.value.company).toBe("Format Company");
+  });
+
+  it("executes report data once and recompiles from the retained snapshot", async () => {
+    vi.resetModules();
+    (globalThis as any).__ = (msg: string) => msg;
+    const snapshot = {
+      preview_snapshot_id: "snapshot-ar",
+      title: "Accounts Receivable",
+      columns: [{ fieldname: "customer", label: "Customer" }],
+      total_rows: 893,
+    };
+    (globalThis as any).frappe = {
+      call: vi
+        .fn()
+        .mockResolvedValueOnce({ message: snapshot })
+        .mockResolvedValueOnce({
+          message: { success: true, typst_source: "#typst" },
+        }),
+    };
+
+    const { useStore } = await import("../../composables/useStore");
+    const store = useStore();
+    store.crispyFormat.value = {
+      name: "Format-1",
+      crispy_format_type: "Report",
+    } as any;
+    store.selectedReportName.value = "Accounts Receivable";
+
+    await store.runSelectedReportPreview();
+    await store.compileReportPreview("Accounts Receivable");
+
+    const requests = (globalThis as any).frappe.call.mock.calls.map(
+      (call: any[]) => call[0],
+    );
+    expect(requests.map((request: any) => request.method)).toEqual([
+      "crispy_print.api.v1.get_sample_report_data",
+      "crispy_print.api.v1.compile_report_preview",
+    ]);
+    expect(requests[0].args).toMatchObject({ limit: 0, store_snapshot: 1 });
+    expect(requests[1].args.preview_snapshot_id).toBe("snapshot-ar");
+    expect(requests[1].args.preview_data).toBeUndefined();
+    expect(store.reportPreviewData.value).toEqual(snapshot);
   });
 
   it("compileReportPreview throws when source is missing", async () => {
@@ -106,6 +187,7 @@ describe("useStore report preview", () => {
 
     const { useStore } = await import("../../composables/useStore");
     const store = useStore();
+    primeReportSnapshot(store);
     store.crispyFormat.value = { name: "Format-1" } as any;
 
     await expect(store.compileReportPreview("Sales Order")).rejects.toThrow(
@@ -125,6 +207,7 @@ describe("useStore report preview", () => {
 
     const { useStore } = await import("../../composables/useStore");
     const store = useStore();
+    primeReportSnapshot(store);
     store.crispyFormat.value = { name: "Format-1" } as any;
     store.layout.value = {
       sections: [
@@ -173,6 +256,7 @@ describe("useStore report preview", () => {
 
     const { useStore } = await import("../../composables/useStore");
     const store = useStore();
+    primeReportSnapshot(store);
     store.crispyFormat.value = { name: "Format-1" } as any;
 
     const result = await store.compileReportPreview("Sales Order");
@@ -192,6 +276,7 @@ describe("useStore report preview", () => {
 
     const { useStore } = await import("../../composables/useStore");
     const store = useStore();
+    primeReportSnapshot(store);
     store.crispyFormat.value = { name: "Format-1" } as any;
     store.layout.value = {
       sections: [
@@ -240,6 +325,7 @@ describe("useStore report preview", () => {
 
     const { useStore } = await import("../../composables/useStore");
     const store = useStore();
+    primeReportSnapshot(store);
     store.crispyFormat.value = { name: "Format-1" } as any;
     store.letterhead.value = { image: "/files/lh.png" } as any;
     store.presentation_settings.value = {

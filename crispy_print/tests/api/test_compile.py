@@ -636,6 +636,28 @@ This is a test.
 
 		self.assertNotEqual(first, second)
 
+	def test_compile_cache_key_includes_generated_report_data(self):
+		from crispy_print.api.v1.compile import _compile_cache_key
+
+		common = {
+			"typst_source": '#let data = json("crispy-report-data.json")',
+			"output_format": "svg",
+			"pdf_standard": "",
+			"asset_files": [],
+			"chart_svg": None,
+			"qr_data": None,
+			"qr_filename": None,
+			"barcode_options": {},
+			"typst_bin": "typst",
+		}
+
+		first = _compile_cache_key(**common, generated_data_files={"crispy-report-data.json": '{"rows":[1]}'})
+		second = _compile_cache_key(
+			**common, generated_data_files={"crispy-report-data.json": '{"rows":[2]}'}
+		)
+
+		self.assertNotEqual(first, second)
+
 
 class TestAssetCopy(FrappeTestCase):
 	"""Test image asset handling"""

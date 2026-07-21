@@ -10,12 +10,13 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 
 def _build_typst_document(
 	format_doc,
-	data_dict: dict,
+	data_dict: dict | None,
 	variable_name: str = "doc",
 	header_block: str | None = None,
 	footer_block: str | None = None,
 	presentation_settings_block: str | None = None,
 	preamble_override: str | None = None,
+	data_file: str | None = None,
 ) -> str:
 	"""
 	Build a complete Typst document from a Crispy Format and data.
@@ -34,7 +35,7 @@ def _build_typst_document(
 	"""
 	sections: list[str] = []
 
-	typst_data = _python_to_typst_dict(data_dict)
+	typst_data = _python_to_typst_dict(data_dict or {})
 	is_raw_typst = _is_raw_typst_format(format_doc)
 
 	# 1. Preamble (set rules, imports, helper functions)
@@ -44,7 +45,8 @@ def _build_typst_document(
 		sections.append(f"// Preamble\n{format_doc.typst_preamble}")
 
 	# 2. Data variable definition
-	sections.append(f"\n// Data injection\n#let {variable_name} = {typst_data}")
+	data_expression = f'json("{data_file}")' if data_file else typst_data
+	sections.append(f"\n// Data injection\n#let {variable_name} = {data_expression}")
 
 	if is_raw_typst:
 		sections.append(f"\n{_build_raw_typst_helpers(format_doc, format_doc.typst_code or '')}")
@@ -77,10 +79,37 @@ def _build_typst_document(
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _CRISPY_BLOCK_RE = re.compile(r'crispy_block\(\s*"([^"\n]+)"')
+_TYPST_KEYWORDS = frozenset(
+	{
+		"and",
+		"as",
+		"auto",
+		"break",
+		"context",
+		"continue",
+		"else",
+		"export",
+		"false",
+		"for",
+		"if",
+		"import",
+		"in",
+		"include",
+		"let",
+		"none",
+		"not",
+		"or",
+		"return",
+		"set",
+		"show",
+		"true",
+		"while",
+	}
+)
 
 
 def _is_raw_typst_format(format_doc) -> bool:
-	return bool(getattr(format_doc, "raw_typst", 0) or getattr(format_doc, "is_advanced", 0))
+	return bool(getattr(format_doc, "raw_typst", 0))
 
 
 def _quote_typst_string(value: str) -> str:
@@ -152,7 +181,7 @@ def _build_raw_typst_helpers(format_doc, typst_source: str = "") -> str:
 
 
 def _format_typst_key(key: str) -> str:
-	if _IDENT_RE.match(key):
+	if _IDENT_RE.match(key) and key not in _TYPST_KEYWORDS:
 		return key
 	return _quote_typst_string(key)
 

@@ -244,5 +244,5 @@ class TestBasicReportChartCompatibility(FrappeTestCase):
 	def test_advanced_format_detection(self):
 		from types import SimpleNamespace
 
-		self.assertTrue(_is_basic_report_format(SimpleNamespace(raw_typst=0, is_advanced=0)))
-		self.assertFalse(_is_basic_report_format(SimpleNamespace(raw_typst=1, is_advanced=0)))
+		self.assertTrue(_is_basic_report_format(SimpleNamespace(raw_typst=0)))
+		self.assertFalse(_is_basic_report_format(SimpleNamespace(raw_typst=1)))

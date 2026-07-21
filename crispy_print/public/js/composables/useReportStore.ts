@@ -16,7 +16,6 @@ import {
   type TypstCompileResult,
 } from "../api/crispy";
 
-const DEFAULT_REPORT_PREVIEW_LIMIT = 50;
 const logger = getLogger({ module: "ReportStore" });
 
 type ColumnConfig = Array<{ fieldname: string; width: string }>;
@@ -33,9 +32,11 @@ interface CreateReportStoreOptions {
   reportColumns: Ref<any[]>;
   reportFilterFields: Ref<any[]>;
   reportFilters: Ref<Record<string, any>>;
+  reportPreviewData: Ref<Record<string, any> | null>;
   reportPreviewReady: Ref<boolean>;
   getReportColumnConfigFromLayout: () => ColumnConfig;
   getEffectiveCompany: () => string | null;
+  getFormatCompany: () => string | null;
 }
 
 export function createReportStore(options: CreateReportStoreOptions) {
@@ -51,9 +52,11 @@ export function createReportStore(options: CreateReportStoreOptions) {
     reportColumns,
     reportFilterFields,
     reportFilters,
+    reportPreviewData,
     reportPreviewReady,
     getReportColumnConfigFromLayout,
     getEffectiveCompany,
+    getFormatCompany,
   } = options;
 
   function buildReportFontPreambleOverride(): string {
@@ -103,6 +106,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
   ) {
     if (!reportName || reportName === "Style Preview") {
       reportColumns.value = [];
+      reportPreviewData.value = null;
       return;
     }
     const response = await frappe.call({
@@ -110,10 +114,18 @@ export function createReportStore(options: CreateReportStoreOptions) {
       args: {
         report: reportName,
         filters,
-        limit: DEFAULT_REPORT_PREVIEW_LIMIT,
+        limit: 0,
+        store_snapshot: 1,
       },
     });
-    reportColumns.value = response?.message?.columns || [];
+    const previewData = response?.message || null;
+    reportPreviewData.value = previewData;
+    reportColumns.value = previewData?.columns || [];
+  }
+
+  function invalidateReportPreviewData() {
+    reportPreviewData.value = null;
+    reportPreviewReady.value = false;
   }
 
   async function loadReportFilterFields(reportName: string) {
@@ -141,14 +153,15 @@ export function createReportStore(options: CreateReportStoreOptions) {
         (field: any) => field.fieldname === "company",
       )
     ) {
-      defaults.company = getEffectiveCompany() || defaults.company || "";
+      defaults.company =
+        getFormatCompany() || getEffectiveCompany() || defaults.company || "";
     }
     reportFilters.value = defaults;
   }
 
   async function loadSampleReports() {
     selectedReportName.value = "";
-    reportPreviewReady.value = false;
+    invalidateReportPreviewData();
   }
 
   async function setSelectedReport(
@@ -157,7 +170,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
   ) {
     void options;
     selectedReportName.value = name || "";
-    reportPreviewReady.value = false;
+    invalidateReportPreviewData();
     await loadReportFilterFields(selectedReportName.value);
     reportColumns.value = [];
   }
@@ -177,6 +190,13 @@ export function createReportStore(options: CreateReportStoreOptions) {
   > {
     try {
       logger.info("Building report source", reportName);
+
+      const previewSnapshotId = String(
+        reportPreviewData.value?.preview_snapshot_id || "",
+      );
+      if (!previewSnapshotId) {
+        throw new Error("Run Preview to load report data before compiling");
+      }
 
       const effectiveColumnConfig =
         Array.isArray(columnConfig) && columnConfig.length
@@ -217,12 +237,26 @@ export function createReportStore(options: CreateReportStoreOptions) {
         (value): value is string => Boolean(value),
       );
       const typst_preamble_override = buildReportFontPreambleOverride();
+      const formatCompany = getFormatCompany();
+      const previewFilters = { ...(reportFilters.value || {}) };
+      if (
+        formatCompany &&
+        reportFilterFields.value.some(
+          (field: any) => field?.fieldname === "company",
+        )
+      ) {
+        previewFilters.company = formatCompany;
+        reportFilters.value = previewFilters;
+      }
       const result = await compileReportPreviewApi({
         report: reportName,
         format_name: formatName.value,
-        filters: reportFilters.value || {},
+        format_company: formatCompany,
+        filters: previewFilters,
         column_config: effectiveColumnConfig,
         include_filters: includeFilters ? 1 : 0,
+		include_summary: reportBuilderConfig.value.show_summary ? 1 : 0,
+		include_total_row: reportBuilderConfig.value.include_total_row ? 1 : 0,
         orientation,
         chart_svg: null,
         typst_preamble_override: typst_preamble_override,
@@ -236,7 +270,8 @@ export function createReportStore(options: CreateReportStoreOptions) {
             letterhead_image: letterhead_image || "",
           },
         },
-        limit: DEFAULT_REPORT_PREVIEW_LIMIT,
+        preview_snapshot_id: previewSnapshotId,
+        limit: 0,
         asset_files: branding_asset_files,
       });
 
@@ -260,5 +295,6 @@ export function createReportStore(options: CreateReportStoreOptions) {
     loadSampleReports,
     setSelectedReport,
     compileReportPreview,
+    invalidateReportPreviewData,
   };
 }
