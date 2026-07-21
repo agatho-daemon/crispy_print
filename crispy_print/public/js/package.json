@@ -4,6 +4,7 @@
 	"private": true,
 	"dependencies": {
 		"@simonwep/pickr": "^1.9.1",
+		"pdfjs-dist": "3.11.174",
 		"vue": "^3.4.0",
 		"vuedraggable": "^4.1.0"
 	},

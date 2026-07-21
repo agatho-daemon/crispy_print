@@ -157,7 +157,8 @@ Frontend:
 - **`crispy_print_engine.js`** - Lightweight optional adapter for Frappe's proposed pluggable print engine handoff.
 - **`useStore.ts`, `useReportStore.ts`, `useSettingsStore.ts`** - State modules for document layout, report modes, and presentation settings.
 - **`JSONToTypst.ts`, `branding.ts`, `cbpBuilderTypst.ts`** - Typst generation paths for formats and branding profile specimens.
-- **`safeSvg.ts`** - Browser-side SVG sanitization before preview injection.
+- **`PdfPreviewRenderer.vue`** - Shared complete document/report viewer. Typst produces one PDF, a packaged PDF.js worker parses it off the main thread, and only the first/near-visible pages are painted to bounded high-DPI canvases. Branding Profile and Typst Block authoring specimens remain on their smaller SVG path.
+- **`safeSvg.ts`** - Browser-side sanitization for specialized SVG authoring previews and SVG assets.
 
 Data model:
 

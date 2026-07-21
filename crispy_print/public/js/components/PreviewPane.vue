@@ -24,6 +24,8 @@
 			store.effective_presentation_settings?.value || store.presentation_settings.value
 		"
 		:preview-revision="store.previewRevision.value"
+		:report-pdf-bytes="reportPdfBytes"
+		:report-pdf-revision="reportPdfRevision"
 		:watch-data-changes="!isReportMode"
 		:zoom-mode="zoomMode"
 		:zoom-percent="zoomPercent"
@@ -177,6 +179,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { ReportChartRender } from "../api/crispy";
 import { getLogger } from "../logger";
 import { __ } from "../utils/i18n";
+import { decodePdfData } from "../utils/pdfBytes";
+import { dispatchCrispyPreviewStatus } from "../utils/events";
 
 type PreviewMode = "normal" | "half" | "full";
 type PreviewZoomMode = "fit" | "manual";
@@ -204,6 +208,8 @@ const emit = defineEmits<{
 const store = useStore();
 const logger = getLogger({ component: "PreviewPane" });
 const chartRenderStatus = ref<ReportChartRender | null>(null);
+const reportPdfBytes = ref<Uint8Array | null>(null);
+const reportPdfRevision = ref(0);
 const chartRenderLabel = computed(() => {
 	const chart = chartRenderStatus.value;
 	if (!chart) return "";
@@ -244,6 +250,7 @@ async function compileSelectedReport(reportName: string) {
 	logger.info("Selected report", reportName);
 
 	try {
+		dispatchCrispyPreviewStatus({ status: "compiling" });
 		// Show compiling status
 		const statusEl = document.getElementById("typst-status");
 		if (statusEl) statusEl.textContent = __("Compiling...");
@@ -255,18 +262,16 @@ async function compileSelectedReport(reportName: string) {
 			return;
 		}
 
-		// Dispatch custom event with SVG data for PreviewRenderer
 		if (result && result.success) {
-			window.dispatchEvent(
-				new CustomEvent("crispy-report-preview", {
-					detail: {
-						svg_pages: result.svg_pages,
-						page_count: result.page_count,
-					},
-				})
-			);
+			const bytes = decodePdfData(result.pdf_data);
+			if (!bytes.byteLength) throw new Error("Report preview returned an empty PDF");
+			reportPdfBytes.value = bytes;
+			reportPdfRevision.value += 1;
 
-			if (statusEl) statusEl.textContent = __("{0} page(s)", [result.page_count]);
+			if (statusEl)
+				statusEl.textContent = result.page_count
+					? __("{0} page(s)", [result.page_count])
+					: __("PDF ready");
 		}
 	} catch (error) {
 		if (requestSeq !== reportCompileRequestSeq) {

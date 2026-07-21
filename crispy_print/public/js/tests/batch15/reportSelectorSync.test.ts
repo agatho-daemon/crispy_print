@@ -11,7 +11,7 @@ const selectedReportName = ref("Accounts Receivable");
 
 const compileReportPreview = vi.fn(async () => ({
   success: true,
-  svg_pages: [] as unknown[],
+  pdf_data: "JVBERi0xLjQK",
   page_count: 1,
 }));
 
@@ -49,7 +49,7 @@ describe("PreviewPane report mode", () => {
     compileReportPreview.mockReset();
     compileReportPreview.mockResolvedValue({
       success: true,
-      svg_pages: [],
+	  pdf_data: "JVBERi0xLjQK",
       page_count: 1,
     });
   });
@@ -109,7 +109,7 @@ describe("PreviewPane report mode", () => {
       )
       .mockResolvedValue({
         success: true,
-        svg_pages: [],
+		pdf_data: "JVBERi0xLjQK",
         page_count: 1,
       });
     reportPreviewReady.value = true;
@@ -135,7 +135,7 @@ describe("PreviewPane report mode", () => {
     await flushPromises();
     expect(compileReportPreview).toHaveBeenCalledTimes(1);
 
-    resolveFirst?.({ success: true, svg_pages: [], page_count: 1 });
+    resolveFirst?.({ success: true, pdf_data: "JVBERi0xLjQK", page_count: 1 });
     await flushPromises();
     expect(compileReportPreview).toHaveBeenCalledTimes(2);
   });

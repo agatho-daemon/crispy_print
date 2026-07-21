@@ -180,10 +180,10 @@ this policy metadata.
   - optional explicit `limit: int`; zero keeps the complete ERPNext result
 - Returns: Typst source + payload metadata used for preview/printing, including `chart_render` engine/status/reason and pinned helper versions
 
-### `compile_report_preview(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, limit=0, asset_files=None)`
+### `compile_report_preview(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, limit=0, asset_files=None, pdf_standard=None)`
 
 - Args: same core arguments as `get_report_typst_source`, plus optional approved `asset_files`
-- Returns: compiled SVG preview payload and report metadata, including native, fallback, empty, or omitted `chart_render` diagnostics. Internally, complete normalized report data is loaded from a private temporary JSON compile input rather than embedded in the Typst source.
+- Returns: compiled PDF preview payload and report metadata, including native, fallback, empty, or omitted `chart_render` diagnostics. The browser decodes the PDF once and hands it to the shared lazy PDF.js viewer; it no longer receives and injects one SVG string per report page. Internally, complete normalized report data is loaded from a private temporary JSON compile input rather than embedded in the Typst source.
 
 ### `generate_report_pdf(report, filters=None, format_name=None, orientation='landscape', include_filters=0, column_config=None)`
 

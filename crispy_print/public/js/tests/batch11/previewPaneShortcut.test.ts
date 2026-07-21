@@ -5,7 +5,7 @@ import PreviewPane from "../../components/PreviewPane.vue"
 
 const compileReportPreview = vi.fn(async () => ({
 	success: true,
-	svg_pages: ["<svg></svg>"],
+	pdf_data: "JVBERi0xLjQK",
 	page_count: 1,
 }))
 const requestPreviewRefresh = vi.fn()

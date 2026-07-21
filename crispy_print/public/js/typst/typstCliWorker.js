@@ -205,10 +205,15 @@ self.addEventListener("message", async (event) => {
 			message.svgPages = result.svgPages;
 			message.pageCount = result.pageCount;
 		} else {
-			message.pdfBytes = Array.from(result.pdfBytes || []);
+			message.pdfBytes = (result.pdfBytes || new Uint8Array()).buffer;
+			message.pageCount = result.pageCount;
 		}
 
-		self.postMessage(message);
+		if (message.pdfBytes instanceof ArrayBuffer) {
+			self.postMessage(message, [message.pdfBytes]);
+		} else {
+			self.postMessage(message);
+		}
 	} catch (err) {
 		warn("Compilation error", err);
 		self.postMessage({

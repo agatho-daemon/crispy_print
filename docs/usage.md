@@ -92,6 +92,8 @@ Raw Typst authors reference a reusable block by its Crispy Typst Block document 
 
 Open the **Crispy Typst Block Builder** from a block form to edit the Typst code with live SVG preview. Click **Refresh** or press **Command/Ctrl-Enter** to compile after every change. The builder keeps preview page controls separate from the reusable block contract: the default preview uses A4 with `2.5cm` margins so document blocks, tables, grids, and long text render in a realistic page width. Turn on auto-size preview only for compact self-sizing blocks; Typst containers without explicit widths can stretch poorly on an auto-width page.
 
+Complete DocType and Report previews use PDF.js instead of inserting every compiled SVG page into the browser. This keeps the preview aligned with the final PDF artifact and is especially valuable for long accounting reports: PDF parsing runs in a packaged worker and page canvases are painted lazily around the visible scroll area. Fit, 100%, manual percentage, zoom, scrolling, and panning remain available. The Branding Profile Builder and Crispy Typst Block Builder continue using SVG because their focused authoring specimens do not need the heavier multipage PDF viewer.
+
 The builder's unsaved indicator tracks only **Typst Code** changes. Page size, margin, orientation, and default-preview toggles are authoring controls for the current preview and do not mark the reusable block as unsaved.
 
 ### Raw Typst Document Formats

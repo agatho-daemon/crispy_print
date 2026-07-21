@@ -1,6 +1,14 @@
 // Shared event names + helpers for Crispy Print.
 
-export type CrispyPreviewStatus = "fetching" | "compiling" | "ready" | "error"
+export type CrispyPreviewStatus =
+	| "idle"
+	| "fetching"
+	| "running-report"
+	| "compiling"
+	| "loading-pdf"
+	| "rendering"
+	| "ready"
+	| "error"
 
 export type CrispyPreviewStatusDetail = {
 	status: CrispyPreviewStatus

@@ -12,7 +12,6 @@ import {
 	dispatchCrispyPreviewStatus,
 } from "../utils/events"
 import { getLogger } from "../logger"
-import { sanitizeSvg } from "../utils/safeSvg"
 import { createSampleDocAutocomplete } from "./workerAutocomplete"
 import {
 	buildRawQrBlock,
@@ -54,6 +53,7 @@ export interface TypstAdapter {
 	get_presentation_settings?: () => any
 	getTypstBlocks?: () => any[] | null | undefined
 	onPdfReady?: (context: TypstPdfReadyContext) => Promise<void> | void
+	onPreviewPdfReady?: (bytes: Uint8Array) => Promise<void> | void
 	hookDataChanges?: (callback: () => void) => () => void
 	hookDoctypeChanges?: (callback: (doctype: string | null | undefined) => void) => () => void
 }
@@ -111,8 +111,7 @@ export function setupWorker(
 	worker.addEventListener("messageerror", handleWorkerMessageError)
 
 	const statusEl = previewPane.querySelector<HTMLElement>("#typst-status")
-	const svgContainer = previewPane.querySelector<HTMLElement>("#typst-svg-container")
-	svgContainer?.setAttribute("data-typst-svg-container", "true")
+	const previewContainer = previewPane.querySelector<HTMLElement>("#typst-pdf-container")
 	const downloadBtn = previewPane.querySelector<HTMLButtonElement>("#typst-download")
 	const viewPdfBtn = previewPane.querySelector<HTMLButtonElement>("#typst-view-pdf")
 	const refreshBtn = previewPane.querySelector<HTMLButtonElement>("#typst-refresh")
@@ -174,8 +173,6 @@ export function setupWorker(
 		resetCompilationLatch()
 		resetCompiledArtifacts(true)
 
-		clearPreview()
-
 		if (statusEl) {
 			statusEl.textContent = __("fetching document…")
 			statusEl.style.color = "#3498db"
@@ -213,65 +210,6 @@ export function setupWorker(
 				indicator: "green",
 			})
 			})
-	}
-
-	const clearPreview = () => {
-		if (svgContainer) {
-			svgContainer.classList.remove("has-pages")
-		}
-	}
-	const markHasPages = () => {
-		if (svgContainer) {
-			svgContainer.classList.add("has-pages")
-		}
-	}
-	let lastRenderedSvgPageHashes: string[] = []
-	const hashSvgPage = (value: string) => {
-		let hash = 5381
-		for (let i = 0; i < value.length; i += 1) {
-			hash = (hash * 33) ^ value.charCodeAt(i)
-		}
-		return (hash >>> 0).toString(16)
-	}
-	const renderTypstPages = (_rootEl: HTMLElement, svgPages: string[]) => {
-		const container = svgContainer || _rootEl.querySelector<HTMLElement>("[data-typst-svg-container]")
-		const placeholder = _rootEl.querySelector<HTMLElement>("#typst-preview-placeholder")
-
-		if (!container) return
-		const nextHashes = svgPages.map(hashSvgPage)
-		if (
-			nextHashes.length === lastRenderedSvgPageHashes.length &&
-			nextHashes.every((hash, index) => hash === lastRenderedSvgPageHashes[index])
-		) {
-			return
-		}
-
-		if (placeholder) {
-			placeholder.remove()
-		}
-
-		const fragment = document.createDocumentFragment()
-
-		svgPages.forEach((svg) => {
-			const page = document.createElement("div")
-			page.className = "typst-page"
-			page.style.marginBottom = "1.5rem"
-			page.style.boxShadow =
-				"0 4px 12px rgba(148, 163, 184, 0.25), 0 2px 6px rgba(148, 163, 184, 0.2)"
-
-			page.innerHTML = sanitizeSvg(svg)
-			const svgEl = page.querySelector("svg")
-			if (svgEl) {
-				svgEl.style.width = "100%"
-				svgEl.style.height = "auto"
-				svgEl.removeAttribute("width") // let viewBox control sizing
-				svgEl.removeAttribute("height")
-			}
-
-			fragment.appendChild(page)
-		})
-		container.replaceChildren(fragment)
-		lastRenderedSvgPageHashes = nextHashes
 	}
 
 	// Unified preview events (single source of truth)
@@ -440,8 +378,8 @@ export function setupWorker(
 		},
 	})
 
-	const previewOutputFormat = "svg"
-	svgContainer?.classList.remove("preview-hidden")
+	const previewOutputFormat = "pdf"
+	previewContainer?.classList.remove("preview-hidden")
 
 	let compilationTimeout: number | undefined
 	let lastTypstCode = ""
@@ -718,8 +656,6 @@ export function setupWorker(
 		if (disposed) {
 			return
 		}
-		clearPreview()
-
 		// Allow compile if we already have document data, even if sampleDocSelected wasn't toggled
 		if (!sampleDocData) {
 			logger.warn("No document data; skipping compile")
@@ -911,6 +847,7 @@ export function setupWorker(
 				typstSrc: typst,
 				csrfToken: frappe?.csrf_token,
 				outputFormat: previewOutputFormat,
+				pdfStandard: adapter.getPdfStandard?.() || null,
 				requestId: PREVIEW_REQUEST_ID,
 				seq: nextSeq(PREVIEW_REQUEST_ID),
 				assetFiles,
@@ -1013,11 +950,6 @@ export function setupWorker(
 				}
 
 				if (!isDownload) {
-					svgContainer?.classList.remove("preview-hidden")
-					if (previewPane) {
-						renderTypstPages(previewPane, svgPages as string[])
-						markHasPages()
-					}
 					if (statusEl) {
 						statusEl.textContent = __("compiled ✓")
 						statusEl.style.color = "#27ae60"
@@ -1057,6 +989,26 @@ export function setupWorker(
 
 			clearPdfBlob()
 			currentPdfBlob = new Blob([pdfArray], { type: "application/pdf" })
+
+			if (requestId === PREVIEW_REQUEST_ID) {
+				await adapter.onPreviewPdfReady?.(pdfArray)
+				if (statusEl) {
+					statusEl.textContent = __("compiled ✓")
+					statusEl.style.color = "#27ae60"
+				}
+				dispatchCrispyPreviewStatus({
+					status: "ready",
+					instanceId,
+					pageCount: e.data?.pageCount,
+					renderMs: typeof renderMs === "number" ? renderMs : null,
+					cacheHit: typeof cacheHit === "boolean" ? cacheHit : null,
+					typstVersion: typstVersion || null,
+					pdfStandard: pdfStandard || null,
+				})
+				if (downloadBtn) downloadBtn.disabled = false
+				if (viewPdfBtn) viewPdfBtn.disabled = false
+				return
+			}
 
 			if (isViewPdf) {
 				try {

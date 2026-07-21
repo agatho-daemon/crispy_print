@@ -85,6 +85,7 @@
 import { ref } from "vue";
 import { useStore } from "../composables/useStore";
 import { __ } from "../utils/i18n";
+import { dispatchCrispyPreviewStatus } from "../utils/events";
 import ReportFilterControl from "./ReportFilterControl.vue";
 
 const store = useStore();
@@ -110,10 +111,12 @@ async function selectReport(event: Event) {
 async function runPreview() {
 	running.value = true;
 	runError.value = "";
+	dispatchCrispyPreviewStatus({ status: "running-report" });
 	try {
 		await store.runSelectedReportPreview();
 	} catch (error: any) {
 		runError.value = error?.message || __("Unable to run report preview");
+		dispatchCrispyPreviewStatus({ status: "error", message: runError.value });
 	} finally {
 		running.value = false;
 	}

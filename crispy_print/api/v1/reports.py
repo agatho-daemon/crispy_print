@@ -686,8 +686,9 @@ def compile_report_preview(
 	preview_snapshot_id: str | None = None,
 	limit: int = 0,
 	asset_files: list | str | None = None,
+	pdf_standard: str | None = None,
 ) -> dict:
-	"""Build and compile report preview SVG in one request."""
+	"""Build and compile a report preview PDF in one request."""
 	source_payload = get_report_typst_source(
 		report=report,
 		format_name=format_name,
@@ -720,7 +721,8 @@ def compile_report_preview(
 	compile_asset_files = list(dict.fromkeys(compile_asset_files))
 	result = compile_typst(
 		source_payload.get("typst_source") or "",
-		output_format="svg",
+		output_format="pdf",
+		pdf_standard=pdf_standard,
 		asset_files=compile_asset_files,
 		chart_svg=source_payload.get("chart_svg"),
 		_trusted_data_files=source_payload.get("_generated_data_files"),

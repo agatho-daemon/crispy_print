@@ -9,8 +9,33 @@ vi.mock("../../typst/setupWorker", () => ({
 }));
 
 describe("PreviewRenderer", () => {
+	it("waits for the runtime template layout before starting the document worker", async () => {
+		const { setupWorker } = await import("../../typst/setupWorker");
+		vi.mocked(setupWorker).mockClear();
+		const wrapper = mount(PreviewRenderer, {
+			props: {
+				formatName: "Sales Invoice",
+				layout: null,
+				docHeader: "",
+				docFooter: "",
+				typstPreamble: "",
+				qrEnabled: false,
+				presentation_settings: { page: { size: "A4" }, branding: { mode: "none" } },
+				letterhead: null,
+				docType: "Sales Invoice",
+				docName: "ACC-SINV-2026-04953",
+			},
+		});
+		await nextTick();
+		expect(setupWorker).not.toHaveBeenCalled();
+
+		await wrapper.setProps({ layout: { sections: [] } });
+		expect(setupWorker).toHaveBeenCalledTimes(1);
+	});
+
   it("invokes setupWorker when format is ready", async () => {
     const { setupWorker } = await import("../../typst/setupWorker");
+	vi.mocked(setupWorker).mockClear();
 
     const wrapper = mount(PreviewRenderer, {
       props: {
@@ -426,8 +451,8 @@ describe("PreviewRenderer", () => {
     }
   });
 
-  it("renders report SVG pages inside the zoomable stage", async () => {
-    const wrapper = mount(PreviewRenderer, {
+  it("passes report PDF bytes to the shared viewer inside the zoomable stage", async () => {
+	const wrapper = mount(PreviewRenderer, {
       props: {
         formatName: "Format-1",
         layout: { sections: [] },
@@ -451,25 +476,52 @@ describe("PreviewRenderer", () => {
         },
         letterhead: null,
         docType: "Invoice",
+		reportPdfBytes: new Uint8Array([37, 80, 68, 70]),
+		reportPdfRevision: 1,
       },
+	  global: {
+		stubs: {
+		  PdfPreviewRenderer: { template: '<div class="pdf-viewer-stub"></div>' },
+		},
+	  },
     });
-
-    window.dispatchEvent(
-      new CustomEvent("crispy-report-preview", {
-        detail: {
-          svg_pages: ['<svg viewBox="0 0 100 100"></svg>'],
-          page_count: 1,
-        },
-      }),
-    );
     await nextTick();
 
-    expect(wrapper.find(".preview-stage #typst-svg-container").exists()).toBe(
-      true,
-    );
-    expect(wrapper.find(".typst-page").exists()).toBe(true);
-    expect(wrapper.find("#typst-svg-container").classes()).toContain(
-      "has-pages",
-    );
+	expect(wrapper.find(".preview-stage #typst-pdf-container").exists()).toBe(true);
+	expect(wrapper.find(".pdf-viewer-stub").exists()).toBe(true);
   });
+
+	it("lets Vue replace the DocType placeholder when worker PDF bytes arrive", async () => {
+		const { setupWorker } = await import("../../typst/setupWorker");
+		const wrapper = mount(PreviewRenderer, {
+			props: {
+				formatName: "Format-1",
+				layout: { sections: [] },
+				docHeader: "",
+				docFooter: "",
+				typstPreamble: "",
+				qrEnabled: false,
+				presentation_settings: {
+					page: { size: "A4", orientation: "portrait", margins: {} },
+					branding: { mode: "none", logo: {} },
+				},
+				letterhead: null,
+				docType: "Sales Order",
+			},
+			global: {
+				stubs: {
+					PdfPreviewRenderer: { template: '<div class="pdf-viewer-stub"></div>' },
+				},
+			},
+		});
+		await nextTick();
+		expect(wrapper.find("#typst-preview-placeholder").exists()).toBe(true);
+
+		const adapter = (setupWorker as any).mock.calls.at(-1)[2];
+		adapter.onPreviewPdfReady(new Uint8Array([37, 80, 68, 70]));
+		await nextTick();
+
+		expect(wrapper.find("#typst-preview-placeholder").exists()).toBe(false);
+		expect(wrapper.find(".pdf-viewer-stub").exists()).toBe(true);
+	});
 });

@@ -401,8 +401,14 @@
 			:doc-name="props.docname || null"
 			:presentation_settings="presentation_settings_computed"
 			:preview-revision="previewRevision"
+			:report-pdf-bytes="reportPdfBytes"
+			:report-pdf-revision="reportPdfRevision"
 			:watch-data-changes="true"
+			:zoom-mode="runtimeZoomMode"
+			:zoom-percent="runtimeZoomPercent"
 			:issue-pdf-snapshot="recordIssuedDocumentSnapshot"
+			@update:zoom-mode="(value) => (runtimeZoomMode = value)"
+			@update:zoom-percent="(value) => (runtimeZoomPercent = value)"
 		>
 			<template #toolbar-actions>
 				<div class="preview-diagnostics-action">
@@ -439,7 +445,7 @@ import PreviewDiagnosticsDrawer, {
 import SettingsSection from "../components/SettingsSection.vue";
 import { useBrandingData } from "../composables/useBrandingData";
 import { loadReportState, normalizeReportChartSvg } from "../utils/reportState";
-import { dispatchCrispyPreviewSource } from "../utils/events";
+import { dispatchCrispyPreviewSource, dispatchCrispyPreviewStatus } from "../utils/events";
 import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
 import {
 	buildReportFormatOptions,
@@ -451,6 +457,7 @@ import { getLogger } from "../logger";
 import { fetchTypstFonts, formatPt, parseSize } from "../utils/typstTypography";
 import { escapeTypstString } from "../utils/typstEscape";
 import { __ } from "../utils/i18n";
+import { decodePdfData } from "../utils/pdfBytes";
 import {
 	compileReportPreview,
 	compileTypst,
@@ -514,6 +521,8 @@ const reportHasChart = computed(() =>
 const isReportColumnsExpanded = ref(true);
 const reportPreviewLoading = ref(false);
 const reportPreviewPending = ref(false);
+const reportPdfBytes = ref<Uint8Array | null>(null);
+const reportPdfRevision = ref(0);
 const reportTruncationWarning = ref("");
 const REPORT_PREVIEW_DEBOUNCE_MS = 250;
 const reportPreviewDebounceTimer = ref<number | null>(null);
@@ -635,6 +644,8 @@ const printBehavior = ref({
 const removeQr = ref(false);
 const letterheadDoc = ref<any | null>(null);
 const previewRevision = ref(0);
+const runtimeZoomMode = ref<"fit" | "manual">("fit");
+const runtimeZoomPercent = ref(100);
 const isReportTemplateExpanded = ref(true);
 const isBrandingExpanded = ref(false);
 const isPresentationSettingsExpanded = ref(false);
@@ -902,6 +913,7 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 
 	try {
 		reportPreviewLoading.value = true;
+		dispatchCrispyPreviewStatus({ status: "compiling" });
 		reportTruncationWarning.value = "";
 		const chartSvgPayload = reportShowChart.value
 			? normalizeReportChartSvg(reportChartSvg.value || "")
@@ -938,6 +950,7 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 			typst_code_override: buildReportTypstCodeOverride(),
 			limit: 0,
 			asset_files: brandingAssetFiles,
+			pdf_standard: pdfStandard.value || null,
 		});
 
 		// Ignore stale response if a newer compile intent exists.
@@ -965,14 +978,10 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		lastReportAssetFiles.value = compileAssetFiles;
 
 		if (result?.success) {
-			window.dispatchEvent(
-				new CustomEvent("crispy-report-preview", {
-					detail: {
-						svg_pages: result.svg_pages,
-						page_count: result.page_count,
-					},
-				})
-			);
+			const bytes = decodePdfData(result.pdf_data);
+			if (!bytes.byteLength) throw new Error("Report preview returned an empty PDF");
+			reportPdfBytes.value = bytes;
+			reportPdfRevision.value += 1;
 		}
 	} catch (error) {
 		logger.error("Report preview failed", error);

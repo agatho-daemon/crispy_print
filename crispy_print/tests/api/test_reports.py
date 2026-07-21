@@ -20,6 +20,41 @@ class TestReportDataPrep(FrappeTestCase):
 		self.assertEqual(infer_report_renderer("Bank Reconciliation Statement"), "bank_reconciliation")
 		self.assertEqual(infer_report_renderer("Unknown Custom Report"), "generic_report")
 
+	def test_compile_report_preview_compiles_pdf_and_preserves_metadata(self):
+		from crispy_print.api.v1.reports import compile_report_preview
+
+		source_payload = {
+			"typst_source": "= Report",
+			"truncation": {"is_truncated": False},
+			"asset_files": ["logo.svg"],
+			"chart_spec": {"kind": "bar"},
+			"chart_render": {"engine": "lilaq", "status": "ready"},
+			"chart_svg": None,
+			"_generated_data_files": {"crispy-report-data.json": b"{}"},
+		}
+		with (
+			mock.patch(
+				"crispy_print.api.v1.reports.get_report_typst_source",
+				return_value=source_payload,
+			),
+			mock.patch(
+				"crispy_print.api.v1.reports.compile_typst",
+				return_value={"success": True, "format": "pdf", "pdf_data": "JVBERg=="},
+			) as compile_mock,
+		):
+			result = compile_report_preview("Sample Report", preview_snapshot_id="snapshot")
+
+		self.assertEqual(result["format"], "pdf")
+		self.assertEqual(result["chart_spec"], {"kind": "bar"})
+		compile_mock.assert_called_once_with(
+			"= Report",
+			output_format="pdf",
+			pdf_standard=None,
+			asset_files=["logo.svg"],
+			chart_svg=None,
+			_trusted_data_files={"crispy-report-data.json": b"{}"},
+		)
+
 	def test_report_payload_exposes_renderer_sections_and_row_roles(self):
 		from crispy_print.api.v1.reports import _prepare_typst_report_data
 

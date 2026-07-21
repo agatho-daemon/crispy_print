@@ -1242,6 +1242,7 @@ function buildStore() {
     getReportColumnConfigFromLayout,
     getEffectiveCompany,
     getFormatCompany: () => formatCompany.value || null,
+	getPdfStandard: () => crispyFormat.value?.pdf_standard || null,
   });
 
   async function initializeTransientReport(draft: CrispyFormat) {

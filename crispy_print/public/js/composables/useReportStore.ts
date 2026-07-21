@@ -37,6 +37,7 @@ interface CreateReportStoreOptions {
   getReportColumnConfigFromLayout: () => ColumnConfig;
   getEffectiveCompany: () => string | null;
   getFormatCompany: () => string | null;
+	getPdfStandard: () => string | null;
 }
 
 export function createReportStore(options: CreateReportStoreOptions) {
@@ -57,6 +58,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
     getReportColumnConfigFromLayout,
     getEffectiveCompany,
     getFormatCompany,
+	getPdfStandard,
   } = options;
 
   function buildReportFontPreambleOverride(): string {
@@ -273,6 +275,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
         preview_snapshot_id: previewSnapshotId,
         limit: 0,
         asset_files: branding_asset_files,
+		pdf_standard: getPdfStandard(),
       });
 
       const typst_source = result?.typst_source || "";

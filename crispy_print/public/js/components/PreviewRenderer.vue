@@ -75,12 +75,30 @@
 				}"
 				@pointerdown="onPanPointerDown"
 			>
+				<div v-if="isBusy" class="preview-progress-layer">
+					<div class="preview-progress" role="status" aria-live="polite">
+						<span class="preview-progress__spinner" aria-hidden="true"></span>
+						<span class="preview-progress__label">{{ previewStateLabel }}</span>
+					</div>
+				</div>
 				<div class="preview-stage-sizer" :style="stageSizerStyle">
 					<div ref="stageEl" class="preview-stage" :style="stageStyle">
-						<div id="typst-svg-container">
-							<div id="typst-preview-placeholder" class="preview-placeholder">
+						<div id="typst-pdf-container">
+							<div
+								v-if="!pdfBytes"
+								id="typst-preview-placeholder"
+								class="preview-placeholder"
+							>
 								{{ __("Preview output will render here.") }}
 							</div>
+							<PdfPreviewRenderer
+								v-if="pdfBytes"
+								:data="pdfBytes"
+								:revision="pdfRevision"
+								:viewport-root="viewportEl"
+								@state="onPdfViewerState"
+								@page-count="onPdfPageCount"
+							/>
 						</div>
 					</div>
 				</div>
@@ -100,10 +118,14 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import PdfPreviewRenderer from "./PdfPreviewRenderer.vue";
 import { resolveTypstPaper } from "../typst/page";
 import { setupWorker, type TypstPdfReadyContext } from "../typst/setupWorker";
-import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
-import { sanitizeSvg } from "../utils/safeSvg";
+import {
+	CrispyPreviewEvents,
+	dispatchCrispyPreviewStatus,
+	type CrispyPreviewStatusDetail,
+} from "../utils/events";
 import { getLogger } from "../logger";
 import { __ } from "../utils/i18n";
 
@@ -128,6 +150,8 @@ interface Props {
 	zoomMode?: "fit" | "manual";
 	zoomPercent?: number;
 	issuePdfSnapshot?: (context: TypstPdfReadyContext) => Promise<void> | void;
+	reportPdfBytes?: Uint8Array | null;
+	reportPdfRevision?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -145,6 +169,17 @@ const viewportEl = ref<HTMLElement | null>(null);
 const stageEl = ref<HTMLElement | null>(null);
 const zoomInputEl = ref<HTMLInputElement | null>(null);
 const errorPanel = ref<string | null>(null);
+const pdfBytes = ref<Uint8Array | null>(null);
+const pdfRevision = ref(0);
+type PreviewState =
+	| "idle"
+	| "running-report"
+	| "compiling"
+	| "loading-pdf"
+	| "rendering"
+	| "ready"
+	| "error";
+const previewState = ref<PreviewState>("idle");
 const panX = ref(0);
 const panY = ref(0);
 const isPanning = ref(false);
@@ -171,6 +206,18 @@ const zoomScale = computed(() =>
 );
 const canPan = computed(() => zoomMode.value === "manual");
 const displayZoom = computed(() => `${Math.round(zoomScale.value * 100)}%`);
+const isBusy = computed(() =>
+	["running-report", "compiling", "loading-pdf", "rendering"].includes(previewState.value)
+);
+const previewStateLabel = computed(
+	() =>
+		({
+			"running-report": __("Running report…"),
+			compiling: __("Compiling PDF…"),
+			"loading-pdf": __("Loading PDF…"),
+			rendering: __("Rendering preview…"),
+		}[previewState.value] || "")
+);
 const stageStyle = computed(() => ({
 	width: `${pageWidthPx.value}px`,
 	"--preview-page-width": `${pageWidthPx.value}px`,
@@ -202,6 +249,10 @@ function createAdapter() {
 		get_presentation_settings: () => props.presentation_settings,
 		getTypstBlocks: () => props.typstBlocks || [],
 		onPdfReady: props.issuePdfSnapshot,
+		onPreviewPdfReady: (bytes: Uint8Array) => {
+			pdfBytes.value = bytes;
+			pdfRevision.value += 1;
+		},
 		hookDataChanges: enableDataWatch
 			? (callback: () => void) => {
 					const stop = watch(
@@ -227,9 +278,18 @@ function createAdapter() {
 }
 
 watch(
-	() => [props.formatName, previewPaneEl.value] as const,
-	([formatName, element]) => {
-		if (!formatName || !element) return;
+	() =>
+		[
+			props.formatName,
+			previewPaneEl.value,
+			Boolean(props.rawTypst ? props.typstCode : props.layout),
+		] as const,
+	([formatName, element, sourceReady]) => {
+		if (!formatName || !element || !sourceReady) {
+			teardown?.();
+			teardown = null;
+			return;
+		}
 
 		teardown?.();
 		teardown = setupWorker(formatName, element, createAdapter());
@@ -250,10 +310,37 @@ function onPreviewStatus(event: Event) {
 	const detail = (event as CustomEvent<CrispyPreviewStatusDetail>).detail;
 	if (!detail) return;
 	if (detail.status === "error") {
+		previewState.value = "error";
 		errorPanel.value = detail.message || "Typst compilation failed.";
-	} else if (detail.status === "ready" || detail.status === "compiling") {
+	} else if (
+		["running-report", "compiling", "loading-pdf", "rendering"].includes(detail.status)
+	) {
+		previewState.value = detail.status as PreviewState;
+		errorPanel.value = null;
+	} else if (detail.status === "fetching" || detail.status === "idle") {
+		previewState.value = "idle";
+		errorPanel.value = null;
+	} else if (detail.status === "ready") {
 		errorPanel.value = null;
 	}
+}
+
+function onPdfViewerState(state: "loading-pdf" | "rendering" | "ready" | "error", detail?: any) {
+	previewState.value = state;
+	if (state === "error") {
+		errorPanel.value = detail?.message || String(detail || __("PDF preview failed."));
+	} else {
+		errorPanel.value = null;
+	}
+	if (state === "ready") scheduleStageMetricsUpdate();
+	if (state === "ready") {
+		dispatchCrispyPreviewStatus({ status: "ready", pageCount: detail?.pageCount });
+	}
+}
+
+function onPdfPageCount() {
+	resetPan();
+	scheduleStageMetricsUpdate();
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -403,40 +490,15 @@ function onPanPointerDown(event: PointerEvent) {
 	};
 }
 
-/**
- * Handle report preview custom event with SVG data
- */
-function onReportPreview(event: Event) {
-	const detail = (event as CustomEvent).detail;
-	if (!detail || !detail.svg_pages) return;
-
-	logger.info("Received report preview", detail);
-
-	// Clear error panel
-	errorPanel.value = null;
-
-	// Get container
-	const container = previewPaneEl.value?.querySelector<HTMLElement>("#typst-svg-container");
-	if (!container) return;
-
-	// Clear existing content
-	container.innerHTML = "";
-	container.classList.add("has-pages");
-
-	// Render SVG pages
-	const svgPages = detail.svg_pages as string[];
-	svgPages.forEach((svgContent: string, index: number) => {
-		const pageDiv = document.createElement("div");
-		pageDiv.className = "typst-page";
-		pageDiv.setAttribute("data-page-number", String(index + 1));
-		pageDiv.innerHTML = sanitizeSvg(svgContent);
-		container.appendChild(pageDiv);
-	});
-	resetPan();
-	scheduleStageMetricsUpdate();
-
-	logger.info(`Rendered ${svgPages.length} page(s)`);
-}
+watch(
+	() => [props.reportPdfBytes, props.reportPdfRevision] as const,
+	([bytes]) => {
+		if (!bytes?.byteLength) return;
+		pdfBytes.value = bytes;
+		pdfRevision.value += 1;
+	},
+	{ immediate: true }
+);
 
 function copyError() {
 	if (!errorPanel.value) return;
@@ -454,8 +516,7 @@ function copyError() {
 
 onMounted(() => {
 	window.addEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
-	window.addEventListener("crispy-report-preview", onReportPreview);
-	const container = previewPaneEl.value?.querySelector<HTMLElement>("#typst-svg-container");
+	const container = previewPaneEl.value?.querySelector<HTMLElement>("#typst-pdf-container");
 	if (container) {
 		contentObserver = new MutationObserver(() => {
 			resetPan();
@@ -491,7 +552,6 @@ onBeforeUnmount(() => {
 	if (stageMetricsFrame !== null) cancelAnimationFrame(stageMetricsFrame);
 	if (stageMetricsReadFrame !== null) cancelAnimationFrame(stageMetricsReadFrame);
 	window.removeEventListener(CrispyPreviewEvents.Status, onPreviewStatus);
-	window.removeEventListener("crispy-report-preview", onReportPreview);
 });
 </script>
 
@@ -633,9 +693,60 @@ onBeforeUnmount(() => {
 }
 
 /* When Typst pages render, we add .has-pages class; keep the same styles as current flow */
-#typst-svg-container.has-pages {
+#typst-pdf-container {
 	display: grid;
 	gap: 16px;
+}
+
+.preview-progress {
+	display: inline-flex;
+	align-items: center;
+	gap: 14px;
+	min-width: 220px;
+	padding: 18px 24px;
+	border: 1px solid rgba(148, 163, 184, 0.65);
+	border-radius: 14px;
+	background: rgba(255, 255, 255, 0.96);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2), 0 4px 12px rgba(15, 23, 42, 0.1);
+	color: #1e293b;
+	backdrop-filter: blur(8px);
+}
+
+.preview-progress-layer {
+	position: sticky;
+	top: 50%;
+	left: 0;
+	z-index: 4;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 0;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+.preview-progress__spinner {
+	flex: 0 0 auto;
+	width: 30px;
+	height: 30px;
+	border: 3px solid #dbeafe;
+	border-top-color: #2563eb;
+	border-radius: 50%;
+	animation: preview-spin 0.8s linear infinite;
+}
+
+.preview-progress__label {
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.35;
+	letter-spacing: 0.01em;
+}
+
+@keyframes preview-spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 .preview-error {

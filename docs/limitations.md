@@ -37,7 +37,7 @@ As a **beta release**, Crispy Print has several known limitations:
 
 ### PDF Generation
 
-- **Browser Preview**: The preview surface renders sanitized SVG; downloaded PDFs are native Typst output.
+- **Browser Preview**: Complete DocType and Report previews render native Typst PDF output through PDF.js. Focused Branding Profile and Typst Block authoring specimens render sanitized SVG.
 - **Image Formats**: Letterhead, logo, and asset files must use formats supported by Typst.
 - **No Real-Time Collaboration**: Multiple users cannot safely edit the same format simultaneously.
 - **Text Editor / HTML Fields**: HTML content is reduced to text-oriented output before rendering.
@@ -59,8 +59,8 @@ As a **beta release**, Crispy Print has several known limitations:
 ### Performance
 
 - **First Compile Cost**: Initial Typst compilation can take longer than cached repeat previews.
-- **SVG Preview Size**: Multi-page SVG previews can be memory-intensive in the browser.
+- **PDF Preview Size**: Complete DocType and Report previews use lazy PDF.js canvas rendering, but exceptionally large PDFs still consume browser memory while their document structure and visible pages are loaded.
 - **Font Loading**: Large custom font collections may slow down font discovery.
 - **Report Preview Cost**: **Run Preview** executes and snapshots the complete ERPNext result once; Builder-only changes reuse the snapshot but still require Typst compilation. Very large results can therefore remain expensive to compile even though the report is not rerun.
-- **Large Report Preview Rendering**: The current preview returns and inserts every generated SVG page. Large multi-page reports can produce large responses and block the browser while SVG pages are sanitized and added to the DOM. Review and PDF generation remain complete; preview virtualization/background rendering is not implemented yet.
+- **Large Report Preview Rendering**: PDF.js removes the former all-pages inline-SVG insertion cost and lazily paints only the first and near-visible report pages. It materially reduces live DOM size and main-thread SVG sanitization/insertion work, but it does not make ERPNext report execution or server-side Typst compilation faster. Very large report PDFs still carry response-transfer, PDF parsing, page-metadata, and visible-canvas costs.
 - **Render Timeout**: Each Typst render and font-discovery command is bounded by the configurable render timeout in Crispy Print Settings (default 60s).

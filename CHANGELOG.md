@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added a packaged PDF.js 3.11 viewer and local worker for complete DocType and Report previews, with lazy near-viewport page painting, capped device-pixel-ratio canvases, explicit compile/load/render states, last-good-preview retention, and cleanup for stale loading documents and render tasks.
 - Added a vendored, offline Lilaq 0.6.0 report-chart engine behind the versioned `@local/crispy-charts:0.1.1` API, with pinned Elembic 1.1.1, Zero 0.6.1, and Tiptoe 0.4.0 dependencies. Runtime compilation uses the application package path and never downloads Typst packages.
 - Added an immutable Typst-package manifest with source, license, version, and SHA-256 inventory, plus a CI verifier for package contents and required third-party license files.
 - Added normalized `chart_spec` payloads for bar, grouped bar, line, mixed, horizontal bar, percentage aging, and waterfall charts. Native Lilaq rendering now follows deterministic Lilaq/SVG/omission precedence with accessibility summaries, renderer/version metadata, 24-series and 2,000-point limits, and visible Builder diagnostics.
@@ -45,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced multipage inline-SVG rendering with PDF.js for complete DocType and Report previews. Typst now compiles the preview artifact as PDF, document-worker responses transfer an `ArrayBuffer`, and report RPC responses decode PDF data only at the UI boundary. This makes preview output match the final PDF path and, especially for long reports, avoids large SVG response arrays, repeated SVG sanitization, and unbounded live DOM trees while keeping the builder interactive through bounded lazy canvas rendering. ERPNext report execution and Typst compilation time are unchanged; retained report snapshots still ensure builder-only changes never rerun the report.
+- Kept the Branding Profile Builder and Crispy Typst Block Builder on SVG intentionally: their small, focused authoring specimens benefit from the lighter SVG path and do not need a multipage PDF document viewer.
 - Upgraded portable Crispy Format exports to schema v3. Schema v1 and v2 imports remain supported and migrate the former Report `is_advanced` value into `raw_typst`.
 - Changed Report Basic/Advanced mode persistence to use only `raw_typst`. A pre-model-sync migration preserves existing advanced Report formats and normalizes their persisted Builder mode before the obsolete field is removed.
 - Changed live Report preview execution to retain the complete prepared ERPNext result in a user-bound, 15-minute server snapshot. Builder-only column, width, filter-display, summary, total-row, typography, layout, and presentation changes project and recompile that snapshot instead of rerunning the report.
@@ -82,6 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed runtime `crispy-print-preview` startup so document compilation waits for the resolved frozen template layout or raw Typst source before requesting fields; the former early worker start could compile a nearly empty document containing only static headings.
+- Fixed runtime PDF preview Fit, 100%, editable percentage, zoom-in, and zoom-out controls by giving the page persistent zoom state, and fixed the DocType placeholder transition so Vue exclusively owns its DOM lifecycle.
 - Fixed missing last-group subtotals and final report totals caused by preview row slicing.
 - Fixed Report Builder column removal and visibility changes so they project the retained report rows and cells without executing the ERPNext report again.
 - Fixed report filter state so changing a preview variable invalidates the retained snapshot, while the format-owned Company field remains read-only and cannot drift from the Crispy Format company.
@@ -113,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 
+- Added frontend coverage for PDF decoding, bounded first-page painting, viewer cleanup, report PDF propagation, DocType placeholder replacement, delayed runtime-template readiness, zoom events, and report compile coalescing; added backend coverage that Report preview compilation requests PDF while preserving snapshot data, assets, charts, and diagnostics.
 - Added backend and frontend regression coverage for schema-v2 mode migration, `raw_typst` normalization, canonical format-company locking, retained report snapshots, no-rerun Builder projection, full-result preservation, temporary JSON compile inputs, cache-key separation, in-flight compile coalescing, Branding Profile request stabilization, raw QR generation, and reserved Typst keys.
 - Added backend and frontend coverage for the Sample Format Catalog, explicit sample creation, fixture removal, and builder Examples flow.
 - Added backend coverage for Company User Permission query conditions, manager bypass, Branding Profile read checks, and target-company duplicate authorization.
