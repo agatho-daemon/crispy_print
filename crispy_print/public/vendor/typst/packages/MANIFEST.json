@@ -8,7 +8,7 @@
       "version": "0.6.0",
       "license": "MIT",
       "source": "https://github.com/lilaq-project/lilaq",
-      "sha256": "efb148550308fc16a49f85cec369ce415e44e13dc9b5ed319e02aae1e6a31816"
+      "sha256": "3bb43245a7caddf51fa1697db068b30347318923dd84fc8fb760b4eac22ef865"
     },
     {
       "namespace": "preview",
@@ -24,7 +24,7 @@
       "version": "0.6.1",
       "license": "MIT",
       "source": "https://github.com/Mc-Zen/zero",
-      "sha256": "5281f02800c87fccdf67fdfed35984d23cccc6afad531ae53744fc5d854310e0"
+      "sha256": "4512b1a60912272c22ba5fe008de30e71f834268d44879b4752e79d281343100"
     },
     {
       "namespace": "preview",

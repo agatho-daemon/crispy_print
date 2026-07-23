@@ -9,4 +9,3 @@ export function decodePdfData(value: string | null | undefined): Uint8Array {
 	}
 	return bytes
 }
-

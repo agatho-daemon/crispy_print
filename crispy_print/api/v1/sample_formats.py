@@ -9,6 +9,7 @@ from frappe import _
 
 from .formats import (
 	EXPORT_SCHEMA_VERSION,
+	_convert_legacy_import_payload,
 	_insert_format_duplicate_for_company,
 	_validate_import_payload,
 )
@@ -93,6 +94,7 @@ def _load_sample_file(path: Path) -> JSONDict:
 
 	if not isinstance(payload, dict):
 		frappe.throw(_("Sample format {0} must be a JSON object.").format(path.name))
+	payload = _convert_legacy_import_payload(payload)
 	if payload.get("schema_version") != EXPORT_SCHEMA_VERSION:
 		frappe.throw(_("Sample format {0} has an unsupported schema version.").format(path.name))
 
