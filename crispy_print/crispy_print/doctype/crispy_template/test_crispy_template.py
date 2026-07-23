@@ -70,6 +70,27 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(template.barcode_symbology, "QR Code")
 		self.assertEqual(template.snapshot_hash, template.compute_snapshot_hash())
 
+	def test_report_template_rejects_missing_generated_typst_code(self):
+		source = frappe.get_doc(
+			{
+				"doctype": "Crispy Format",
+				"name": "CT Test Report Missing Typst",
+				"company": self.company,
+				"crispy_format_type": "Report",
+				"module": "Crispy Print",
+				"report_scope": "Selected Reports",
+				"report_renderer": "general_ledger",
+				"report": [{"report": "General Ledger"}],
+				"layout_json": json.dumps({"sections": []}),
+				"presentation_settings": json.dumps({"report": {"mode": "basic"}}),
+				"raw_typst": 0,
+				"typst_code": "",
+			}
+		).insert(ignore_permissions=True)
+
+		with self.assertRaisesRegex(frappe.ValidationError, "Generated Typst Code is required"):
+			publish_crispy_template(source.name)
+
 	def test_legacy_v1_snapshot_hash_still_validates_after_v2_fields_exist(self):
 		source = self._insert_format("CT Test Source Legacy Hash")
 		template = self._insert_template(

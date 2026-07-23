@@ -6,7 +6,7 @@ import { typstTextStyle } from "../typst/textStyles";
 import { escapeTypstString } from "./typstEscape";
 
 export const REPORT_BASIC_SIGNATURE_PREFIX = "CRISPY_REPORT_BASIC_SIGNATURE:";
-export const REPORT_BASIC_GENERATOR_VERSION = 2;
+export const REPORT_BASIC_GENERATOR_VERSION = 4;
 
 export type ReportBuilderMode = "basic" | "advanced";
 export type ReportBuilderPreset = "grid" | "tree" | "summary" | "minimal";
@@ -61,6 +61,20 @@ export interface ReportBuilderConfig {
 interface ReportTypstBuildOptions {
   tableSettings?: TableSettings | null;
   reportTheme?: ReportThemeSettings | null;
+  language?: string | null;
+}
+
+const RTL_LANGUAGE_PREFIXES = new Set(["ar", "fa", "he", "ur"]);
+
+function normalizeReportLanguage(value: string | null | undefined): string {
+  const normalized = String(value || "en")
+    .trim()
+    .replace(/_/g, "-");
+  return normalized || "en";
+}
+
+function isRtlReportLanguage(language: string): boolean {
+  return RTL_LANGUAGE_PREFIXES.has(language.split("-", 1)[0].toLowerCase());
 }
 
 export function getDefaultReportBuilderConfig(
@@ -256,6 +270,10 @@ export function buildReportTypstFromConfig(
   config: ReportBuilderConfig,
   options: ReportTypstBuildOptions = {},
 ): string {
+  const reportLanguage = normalizeReportLanguage(options.language);
+  const [reportLanguageCode, reportRegion] = reportLanguage.split("-", 2);
+  const reportIsRtl = isRtlReportLanguage(reportLanguage);
+  const reportDirection = reportIsRtl ? "rtl" : "ltr";
   const densityScale =
     config.layout_style === "Compact"
       ? 0.85
@@ -425,7 +443,7 @@ export function buildReportTypstFromConfig(
     lines.push('#import "@local/crispy-charts:0.1.1": crispy-chart');
   }
   lines.push(
-    `#set text(font: "${escapeTypstString(config.font_family)}", size: ${formatPt(fontSize)})`,
+    `#set text(font: ("${escapeTypstString(config.font_family)}", "Noto Naskh Arabic", "Noto Sans Arabic", "Inter"), size: ${formatPt(fontSize)}, lang: "${escapeTypstString(reportLanguageCode)}"${reportRegion ? `, region: "${escapeTypstString(reportRegion.toUpperCase())}"` : ""}, dir: ${reportDirection})`,
   );
   lines.push("");
   if (sectionVisible("heading")) {
@@ -531,7 +549,9 @@ export function buildReportTypstFromConfig(
       lines.push(`  #v(${formatPt(config.chart_spacing_bottom_pt)})`);
     }
     lines.push("]");
-    lines.push('#if "chart_svg" in data and data.chart_svg != "" [');
+    lines.push(
+      '#if "chart_spec" in data and data.chart_spec.engine == "frappe_svg" and "chart_svg" in data and data.chart_svg != "" [',
+    );
     if (config.chart_spacing_top_pt > 0) {
       lines.push(`  #v(${formatPt(config.chart_spacing_top_pt)})`);
     }
@@ -612,12 +632,20 @@ export function buildReportTypstFromConfig(
     lines.push("");
     lines.push("  align: (x, y) => {");
     lines.push("    if y == 0 {");
-    lines.push(`      ${tableHeaderAlign} + horizon`);
+    if (reportIsRtl) {
+      lines.push(
+        "      if data.columns.at(x).is_numeric { left + horizon } else { right + horizon }",
+      );
+    } else {
+      lines.push(`      ${tableHeaderAlign} + horizon`);
+    }
     lines.push("    } else if data.columns.at(x).is_numeric {");
-    lines.push(`      ${tableBodyAlign}`);
+    lines.push(reportIsRtl ? "      left + horizon" : `      ${tableBodyAlign}`);
     lines.push("    } else {");
     lines.push(
-      `      ${tableBodyAlign === "right + horizon" ? "left + horizon" : tableBodyAlign}`,
+      reportIsRtl
+        ? "      right + horizon"
+        : `      ${tableBodyAlign === "right + horizon" ? "left + horizon" : tableBodyAlign}`,
     );
     lines.push("    }");
     lines.push("  },");
@@ -634,6 +662,7 @@ export function buildReportTypstFromConfig(
     );
     lines.push("");
     lines.push("  table.header(");
+    lines.push("    repeat: true,");
     lines.push(
       `    ..data.columns.map(col => text(..${headerTextStyle})[#col.label])`,
     );
@@ -644,28 +673,50 @@ export function buildReportTypstFromConfig(
     if (!config.include_total_row) {
       lines.push("    .filter(row => row.is_total_row != true)");
     }
-    lines.push("    .map(row => {");
+    lines.push("    .enumerate()");
+    lines.push("    .map(row_entry => {");
+    lines.push("      let row-index = row_entry.at(0)");
+    lines.push("      let row = row_entry.at(1)");
+    lines.push(
+      "      let next-row = if row-index + 1 < data.rows.len() { data.rows.at(row-index + 1) } else { none }",
+    );
+    lines.push(
+      '      let keep-with-next = row.role == "section" or (next-row != none and (next-row.role == "calculation" or next-row.role == "grand_total"))',
+    );
+    lines.push(
+      '      let row-breakable = row.role == "detail" or row.role == "auxiliary" or row.role == "spacer"',
+    );
     lines.push(
       `      let row-fill = if row.role == "section" { rgb("${groupFill}") } else if row.role == "calculation" { rgb("${subtotalFill}") } else if row.role == "grand_total" { rgb("${grandTotalFill}") } else { none }`,
     );
+    lines.push('      if row.role == "section" {');
+    lines.push("        let heading = row.cells.at(0)");
+    lines.push(
+      `        (table.cell(colspan: data.columns.len(), fill: row-fill, breakable: false)[#block(sticky: true)[#text(..${boldBodyTextStyle})[#heading.value]]],)`,
+    );
+    lines.push("      } else {");
     lines.push("      row.cells.enumerate().map(cell_entry => {");
     lines.push("        let idx = cell_entry.at(0)");
     lines.push("        let cell = cell_entry.at(1)");
+    lines.push("        let cell-dir = if cell.is_numeric { ltr } else { " + reportDirection + " }");
     lines.push("        let content = if row.is_bold {");
-    lines.push(`          text(..${boldBodyTextStyle})[#cell.value]`);
+    lines.push(`          text(dir: cell-dir, ..${boldBodyTextStyle})[#cell.value]`);
     lines.push("        } else {");
-    lines.push(`          text(..${bodyTextStyle})[#cell.value]`);
+    lines.push(`          text(dir: cell-dir, ..${bodyTextStyle})[#cell.value]`);
     lines.push("        }");
     lines.push(
       '        if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
     );
     lines.push(
-      `          table.cell(fill: row-fill)[#box(inset: (left: row.indent * ${formatPt(hierarchyIndentPt)}))[#content]]`,
+      `          table.cell(fill: row-fill, breakable: row-breakable)[#block(sticky: keep-with-next)[#box(inset: (left: row.indent * ${formatPt(hierarchyIndentPt)}))[#content]]]`,
     );
     lines.push("        } else {");
-    lines.push("          table.cell(fill: row-fill)[#content]");
+    lines.push(
+      "          table.cell(fill: row-fill, breakable: row-breakable)[#block(sticky: keep-with-next)[#content]]",
+    );
     lines.push("        }");
     lines.push("      })");
+    lines.push("      }");
     lines.push("    })");
     lines.push("    .flatten()");
     lines.push(")");

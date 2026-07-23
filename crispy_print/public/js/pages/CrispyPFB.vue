@@ -329,6 +329,7 @@ const formatHealthItems = computed<FormatHealthItem[]>(() => {
 		});
 	}
 	const sourceStatus = store.reportRendererMetadata?.value?.source?.status;
+	const compatibilityStatus = store.reportRendererMetadata?.value?.compatibility?.status;
 	if (sourceStatus === "review_required") {
 		items.push({
 			level: "warning",
@@ -338,6 +339,14 @@ const formatHealthItems = computed<FormatHealthItem[]>(() => {
 		items.push({
 			level: "warning",
 			message: __("The source report HTML is unavailable for compatibility checking."),
+		});
+	}
+	if (compatibilityStatus === "review_required" && sourceStatus === "current") {
+		items.push({
+			level: "warning",
+			message: __(
+				"The installed ERPNext report registry or version differs from the reviewed compatibility contract."
+			),
 		});
 	}
 	if (isGeneratedReportTypstStale()) {
@@ -460,6 +469,7 @@ function isGeneratedReportTypstStale(): boolean {
 	const expected = buildReportTypstFromConfig(store.reportBuilderConfig.value, {
 		tableSettings: store.effective_presentation_settings.value?.table,
 		reportTheme: store.effective_presentation_settings.value?.reportTheme,
+		language: store.effective_presentation_settings.value?.language,
 	});
 	return Boolean(store.typstCode.value.trim()) && store.typstCode.value !== expected;
 }

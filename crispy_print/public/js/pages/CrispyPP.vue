@@ -84,6 +84,14 @@
 							class="settings-pane__report-warning text-warning small"
 						>
 							{{ reportTruncationWarning }}
+							<button
+								v-if="reportPreviewNeedsRefresh"
+								type="button"
+								class="btn btn-xs btn-default"
+								@click="runReportPreviewAgain"
+							>
+								{{ __("Run Preview again") }}
+							</button>
 						</p>
 					</SettingsSection>
 
@@ -449,7 +457,9 @@ import { dispatchCrispyPreviewSource, dispatchCrispyPreviewStatus } from "../uti
 import { CrispyPreviewEvents, type CrispyPreviewStatusDetail } from "../utils/events";
 import {
 	buildReportFormatOptions,
+	getReportColumnDefault,
 	normalizeReportColumns,
+	serializeReportPreviewIntent,
 	type ReportColumn,
 	type ReportFormatOption,
 } from "./reportPrintSettings";
@@ -459,11 +469,12 @@ import { escapeTypstString } from "../utils/typstEscape";
 import { __ } from "../utils/i18n";
 import { decodePdfData } from "../utils/pdfBytes";
 import {
-	compileReportPreview,
+	compileReportPreview as compileReportPreviewRequest,
 	compileTypst,
 	createIssuedDocumentSnapshot,
 	getActiveCrispyTemplatesForDocument,
 	getResolvedCrispyTemplateForDocument,
+	getSampleReportData,
 	type ActiveCrispyTemplateOption,
 	type ResolvedCrispyTemplate,
 } from "../api/crispy";
@@ -524,15 +535,23 @@ const reportPreviewPending = ref(false);
 const reportPdfBytes = ref<Uint8Array | null>(null);
 const reportPdfRevision = ref(0);
 const reportTruncationWarning = ref("");
+const reportPreviewNeedsRefresh = ref(false);
 const REPORT_PREVIEW_DEBOUNCE_MS = 250;
 const reportPreviewDebounceTimer = ref<number | null>(null);
 const reportPreviewIntentSeq = ref(0);
+const reportPreviewSnapshotId = ref("");
+const reportPreviewDataKey = ref("");
+const reportPreviewTabId =
+	globalThis.crypto?.randomUUID?.() ||
+	`crispy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+let lastRequestedReportPreviewKey = "";
 const reportBrandingInitialized = ref(false);
 const reportOrientationInitialized = ref(false);
 const reportMarginsInitialized = ref(false);
 const lastReportTypstSource = ref<string | null>(null);
 const lastReportChartSvg = ref<string>("");
 const lastReportAssetFiles = ref<string[]>([]);
+const lastReportCompileArgs = ref<Record<string, any> | null>(null);
 const availableFonts = ref<string[]>([]);
 const loadingFonts = ref(false);
 const reportFontFamily = ref("Inter");
@@ -745,7 +764,7 @@ function seedReportColumnSelections(columns: ReportColumn[]) {
 	const next: Record<string, { selected: boolean; width: string }> = {};
 	columns.forEach((col) => {
 		const existing = reportColumnSelections.value[col.fieldname];
-		next[col.fieldname] = existing || { selected: true, width: "auto" };
+		next[col.fieldname] = existing || getReportColumnDefault(reportName.value, col.fieldname);
 	});
 	reportColumnSelections.value = next;
 }
@@ -869,7 +888,8 @@ async function fetchReportColumns() {
 	}
 }
 
-async function compileReportPreview() {
+async function compileCurrentReportPreview() {
+	lastRequestedReportPreviewKey = getReportPreviewRequestKey();
 	reportPreviewIntentSeq.value += 1;
 	const requestedIntent = reportPreviewIntentSeq.value;
 	if (reportPreviewDebounceTimer.value) {
@@ -881,6 +901,9 @@ async function compileReportPreview() {
 
 function requestReportPreviewCompile(immediate = false) {
 	if (!isReportMode.value) return;
+	const requestKey = getReportPreviewRequestKey();
+	if (requestKey === lastRequestedReportPreviewKey) return;
+	lastRequestedReportPreviewKey = requestKey;
 
 	reportPreviewIntentSeq.value += 1;
 	const requestedIntent = reportPreviewIntentSeq.value;
@@ -903,6 +926,50 @@ function requestReportPreviewCompile(immediate = false) {
 	reportPreviewDebounceTimer.value = window.setTimeout(run, REPORT_PREVIEW_DEBOUNCE_MS);
 }
 
+function getReportPreviewRequestKey(): string {
+	return serializeReportPreviewIntent([
+		reportName.value,
+		selectedReportFormat.value,
+		reportFilters.value,
+		reportColumnConfig.value,
+		reportIncludeFilters.value,
+		reportShowSummary.value,
+		reportShowTotalRow.value,
+		reportShowChart.value,
+		reportShowChart.value ? normalizeReportChartSvg(reportChartSvg.value || "") : "",
+		presentation_settings_computed.value,
+		letterheadDoc.value?.image || "",
+		logo_settings.value.image || "",
+		reportFontFamily.value,
+		reportFontSizePt.value,
+		buildReportTypstCodeOverride(),
+		pdfStandard.value,
+	]);
+}
+
+function getReportDataRequestKey(): string {
+	return serializeReportPreviewIntent([reportName.value, reportFilters.value || {}]);
+}
+
+async function ensureReportPreviewSnapshot(): Promise<string> {
+	const dataKey = getReportDataRequestKey();
+	if (reportPreviewSnapshotId.value && reportPreviewDataKey.value === dataKey) {
+		return reportPreviewSnapshotId.value;
+	}
+	const previewData = await getSampleReportData({
+		report: reportName.value,
+		filters: reportFilters.value || {},
+		limit: 0,
+		store_snapshot: 1,
+		preview_tab_id: reportPreviewTabId,
+	});
+	const snapshotId = String(previewData?.preview_snapshot_id || "");
+	if (!snapshotId) throw new Error("Report preview snapshot was not created");
+	reportPreviewSnapshotId.value = snapshotId;
+	reportPreviewDataKey.value = dataKey;
+	return snapshotId;
+}
+
 async function compileReportPreviewForIntent(intentSeq: number) {
 	if (!isReportMode.value) return;
 	if (!reportName.value || !selectedReportFormat.value) return;
@@ -915,6 +982,9 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		reportPreviewLoading.value = true;
 		dispatchCrispyPreviewStatus({ status: "compiling" });
 		reportTruncationWarning.value = "";
+		reportPreviewNeedsRefresh.value = false;
+		const previewSnapshotId = await ensureReportPreviewSnapshot();
+		if (intentSeq !== reportPreviewIntentSeq.value) return;
 		const chartSvgPayload = reportShowChart.value
 			? normalizeReportChartSvg(reportChartSvg.value || "")
 			: "";
@@ -928,16 +998,18 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		const brandingAssetFiles = [letterhead_image, logoImage].filter((value): value is string =>
 			Boolean(value)
 		);
-		logger.info("Report preview compile requested with letterhead", letterheadDoc.value);
-		logger.info("Report preview compile requested with letterhead image", letterhead_image);
-		logger.info(
-			"Report preview compile requested with presentation settings",
-			presentation_settings_computed.value
-		);
-		const result = await compileReportPreview({
+		logger.debug("Report preview compile requested", {
+			intentSeq,
+			format: selectedReportFormat.value,
+			hasLetterhead: Boolean(letterhead_image),
+			hasLogo: Boolean(logoImage),
+		});
+		const compileArgs = {
 			report: reportName.value,
 			format_name: selectedReportFormat.value,
 			filters: reportFilters.value || {},
+			preview_snapshot_id: previewSnapshotId,
+			preview_tab_id: reportPreviewTabId,
 			column_config: reportColumnConfig.value,
 			include_filters: reportIncludeFilters.value ? 1 : 0,
 			include_summary: reportShowSummary.value ? 1 : 0,
@@ -951,7 +1023,8 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 			limit: 0,
 			asset_files: brandingAssetFiles,
 			pdf_standard: pdfStandard.value || null,
-		});
+		};
+		const result = await compileReportPreviewRequest(compileArgs);
 
 		// Ignore stale response if a newer compile intent exists.
 		if (intentSeq !== reportPreviewIntentSeq.value) return;
@@ -976,6 +1049,7 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		lastReportTypstSource.value = typstSource;
 		lastReportChartSvg.value = chartSvgPayload || "";
 		lastReportAssetFiles.value = compileAssetFiles;
+		lastReportCompileArgs.value = compileArgs;
 
 		if (result?.success) {
 			const bytes = decodePdfData(result.pdf_data);
@@ -985,17 +1059,40 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 		}
 	} catch (error) {
 		logger.error("Report preview failed", error);
+		const errorMessage = String((error as any)?.message || error || "");
+		if (/Report preview (?:data has expired|access has changed)/i.test(errorMessage)) {
+			reportPreviewSnapshotId.value = "";
+			reportPreviewDataKey.value = "";
+			reportPreviewNeedsRefresh.value = true;
+			reportTruncationWarning.value = __(
+				"Report preview access expired. Run Preview again."
+			);
+		}
 		frappe.show_alert({
-			message: __("Report preview failed."),
+			message: reportPreviewNeedsRefresh.value
+				? __("Report preview access expired. Run Preview again.")
+				: __("Report preview failed."),
 			indicator: "red",
 		});
 	} finally {
 		reportPreviewLoading.value = false;
 		if (reportPreviewPending.value || intentSeq !== reportPreviewIntentSeq.value) {
 			reportPreviewPending.value = false;
-			requestReportPreviewCompile(true);
+			if (reportPreviewDebounceTimer.value) {
+				window.clearTimeout(reportPreviewDebounceTimer.value);
+				reportPreviewDebounceTimer.value = null;
+			}
+			void compileReportPreviewForIntent(reportPreviewIntentSeq.value);
 		}
 	}
+}
+
+function runReportPreviewAgain() {
+	reportPreviewNeedsRefresh.value = false;
+	reportTruncationWarning.value = "";
+	reportPreviewSnapshotId.value = "";
+	reportPreviewDataKey.value = "";
+	void compileCurrentReportPreview();
 }
 
 // Explicit invalidation for preview recompilation (avoids deep watches inside PreviewRenderer).
@@ -1258,8 +1355,11 @@ const getLetterhead = () => {
 // Fetch letterhead data when letterhead selection changes
 watch(
 	presentation_settings,
-	() => {
-		refreshEffectivePresentationSettings();
+	async () => {
+		await refreshEffectivePresentationSettings();
+		if (isReportMode.value) {
+			requestReportPreviewCompile();
+		}
 	},
 	{ deep: true, immediate: true }
 );
@@ -1333,16 +1433,6 @@ watch(
 	{ deep: true }
 );
 
-watch(
-	() => presentation_settings.value,
-	() => {
-		if (isReportMode.value) {
-			requestReportPreviewCompile();
-		}
-	},
-	{ deep: true }
-);
-
 watch([reportFontFamily, reportFontSizePt], () => {
 	if (isReportMode.value) {
 		requestReportPreviewCompile();
@@ -1385,7 +1475,7 @@ onMounted(async () => {
 	}
 	await initializeData();
 	await initializeReportSettings();
-	await compileReportPreview();
+	await compileCurrentReportPreview();
 });
 
 onBeforeUnmount(() => {
@@ -1464,6 +1554,67 @@ async function downloadPDF() {
 	);
 }
 
+async function printPDF() {
+	logger.info("Print PDF clicked");
+	if (!isReportMode.value) return;
+	if (!reportPdfBytes.value?.byteLength) {
+		frappe.show_alert({
+			message: __("Report preview not ready yet."),
+			indicator: "orange",
+		});
+		return;
+	}
+
+	const blob = new Blob([reportPdfBytes.value.slice()], { type: "application/pdf" });
+	const pdfUrl = URL.createObjectURL(blob);
+	const frame = document.createElement("iframe");
+	frame.setAttribute("aria-hidden", "true");
+	frame.style.position = "fixed";
+	frame.style.width = "0";
+	frame.style.height = "0";
+	frame.style.border = "0";
+	frame.style.right = "0";
+	frame.style.bottom = "0";
+
+	let cleanedUp = false;
+	const cleanup = () => {
+		if (cleanedUp) return;
+		cleanedUp = true;
+		frame.remove();
+		URL.revokeObjectURL(pdfUrl);
+	};
+	frame.onload = () => {
+		try {
+			const printWindow = frame.contentWindow;
+			if (!printWindow) throw new Error("PDF print frame is unavailable");
+			printWindow.addEventListener("afterprint", cleanup, { once: true });
+			printWindow.focus();
+			printWindow.print();
+			frappe.show_alert({
+				message: __("Print dialog opened."),
+				indicator: "green",
+			});
+		} catch (error) {
+			cleanup();
+			logger.error("Report printing failed", error);
+			frappe.show_alert({
+				message: __("Report printing failed."),
+				indicator: "red",
+			});
+		}
+	};
+	frame.onerror = () => {
+		cleanup();
+		frappe.show_alert({
+			message: __("Report printing failed."),
+			indicator: "red",
+		});
+	};
+	document.body.appendChild(frame);
+	frame.src = pdfUrl;
+	window.setTimeout(cleanup, 60_000);
+}
+
 async function generateReportPdf(action: "view" | "download") {
 	if (!lastReportTypstSource.value) {
 		frappe.show_alert({
@@ -1474,13 +1625,19 @@ async function generateReportPdf(action: "view" | "download") {
 	}
 
 	try {
-		const result = await compileTypst({
-			typst_source: lastReportTypstSource.value,
-			output_format: "pdf",
-			pdf_standard: pdfStandard.value,
-			asset_files: lastReportAssetFiles.value || [],
-			chart_svg: lastReportChartSvg.value || null,
-		});
+		const result =
+			action === "download" && lastReportCompileArgs.value
+				? await compileReportPreviewRequest({
+						...lastReportCompileArgs.value,
+						output_action: "download",
+				  })
+				: await compileTypst({
+						typst_source: lastReportTypstSource.value,
+						output_format: "pdf",
+						pdf_standard: pdfStandard.value,
+						asset_files: lastReportAssetFiles.value || [],
+						chart_svg: lastReportChartSvg.value || null,
+				  });
 
 		if (!result?.pdf_url && !result?.pdf_data) {
 			throw new Error("No PDF data returned");
@@ -1545,6 +1702,7 @@ defineExpose({
 	initializeData,
 	generatePDF,
 	downloadPDF,
+	printPDF,
 });
 </script>
 

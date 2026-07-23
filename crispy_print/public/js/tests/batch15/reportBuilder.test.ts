@@ -15,13 +15,25 @@ describe("reportBuilder utils", () => {
     const typst = buildReportTypstFromConfig(config);
 
     expect(typst).toContain("CRISPY_REPORT_BASIC_SIGNATURE:");
-    expect(typst).toContain("CRISPY_REPORT_BASIC_GENERATOR:2");
+    expect(typst).toContain("CRISPY_REPORT_BASIC_GENERATOR:4");
     expect(typst).toContain(
       '#import "@local/crispy-charts:0.1.1": crispy-chart',
     );
     expect(typst).toContain("#crispy-chart(data.chart_spec");
+    expect(typst).toContain(
+      'data.chart_spec.engine == "frappe_svg" and "chart_svg" in data',
+    );
     expect(typst).toContain("data.columns");
     expect(typst).toContain("data.columns.map(cp_column_width)");
+    expect(typst).toContain("table.header(");
+    expect(typst).toContain("repeat: true");
+    expect(typst).toContain(
+      'let row-breakable = row.role == "detail" or row.role == "auxiliary" or row.role == "spacer"',
+    );
+    expect(typst).toContain(
+      "table.cell(colspan: data.columns.len(), fill: row-fill, breakable: false)",
+    );
+    expect(typst).toContain("block(sticky: keep-with-next)");
     expect(typst).not.toContain("eval(col.width)");
     expect(typst).toContain("Total Records: #data.total_rows");
   });
@@ -130,5 +142,22 @@ describe("reportBuilder utils", () => {
       'if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
     );
     expect(typst).toContain("box(inset: (left: row.indent * 10pt))[#content]");
+  });
+
+  it("emits an RTL bilingual accounting contract for Arabic", () => {
+    const typst = buildReportTypstFromConfig(
+      getDefaultReportBuilderConfig("Tree"),
+      { language: "ar-KW" },
+    );
+
+    expect(typst).toContain('lang: "ar", region: "KW", dir: rtl');
+    expect(typst).toContain('"Noto Naskh Arabic", "Noto Sans Arabic", "Inter"');
+    expect(typst).toContain(
+      "if data.columns.at(x).is_numeric { left + horizon } else { right + horizon }",
+    );
+    expect(typst).toContain(
+      "let cell-dir = if cell.is_numeric { ltr } else { rtl }",
+    );
+    expect(typst).toContain("text(dir: cell-dir");
   });
 });

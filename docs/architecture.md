@@ -26,6 +26,9 @@ crispy_print/
 │   ├── install.py                        # Install-time setup helpers
 │   ├── json_utils.py                     # Shared JSON parsing/coercion helpers
 │   ├── letterhead_lifecycle.py           # Letter Head lifecycle fields and validation
+│   ├── report_lifecycle.py               # Report publication gates and format precedence
+│   ├── report_renderers.py               # Renderer registry and upstream compatibility
+│   ├── report_charts.py                  # Lilaq-first printable chart normalization
 │   ├── config/
 │   │   └── __init__.py                   # Frappe config package marker
 │   ├── examples/
@@ -83,6 +86,7 @@ crispy_print/
 │   │   │   ├── crispy_format_reports/        # Report links for formats
 │   │   │   ├── crispy_template/              # Frozen approved render contract
 │   │   │   ├── crispy_issued_document/       # Issued-document registry (CID) + child tables
+│   │   │   ├── crispy_report_output_audit/   # Metadata-only report download/print audit
 │   │   │   └── crispy_print_settings/        # Global font, render, and print policy (Single)
 │   │   ├── page/
 │   │   │   ├── crispy_format_builder/        # Format Builder Desk page
@@ -102,7 +106,8 @@ crispy_print/
 │   └── tests/                            # Backend API/helper tests
 ├── patches/                             # Schema/data backfill patches
 ├── dev_utils/
-│   └── perf_benchmarks.py                # Local benchmark helper
+│   ├── perf_benchmarks.py                # Non-mutating report pipeline benchmark
+│   └── upstream_report_compatibility.py  # Privacy-safe structural snapshot comparison
 ├── pyproject.toml                        # Python dependencies & config
 └── README.md
 ```
@@ -136,8 +141,9 @@ Backend:
 - **`api/v1/formats.py`** - Format listing, import/export, conflict detection, builder mode, and report-format lookup.
 - **`api/v1/sample_formats.py`** - Company-neutral sample catalog listing and explicit format creation from app-owned examples.
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
-- **`api/v1/reports.py`** - Report sample data, Typst source generation, combined preview compilation, and report PDF helpers.
-- **`report_renderers.py`** - Report-family registry, renderer compatibility, curated sections, and upstream structural-source fingerprints. Report rendering remains WIP pending full acceptance testing.
+- **`api/v1/reports.py`** - Report execution, user/report/company/tab-bound retained snapshots, Typst source generation, combined preview compilation, and metadata-only output audit creation.
+- **`report_lifecycle.py`** - Exact-report publication gates, current Basic generator/fingerprint checks, and centralized report format resolution precedence.
+- **`report_renderers.py`** - Report-family registry, curated sections, composite upstream fingerprints, installed-version/Report registry diagnostics, and compatibility acknowledgement metadata. Report rendering remains WIP pending full family acceptance testing.
 - **`report_charts.py`** - Stable chart-spec normalization, safe format-level bar/line/horizontal-bar representation overrides, protected accounting semantics, accounting chart limits, accessibility summaries, theme normalization, and deterministic Lilaq/Frappe-SVG/omission policy.
 - **`@local/crispy-charts:0.1.1`** - The only report-template chart API. It wraps vendored Lilaq 0.6.0 and compiles exclusively through the application package path.
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.
@@ -157,7 +163,7 @@ Frontend:
 - **`crispy_print_engine.js`** - Lightweight optional adapter for Frappe's proposed pluggable print engine handoff.
 - **`useStore.ts`, `useReportStore.ts`, `useSettingsStore.ts`** - State modules for document layout, report modes, and presentation settings.
 - **`JSONToTypst.ts`, `branding.ts`, `cbpBuilderTypst.ts`** - Typst generation paths for formats and branding profile specimens.
-- **`PdfPreviewRenderer.vue`** - Shared complete document/report viewer. Typst produces one PDF, a packaged PDF.js worker parses it off the main thread, and only the first/near-visible pages are painted to bounded high-DPI canvases. Branding Profile and Typst Block authoring specimens remain on their smaller SVG path.
+- **`PdfPreviewRenderer.vue`** - Shared complete document/report viewer. Typst produces one PDF, a packaged PDF.js worker parses it off the main thread, and a five-page window receives bounded high-DPI canvases plus matching selectable/copyable text layers. Offscreen canvas backing stores and text DOM are released. Branding Profile and Typst Block authoring specimens remain on their smaller SVG path.
 - **`safeSvg.ts`** - Browser-side sanitization for specialized SVG authoring previews and SVG assets.
 
 Data model:
@@ -165,6 +171,7 @@ Data model:
 - **`Crispy Format`** - Format registry for DocType, Report, and Contract format records.
 - **`Crispy Template`** - Frozen, versioned approved render contract published from a Crispy Format.
 - **`Crispy Issued Document`** - Immutable issued-document registry (CID) with verification tokens and revocation/supersession state, plus artifact, trust-event, and regulatory-submission child tables.
+- **`Crispy Report Output Audit`** - Immutable metadata-only record for successful report download/print actions. It stores lifecycle references and hashes but no rows, raw filters, Typst source, PDF binary, or CID.
 - **`Crispy Branding Profile`** - Reusable company presentation profile, including semantic report-theme tokens that do not depend on a specific report family.
 - **`Crispy Typst Block`** - Governed reusable Typst snippet library with generated snake_case reference keys, major/minor versions, company-aware override support, and a preview-only authoring builder.
 - **Report renderer fields on `Crispy Format`** - `report_scope`, `report_renderer`, linked report rows, and source fingerprint replace the removed `Crispy Generic Report` classification model.

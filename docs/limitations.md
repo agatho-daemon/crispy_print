@@ -19,7 +19,7 @@ As a **beta release**, Crispy Print has several known limitations:
 - **Conditional Logic**: Visual conditional visibility is not implemented yet.
 - **Report Scope (WIP)**: The renderer architecture currently covers generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation. It has not completed comprehensive acceptance testing, so every generated report PDF must be reviewed before operational or accounting use.
 - **Report Family Coverage**: Known renderer mappings are curated. New or renamed ERPNext reports fall back to the generic renderer until deliberately classified and tested.
-- **Upstream Report Changes**: Source fingerprints warn when referenced Frappe/ERPNext HTML changes, but native Typst renderers are not automatically regenerated. A designer must review and approve corresponding renderer changes.
+- **Upstream Report Changes**: Composite HTML/JavaScript/JSON/Python fingerprints and Report registry checks warn when reviewed Frappe/ERPNext sources change, but native Typst renderers are not automatically regenerated. A designer must review structural snapshots and representative PDFs, acknowledge the current fingerprint, and publish a new template version where required.
 - **Report Edge Cases**: Dynamic columns, unusual filters, empty datasets, very wide reports, long values, multiple pages, charts, totals, RTL content, and custom ERPNext modifications require report-specific testing. Advanced Raw Typst may still be necessary.
 - **Native Chart Coverage (WIP)**: Lilaq rendering is limited to accounting-core bar, grouped bar, line, mixed, horizontal bar, percentage aging, and waterfall specs. Basic formats may request compatible bar, line, or single-series horizontal-bar representations, but percentage-aging and waterfall semantics cannot be overridden. Unsupported browser charts may use sanitized Frappe SVG; unsupported background charts are omitted with diagnostics.
 - **Contract Scope**: Contract format type exists as a foundation, but contract authoring workflows are WIP.
@@ -37,7 +37,7 @@ As a **beta release**, Crispy Print has several known limitations:
 
 ### PDF Generation
 
-- **Browser Preview**: Complete DocType and Report previews render native Typst PDF output through PDF.js. Focused Branding Profile and Typst Block authoring specimens render sanitized SVG.
+- **Browser Preview**: Complete DocType and Report previews render native Typst PDF output through PDF.js with a bounded five-page canvas and selectable-text window. Full-document search and enhanced semantic screen-reader navigation are not implemented. Focused Branding Profile and Typst Block authoring specimens render sanitized SVG.
 - **Image Formats**: Letterhead, logo, and asset files must use formats supported by Typst.
 - **No Real-Time Collaboration**: Multiple users cannot safely edit the same format simultaneously.
 - **Text Editor / HTML Fields**: HTML content is reduced to text-oriented output before rendering.
@@ -50,7 +50,7 @@ As a **beta release**, Crispy Print has several known limitations:
 
 ### Data & Compatibility
 
-- **LTR Languages Only**: Builder UI and text direction currently support left-to-right languages only (English, Spanish, French, etc.). RTL support (Arabic, Hebrew) not yet implemented. Multi-language content is possible via Raw Typst Mode if document fields contain the target language data.
+- **Partial RTL Coverage**: Managed Basic report output supports Arabic, Persian, Hebrew, and Urdu direction, mixed text, localized labels/dates, and LTR accounting values. Equivalent RTL coverage is not yet complete across the builder UI and every DocType format path; Raw Typst remains available for bespoke multilingual documents.
 - **No Jinja Support**: Crispy Print uses structured layouts and Typst, not Frappe Print Format Jinja templates.
 - **No Python Scripts**: Formats do not execute custom Python code.
 - **Import/Export Scope**: Format import/export exists, but cross-site migration should still be tested carefully in beta.
@@ -59,7 +59,7 @@ As a **beta release**, Crispy Print has several known limitations:
 ### Performance
 
 - **First Compile Cost**: Initial Typst compilation can take longer than cached repeat previews.
-- **PDF Preview Size**: Complete DocType and Report previews use lazy PDF.js canvas rendering, but exceptionally large PDFs still consume browser memory while their document structure and visible pages are loaded.
+- **PDF Preview Size**: Complete DocType and Report previews retain only five PDF.js canvas and text layers, with zero-sized offscreen canvas placeholders, but exceptionally large PDFs still consume browser memory while their document structure, text/font data, and visible pages are loaded.
 - **Font Loading**: Large custom font collections may slow down font discovery.
 - **Report Preview Cost**: **Run Preview** executes and snapshots the complete ERPNext result once; Builder-only changes reuse the snapshot but still require Typst compilation. Very large results can therefore remain expensive to compile even though the report is not rerun.
 - **Large Report Preview Rendering**: PDF.js removes the former all-pages inline-SVG insertion cost and lazily paints only the first and near-visible report pages. It materially reduces live DOM size and main-thread SVG sanitization/insertion work, but it does not make ERPNext report execution or server-side Typst compilation faster. Very large report PDFs still carry response-transfer, PDF parsing, page-metadata, and visible-canvas costs.

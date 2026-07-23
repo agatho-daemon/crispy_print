@@ -267,6 +267,60 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 		self.assertEqual(events["Validation"].validation_status, "Valid")
 		self.assertIn("producer-asserted by Typst", events["Validation"].validation_message)
 
+	def test_create_snapshot_rejects_report_source_without_creating_cid(self):
+		before_count = frappe.db.count("Crispy Issued Document")
+
+		with self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Reports cannot be issued or saved as Crispy Issued Documents",
+		):
+			create_issued_document_snapshot("Report", "Accounts Receivable")
+
+		self.assertEqual(frappe.db.count("Crispy Issued Document"), before_count)
+
+	def test_create_snapshot_rejects_explicit_report_format_without_creating_cid(self):
+		frappe.db.set_value("Crispy Format", self.format_name, "crispy_format_type", "Report")
+		before_count = frappe.db.count("Crispy Issued Document")
+
+		with self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Report formats cannot be issued or saved as Crispy Issued Documents",
+		):
+			create_issued_document_snapshot(
+				"DocType",
+				"DocType",
+				crispy_format=self.format_name,
+			)
+
+		self.assertEqual(frappe.db.count("Crispy Issued Document"), before_count)
+
+	def test_create_snapshot_rejects_report_format_from_resolved_template(self):
+		template = frappe.get_doc(
+			{
+				"doctype": "Crispy Template",
+				"template_name": "CID Report Scope Guard Template",
+				"source_crispy_format": self.format_name,
+				"company": self.company,
+				"status": "Approved",
+				"is_active": 1,
+			}
+		)
+		template.insert(ignore_permissions=True)
+		frappe.db.set_value("Crispy Format", self.format_name, "crispy_format_type", "Report")
+		before_count = frappe.db.count("Crispy Issued Document")
+
+		with self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Report formats cannot be issued or saved as Crispy Issued Documents",
+		):
+			create_issued_document_snapshot(
+				"DocType",
+				"DocType",
+				crispy_template=template.name,
+			)
+
+		self.assertEqual(frappe.db.count("Crispy Issued Document"), before_count)
+
 	def test_create_snapshot_returns_existing_document_for_same_typst_hash(self):
 		template = frappe.get_doc(
 			{

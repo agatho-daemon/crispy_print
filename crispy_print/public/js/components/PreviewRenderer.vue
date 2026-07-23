@@ -3,7 +3,7 @@
 		<!-- Optional controls/menu (used by builder) -->
 		<slot name="menu"></slot>
 
-		<div class="preview-pane__body">
+		<div ref="scrollRootEl" class="preview-pane__body">
 			<div class="preview-zoom-toolbar" role="group" :aria-label="__('Preview zoom')">
 				<button
 					type="button"
@@ -95,7 +95,7 @@
 								v-if="pdfBytes"
 								:data="pdfBytes"
 								:revision="pdfRevision"
-								:viewport-root="viewportEl"
+								:viewport-root="scrollRootEl"
 								@state="onPdfViewerState"
 								@page-count="onPdfPageCount"
 							/>
@@ -165,6 +165,7 @@ const emit = defineEmits<{
 const logger = getLogger({ component: "PreviewRenderer" });
 
 const previewPaneEl = ref<HTMLElement | null>(null);
+const scrollRootEl = ref<HTMLElement | null>(null);
 const viewportEl = ref<HTMLElement | null>(null);
 const stageEl = ref<HTMLElement | null>(null);
 const zoomInputEl = ref<HTMLInputElement | null>(null);

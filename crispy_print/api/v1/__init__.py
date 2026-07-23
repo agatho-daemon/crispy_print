@@ -8,6 +8,7 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	get_applicable_typst_blocks as _get_applicable_typst_blocks,
 )
 from crispy_print.report_renderers import get_renderer_metadata as _get_renderer_metadata
+from crispy_print.report_renderers import get_source_fingerprint as _get_source_fingerprint
 from crispy_print.report_renderers import infer_report_renderer
 
 from .branding_profiles import (
@@ -292,6 +293,27 @@ def get_report_renderer_metadata(format_name: str) -> JSONDict:
 			report for report in reports if infer_report_renderer(report) == doc.report_renderer
 		]
 	return metadata
+
+
+@frappe.whitelist(methods=["POST"])
+@endpoint_policy(
+	rate_key="acknowledge_report_renderer_compatibility",
+	limit=30,
+	window_seconds=60,
+	permissions=(("Crispy Format", "write"),),
+)
+def acknowledge_report_renderer_compatibility(format_name: str) -> JSONDict:
+	"""Record the current composite upstream fingerprint after a completed review."""
+	doc = frappe.get_doc("Crispy Format", format_name)
+	doc.check_permission("write")
+	if doc.crispy_format_type != "Report":
+		frappe.throw(_("Compatibility acknowledgement is available only for Report formats."))
+	source = _get_source_fingerprint(doc.report_renderer)
+	fingerprint = source.get("fingerprint")
+	if not fingerprint:
+		frappe.throw(_("The upstream report sources are unavailable; the review cannot be acknowledged."))
+	doc.db_set("report_source_fingerprint", fingerprint, update_modified=True)
+	return _get_renderer_metadata(doc.report_renderer, fingerprint)
 
 
 @frappe.whitelist()
@@ -661,6 +683,7 @@ def get_report_typst_source(
 	typst_code_override: str | None = None,
 	preview_data: JSONDict | str | None = None,
 	preview_snapshot_id: str | None = None,
+	preview_tab_id: str | None = None,
 	limit: int = 0,
 ) -> JSONDict:
 	enforce_rate_limit("get_report_typst_source", limit=60, window_seconds=60)
@@ -681,6 +704,7 @@ def get_report_typst_source(
 		typst_code_override=typst_code_override,
 		preview_data=preview_data,
 		preview_snapshot_id=preview_snapshot_id,
+		preview_tab_id=preview_tab_id,
 		limit=limit,
 	)
 
@@ -706,6 +730,7 @@ def compile_report_preview(
 	typst_code_override: str | None = None,
 	preview_data: JSONDict | str | None = None,
 	preview_snapshot_id: str | None = None,
+	preview_tab_id: str | None = None,
 	limit: int = 0,
 	asset_files: list[str] | str | None = None,
 ) -> JSONDict:
@@ -727,6 +752,7 @@ def compile_report_preview(
 		typst_code_override=typst_code_override,
 		preview_data=preview_data,
 		preview_snapshot_id=preview_snapshot_id,
+		preview_tab_id=preview_tab_id,
 		limit=limit,
 		asset_files=_normalize_rpc_list(asset_files),
 	)
@@ -742,6 +768,7 @@ def get_sample_report_data(
 	filters: JSONDict | str | None = None,
 	limit: int = 0,
 	store_snapshot: int = 0,
+	preview_tab_id: str | None = None,
 ) -> JSONDict:
 	enforce_rate_limit("get_sample_report_data", limit=60, window_seconds=60)
 	return _get_sample_report_data(
@@ -749,6 +776,7 @@ def get_sample_report_data(
 		filters=filters,
 		limit=limit,
 		store_snapshot=store_snapshot,
+		preview_tab_id=preview_tab_id,
 	)
 
 
@@ -1074,6 +1102,7 @@ def run_report_template_parity_check(
 
 
 __all__ = [
+	"acknowledge_report_renderer_compatibility",
 	"add_issued_document_trust_event",
 	"cancel_issued_document",
 	"check_import_conflicts",

@@ -5,7 +5,7 @@ import CrispyPFB from "../../pages/CrispyPFB.vue";
 
 const STORAGE_KEY = "crispy-print:format-builder-layout:v1";
 let storage: Record<string, string>;
-const createFormatFromSample = vi.fn(async () => ({
+const createFormatFromSample = vi.fn(async (_args: Record<string, unknown>) => ({
   success: true,
   name: "Sample Sales Invoice Starter",
   sample_id: "sales-invoice-basic",

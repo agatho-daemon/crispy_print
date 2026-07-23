@@ -13,6 +13,37 @@ export type ReportFormatOption = { label: string; value: string };
 
 export type ReportColumn = { fieldname: string; label: string };
 
+export type ReportColumnSelection = { selected: boolean; width: string };
+
+const GENERAL_LEDGER_COLUMN_DEFAULTS: Record<string, string> = {
+  posting_date: "54pt",
+  account: "1.4fr",
+  debit: "62pt",
+  credit: "62pt",
+  balance: "66pt",
+  voucher_type: "64pt",
+  voucher_no: "82pt",
+  party_name: "1fr",
+};
+
+export function getReportColumnDefault(
+  reportName: string | null | undefined,
+  fieldname: string,
+): ReportColumnSelection {
+  if (reportName === "General Ledger") {
+    const width = GENERAL_LEDGER_COLUMN_DEFAULTS[fieldname];
+    return width
+      ? { selected: true, width }
+      : { selected: false, width: "auto" };
+  }
+
+  return { selected: true, width: "auto" };
+}
+
+export function serializeReportPreviewIntent(parts: unknown[]): string {
+  return JSON.stringify(parts);
+}
+
 export function buildReportFormatOptions(
   formats: ReportFormatsResponse | null | undefined,
 ): {

@@ -151,7 +151,15 @@ this policy metadata.
 ### `get_report_renderer_metadata(format_name)`
 
 - Args: `format_name: str`
-- Returns: renderer metadata, curated sections, supported reports, and source fingerprint status for the selected format
+- Returns: renderer metadata, curated sections, supported reports, installed Frappe/ERPNext versions, Report registry issues, composite source-file fingerprint status, and the compatibility review checklist
+
+### `acknowledge_report_renderer_compatibility(format_name)`
+
+- Method: POST
+- Permission: write on the selected Crispy Format
+- Records the current composite upstream source fingerprint after a completed compatibility review
+- Returns refreshed renderer and compatibility metadata
+- Does not suppress unresolved version or Report registry issues
 
 ### `get_default_report_builder_config(report_renderer=None)`
 
@@ -163,12 +171,12 @@ this policy metadata.
 - Args: `report: str`, optional `company: str`
 - Returns: `{ formats, default_format, renderer }`; each format includes company, scope, renderer, layout style, default status, and compatibility status
 
-### `get_sample_report_data(report, filters=None, limit=0, store_snapshot=0)`
+### `get_sample_report_data(report, filters=None, limit=0, store_snapshot=0, preview_tab_id=None)`
 
-- Args: `report: str`, optional `filters`, optional explicit `limit: int`; zero keeps the complete ERPNext result. Set `store_snapshot=1` for the Builder workflow.
-- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, unchanged upstream `chart`, printable `chart_spec`, and compatibility aliases. With `store_snapshot=1`, returns lightweight metadata, columns, and a user-bound `preview_snapshot_id` instead of returning all rows to the browser. The complete prepared result remains available for 15 minutes. Render-time `chart_spec.representation` records the requested, source, applied, and resolved chart kinds when a Basic format requests a compatible representation override.
+- Args: `report: str`, optional `filters`, optional explicit `limit: int`; zero keeps the complete ERPNext result. Set `store_snapshot=1` and supply a random per-tab `preview_tab_id` for the Builder or standalone preview workflow.
+- Returns: normalized report payload including `renderer`, `sections`, semantic row roles, `columns`, `rows`, `filters`, `report_summary`, unchanged upstream `chart`, printable `chart_spec`, and compatibility aliases. With `store_snapshot=1`, returns lightweight metadata, columns, and a user/report/company/tab-bound `preview_snapshot_id` instead of returning all rows to the browser. The complete prepared result remains available for 15 minutes. Every reuse rechecks Report and Company User Permissions. Render-time `chart_spec.representation` records the requested, source, applied, and resolved chart kinds when a Basic format requests a compatible representation override.
 
-### `get_report_typst_source(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, limit=0)`
+### `get_report_typst_source(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, preview_tab_id=None, limit=0)`
 
 - Args (core):
   - `report: str`
@@ -176,14 +184,15 @@ this policy metadata.
   - optional `format_company: str` for a transient format; a saved format always uses its own company as the authoritative report filter/render context
   - optional toggles: `include_filters`, `include_summary`, `include_total_row`, `include_chart`
   - optional overrides: `typst_preamble_override`, `typst_code_override`, `page_settings`, `preview_data`
-  - optional `preview_snapshot_id` to project columns and presentation choices from an already-executed report
+  - optional `preview_snapshot_id` plus its originating `preview_tab_id` to project columns and presentation choices from an already-executed report
   - optional explicit `limit: int`; zero keeps the complete ERPNext result
 - Returns: Typst source + payload metadata used for preview/printing, including `chart_render` engine/status/reason and pinned helper versions
 
-### `compile_report_preview(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, limit=0, asset_files=None, pdf_standard=None)`
+### `compile_report_preview(report, format_name=None, format_company=None, ..., preview_snapshot_id=None, preview_tab_id=None, limit=0, asset_files=None, pdf_standard=None, output_action=None)`
 
 - Args: same core arguments as `get_report_typst_source`, plus optional approved `asset_files`
-- Returns: compiled PDF preview payload and report metadata, including native, fallback, empty, or omitted `chart_render` diagnostics. The browser decodes the PDF once and hands it to the shared lazy PDF.js viewer; it no longer receives and injects one SVG string per report page. Internally, complete normalized report data is loaded from a private temporary JSON compile input rather than embedded in the Typst source.
+- Returns: compiled PDF preview payload and report metadata, including native, fallback, empty, or omitted `chart_render` diagnostics. The browser decodes the PDF once and hands it to the shared PDF.js viewer, which retains a five-page window of canvas and selectable-text layers; it no longer receives and injects one SVG string per report page. Internally, complete normalized report data is loaded from a private temporary JSON compile input rather than embedded in the Typst source.
+- `output_action='download'` or `'print'` records an immutable metadata-only `Crispy Report Output Audit` after successful compilation. The event stores hashes and lifecycle facts, never report rows, raw filters, PDF bytes, Typst source, or a CID.
 
 ### `generate_report_pdf(report, filters=None, format_name=None, orientation='landscape', include_filters=0, column_config=None)`
 
@@ -321,6 +330,7 @@ verification endpoints).
 
 - Args: source document identity plus a Crispy Format and/or frozen Crispy Template
 - Returns: created Crispy Issued Document payload with immutable render facts
+- Scope: document issuance only. Report sources and Report formats are rejected; report preview snapshots and report PDF actions never create CID records.
 
 ### `cancel_issued_document(name, reason=None)`
 
@@ -350,5 +360,5 @@ verification endpoints).
 ## Notes
 
 - API errors are returned as Frappe exceptions (`ValidationError`, etc.).
-- Large report previews are intentionally truncated by `limit`.
+- Report previews keep the complete ERPNext result by default. `limit` truncates only when an API caller supplies a positive value explicitly.
 - Deprecated direct image params such as `letterhead_image` and `logo_image` are rejected by `compile_typst`; use `asset_files`.

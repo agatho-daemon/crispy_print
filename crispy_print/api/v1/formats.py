@@ -17,6 +17,7 @@ from crispy_print.render_contract import (
 	FORMAT_IMPORT_FIELD_MAX_BYTES,
 	format_data_from_doc,
 )
+from crispy_print.report_lifecycle import report_format_resolution_rank
 from crispy_print.report_renderers import get_renderer_metadata, infer_report_renderer, list_renderer_metadata
 
 from ._common import require_target_company, truthy
@@ -212,25 +213,7 @@ def get_available_formats(report: str, company: str | None = None) -> dict:
 	rows = exact + [row for row in fallbacks if row.get("name") not in seen]
 
 	def rank(row):
-		exact_target = row.get("report_scope") == "Selected Reports"
-		exact_company = bool(company and _clean_company(row.get("company")) == company)
-		global_company = not _clean_company(row.get("company"))
-		exact_renderer = row.get("report_renderer") == renderer
-		if exact_target and exact_company and row.get("is_default"):
-			bucket = 0
-		elif exact_target and exact_company:
-			bucket = 1
-		elif exact_target and global_company:
-			bucket = 2
-		elif exact_renderer and exact_company:
-			bucket = 3
-		elif exact_renderer and global_company:
-			bucket = 4
-		elif exact_company:
-			bucket = 5
-		else:
-			bucket = 6
-		return bucket, 0 if row.get("is_default") else 1, str(row.get("name"))
+		return report_format_resolution_rank(row, report_renderer=renderer, company=company)
 
 	rows.sort(key=rank)
 	formats = []

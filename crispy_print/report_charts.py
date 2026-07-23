@@ -6,8 +6,6 @@ import math
 from copy import deepcopy
 from typing import Any
 
-import frappe
-
 LILAQ_VERSION = "0.6.0"
 CRISPY_CHARTS_VERSION = "0.1.1"
 CHART_SPEC_VERSION = 1
@@ -42,13 +40,6 @@ DEFAULT_CHART_THEME = {
 	"marker_size_pt": 4.0,
 	"accessibility_mode": True,
 }
-
-
-def get_report_chart_engine() -> str:
-	"""Return the site-wide chart engine, defaulting safely to Lilaq."""
-	value = str(frappe.conf.get("CRISPY_PRINT_REPORT_CHART_ENGINE", "lilaq") or "lilaq")
-	value = value.strip().lower()
-	return value if value in {"lilaq", "frappe_svg"} else "lilaq"
 
 
 def normalize_report_chart(raw_chart: Any, report_name: str | None = None) -> dict[str, Any]:
@@ -178,36 +169,24 @@ def _reject_chart_representation(result: dict[str, Any], requested: str, message
 def resolve_chart_render(
 	spec: dict[str, Any] | None,
 	chart_svg: str | None,
-	engine_preference: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-	"""Resolve native/fallback/omitted rendering without altering the raw chart."""
+	"""Resolve the invariant Lilaq-first/fallback/omitted rendering policy."""
 	resolved = deepcopy(spec or _base_spec({}))
-	preference = (engine_preference or get_report_chart_engine()).strip().lower()
-	if preference not in {"lilaq", "frappe_svg"}:
-		preference = "lilaq"
 	has_svg = bool(isinstance(chart_svg, str) and chart_svg.strip())
 	status = resolved.get("status") or "empty"
 
-	if preference == "lilaq" and status == "ready" and resolved.get("kind") in SUPPORTED_KINDS:
+	if status == "ready" and resolved.get("kind") in SUPPORTED_KINDS:
 		resolved["engine"] = "lilaq"
 		render_status = "ready"
 		reason = "native_lilaq"
 	elif has_svg and status != "empty":
 		resolved["engine"] = "frappe_svg"
 		render_status = "fallback"
-		reason = (
-			"engine_disabled"
-			if preference == "frappe_svg"
-			else resolved.get("diagnostic", {}).get("code", "unsupported")
-		)
+		reason = resolved.get("diagnostic", {}).get("code", "unsupported")
 	else:
 		resolved["engine"] = "none"
 		render_status = "empty" if status == "empty" else "omitted"
-		reason = (
-			"engine_disabled_no_svg"
-			if preference == "frappe_svg" and status == "ready"
-			else resolved.get("diagnostic", {}).get("code") or "chart_unavailable"
-		)
+		reason = resolved.get("diagnostic", {}).get("code") or "chart_unavailable"
 
 	metadata = {
 		"engine": resolved["engine"],
@@ -249,9 +228,9 @@ def normalize_chart_theme(presentation_settings: dict[str, Any] | None) -> dict[
 			"line_stroke_pt": _number(chart, "lineStrokePt", "line_stroke_pt", 1.2, 0.25, 8),
 			"marker_size_pt": _number(chart, "markerSizePt", "marker_size_pt", 4, 0, 20),
 			"accessibility_mode": _bool(chart, "accessibilityMode", "accessibility_mode", default=True),
-			"negative_color": str(report_theme.get("negativeColor") or "#B91C1C"),
-			"muted_color": str(report_theme.get("mutedColor") or "#64748B"),
-			"palette": [str(value) for value in palette[:12] if str(value).strip()],
+			"negative_color": _valid_color(report_theme.get("negativeColor"), "#B91C1C"),
+			"muted_color": _valid_color(report_theme.get("mutedColor"), "#64748B"),
+			"palette": [color for value in palette[:12] if (color := _valid_color(value, None)) is not None],
 		}
 	)
 	return result
@@ -324,6 +303,23 @@ def _normalize_direct_kind(base, kind, labels, datasets, raw_chart, report_name)
 		return _with_status(base, "invalid", "none", error[0], error[1])
 	if not series or not any(_has_numeric_values(item.get("values")) for item in series):
 		return _with_status(base, "empty", "none", "empty_chart", "The chart contains no plottable values.")
+	if kind == "waterfall":
+		if len(series) != 1:
+			return _with_status(
+				base,
+				"unsupported",
+				"none",
+				"waterfall_requires_single_series",
+				"Native waterfall charts require exactly one cumulative series.",
+			)
+		if any(value is None for value in series[0]["values"]):
+			return _with_status(
+				base,
+				"invalid",
+				"none",
+				"waterfall_missing_value",
+				"Native waterfall charts cannot contain missing cumulative values.",
+			)
 	base.update(
 		{
 			"kind": kind,
@@ -493,7 +489,11 @@ def _choice(mapping, key, alias, allowed, default):
 
 
 def _color(mapping, key, alias, default):
-	value = str(_pick(mapping, key, alias, default=default)).strip()
+	return _valid_color(_pick(mapping, key, alias, default=default), default)
+
+
+def _valid_color(value, default):
+	value = str(value or "").strip()
 	if len(value) == 7 and value.startswith("#"):
 		try:
 			int(value[1:], 16)

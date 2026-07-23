@@ -728,6 +728,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 			self.skipTest("No Report records available")
 		custom_name = "Test API Format Linked Report Custom"
 		generic_name = "Test API Format Linked Report Generic"
+		company = self._ensure_company("Test API Format Linked Report Company", "TAFLRC")
 
 		custom = frappe.get_doc(
 			{
@@ -736,6 +737,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 				"crispy_format_type": "Report",
 				"report_scope": "Selected Reports",
 				"report_renderer": "custom",
+				"company": company,
 				"module": "Crispy Print",
 				"report": [{"report": report_name, "disabled": 0}],
 			}
@@ -749,13 +751,14 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 				"crispy_format_type": "Report",
 				"report_scope": "All Compatible Reports",
 				"report_renderer": "generic_report",
+				"company": company,
 				"module": "Crispy Print",
 			}
 		)
 		generic.insert()
 		frappe.db.commit()
 
-		out = get_available_formats(report_name)
+		out = get_available_formats(report_name, company=company)
 		custom_names = [row["name"] for row in out.get("formats") or []]
 
 		self.assertIn(custom_name, custom_names)

@@ -135,7 +135,9 @@ describe("PreviewPane report mode", () => {
     await flushPromises();
     expect(compileReportPreview).toHaveBeenCalledTimes(1);
 
-    resolveFirst?.({ success: true, pdf_data: "JVBERi0xLjQK", page_count: 1 });
+    expect(resolveFirst).not.toBeNull();
+    const finishFirst = resolveFirst as unknown as (value: any) => void;
+    finishFirst({ success: true, pdf_data: "JVBERi0xLjQK", page_count: 1 });
     await flushPromises();
     expect(compileReportPreview).toHaveBeenCalledTimes(2);
   });

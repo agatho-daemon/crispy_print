@@ -766,6 +766,23 @@ export async function compileReportPreview(args: Record<string, any>): Promise<
   return res.message;
 }
 
+export async function getSampleReportData(args: {
+  report: string;
+  filters?: Record<string, any>;
+  limit?: number;
+  store_snapshot?: number;
+  preview_tab_id?: string;
+}): Promise<Record<string, any>> {
+  const res = await call<Record<string, any>>({
+    method: "crispy_print.api.v1.get_sample_report_data",
+    args,
+  });
+  if (!res.message) {
+    throw new Error("Missing report preview data");
+  }
+  return res.message;
+}
+
 export async function getCrispyFormat(
   name: string,
   context: {

@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import json
 import re
 from copy import copy, deepcopy
@@ -9,6 +11,7 @@ from frappe import _
 from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
 	resolve_effective_presentation_settings,
 )
+from crispy_print.permissions import ensure_company_access
 from crispy_print.report_charts import (
 	apply_chart_representation,
 	normalize_chart_theme,
@@ -30,6 +33,7 @@ from .typst_doc import _build_typst_document
 
 REPORT_PREVIEW_SNAPSHOT_TTL_SECONDS = 15 * 60
 REPORT_DATA_FILENAME = "crispy-report-data.json"
+RTL_LANGUAGE_PREFIXES = {"ar", "fa", "he", "ur"}
 IMAGE_EXTENSIONS = {
 	"png",
 	"jpg",
@@ -110,27 +114,73 @@ def _build_truncation_payload(
 	}
 
 
-def _store_report_preview_snapshot(report: str, typst_data: dict) -> str:
+def _snapshot_company(typst_data: dict) -> str | None:
+	filters_map = typst_data.get("filters_map")
+	if isinstance(filters_map, dict):
+		company = filters_map.get("company")
+		if isinstance(company, str) and company.strip():
+			return company.strip()
+	return None
+
+
+def _require_preview_tab_id(preview_tab_id: str | None) -> str:
+	value = str(preview_tab_id or "").strip()
+	if not value or len(value) > 128:
+		frappe.throw(_("Report preview tab context is invalid. Run Preview again."))
+	return value
+
+
+def _store_report_preview_snapshot(
+	report: str,
+	typst_data: dict,
+	preview_tab_id: str | None = None,
+) -> str:
+	preview_tab_id = _require_preview_tab_id(preview_tab_id)
 	snapshot_id = frappe.generate_hash(length=32)
 	frappe.cache.set_value(
 		f"crispy_report_preview:{snapshot_id}",
-		{"report": report, "data": typst_data},
+		{
+			"report": report,
+			"data": typst_data,
+			"owner": frappe.session.user,
+			"preview_tab_id": preview_tab_id,
+			"company": _snapshot_company(typst_data),
+		},
 		user=True,
 		expires_in_sec=REPORT_PREVIEW_SNAPSHOT_TTL_SECONDS,
 	)
 	return snapshot_id
 
 
-def _load_report_preview_snapshot(report: str, snapshot_id: str | None) -> dict | None:
+def _load_report_preview_snapshot(
+	report: str,
+	snapshot_id: str | None,
+	preview_tab_id: str | None = None,
+) -> dict | None:
 	if not snapshot_id:
 		return None
+	preview_tab_id = _require_preview_tab_id(preview_tab_id)
 	payload = frappe.cache.get_value(
 		f"crispy_report_preview:{snapshot_id}",
 		user=True,
 		expires=True,
 	)
-	if not isinstance(payload, dict) or payload.get("report") != report:
+	if (
+		not isinstance(payload, dict)
+		or payload.get("report") != report
+		or payload.get("owner") not in (None, frappe.session.user)
+		or payload.get("preview_tab_id") != preview_tab_id
+	):
 		frappe.throw(_("Report preview data has expired. Run Preview again."))
+	try:
+		_ensure_report_read_permission(report)
+		if payload.get("company"):
+			ensure_company_access(payload["company"], doctype="Report")
+	except frappe.PermissionError:
+		frappe.throw(
+			_("Report preview access has changed. Run Preview again."),
+			frappe.PermissionError,
+		)
 	data = payload.get("data")
 	if not isinstance(data, dict):
 		frappe.throw(_("Report preview data has expired. Run Preview again."))
@@ -139,6 +189,64 @@ def _load_report_preview_snapshot(report: str, snapshot_id: str | None) -> dict 
 
 def _serialize_report_data_file(data: dict) -> str:
 	return json.dumps(data, ensure_ascii=False, separators=(",", ":"), default=str)
+
+
+def _normalize_report_language(language: str | None) -> str:
+	value = str(language or "en").strip().replace("_", "-")
+	return value or "en"
+
+
+def _localize_report_typst_data(typst_data: dict, language: str | None) -> dict:
+	"""Localize labels/dates while retaining raw accounting values for re-rendering."""
+	language = _normalize_report_language(language)
+	language_prefix = language.split("-", 1)[0].lower()
+	columns = [column for column in typst_data.get("columns") or [] if isinstance(column, dict)]
+	columns_by_fieldname = {
+		str(column.get("fieldname") or ""): column for column in columns if column.get("fieldname")
+	}
+
+	for column in columns:
+		label = str(column.get("label") or "")
+		if label:
+			column["label"] = _(label, lang=language)
+
+	previous_language = getattr(frappe.local, "lang", None)
+	frappe.local.lang = language
+	try:
+		for row in typst_data.get("rows") or []:
+			if not isinstance(row, dict):
+				continue
+			for cell in row.get("cells") or []:
+				if not isinstance(cell, dict):
+					continue
+				fieldname = str(cell.get("fieldname") or "")
+				column = columns_by_fieldname.get(fieldname) or {}
+				fieldtype = str(column.get("fieldtype") or "")
+				label = str(cell.get("label") or "")
+				if label:
+					cell["label"] = _(label, lang=language)
+				if fieldtype in {"Date", "Datetime", "Time"} and cell.get("raw_value") not in (None, ""):
+					cell["value"] = str(
+						frappe.format(
+							cell.get("raw_value"),
+							{"fieldtype": fieldtype},
+							translated=True,
+						)
+					)
+	finally:
+		if previous_language is None:
+			frappe.local.lang = "en"
+		else:
+			frappe.local.lang = previous_language
+
+	typst_data["locale"] = {
+		"language": language,
+		"direction": "rtl" if language_prefix in RTL_LANGUAGE_PREFIXES else "ltr",
+		# Accounting reports retain Latin digits unless a future explicit
+		# numbering-system setting requests conversion.
+		"numbering_system": "latn",
+	}
+	return typst_data
 
 
 def _is_image_asset_value(value: str) -> bool:
@@ -403,6 +511,7 @@ def get_report_typst_source(
 	typst_code_override: str | None = None,
 	preview_data: dict | str | None = None,
 	preview_snapshot_id: str | None = None,
+	preview_tab_id: str | None = None,
 	limit: int = 0,
 	_externalize_data: bool = False,
 ) -> dict:
@@ -435,7 +544,7 @@ def get_report_typst_source(
 		elif isinstance(preview_data, dict):
 			preview_data_dict = preview_data
 	if preview_snapshot_id:
-		preview_data_dict = _load_report_preview_snapshot(report, preview_snapshot_id)
+		preview_data_dict = _load_report_preview_snapshot(report, preview_snapshot_id, preview_tab_id)
 
 	# Parse filters if string
 	if isinstance(filters, str):
@@ -473,6 +582,7 @@ def get_report_typst_source(
 				presentation_settings_dict = None
 		elif isinstance(presentation_settings, dict):
 			presentation_settings_dict = presentation_settings
+	requested_language = str((presentation_settings_dict or {}).get("language") or "").strip() or None
 
 	# Saved formats are optional in the Builder. A transient preview requires
 	# create permission and explicit Typst supplied by the current editor state.
@@ -510,6 +620,11 @@ def get_report_typst_source(
 		resolve_effective_presentation_settings(presentation_settings_dict, company=effective_company),
 		(orientation or "landscape").lower(),
 	)
+	presentation_settings_dict["language"] = _normalize_report_language(
+		requested_language
+		or getattr(format_doc, "default_print_language", None)
+		or getattr(frappe.local, "lang", None)
+	)
 	presentation_settings_dict = apply_effective_company_to_presentation_settings(
 		presentation_settings_dict,
 		effective_company,
@@ -522,6 +637,15 @@ def get_report_typst_source(
 		if format_name:
 			format_doc.check_permission("write")
 		format_doc_for_render.typst_code = typst_code_override
+	if (
+		_is_basic_report_format(format_doc_for_render)
+		and not str(getattr(format_doc_for_render, "typst_code", "") or "").strip()
+	):
+		frappe.throw(
+			_(
+				"This Basic report format has no generated Typst code. Open it in the Report Format Builder, save it, and try again."
+			)
+		)
 
 	# Prepare data for Typst
 	if preview_data_dict:
@@ -571,6 +695,7 @@ def get_report_typst_source(
 		presentation_settings_dict.get("page", {}).get("orientation") or orientation_value
 	)
 	typst_data["presentation_settings"] = presentation_settings_dict
+	_localize_report_typst_data(typst_data, presentation_settings_dict.get("language"))
 
 	# Resolve the chart independently of report execution. Native Lilaq wins;
 	# sanitized Frappe SVG is retained only as a compatibility fallback.
@@ -590,7 +715,7 @@ def get_report_typst_source(
 		typst_data["chart_spec"]["engine"] = "none"
 		chart_render.update({"engine": "none", "status": "omitted", "reason": "chart_section_disabled"})
 	is_basic_format = _is_basic_report_format(format_doc_for_render)
-	if sanitized_chart_svg and (chart_render.get("engine") == "frappe_svg" or not is_basic_format):
+	if sanitized_chart_svg and chart_render.get("engine") == "frappe_svg":
 		typst_data["chart_svg"] = "report_chart.svg"
 	else:
 		typst_data.pop("chart_svg", None)
@@ -684,9 +809,11 @@ def compile_report_preview(
 	typst_code_override: str | None = None,
 	preview_data: dict | str | None = None,
 	preview_snapshot_id: str | None = None,
+	preview_tab_id: str | None = None,
 	limit: int = 0,
 	asset_files: list | str | None = None,
 	pdf_standard: str | None = None,
+	output_action: str | None = None,
 ) -> dict:
 	"""Build and compile a report preview PDF in one request."""
 	source_payload = get_report_typst_source(
@@ -706,6 +833,7 @@ def compile_report_preview(
 		typst_code_override=typst_code_override,
 		preview_data=preview_data,
 		preview_snapshot_id=preview_snapshot_id,
+		preview_tab_id=preview_tab_id,
 		limit=limit,
 		_externalize_data=True,
 	)
@@ -727,6 +855,17 @@ def compile_report_preview(
 		chart_svg=source_payload.get("chart_svg"),
 		_trusted_data_files=source_payload.get("_generated_data_files"),
 	)
+	audit_event = None
+	if str(output_action or "").strip().lower() in {"download", "print"}:
+		audit_event = _record_report_output_audit(
+			report=report,
+			format_name=format_name,
+			filters=filters,
+			output_action=str(output_action).strip().lower(),
+			result=result,
+			source_payload=source_payload,
+			pdf_standard=pdf_standard,
+		)
 	return {
 		**result,
 		"typst_source": source_payload.get("typst_source") or "",
@@ -734,7 +873,100 @@ def compile_report_preview(
 		"asset_files": compile_asset_files,
 		"chart_spec": source_payload.get("chart_spec") or {},
 		"chart_render": source_payload.get("chart_render") or {},
+		"report_output_audit": audit_event,
 	}
+
+
+def _record_report_output_audit(
+	*,
+	report: str,
+	format_name: str | None,
+	filters: dict | str | None,
+	output_action: str,
+	result: dict,
+	source_payload: dict,
+	pdf_standard: str | None,
+) -> dict:
+	"""Record a metadata-only report output event; reports never enter CID."""
+	if not format_name:
+		frappe.throw(_("A saved Report format is required for audited output."))
+	format_doc = frappe.get_doc("Crispy Format", format_name)
+	format_doc.check_permission("read")
+	if format_doc.crispy_format_type != "Report":
+		frappe.throw(_("Report output audit requires a Report format."))
+	if isinstance(filters, str):
+		try:
+			filters = json.loads(filters)
+		except json.JSONDecodeError:
+			filters = {}
+	filters = filters if isinstance(filters, dict) else {}
+	try:
+		pdf_bytes = base64.b64decode(str(result.get("pdf_data") or ""), validate=True)
+	except (ValueError, TypeError):
+		pdf_bytes = b""
+	filters_hash = hashlib.sha256(
+		json.dumps(filters, sort_keys=True, separators=(",", ":"), default=str).encode()
+	).hexdigest()
+	pdf_hash = hashlib.sha256(pdf_bytes).hexdigest() if pdf_bytes else ""
+	template = _latest_report_template_for_audit(report, format_doc)
+	details = {
+		"schema_version": 1,
+		"report": report,
+		"action": output_action,
+		"format": format_doc.name,
+		"renderer": format_doc.report_renderer,
+		"format_source_fingerprint": format_doc.report_source_fingerprint,
+		"template": template.get("name") if template else None,
+		"template_version": template.get("version") if template else None,
+		"template_snapshot_hash": template.get("snapshot_hash") if template else None,
+		"filters_hash": filters_hash,
+		"pdf_sha256": pdf_hash,
+		"pdf_standard": pdf_standard or format_doc.pdf_standard,
+		"page_count": result.get("page_count"),
+		"row_count": (source_payload.get("truncation") or {}).get("rows", {}).get("returned"),
+	}
+	log = frappe.get_doc(
+		{
+			"doctype": "Crispy Report Output Audit",
+			"report": report,
+			"action": output_action.title(),
+			"crispy_format": format_doc.name,
+			"company": format_doc.company,
+			"crispy_template": details["template"],
+			"template_version": details["template_version"],
+			"template_snapshot_hash": details["template_snapshot_hash"],
+			"renderer": details["renderer"],
+			"format_source_fingerprint": details["format_source_fingerprint"],
+			"filters_hash": filters_hash,
+			"pdf_sha256": pdf_hash,
+			"pdf_standard": details["pdf_standard"],
+			"page_count": details["page_count"],
+			"row_count": details["row_count"],
+		}
+	)
+	log.insert(ignore_permissions=True)
+	return {"name": log.name, **details}
+
+
+def _latest_report_template_for_audit(report: str, format_doc) -> dict | None:
+	rows = frappe.get_all(
+		"Crispy Template",
+		filters={
+			"crispy_format_type": "Report",
+			"source_report": report,
+			"source_crispy_format": format_doc.name,
+			"status": "Approved",
+			"is_active": 1,
+		},
+		fields=["name", "version", "snapshot_hash", "company", "effective_from"],
+		order_by="effective_from desc, version desc",
+		limit=20,
+	)
+	company = str(format_doc.company or "").strip()
+	for row in rows:
+		if str(row.get("company") or "").strip() == company:
+			return dict(row)
+	return None
 
 
 def get_sample_report_data(
@@ -742,6 +974,7 @@ def get_sample_report_data(
 	filters=None,
 	limit: int = 0,
 	store_snapshot: int = 0,
+	preview_tab_id: str | None = None,
 ) -> dict:
 	"""
 	Get sample data from a report for preview purposes.
@@ -785,7 +1018,7 @@ def get_sample_report_data(
 		typst_data["total_rows"] = limit
 
 	if store_snapshot:
-		snapshot_id = _store_report_preview_snapshot(report, typst_data)
+		snapshot_id = _store_report_preview_snapshot(report, typst_data, preview_tab_id)
 		row_count = len(typst_data.get("rows") or [])
 		return {
 			"preview_snapshot_id": snapshot_id,
@@ -1594,6 +1827,12 @@ def _build_report_presentation_settings_block(
 	margin_left = margins.get("left", 20)
 	margin_right = margins.get("right", 20)
 	branding_mode = str(branding.get("mode") or "none")
+	language = _normalize_report_language(presentation_settings.get("language"))
+	language_parts = language.split("-", 1)
+	language_code = language_parts[0].lower()
+	region = language_parts[1].upper() if len(language_parts) > 1 else ""
+	is_rtl = language_code in RTL_LANGUAGE_PREFIXES
+	page_label = _("Page", lang=language)
 	logo = branding.get("logo") or {}
 	logo_image = logo_filename or logo.get("image") or ""
 	logo_size = logo.get("size", 25)
@@ -1609,7 +1848,20 @@ def _build_report_presentation_settings_block(
 		f"  margin: (top: {margin_top}mm, bottom: {margin_bottom}mm, left: {margin_left}mm, right: {margin_right}mm),"
 	)
 	lines.append("  header: header_block,")
-	lines.append("  footer: footer_block,")
+	lines.append("  footer: context {")
+	lines.append("    grid(")
+	lines.append("      columns: (1fr, auto),")
+	lines.append("      column-gutter: 8pt,")
+	lines.append("      footer_block,")
+	lines.append(
+		f'      text(size: 8pt, fill: rgb("#64748b"), lang: "{language_code}"'
+		+ (f', region: "{region}"' if region else "")
+		+ f', dir: {"rtl" if is_rtl else "ltr"})['
+	)
+	lines.append(f'        {page_label} #text(dir: ltr)[#counter(page).display("1 / 1", both: true)]')
+	lines.append("      ],")
+	lines.append("    )")
+	lines.append("  },")
 
 	if branding_mode in {"letterhead", "logo_letterhead"} and letterhead_filename:
 		lines.append(f'  background: image("{letterhead_filename}", width: 100%)')

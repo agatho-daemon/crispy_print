@@ -92,7 +92,7 @@ Raw Typst authors reference a reusable block by its Crispy Typst Block document 
 
 Open the **Crispy Typst Block Builder** from a block form to edit the Typst code with live SVG preview. Click **Refresh** or press **Command/Ctrl-Enter** to compile after every change. The builder keeps preview page controls separate from the reusable block contract: the default preview uses A4 with `2.5cm` margins so document blocks, tables, grids, and long text render in a realistic page width. Turn on auto-size preview only for compact self-sizing blocks; Typst containers without explicit widths can stretch poorly on an auto-width page.
 
-Complete DocType and Report previews use PDF.js instead of inserting every compiled SVG page into the browser. This keeps the preview aligned with the final PDF artifact and is especially valuable for long accounting reports: PDF parsing runs in a packaged worker and page canvases are painted lazily around the visible scroll area. Fit, 100%, manual percentage, zoom, scrolling, and panning remain available. The Branding Profile Builder and Crispy Typst Block Builder continue using SVG because their focused authoring specimens do not need the heavier multipage PDF viewer.
+Complete DocType and Report previews use PDF.js instead of inserting every compiled SVG page into the browser. This keeps the preview aligned with the final PDF artifact and is especially valuable for long accounting reports: PDF parsing runs in a packaged worker, while canvas and selectable-text layers are retained only for a five-page window around the visible scroll area. Fit, 100%, manual percentage, zoom, scrolling, panning, text selection, and copy remain available. Full-document search and enhanced semantic screen-reader navigation are not part of the current viewer. The Branding Profile Builder and Crispy Typst Block Builder continue using SVG because their focused authoring specimens do not need the heavier multipage PDF viewer.
 
 The builder's unsaved indicator tracks only **Typst Code** changes. Page size, margin, orientation, and default-preview toggles are authoring controls for the current preview and do not mark the reusable block as unsaved.
 
@@ -179,10 +179,16 @@ Report formats now select a coverage scope and renderer:
 - Unknown reports use the generic renderer, based on Frappe's report-grid structure.
 - **Custom** permits deliberate cross-family or fully bespoke Typst implementations.
 
+A draft may temporarily link several compatible reports while a designer is
+exploring coverage. Publication requires exactly one enabled Selected Report so
+each immutable template history has one unambiguous report target.
+
 Basic mode offers renderer-curated sections and Standard, Compact, Minimal, and Summary Focus layout styles. The preview panel loads the selected report's real filters and executes live report data only after the designer supplies the required values and chooses **Run Preview**. No dummy report dataset is used. The Crispy Format company is authoritative: when the ERPNext report exposes a Company filter, preview displays that exact `company.name`, keeps the field read-only, and executes with that value.
 
 **Run Preview** executes the ERPNext report once and retains the complete normalized
-result in a user-bound server snapshot for 15 minutes. Builder-only changes—such as
+result in a user-, report-, company-, and preview-tab-bound server snapshot for 15 minutes.
+Permission and Company User Permission checks are repeated whenever the snapshot is
+used; expired, mismatched, or no-longer-authorized handles fail closed. Builder-only changes—such as
 adding or removing columns, changing widths, showing filters or summaries, including
 totals, changing typography, or adjusting presentation—reuse that snapshot and do
 not execute the ERPNext report again. Changing a report input invalidates the
@@ -196,18 +202,21 @@ preserves grouped subtotals and the final group/overall totals.
 During compilation the normalized result is written to a private temporary
 `crispy-report-data.json` file and loaded by Typst with `json()`. It is not embedded
 in the generated Typst source or exposed as a public asset. A source status warning
-indicates when the upstream Frappe or ERPNext HTML structural reference has changed.
-The warning does not modify approved Typst automatically.
+indicates when the reviewed upstream Frappe or ERPNext HTML, JavaScript, JSON, or
+Python source set has changed, or when installed version/Report registry checks need
+attention. The warning does not modify approved Typst automatically.
 
 Renderer metadata is application-owned, but report formats are not provisioned automatically. Opening a new layout, selecting a renderer, choosing a Branding Profile, and running a preview remain transient until the designer explicitly saves the Crispy Format.
 
-Until acceptance testing is complete, test every intended report with representative filters, long values, multiple pages, totals, empty results, branding, and the target PDF standard.
+Managed Basic reports repeat table headers, report headers, branding footers, and page numbers; keep group headings with following content; prevent subtotal and grand-total rows from splitting; and allow long detail rows to break. RTL report languages apply RTL direction to text while currency and numeric cells remain LTR with stable Latin accounting digits. Existing frozen templates must be regenerated and republished to adopt a newer Basic generator contract.
+
+Until acceptance testing is complete, test every intended report with representative filters, long values, multiple pages, totals, empty results, branding, the target language/direction, and the target PDF standard. See [Report Preview and Output](report-preview-and-output.md) for the full execution, pagination, localization, PDF.js, security, and operational contract.
 
 Report charts use the vendored Lilaq engine by default and compile without network access. Basic formats insert native charts automatically when `chart_spec` is supported. Under **Chart Settings → Chart Representation**, **Auto** preserves the ERPNext report chart; compatible datasets may instead be rendered as Bar, Line, or Horizontal Bar. Multiple bar series become grouped bars. Horizontal bars require one series, while aging-distribution and waterfall charts preserve their accounting semantics and reject incompatible overrides with a diagnostic.
 
-Unsupported or invalid charts use a sanitized Frappe SVG only when the browser supplied one; background rendering otherwise omits the chart and reports a diagnostic without failing the report. Empty charts are omitted silently. The site-level emergency setting `CRISPY_PRINT_REPORT_CHART_ENGINE=frappe_svg` disables native chart selection; it is intentionally not a designer control.
+Unsupported or invalid charts use a sanitized Frappe SVG only when the browser supplied one; background rendering otherwise omits the chart and reports a diagnostic without failing the report. Empty charts are omitted silently. There is no setting or designer control that can select Frappe SVG for a native-supported chart.
 
-Advanced report formats receive `chart`, `chart_spec`, and `chart_svg`, but Crispy Print does not insert a chart automatically. Advanced authors may call `crispy-chart` explicitly or render the supplied fallback SVG.
+Advanced report formats receive `chart` and `chart_spec`, but Crispy Print does not insert a chart automatically. They receive `chart_svg` only when the resolver explicitly selects the sanitized compatibility fallback. Advanced authors should call `crispy-chart` for `engine == "lilaq"` and render the supplied SVG only for `engine == "frappe_svg"`.
 
 ### Branding Profile Workflow
 

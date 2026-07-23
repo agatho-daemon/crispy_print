@@ -131,3 +131,71 @@ This is a Typst CLI integration test.
 		self.assertNotEqual(horizontal, vertical)
 		self.assertNotIn("#ff59ff", major)
 		self.assertIn("#ff59ff", minor)
+
+	def test_lilaq_accounting_edge_case_specimens_compile_without_browser_svg(self):
+		from crispy_print.api.v1 import compile_typst
+
+		typst_source = """
+#import "@local/crispy-charts:0.1.1": crispy-chart
+#set page(width: 180mm, height: 110mm, margin: 10mm)
+#let theme = (
+  palette: ("#123456", "#2f855a", "#805ad5"),
+  negative_color: "#c53030",
+  muted_color: "#475569",
+  legend_position: "bottom",
+)
+#crispy-chart(
+  (
+    kind: "mixed",
+    labels: ("Jan", "Feb", "Mar", "Apr"),
+    series: (
+      (name: "Actual", kind: "bar", values: (1200000, none, -250000, 900000)),
+      (name: "Budget", kind: "line", values: (1000000, 1100000, 1050000, 1150000)),
+    ),
+    options: (:),
+    accessibility: (summary: "Mixed null, negative, and large-value specimen."),
+  ),
+  theme: theme,
+  width: 100%,
+  height: 68mm,
+)
+#pagebreak()
+#crispy-chart(
+  (
+    kind: "percentage_stacked",
+    labels: ("Current", "30 days", "60 days"),
+    series: (
+      (name: "Current", kind: "bar", values: (65,)),
+      (name: "30 days", kind: "bar", values: (25,)),
+      (name: "60 days", kind: "bar", values: (10,)),
+    ),
+    options: (stacked: true, orientation: "horizontal"),
+    accessibility: (summary: "Aging distribution specimen."),
+  ),
+  theme: theme,
+  width: 100%,
+  height: 68mm,
+)
+#pagebreak()
+#crispy-chart(
+  (
+    kind: "waterfall",
+    labels: ("Opening", "Income", "Expense", "Closing adjustment"),
+    series: ((name: "Movement", kind: "bar", values: (100, 35, -20, 5)),),
+    options: (:),
+    accessibility: (summary: "Cumulative waterfall specimen."),
+  ),
+  theme: theme,
+  width: 100%,
+  height: 68mm,
+)
+"""
+		result = compile_typst(typst_source, output_format="svg")
+
+		self.assertIsNotNone(result)
+		assert result is not None
+		self.assertTrue(result["success"])
+		self.assertEqual(result["page_count"], 3)
+		rendered = "\n".join(str(page).lower() for page in result["svg_pages"])
+		self.assertIn("#123456", rendered)
+		self.assertIn("#c53030", rendered)

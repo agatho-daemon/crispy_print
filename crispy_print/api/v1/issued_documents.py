@@ -20,6 +20,28 @@ DOCTYPE = "Crispy Issued Document"
 JSONDict = dict[str, Any]
 
 
+def _reject_report_issuance(
+	source_doctype: str,
+	crispy_format: str | None = None,
+) -> None:
+	"""Keep analytical report output outside the CID document registry."""
+	if (source_doctype or "").strip() == "Report":
+		frappe.throw(
+			_("Reports cannot be issued or saved as Crispy Issued Documents."),
+			frappe.ValidationError,
+		)
+
+	if not crispy_format:
+		return
+
+	format_type = frappe.db.get_value("Crispy Format", crispy_format, "crispy_format_type")
+	if format_type == "Report":
+		frappe.throw(
+			_("Report formats cannot be issued or saved as Crispy Issued Documents."),
+			frappe.ValidationError,
+		)
+
+
 def get_issued_document(name: str) -> JSONDict:
 	ensure_doctype_read_permission(DOCTYPE)
 	doc = frappe.get_doc(DOCTYPE, name)
@@ -161,17 +183,21 @@ def create_issued_document_snapshot(
 	final generated source for the concrete document, after data substitution.
 	Artifact persistence/signing remains a later step.
 	"""
+	_reject_report_issuance(source_doctype)
 	source_doc = frappe.get_doc(source_doctype, source_docname)
 	source_doc.check_permission("read")
+	if crispy_format:
+		frappe.get_doc("Crispy Format", crispy_format).check_permission("read")
+		_reject_report_issuance(source_doctype, crispy_format)
 	resolved_template = resolve_active_crispy_template(
 		source_doctype=source_doctype,
 		source_docname=source_docname,
 		template=crispy_template,
 	)
-	if crispy_format:
-		frappe.get_doc("Crispy Format", crispy_format).check_permission("read")
-	else:
-		crispy_format = resolved_template.get("source_crispy_format")
+	resolved_format = resolved_template.get("source_crispy_format")
+	_reject_report_issuance(source_doctype, resolved_format)
+	if not crispy_format:
+		crispy_format = resolved_format
 
 	render_payload = resolved_template.get("render_payload") or {}
 	frozen_render_hashes = _get_frozen_render_hashes(render_payload)

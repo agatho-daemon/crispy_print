@@ -38,7 +38,10 @@ frappe.provide("crispy_print");
 		if (qr.page.btn_typst_print) {
 			const btn = qr.page.btn_typst_print;
 			const btnEl = btn && btn.length ? btn[0] : null;
-			if (btnEl && document.contains(btnEl)) return;
+			if (btnEl && document.contains(btnEl)) {
+				if (btnEl.__crispy_report_instance__ === qr) return;
+				btn.remove?.();
+			}
 			qr.page.btn_typst_print = null;
 		}
 
@@ -91,6 +94,7 @@ frappe.provide("crispy_print");
 		const btnEl = qr.page.btn_typst_print && qr.page.btn_typst_print[0];
 		if (btnEl) {
 			btnEl.setAttribute(BTN_MARK, "1");
+			btnEl.__crispy_report_instance__ = qr;
 		}
 	};
 

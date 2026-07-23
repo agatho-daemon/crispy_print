@@ -32,6 +32,7 @@ from crispy_print.render_contract import (
 	TEMPLATE_SNAPSHOT_HASH_FIELDS_V1,
 	TEMPLATE_SNAPSHOT_HASH_FIELDS_V2,
 )
+from crispy_print.report_lifecycle import validate_report_format_for_publish
 from crispy_print.template_resolution import (
 	TemplateRenderContext,
 	is_effective_template_row,
@@ -253,6 +254,13 @@ class CrispyTemplate(Document):
 				frappe.throw(_("Typst Code is required for raw Typst templates."))
 			return
 
+		if self.crispy_format_type == "Report" and self.is_new() and not (self.typst_code or "").strip():
+			frappe.throw(
+				_(
+					"Generated Typst Code is required for Basic report templates. Open the source format in the Report Format Builder, save it, and publish again."
+				)
+			)
+
 		if not (self.layout_json or "").strip():
 			frappe.throw(_("Layout JSON is required for visual templates."))
 
@@ -363,6 +371,7 @@ def publish_crispy_template(
 	source = frappe.get_doc("Crispy Format", source_crispy_format)
 	source.check_permission("read")
 	source.check_permission("write")
+	validate_report_format_for_publish(source)
 	_validate_publish_source_company(source)
 	_validate_expected_source_company(source, company)
 
@@ -411,6 +420,7 @@ def get_publish_preview(
 		frappe.throw(_("Source Crispy Format is required."))
 	source = frappe.get_doc("Crispy Format", source_crispy_format)
 	source.check_permission("read")
+	validate_report_format_for_publish(source)
 	_validate_publish_source_company(source)
 	_validate_expected_source_company(source, company)
 

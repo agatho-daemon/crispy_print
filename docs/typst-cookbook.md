@@ -54,7 +54,7 @@ Use these snippets inside `typst_code` for report-mode formats.
 #if "chart_spec" in data and data.chart_spec.engine == "lilaq" [
   #crispy-chart(data.chart_spec, theme: data.chart_theme, width: 100%, height: 210pt)
 ]
-#if "chart_svg" in data and data.chart_svg != "" [
+#if "chart_spec" in data and data.chart_spec.engine == "frappe_svg" and "chart_svg" in data and data.chart_svg != "" [
   #align(center)[#image(data.chart_svg, width: 100%, height: 210pt, fit: "contain")]
 ]
 ```

@@ -122,6 +122,40 @@ class TestReportChartNormalization(FrappeTestCase):
 		self.assertEqual(invalid["status"], "invalid")
 		self.assertEqual(invalid["diagnostic"]["code"], "negative_percentage_value")
 
+	def test_waterfall_preserves_cumulative_semantics_or_requires_fallback(self):
+		ready = normalize_report_chart(
+			{
+				"type": "waterfall",
+				"data": {
+					"labels": ["Opening", "Income", "Expense"],
+					"datasets": [{"name": "Movement", "values": [100, 25, -10]}],
+				},
+			}
+		)
+		self.assertEqual(ready["status"], "ready")
+		self.assertEqual(ready["kind"], "waterfall")
+		self.assertEqual(ready["series"][0]["values"], [100, 25, -10])
+		self.assertIn("negative value", ready["accessibility"]["summary"])
+
+		for datasets, code in (
+			(
+				[
+					{"name": "A", "values": [1, 2]},
+					{"name": "B", "values": [3, 4]},
+				],
+				"waterfall_requires_single_series",
+			),
+			([{"name": "A", "values": [1, None]}], "waterfall_missing_value"),
+		):
+			with self.subTest(code=code):
+				invalid = normalize_report_chart(
+					{
+						"type": "waterfall",
+						"data": {"labels": ["A", "B"], "datasets": datasets},
+					}
+				)
+				self.assertEqual(invalid["diagnostic"]["code"], code)
+
 	def test_rejects_non_finite_mismatch_and_oversized_data(self):
 		base = {"type": "line", "data": {"labels": ["A"], "datasets": []}}
 		base["data"]["datasets"] = [{"values": [float("nan")]}]
@@ -146,23 +180,18 @@ class TestReportChartNormalization(FrappeTestCase):
 				"data": {"labels": ["A"], "datasets": [{"values": [1]}]},
 			}
 		)
-		resolved, metadata = resolve_chart_render(ready, "<svg/>", "lilaq")
+		resolved, metadata = resolve_chart_render(ready, "<svg/>")
 		self.assertEqual(resolved["engine"], "lilaq")
 		self.assertEqual(metadata["status"], "ready")
-		resolved, metadata = resolve_chart_render(ready, "<svg/>", "frappe_svg")
-		self.assertEqual(resolved["engine"], "frappe_svg")
-		self.assertEqual(metadata["reason"], "engine_disabled")
-		resolved, metadata = resolve_chart_render(ready, None, "frappe_svg")
-		self.assertEqual(resolved["engine"], "none")
-		self.assertEqual(metadata["reason"], "engine_disabled_no_svg")
+		self.assertEqual(metadata["reason"], "native_lilaq")
 
 		unsupported = normalize_report_chart(
 			{"type": "pie", "data": {"labels": ["A"], "datasets": [{"values": [1]}]}}
 		)
-		resolved, metadata = resolve_chart_render(unsupported, "<svg/>", "lilaq")
+		resolved, metadata = resolve_chart_render(unsupported, "<svg/>")
 		self.assertEqual(resolved["engine"], "frappe_svg")
 		self.assertEqual(metadata["status"], "fallback")
-		resolved, metadata = resolve_chart_render(unsupported, None, "lilaq")
+		resolved, metadata = resolve_chart_render(unsupported, None)
 		self.assertEqual(resolved["engine"], "none")
 		self.assertEqual(metadata["status"], "omitted")
 
@@ -180,6 +209,22 @@ class TestReportChartNormalization(FrappeTestCase):
 		self.assertEqual(theme["label_size_pt"], 6)
 		self.assertEqual(theme["legend_position"], "top")
 		self.assertEqual(theme["negative_color"], "#AA0000")
+
+	def test_chart_theme_filters_invalid_branding_colors_and_controls_legend(self):
+		theme = normalize_chart_theme(
+			{
+				"reportTheme": {
+					"negativeColor": "red; panic",
+					"mutedColor": "#123456",
+					"chartPalette": ["#ABCDEF", "not-a-color", "#010203"],
+					"chart": {"legendPosition": "hidden"},
+				}
+			}
+		)
+		self.assertEqual(theme["palette"], ["#ABCDEF", "#010203"])
+		self.assertEqual(theme["negative_color"], "#B91C1C")
+		self.assertEqual(theme["muted_color"], "#123456")
+		self.assertEqual(theme["legend_position"], "hidden")
 
 
 class TestReportChartSvgSanitization(FrappeTestCase):

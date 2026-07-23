@@ -1780,6 +1780,7 @@ function buildStore() {
     const generated = buildReportTypstFromConfig(reportBuilderConfig.value, {
       tableSettings: getReportTableSettingsSnapshot(),
       reportTheme: effective_presentation_settings.value.reportTheme,
+      language: effective_presentation_settings.value.language,
     });
     const signature = computeReportBasicSignature(generated);
     reportBuilderConfig.value.raw_signature = signature;

@@ -91,7 +91,18 @@ frappe.ui.CrispyPrintView = class {
 	}
 
 	show_report(context) {
-		const same_report = this.current.report === context.report;
+		const previous_context_key = JSON.stringify({
+			report: this.current.report || null,
+			filters: this.current.filters || {},
+			columns: this.current.columns || [],
+			chartSvg: this.current.chartSvg || "",
+		});
+		const next_context_key = JSON.stringify({
+			report: context.report || null,
+			filters: context.filters || {},
+			columns: context.columns || [],
+			chartSvg: context.chartSvg || "",
+		});
 		this.current = {
 			report: context.report,
 			source: context.source || "report",
@@ -105,7 +116,7 @@ frappe.ui.CrispyPrintView = class {
 		this.add_or_update_context_action_icon();
 		this.setup_menu(null);
 
-		if (!same_report) {
+		if (previous_context_key !== next_context_key) {
 			this.unmount_preview();
 			this.render_preview({ doctype: null, docname: null }, null, {
 				source: context.source || "report",
@@ -327,6 +338,17 @@ frappe.ui.CrispyPrintView = class {
 	print_document() {
 		if (!this.current.doctype && !this.current.report) {
 			this.prompt_for_preview_context();
+			return;
+		}
+		if (this.current.report) {
+			if (this.vue_instance?.component?.printPDF) {
+				this.vue_instance.component.printPDF();
+				return;
+			}
+			frappe.show_alert({
+				message: __("Report preview is not ready to print."),
+				indicator: "orange",
+			});
 			return;
 		}
 		frappe.msgprint({

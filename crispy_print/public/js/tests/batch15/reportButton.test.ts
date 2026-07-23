@@ -74,4 +74,98 @@ describe("report_button", () => {
 			"Sales Register"
 		)
 	})
+
+	it("preserves ERPNext filter value shapes and route options", () => {
+		vi.resetModules()
+		setupGlobals()
+		delete (globalThis as any).__crispy_qr_patched__
+		loadReportButtonBundle()
+
+		const filters = {
+			company: "ACME",
+			from_date: "2026-01-01",
+			to_date: "2026-01-31",
+			accounts: ["1100 - Receivables", "1200 - Bank"],
+			party_type: "Customer",
+			party: ["CUST-001", "CUST-002"],
+			cost_center: ["Main - ACME", "North - ACME"],
+			project: "PROJ-001",
+			accounting_dimensions: { branch: "Kuwait", region: ["North", "South"] },
+			include_dimensions: 1,
+			group_by_party: 0,
+			optional_link: "",
+			custom_filter: null,
+		}
+		const report = {
+			report_name: "General Ledger",
+			get_filter_values: () => filters,
+			columns: [
+				{ fieldname: "posting_date", fieldtype: "Date" },
+				{ fieldname: "account", fieldtype: "Link", options: "Account" },
+			],
+			page: {
+				btn_typst_print: null,
+				inner_toolbar: [{ querySelector: (): null => null }],
+				add_inner_button: (_label: string, handler: () => void): any[] =>
+					Object.assign([{ setAttribute: vi.fn() }], { length: 1, _handler: handler }),
+			},
+		} as any
+
+		;(globalThis as any).crispy_print.add_print_button(report)
+		report.page.btn_typst_print._handler()
+
+		expect((globalThis as any).frappe.route_options.filters).toEqual(filters)
+		expect((globalThis as any).frappe.route_options.columns).toEqual(report.columns)
+	})
+
+	it("rebinds a restored report button to the current Query Report instance", () => {
+		vi.resetModules()
+		setupGlobals()
+		delete (globalThis as any).__crispy_qr_patched__
+		loadReportButtonBundle()
+
+		const page: any = {
+			btn_typst_print: null,
+			inner_toolbar: [{ querySelector: (): null => null }],
+			add_inner_button: (_label: string, handler: () => void) => {
+				const element = document.createElement("button") as HTMLButtonElement & {
+					_handler?: () => void
+				}
+				document.body.appendChild(element)
+				element._handler = handler
+				const button: any = [element]
+				button.length = 1
+				button.remove = () => element.remove()
+				button._handler = handler
+				return button
+			},
+		}
+		const firstReport = {
+			report_name: "Salary Register",
+			get_filter_values: () => ({ from_date: "2025-12-01" }),
+			columns: [{ fieldname: "basic_salary" }],
+			page,
+		} as any
+		;(globalThis as any).crispy_print.add_print_button(firstReport)
+		const firstElement = page.btn_typst_print[0]
+
+		const restoredReport = {
+			report_name: "Salary Register",
+			get_filter_values: () => ({ from_date: "2026-01-01" }),
+			columns: [
+				{ fieldname: "basic_salary" },
+				{ fieldname: "_test_allowance" },
+			],
+			page,
+		} as any
+		;(globalThis as any).crispy_print.add_print_button(restoredReport)
+
+		expect(firstElement.isConnected).toBe(false)
+		page.btn_typst_print._handler()
+		expect((globalThis as any).frappe.route_options.filters).toEqual({
+			from_date: "2026-01-01",
+		})
+		expect((globalThis as any).frappe.route_options.columns).toHaveLength(2)
+		document.body.innerHTML = ""
+	})
 })

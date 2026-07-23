@@ -41,6 +41,9 @@ interface CreateReportStoreOptions {
 }
 
 export function createReportStore(options: CreateReportStoreOptions) {
+	const reportPreviewTabId =
+		globalThis.crypto?.randomUUID?.() ||
+		`crispy-builder-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   const {
     formatName,
     presentation_settings,
@@ -118,6 +121,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
         filters,
         limit: 0,
         store_snapshot: 1,
+		preview_tab_id: reportPreviewTabId,
       },
     });
     const previewData = response?.message || null;
@@ -273,6 +277,7 @@ export function createReportStore(options: CreateReportStoreOptions) {
           },
         },
         preview_snapshot_id: previewSnapshotId,
+		preview_tab_id: reportPreviewTabId,
         limit: 0,
         asset_files: branding_asset_files,
 		pdf_standard: getPdfStandard(),
