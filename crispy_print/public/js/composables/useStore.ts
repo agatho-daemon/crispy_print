@@ -560,6 +560,7 @@ function buildStore() {
     const resolved = await resolve_effective_presentation_settings(
       presentation_settings.value,
       getEffectiveCompany(),
+      isReportMode.value,
     );
     if (requestSeq !== effectiveSettingsRequestSeq) return;
     effective_presentation_settings.value = resolved;

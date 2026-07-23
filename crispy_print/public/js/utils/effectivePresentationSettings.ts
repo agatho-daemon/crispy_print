@@ -15,6 +15,7 @@ const inflightBrandingProfileRequests = new Map<
 export async function resolve_effective_presentation_settings(
   presentation_settings: PresentationSettings,
   effective_company?: string | null,
+  apply_format_overrides = true,
 ): Promise<PresentationSettings> {
   const source = presentation_settings?.source || "";
   const profile = String(presentation_settings?.branding?.profile || "").trim();
@@ -76,10 +77,12 @@ export async function resolve_effective_presentation_settings(
       effective,
       getRendererPresentationDefaults(presentation_settings.report?.renderer),
     );
-    effective = merge_presentation_settings(
-      effective,
-      presentation_settings.overrides || {},
-    );
+    if (apply_format_overrides) {
+      effective = merge_presentation_settings(
+        effective,
+        presentation_settings.overrides || {},
+      );
+    }
     effective.source = "branding_profile";
     effective.branding.profile = profile;
     if (expectedCompany) {

@@ -132,6 +132,8 @@
 					v-if="!isRawTypst"
 					v-model="isPresentationSettingsExpanded"
 					:title="__('Page Settings')"
+					:readonly="profilePresentationReadOnly"
+					:readonly-label="profilePresentationReadOnly ? inheritedProfileLabel : ''"
 				>
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">{{ __("Size") }}</label>
@@ -453,6 +455,8 @@
 					v-if="!isReportMode && !isRawTypst"
 					v-model="isTypographyExpanded"
 					:title="__('Typography')"
+					:readonly="profilePresentationReadOnly"
+					:readonly-label="profilePresentationReadOnly ? inheritedProfileLabel : ''"
 				>
 					<TypographyStyleEditor
 						v-model="typography.sectionLabel"
@@ -480,6 +484,8 @@
 					v-if="!isRawTypst"
 					v-model="isTableExpanded"
 					:title="__('Table Settings')"
+					:readonly="profilePresentationReadOnly"
+					:readonly-label="profilePresentationReadOnly ? inheritedProfileLabel : ''"
 				>
 					<div class="settings-pane__subsection">
 						<BoxSidesEditor
@@ -1062,6 +1068,10 @@ const selected_company = computed<string>({
 const is_custom_profile = computed(
 	() => props.presentation_settings.source !== "branding_profile"
 );
+const profilePresentationReadOnly = computed(
+	() => !isReportMode.value && props.presentation_settings.source === "branding_profile"
+);
+const inheritedProfileLabel = __("Inherited from the selected Branding Profile.");
 const branding_profile_selection = computed<string>({
 	get: () => {
 		if (props.presentation_settings.source === "custom") return "custom";
@@ -1079,6 +1089,9 @@ const branding_profile_selection = computed<string>({
 		} else if (value) {
 			props.presentation_settings.source = "branding_profile";
 			props.presentation_settings.branding.profile = value;
+			if (!isReportMode.value) {
+				props.presentation_settings.overrides = undefined;
+			}
 			const selectedProfile = branding_profiles.value.find(
 				(profile) => profile.name === value
 			);
@@ -1120,6 +1133,7 @@ function markSettingsDirty(policy: MarkDirtyOptions["preview"] = "live", capture
 	if (store.loading.value || store.initializing.value) return;
 	if (
 		captureOverrides &&
+		isReportMode.value &&
 		props.presentation_settings.source === "branding_profile" &&
 		branding_profile_baseline.value
 	) {
@@ -1138,9 +1152,14 @@ async function applyBrandingProfileBase(profile: string) {
 		if (props.presentation_settings.branding.profile !== profile) return;
 		const baseline = extractOverrideableSettings(profileSettings as PresentationSettings);
 		branding_profile_baseline.value = cloneValue(baseline);
+		if (!isReportMode.value) {
+			props.presentation_settings.overrides = undefined;
+		}
 		const effective = merge_presentation_settings(
 			profileSettings as PresentationSettings,
-			(props.presentation_settings.overrides || {}) as Partial<PresentationSettings>
+			(isReportMode.value
+				? props.presentation_settings.overrides || {}
+				: {}) as Partial<PresentationSettings>
 		);
 		for (const key of ["page", "typography", "table", "qr", "reportTheme"] as const) {
 			if (effective[key] !== undefined) {

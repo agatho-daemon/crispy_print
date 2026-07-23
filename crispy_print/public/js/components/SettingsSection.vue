@@ -25,7 +25,12 @@
 			</svg>
 		</button>
 		<div v-if="modelValue" class="settings-pane__section-content card-body">
-			<slot></slot>
+			<p v-if="readonly && readonlyLabel" class="settings-pane__readonly-hint">
+				{{ readonlyLabel }}
+			</p>
+			<fieldset class="settings-pane__section-fields" :disabled="readonly">
+				<slot></slot>
+			</fieldset>
 		</div>
 	</div>
 </template>
@@ -35,6 +40,8 @@ defineProps<{
 	modelValue: boolean;
 	title: string;
 	contentBorder?: boolean;
+	readonly?: boolean;
+	readonlyLabel?: string;
 }>();
 
 const emit = defineEmits<{
@@ -110,6 +117,25 @@ const emit = defineEmits<{
 	padding: 12px;
 	border-top: none !important;
 	box-shadow: none !important;
+}
+
+.settings-pane__section-fields {
+	display: contents;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+.settings-pane__section-fields:disabled {
+	opacity: 0.55;
+}
+
+.settings-pane__readonly-hint {
+	margin: 0;
+	color: #64748b;
+	font-size: 11px;
+	line-height: 1.4;
 }
 
 .settings-pane__section-card--content-border .settings-pane__section-content {

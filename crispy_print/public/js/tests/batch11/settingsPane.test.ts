@@ -231,7 +231,7 @@ describe("SettingsPane", () => {
     hoisted.storeMock.isReportMode.value = false;
   });
 
-  it("keeps format override settings available with a branding profile", async () => {
+  it("makes profile-owned settings read-only with a branding profile", async () => {
     const presentation_settings = reactive({
       source: "custom",
       page: {
@@ -276,6 +276,16 @@ describe("SettingsPane", () => {
     expect(wrapper.text()).toContain("Page Settings");
     expect(wrapper.text()).toContain("Typography");
     expect(wrapper.text()).toContain("Enable QR Code");
+    const pageSettingsButton = wrapper
+      .findAll("button.settings-pane__section-header")
+      .find((button) => button.text().includes("Page Settings"));
+    await pageSettingsButton!.trigger("click");
+    await nextTick();
+    expect(wrapper.text()).toContain("Inherited from the selected Branding Profile.");
+    expect(wrapper.findAll("fieldset[disabled]")).toHaveLength(1);
+    expect(
+      wrapper.find('input[data-fieldname="qr_enabled"]').attributes("disabled"),
+    ).toBeUndefined();
     // Company identity remains owned by the Branding Profile.
     expect(wrapper.find('option[value="logo"]').exists()).toBe(false);
 
