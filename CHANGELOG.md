@@ -95,6 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed PDF.js text-layer integration by assigning each retained layer the actual page viewport `--scale-factor` before rendering, removing the PDF.js contract warning while preserving canvas/text alignment under shared preview zoom.
+- Fixed backend normal-document assembly order so safe empty header/footer blocks precede the runtime and format preambles, while dedicated `doc_header` and `doc_footer` definitions remain authoritative before page setup; browser and backend compilation now share the same precedence.
 - Fixed a runaway standalone Report Preview compile loop caused by the runtime orchestration function shadowing the report compile API import. The API and orchestration paths now have distinct names, equivalent effective payloads are deduplicated, presentation settings resolve before scheduling, and only the latest genuinely changed intent is replayed.
 - Fixed runtime `crispy-print-preview` startup so document compilation waits for the resolved frozen template layout or raw Typst source before requesting fields; the former early worker start could compile a nearly empty document containing only static headings.
 - Fixed runtime PDF preview Fit, 100%, editable percentage, zoom-in, and zoom-out controls by giving the page persistent zoom state, and fixed the DocType placeholder transition so Vue exclusively owns its DOM lifecycle.

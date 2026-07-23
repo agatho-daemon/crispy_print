@@ -38,22 +38,22 @@ def _build_typst_document(
 	typst_data = _python_to_typst_dict(data_dict or {})
 	is_raw_typst = _is_raw_typst_format(format_doc)
 
-	# 1. Preamble (set rules, imports, helper functions)
-	if preamble_override and not is_raw_typst:
-		sections.append(f"// Preamble override\n{preamble_override}")
-	if format_doc.typst_preamble and not is_raw_typst:
-		sections.append(f"// Preamble\n{format_doc.typst_preamble}")
-
-	# 2. Data variable definition
+	# 1. Data variable definition
 	data_expression = f'json("{data_file}")' if data_file else typst_data
 	sections.append(f"\n// Data injection\n#let {variable_name} = {data_expression}")
 
 	if is_raw_typst:
 		sections.append(f"\n{_build_raw_typst_helpers(format_doc, format_doc.typst_code or '')}")
 	else:
-		# 3. Default header/footer blocks (safe no-op)
+		# 2. Default header/footer blocks (safe no-op)
 		sections.append("\n#let header_block = []")
 		sections.append("#let footer_block = []")
+
+		# 3. Preamble (set rules, imports, helper functions)
+		if preamble_override:
+			sections.append(f"\n// Preamble override\n{preamble_override}")
+		if format_doc.typst_preamble:
+			sections.append(f"\n// Preamble\n{format_doc.typst_preamble}")
 
 		# 4. Header block (can be overridden for letterhead)
 		if header_block:

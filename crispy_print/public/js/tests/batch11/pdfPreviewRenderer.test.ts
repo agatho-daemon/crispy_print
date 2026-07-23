@@ -24,7 +24,11 @@ const mocks = vi.hoisted(() => {
     styles: {},
   }));
   const getPage = vi.fn(async (number: number) => ({
-    getViewport: () => ({ width: 800, height: 1100 }),
+    getViewport: ({ scale }: { scale: number }) => ({
+      width: 800,
+      height: 1100,
+      scale,
+    }),
     render: () => render(number),
     getTextContent,
   }));
@@ -108,6 +112,11 @@ describe("PDF preview renderer", () => {
     expect(wrapper.find(".pdf-preview__text-layer").text()).toBe(
       "Selectable report text",
     );
+    expect(
+      wrapper
+        .find<HTMLElement>(".pdf-preview__text-layer")
+        .element.style.getPropertyValue("--scale-factor"),
+    ).toBe(String(96 / 72));
     expect(wrapper.emitted("ready")).toBeUndefined();
     expect(wrapper.emitted("state")?.some(([state]) => state === "ready")).toBe(
       true,

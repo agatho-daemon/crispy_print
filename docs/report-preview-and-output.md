@@ -120,7 +120,10 @@ For each retained page, the viewer creates:
 Canvas backing stores and text-layer DOM are cleared when a page leaves the
 window. Placeholder canvases remain at `0 x 0`, avoiding the browser's default
 offscreen canvas allocation on reports with hundreds of pages. Canvas and text
-layer use the same PDF viewport and shared preview-stage zoom.
+layer use the same PDF viewport and shared preview-stage zoom. Each retained
+text-layer container receives PDF.js's required `--scale-factor` from that
+page's actual viewport before text rendering, keeping glyph positioning aligned
+with the canvas without relying on a global or hard-coded scale.
 
 The text layer provides selection and copy only. Full-document search indexing
 and enhanced semantic screen-reader navigation are intentionally deferred

@@ -160,6 +160,7 @@ async function renderPage(pageNumber: number, expectedGeneration: number) {
 				!wantedPages.has(pageNumber)
 			)
 				return;
+			textLayer.style.setProperty("--scale-factor", String(viewport.scale));
 			const textTask = renderTextLayer({
 				textContentSource: textContent,
 				container: textLayer,

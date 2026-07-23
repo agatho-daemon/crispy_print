@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from frappe.tests.utils import FrappeTestCase
 
 
@@ -38,3 +40,38 @@ class TestTypstDocSerialization(FrappeTestCase):
 		from crispy_print.api.v1.typst_doc import _quote_typst_string
 
 		self.assertEqual(_quote_typst_string(r"C:\tmp\file.txt"), r'"C:\\tmp\\file.txt"')
+
+
+class TestTypstDocumentAssembly(FrappeTestCase):
+	def test_normal_document_places_defaults_before_preamble_and_dedicated_blocks_after_it(self):
+		from crispy_print.api.v1.typst_doc import _build_typst_document
+
+		format_doc = SimpleNamespace(
+			raw_typst=0,
+			typst_preamble="#let header_block = [Preamble Header]",
+			doc_header="#let header_block = [Format Header]",
+			doc_footer="#let footer_block = [Format Footer]",
+			typst_code="#text[#doc.name]",
+		)
+
+		source = _build_typst_document(
+			format_doc,
+			{"name": "SI-1"},
+			preamble_override="#let footer_block = [Override Footer]",
+			presentation_settings_block="#set page(header: header_block, footer: footer_block)",
+		)
+
+		expected_order = [
+			'#let doc = (name: "SI-1")',
+			"#let header_block = []",
+			"#let footer_block = []",
+			"#let footer_block = [Override Footer]",
+			"#let header_block = [Preamble Header]",
+			"#let header_block = [Format Header]",
+			"#let footer_block = [Format Footer]",
+			"#set page(header: header_block, footer: footer_block)",
+			"#text[#doc.name]",
+		]
+		positions = [source.index(fragment) for fragment in expected_order]
+
+		self.assertEqual(positions, sorted(positions))
