@@ -142,7 +142,8 @@ describe("standalone report preview runtime", () => {
 
     await (wrapper.vm as any).generatePDF();
 
-    expect(compileTypstRequest).toHaveBeenCalledOnce();
+    expect(compileReportPreviewRequest).toHaveBeenCalledOnce();
+    expect(compileTypstRequest).not.toHaveBeenCalled();
     expect(openWindow).toHaveBeenCalledWith("blob:view-report", "_blank");
     expect(createIssuedDocumentSnapshotRequest).not.toHaveBeenCalled();
     wrapper.unmount();
@@ -175,12 +176,7 @@ describe("standalone report preview runtime", () => {
 
     await (wrapper.vm as any).downloadPDF();
 
-    expect(compileReportPreviewRequest).toHaveBeenCalledTimes(2);
-    expect(compileReportPreviewRequest.mock.calls[1][0]).toMatchObject({
-      report: "Accounts Payable",
-      format_name: "AR Format",
-      output_action: "download",
-    });
+    expect(compileReportPreviewRequest).toHaveBeenCalledOnce();
     expect(compileTypstRequest).not.toHaveBeenCalled();
     expect(clickDownload).toHaveBeenCalledOnce();
     expect(createIssuedDocumentSnapshotRequest).not.toHaveBeenCalled();
@@ -188,14 +184,17 @@ describe("standalone report preview runtime", () => {
   });
 
   it("prints the compiled report PDF without creating a CID snapshot", async () => {
+    const loadHandlers: Array<() => void> = [];
     const printWindow = {
-      addEventListener: vi.fn(),
+      addEventListener: vi.fn((event: string, callback: () => void) => {
+        if (event === "load") loadHandlers.push(callback);
+      }),
       focus: vi.fn(),
       print: vi.fn(),
     };
-    vi.spyOn(HTMLIFrameElement.prototype, "contentWindow", "get").mockReturnValue(
-      printWindow as unknown as Window,
-    );
+    const openWindow = vi
+      .spyOn(window, "open")
+      .mockReturnValue(printWindow as unknown as Window);
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
       value: vi.fn(() => "blob:salary-report"),
@@ -219,9 +218,9 @@ describe("standalone report preview runtime", () => {
     await flushPromises();
 
     await (wrapper.vm as any).printPDF();
-    const frame = document.querySelector('iframe[aria-hidden="true"]') as HTMLIFrameElement;
-    expect(frame).toBeTruthy();
-    frame.onload?.(new Event("load"));
+    expect(openWindow).toHaveBeenCalledWith("blob:salary-report", "_blank");
+    expect(loadHandlers).toHaveLength(1);
+    loadHandlers[0]();
 
     expect(printWindow.focus).toHaveBeenCalledOnce();
     expect(printWindow.print).toHaveBeenCalledOnce();
@@ -232,7 +231,6 @@ describe("standalone report preview runtime", () => {
     });
 
     wrapper.unmount();
-    frame.remove();
   });
 
   it("reruns report data for filter changes but reuses it for presentation changes", async () => {
