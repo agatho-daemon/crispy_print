@@ -478,6 +478,7 @@ import {
 	type ResolvedCrispyTemplate,
 } from "../api/crispy";
 import type { TypstPdfReadyContext } from "../typst/setupWorker";
+import { printPdfBlob } from "../typst/workerPdf";
 
 interface Props {
 	doctype?: string;
@@ -1544,7 +1545,12 @@ async function downloadPDF() {
 
 async function printPDF() {
 	logger.info("Print PDF clicked");
-	if (!isReportMode.value) return;
+	if (!isReportMode.value) {
+		window.dispatchEvent(
+			new CustomEvent("crispy-preview:request-pdf", { detail: { action: "print" } })
+		);
+		return;
+	}
 	if (!reportPdfBytes.value?.byteLength) {
 		frappe.show_alert({
 			message: __("Report preview not ready yet."),
@@ -1554,48 +1560,27 @@ async function printPDF() {
 	}
 
 	const blob = new Blob([reportPdfBytes.value.slice()], { type: "application/pdf" });
-	const pdfUrl = URL.createObjectURL(blob);
-	const printWindow = window.open(pdfUrl, "_blank");
-	if (!printWindow) {
-		URL.revokeObjectURL(pdfUrl);
-		frappe.show_alert({
-			message: __("Report printing was blocked by the browser."),
-			indicator: "orange",
-		});
-		return;
-	}
-	let cleanedUp = false;
-	const cleanup = () => {
-		if (cleanedUp) return;
-		cleanedUp = true;
-		URL.revokeObjectURL(pdfUrl);
-	};
-	let printRequested = false;
-	const requestPrint = () => {
-		if (printRequested) return;
-		printRequested = true;
-		try {
-			printWindow.addEventListener("afterprint", cleanup, { once: true });
-			printWindow.focus();
-			printWindow.print();
+	const printOpened = printPdfBlob(blob, {
+		onPrint: () => {
 			frappe.show_alert({
 				message: __("Print dialog opened."),
 				indicator: "green",
 			});
-		} catch (error) {
-			cleanup();
+		},
+		onError: (error) => {
 			logger.error("Report printing failed", error);
 			frappe.show_alert({
 				message: __("Report printing failed."),
 				indicator: "red",
 			});
-		}
-	};
-	printWindow.addEventListener("load", requestPrint, { once: true });
-	// Chrome's built-in PDF viewer can finish loading before its top-level load
-	// event listener is attached. Keep a guarded fallback for that race.
-	window.setTimeout(requestPrint, 1000);
-	window.setTimeout(cleanup, 60_000);
+		},
+	});
+	if (!printOpened) {
+		frappe.show_alert({
+			message: __("Report printing was blocked by the browser."),
+			indicator: "orange",
+		});
+	}
 }
 
 async function generateReportPdf(action: "view" | "download") {

@@ -2,7 +2,12 @@ export const PREVIEW_REQUEST_ID = "preview"
 export const DOWNLOAD_REQUEST_ID = "download"
 export const VIEW_PDF_REQUEST_ID = "view-pdf"
 
-export type PdfAction = "view" | "download"
+export type PdfAction = "view" | "download" | "print"
+
+export type PrintPdfBlobOptions = {
+	onPrint?: () => void
+	onError?: (error: unknown) => void
+}
 
 export function openPdfBlob(blob: Blob) {
 	const url = URL.createObjectURL(blob)
@@ -22,6 +27,43 @@ export function downloadPdfBlob(blob: Blob, filename: string) {
 		link.remove()
 		URL.revokeObjectURL(url)
 	}, 1000)
+}
+
+export function printPdfBlob(blob: Blob, options: PrintPdfBlobOptions = {}): boolean {
+	const url = URL.createObjectURL(blob)
+	const printWindow = window.open(url, "_blank")
+	if (!printWindow) {
+		URL.revokeObjectURL(url)
+		return false
+	}
+
+	let cleanedUp = false
+	const cleanup = () => {
+		if (cleanedUp) return
+		cleanedUp = true
+		URL.revokeObjectURL(url)
+	}
+	let printRequested = false
+	const requestPrint = () => {
+		if (printRequested) return
+		printRequested = true
+		try {
+			printWindow.addEventListener("afterprint", cleanup, { once: true })
+			printWindow.focus()
+			printWindow.print()
+			options.onPrint?.()
+		} catch (error) {
+			cleanup()
+			options.onError?.(error)
+		}
+	}
+
+	printWindow.addEventListener("load", requestPrint, { once: true })
+	// Chrome's built-in PDF viewer can finish loading before its top-level
+	// load listener is attached.
+	window.setTimeout(requestPrint, 1000)
+	window.setTimeout(cleanup, 60_000)
+	return true
 }
 
 export function postPdfCompile(options: {

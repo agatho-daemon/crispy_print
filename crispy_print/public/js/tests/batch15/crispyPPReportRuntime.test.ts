@@ -91,6 +91,29 @@ describe("standalone report preview runtime", () => {
     };
   });
 
+  it("routes DocType printing through the compiled preview PDF", async () => {
+    const printRequest = vi.fn();
+    window.addEventListener("crispy-preview:request-pdf", printRequest, {
+      once: true,
+    });
+    const { default: CrispyPP } = await import("../../pages/CrispyPP.vue");
+    const wrapper = shallowMount(CrispyPP, {
+      props: {
+        doctype: "Sales Invoice",
+        docname: "ACC-SINV-2026-04953",
+      },
+    });
+    await flushPromises();
+
+    await (wrapper.vm as any).printPDF();
+
+    expect(printRequest).toHaveBeenCalledOnce();
+    expect((printRequest.mock.calls[0][0] as CustomEvent).detail).toEqual({
+      action: "print",
+    });
+    wrapper.unmount();
+  });
+
   it("reaches the report compile API once on initial mount", async () => {
     const { default: CrispyPP } = await import("../../pages/CrispyPP.vue");
     const wrapper = mount(CrispyPP, {
