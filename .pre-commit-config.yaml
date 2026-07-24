@@ -39,6 +39,7 @@ repos:
         exclude: |
             (?x)^(
                 crispy_print/public/dist/.*|
+                crispy_print/public/vendor/pdfjs/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
                 crispy_print/templates/includes/.*|
@@ -57,6 +58,7 @@ repos:
         exclude: |
             (?x)^(
                 crispy_print/public/dist/.*|
+                crispy_print/public/vendor/pdfjs/.*|
                 cypress/.*|
                 .*node_modules.*|
                 .*boilerplate.*|

@@ -21,16 +21,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import {
-	GlobalWorkerOptions,
-	getDocument,
-	renderTextLayer,
-	type PDFDocumentProxy,
-	type RenderTask,
-	type TextLayerRenderTask,
-} from "pdfjs-dist/legacy/build/pdf.js";
+import type { PDFDocumentProxy, RenderTask, TextLayer } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { loadPdfJs } from "../utils/pdfJs";
 
-GlobalWorkerOptions.workerSrc = "/assets/crispy_print/vendor/pdfjs/pdf.worker.min.js";
+type PdfLoadingTask = ReturnType<typeof import("pdfjs-dist/legacy/build/pdf.mjs").getDocument>;
 
 interface PageDescriptor {
 	number: number;
@@ -54,7 +48,7 @@ const pages = ref<PageDescriptor[]>([]);
 const canvases = new Map<number, HTMLCanvasElement>();
 const textLayers = new Map<number, HTMLElement>();
 const renderTasks = new Map<number, RenderTask>();
-const textLayerTasks = new Map<number, TextLayerRenderTask>();
+const textLayerTasks = new Map<number, TextLayer>();
 const renderRequests = new Map<number, symbol>();
 const renderedPages = new Set<number>();
 const intersectingPages = new Set<number>();
@@ -62,7 +56,7 @@ let wantedPages = new Set<number>();
 const busy = computed(() => Boolean(props.data?.byteLength) && renderedPages.size === 0);
 const MAX_RENDERED_PAGES = 5;
 let documentProxy: PDFDocumentProxy | null = null;
-let loadingTask: ReturnType<typeof getDocument> | null = null;
+let loadingTask: PdfLoadingTask | null = null;
 let observer: IntersectionObserver | null = null;
 let generation = 0;
 
@@ -146,7 +140,7 @@ async function renderPage(pageNumber: number, expectedGeneration: number) {
 		const context = canvas.getContext("2d");
 		if (!context) throw new Error("Canvas rendering is unavailable");
 		const task = page.render({
-			canvasContext: context,
+			canvas,
 			viewport,
 			transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0],
 		});
@@ -161,13 +155,14 @@ async function renderPage(pageNumber: number, expectedGeneration: number) {
 			)
 				return;
 			textLayer.style.setProperty("--scale-factor", String(viewport.scale));
-			const textTask = renderTextLayer({
+			const { TextLayer } = await loadPdfJs();
+			const textTask = new TextLayer({
 				textContentSource: textContent,
 				container: textLayer,
 				viewport,
 			});
 			textLayerTasks.set(pageNumber, textTask);
-			await textTask.promise;
+			await textTask.render();
 		})();
 		await Promise.all([task.promise, textPromise]);
 		renderTasks.delete(pageNumber);
@@ -290,6 +285,8 @@ async function loadPdf(data: Uint8Array | null) {
 	if (!data?.byteLength) return;
 	emit("state", "loading-pdf");
 	try {
+		const { getDocument } = await loadPdfJs();
+		if (expectedGeneration !== generation) return;
 		loadingTask = getDocument({ data: data.slice() });
 		const loaded = await loadingTask.promise;
 		if (expectedGeneration !== generation) {
