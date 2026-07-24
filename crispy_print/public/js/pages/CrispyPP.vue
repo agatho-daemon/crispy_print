@@ -470,7 +470,6 @@ import { __ } from "../utils/i18n";
 import { decodePdfData } from "../utils/pdfBytes";
 import {
 	compileReportPreview as compileReportPreviewRequest,
-	compileTypst,
 	createIssuedDocumentSnapshot,
 	getActiveCrispyTemplatesForDocument,
 	getResolvedCrispyTemplateForDocument,
@@ -479,6 +478,7 @@ import {
 	type ResolvedCrispyTemplate,
 } from "../api/crispy";
 import type { TypstPdfReadyContext } from "../typst/setupWorker";
+import { printPdfBlob } from "../typst/workerPdf";
 
 interface Props {
 	doctype?: string;
@@ -548,10 +548,6 @@ let lastRequestedReportPreviewKey = "";
 const reportBrandingInitialized = ref(false);
 const reportOrientationInitialized = ref(false);
 const reportMarginsInitialized = ref(false);
-const lastReportTypstSource = ref<string | null>(null);
-const lastReportChartSvg = ref<string>("");
-const lastReportAssetFiles = ref<string[]>([]);
-const lastReportCompileArgs = ref<Record<string, any> | null>(null);
 const availableFonts = ref<string[]>([]);
 const loadingFonts = ref(false);
 const reportFontFamily = ref("Inter");
@@ -1031,9 +1027,6 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 
 		const typstSource = result?.typst_source || "";
 		const truncation = result?.truncation || null;
-		const compileAssetFiles = Array.isArray(result?.asset_files)
-			? result.asset_files
-			: brandingAssetFiles;
 		if (!typstSource) {
 			throw new Error("No Typst source returned");
 		}
@@ -1046,10 +1039,6 @@ async function compileReportPreviewForIntent(intentSeq: number) {
 			);
 		}
 		dispatchCrispyPreviewSource({ source: typstSource });
-		lastReportTypstSource.value = typstSource;
-		lastReportChartSvg.value = chartSvgPayload || "";
-		lastReportAssetFiles.value = compileAssetFiles;
-		lastReportCompileArgs.value = compileArgs;
 
 		if (result?.success) {
 			const bytes = decodePdfData(result.pdf_data);
@@ -1556,7 +1545,12 @@ async function downloadPDF() {
 
 async function printPDF() {
 	logger.info("Print PDF clicked");
-	if (!isReportMode.value) return;
+	if (!isReportMode.value) {
+		window.dispatchEvent(
+			new CustomEvent("crispy-preview:request-pdf", { detail: { action: "print" } })
+		);
+		return;
+	}
 	if (!reportPdfBytes.value?.byteLength) {
 		frappe.show_alert({
 			message: __("Report preview not ready yet."),
@@ -1566,57 +1560,31 @@ async function printPDF() {
 	}
 
 	const blob = new Blob([reportPdfBytes.value.slice()], { type: "application/pdf" });
-	const pdfUrl = URL.createObjectURL(blob);
-	const frame = document.createElement("iframe");
-	frame.setAttribute("aria-hidden", "true");
-	frame.style.position = "fixed";
-	frame.style.width = "0";
-	frame.style.height = "0";
-	frame.style.border = "0";
-	frame.style.right = "0";
-	frame.style.bottom = "0";
-
-	let cleanedUp = false;
-	const cleanup = () => {
-		if (cleanedUp) return;
-		cleanedUp = true;
-		frame.remove();
-		URL.revokeObjectURL(pdfUrl);
-	};
-	frame.onload = () => {
-		try {
-			const printWindow = frame.contentWindow;
-			if (!printWindow) throw new Error("PDF print frame is unavailable");
-			printWindow.addEventListener("afterprint", cleanup, { once: true });
-			printWindow.focus();
-			printWindow.print();
+	const printOpened = printPdfBlob(blob, {
+		onPrint: () => {
 			frappe.show_alert({
 				message: __("Print dialog opened."),
 				indicator: "green",
 			});
-		} catch (error) {
-			cleanup();
+		},
+		onError: (error) => {
 			logger.error("Report printing failed", error);
 			frappe.show_alert({
 				message: __("Report printing failed."),
 				indicator: "red",
 			});
-		}
-	};
-	frame.onerror = () => {
-		cleanup();
+		},
+	});
+	if (!printOpened) {
 		frappe.show_alert({
-			message: __("Report printing failed."),
-			indicator: "red",
+			message: __("Report printing was blocked by the browser."),
+			indicator: "orange",
 		});
-	};
-	document.body.appendChild(frame);
-	frame.src = pdfUrl;
-	window.setTimeout(cleanup, 60_000);
+	}
 }
 
 async function generateReportPdf(action: "view" | "download") {
-	if (!lastReportTypstSource.value) {
+	if (!reportPdfBytes.value?.byteLength) {
 		frappe.show_alert({
 			message: __("Report preview not ready yet."),
 			indicator: "orange",
@@ -1625,39 +1593,8 @@ async function generateReportPdf(action: "view" | "download") {
 	}
 
 	try {
-		const result =
-			action === "download" && lastReportCompileArgs.value
-				? await compileReportPreviewRequest({
-						...lastReportCompileArgs.value,
-						output_action: "download",
-				  })
-				: await compileTypst({
-						typst_source: lastReportTypstSource.value,
-						output_format: "pdf",
-						pdf_standard: pdfStandard.value,
-						asset_files: lastReportAssetFiles.value || [],
-						chart_svg: lastReportChartSvg.value || null,
-				  });
-
-		if (!result?.pdf_url && !result?.pdf_data) {
-			throw new Error("No PDF data returned");
-		}
-
-		let pdfUrl = result.pdf_url as string | undefined;
-		if (!pdfUrl && result.pdf_data) {
-			const binary = atob(result.pdf_data);
-			const bytes = new Uint8Array(binary.length);
-			for (let i = 0; i < binary.length; i++) {
-				bytes[i] = binary.charCodeAt(i);
-			}
-			const blob = new Blob([bytes], { type: "application/pdf" });
-			pdfUrl = URL.createObjectURL(blob);
-			setTimeout(() => URL.revokeObjectURL(pdfUrl as string), 1000);
-		}
-
-		if (!pdfUrl) {
-			throw new Error("Failed to build PDF URL");
-		}
+		const blob = new Blob([reportPdfBytes.value.slice()], { type: "application/pdf" });
+		const pdfUrl = URL.createObjectURL(blob);
 
 		if (action === "download") {
 			const link = document.createElement("a");
@@ -1677,6 +1614,7 @@ async function generateReportPdf(action: "view" | "download") {
 				indicator: "green",
 			});
 		}
+		window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
 	} catch (error) {
 		logger.error("Report PDF generation failed", error);
 		frappe.show_alert({

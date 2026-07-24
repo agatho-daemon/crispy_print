@@ -32,12 +32,19 @@ const mocks = vi.hoisted(() => {
     render: () => render(number),
     getTextContent,
   }));
-  const renderTextLayer = vi.fn(({ container }: { container: HTMLElement }) => {
-    const span = document.createElement("span");
-    span.textContent = "Selectable report text";
-    container.append(span);
-    return { promise: Promise.resolve(), cancel: vi.fn() };
-  });
+  const renderTextLayer = vi.fn();
+  const cancelTextLayer = vi.fn();
+  const TextLayer = vi.fn(
+    ({ container }: { container: HTMLElement }) => ({
+      render: async () => {
+        renderTextLayer(container);
+        const span = document.createElement("span");
+        span.textContent = "Selectable report text";
+        container.append(span);
+      },
+      cancel: cancelTextLayer,
+    }),
+  );
   const getDocument = vi.fn(() => ({
     promise: Promise.resolve({
       numPages: 20,
@@ -49,6 +56,8 @@ const mocks = vi.hoisted(() => {
   return {
     render,
     renderTextLayer,
+    cancelTextLayer,
+    TextLayer,
     getTextContent,
     destroyDocument,
     destroyLoading,
@@ -57,10 +66,12 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock("pdfjs-dist/legacy/build/pdf.js", () => ({
-  GlobalWorkerOptions: {},
-  getDocument: mocks.getDocument,
-  renderTextLayer: mocks.renderTextLayer,
+vi.mock("../../utils/pdfJs", () => ({
+  loadPdfJs: async () => ({
+    GlobalWorkerOptions: {},
+    getDocument: mocks.getDocument,
+    TextLayer: mocks.TextLayer,
+  }),
 }));
 
 let observerCallback: IntersectionObserverCallback | null = null;

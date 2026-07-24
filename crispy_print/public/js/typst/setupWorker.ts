@@ -25,6 +25,7 @@ import {
 	VIEW_PDF_REQUEST_ID,
 	downloadPdfBlob,
 	openPdfBlob,
+	printPdfBlob,
 	postPdfCompile,
 	type PdfAction,
 } from "./workerPdf"
@@ -285,6 +286,40 @@ export function setupWorker(
 		})
 
 		if (currentPdfBlob) {
+			if (action === "print") {
+				const printOpened = printPdfBlob(currentPdfBlob, {
+					onPrint: () => {
+						frappe?.show_alert({
+							message: __("Print dialog opened."),
+							indicator: "green",
+						})
+					},
+					onError: (error) => {
+						logger.error("Document printing failed", error)
+						frappe?.show_alert({
+							message: __("Document printing failed."),
+							indicator: "red",
+						})
+					},
+				})
+				if (!printOpened) {
+					frappe?.show_alert({
+						message: __("Document printing was blocked by the browser."),
+						indicator: "orange",
+					})
+					return
+				}
+				try {
+					await notifyPdfReady(action, currentPdfBlob)
+				} catch (err) {
+					logger.error("Failed to record issued document snapshot", err)
+					frappe?.show_alert({
+						message: __("Could not record issued document snapshot."),
+						indicator: "red",
+					})
+				}
+				return
+			}
 			try {
 				await notifyPdfReady(action, currentPdfBlob)
 			} catch (err) {
@@ -302,6 +337,14 @@ export function setupWorker(
 			}
 
 			openPdfBlob(currentPdfBlob)
+			return
+		}
+
+		if (action === "print") {
+			frappe?.show_alert({
+				message: __("Document preview is not ready to print."),
+				indicator: "orange",
+			})
 			return
 		}
 

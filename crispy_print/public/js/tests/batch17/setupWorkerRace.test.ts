@@ -175,6 +175,57 @@ describe("setupWorker race guards", () => {
 		expect(cleanupWorker).toHaveBeenCalledTimes(1)
 	})
 
+	it("prints the cached DocType preview PDF", async () => {
+		const loadHandlers: Array<() => void> = []
+		const printWindow = {
+			addEventListener: vi.fn((event: string, callback: () => void) => {
+				if (event === "load") loadHandlers.push(callback)
+			}),
+			focus: vi.fn(),
+			print: vi.fn(),
+		}
+		vi.spyOn(window, "open").mockReturnValue(printWindow as unknown as Window)
+		Object.defineProperty(URL, "createObjectURL", {
+			configurable: true,
+			value: vi.fn(() => "blob:doctype-preview"),
+		})
+		Object.defineProperty(URL, "revokeObjectURL", {
+			configurable: true,
+			value: vi.fn(),
+		})
+		const pane = makePane()
+		const teardown = setupWorker("Test Format", pane, makeAdapter(), {
+			createWorker: () => ({ worker: worker as any, cleanup: vi.fn() }),
+			instanceId: "pane-a",
+		})
+		worker.emit({
+			type: "compile",
+			ok: true,
+			format: "pdf",
+			requestId: "preview",
+			pdfBytes: [37, 80, 68, 70],
+		})
+		await Promise.resolve()
+
+		window.dispatchEvent(
+			new CustomEvent(CrispyPreviewEvents.RequestPdf, {
+				detail: { action: "print", instanceId: "pane-a" },
+			})
+		)
+		await Promise.resolve()
+
+		expect(window.open).toHaveBeenCalledWith("blob:doctype-preview", "_blank")
+		expect(loadHandlers).toHaveLength(1)
+		loadHandlers[0]()
+		expect(printWindow.focus).toHaveBeenCalledOnce()
+		expect(printWindow.print).toHaveBeenCalledOnce()
+		expect((globalThis as any).frappe.show_alert).toHaveBeenCalledWith({
+			message: "Print dialog opened.",
+			indicator: "green",
+		})
+		teardown()
+	})
+
 	it("recovers from a missing-layout dead end after a later valid document refresh", async () => {
 		const pane = makePane()
 		let hasLayout = false

@@ -340,21 +340,13 @@ frappe.ui.CrispyPrintView = class {
 			this.prompt_for_preview_context();
 			return;
 		}
-		if (this.current.report) {
-			if (this.vue_instance?.component?.printPDF) {
-				this.vue_instance.component.printPDF();
-				return;
-			}
-			frappe.show_alert({
-				message: __("Report preview is not ready to print."),
-				indicator: "orange",
-			});
+		if (this.vue_instance?.component?.printPDF) {
+			this.vue_instance.component.printPDF();
 			return;
 		}
-		frappe.msgprint({
-			title: __("Print"),
-			message: __("Printing {0}...", [this.current.docname || this.current.report || ""]),
-			primary_action: { label: __("Close"), action: () => {} },
+		frappe.show_alert({
+			message: __("Preview is not ready to print."),
+			indicator: "orange",
 		});
 	}
 

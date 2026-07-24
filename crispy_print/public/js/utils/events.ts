@@ -32,7 +32,7 @@ export type CrispyPreviewSetDocDetail = {
 	instanceId?: string
 }
 
-export type CrispyPreviewPdfAction = "view" | "download"
+export type CrispyPreviewPdfAction = "view" | "download" | "print"
 export type CrispyPreviewPdfRequestDetail = {
 	action: CrispyPreviewPdfAction
 	instanceId?: string
