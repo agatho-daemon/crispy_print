@@ -142,7 +142,10 @@ this policy metadata.
 
 ## Reports
 
-> **Status: WIP.** These interfaces support renderer development and acceptance testing. Their presence does not mean every supported ERPNext report layout has completed production acceptance testing.
+> **Status: Beta 2 architecture complete; production acceptance ongoing.** These
+> interfaces implement the supported report publishing architecture. Their presence
+> does not mean every ERPNext report family, site customization, filter/data
+> combination, or output standard has completed production acceptance testing.
 
 ### `get_report_renderer_catalog()`
 

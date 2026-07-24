@@ -149,7 +149,12 @@ Use **Duplicate** in the builder preview pane when the same document design shou
 
 ### Report Builder Workflow (Dual Mode)
 
-> **Status: WIP / acceptance testing required.** The renderer-based report workflow is available for development and real-data testing, but it has not been fully validated across all supported reports, filter combinations, languages, page counts, and ERPNext datasets. Do not treat current report output as an approved production or accounting publication without reviewing the generated PDF.
+> **Status: Beta 2 architecture complete; acceptance testing required.** The
+> renderer-based report workflow implements the supported Beta 2 architecture, but it
+> has not been fully validated across every report family, filter combination,
+> language, page count, site customization, and ERPNext dataset. Do not treat report
+> output as an approved production or accounting publication without reviewing the
+> generated PDF.
 
 For `Crispy Format Type = Report`, builder now supports two editing modes:
 
@@ -168,8 +173,9 @@ This keeps report editing accessible while protecting advanced customizations.
 
 `raw_typst` is the only persisted mode flag. Portable exports use schema v3; imports
 from schema v1 and v2 remain accepted and convert the former `is_advanced` value to
-`raw_typst`. Existing sites receive the same conversion through a pre-model-sync
-migration before the obsolete DocField is removed.
+`raw_typst`. This schema compatibility is not an upgrade guarantee: Beta 2 remains a
+fresh-install-only release, and its internal patches do not establish a supported
+upgrade path from an earlier alpha or beta site.
 
 Report formats now select a coverage scope and renderer:
 

@@ -7,18 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Working Beta Changes
+## [0.2.0-beta.2] - 2026-07-24
+
+### Beta Release Notes
+
+- Beta 2 is a fresh-install-only release. There is no supported in-place upgrade path or persisted-data compatibility guarantee from Beta 1 or any alpha release.
+- Node.js `24.18.0` LTS and Yarn Classic `1.22.22` are the pinned development and asset-build toolchain.
+- The report publishing architecture is complete for Beta 2. Production acceptance remains ongoing across supported report families, site-specific filters and customizations, large and empty datasets, charts, branding, RTL, and PDF standards.
+- Complete DocType and Report previews use PDF.js `6.1.200`, and their View, Download, and Print actions reuse the compiled PDF artifact.
+- Primary release verification used Frappe v15 and current Chrome. Frappe v16 and current dev-17 remain compatibility targets requiring continued beta retesting.
 
 - Report raw-code mode now uses the existing `raw_typst` flag as its single persisted source of truth. The redundant `is_advanced` field was removed while Advanced remains the Report Builder's direct-Typst editing mode, with schema v1/v2 import compatibility retained.
 - Raw Typst document authoring is now a working beta path for authors who want full Typst control: builder-owned presentation controls are hidden, raw code refresh is explicit, and compile helpers are constrained to the author-facing raw API.
 - Regular builder image insertion, private uploaded image lookup, font-face-aware typography controls, and menu layering fixes are working beta changes intended for real template testing during stabilization.
-- Report usage remains **WIP**. Core pagination, RTL, chart, large-result, and PDF preview contracts now have representative acceptance fixtures, but every supported ERPNext report family and site-specific filter/data combination still requires review before production accounting use.
 
 ### Added
 
 - Added backend CID scope guards and regression coverage so Report sources, Report formats, and report-derived template issuance attempts cannot create Crispy Issued Document records; report preview snapshots and report PDF actions remain non-issuance workflows.
-- Added a packaged PDF.js 3.11 viewer and local worker for complete DocType and Report previews, with a five-page canvas and selectable-text window, capped device-pixel-ratio painting, zero-sized offscreen canvas placeholders, explicit compile/load/render states, last-good-preview retention, and cleanup for stale loading documents, text layers, and render tasks.
-- Added a working standalone Report Preview Print action that prints the already compiled PDF through a temporary hidden frame, releases browser resources afterward, and remains outside CID issuance.
+- Added a packaged PDF.js `6.1.200` viewer and matching local ESM worker for complete DocType and Report previews, with a five-page canvas and selectable-text window, capped device-pixel-ratio painting, zero-sized offscreen canvas placeholders, explicit compile/load/render states, last-good-preview retention, and cleanup for stale loading documents, text layers, and render tasks.
+- Added shared compiled-PDF printing for standalone Report and DocType previews. Both modes open the in-memory PDF in a top-level blob window, invoke the browser print dialog after the PDF viewer loads, report popup/print failures, and release the blob URL afterward; Report output remains outside CID issuance.
 - Added user/report/company/preview-tab-bound 15-minute report snapshots. Snapshot reuse rechecks Report and Company User Permissions and fails closed after expiry, session/tab mismatch, or permission drift.
 - Added Basic report pagination and localization contracts: repeating table/report headers and branding footers, localized page numbers, protected group/subtotal/grand-total boundaries, breakable detail rows, RTL textual columns, mixed-direction shaping, localized labels/dates, Arabic font fallbacks, and stable LTR accounting values.
 - Added a non-mutating report pipeline benchmark covering ERPNext execution, normalization, private JSON serialization, Typst construction/compilation, RPC/base64 overhead, PDF metadata scanning, cache behavior, and browser canvas allocation.
@@ -55,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bumped the application version to `0.2.0-beta.2`.
+- Pinned the Beta 2 development and asset-build runtime to Node.js `24.18.0` LTS with Yarn Classic `1.22.22`.
 - Replaced multipage inline-SVG rendering with PDF.js for complete DocType and Report previews. Typst now compiles the preview artifact as PDF, document-worker responses transfer an `ArrayBuffer`, and report RPC responses decode PDF data only at the UI boundary. This makes preview output match the final PDF path and, especially for long reports, avoids large SVG response arrays, repeated SVG sanitization, and unbounded live DOM trees while keeping the builder interactive through bounded lazy canvas rendering. ERPNext report execution and Typst compilation time are unchanged; retained report snapshots still ensure builder-only changes never rerun the report.
 - Kept the Branding Profile Builder and Crispy Typst Block Builder on SVG intentionally: their small, focused authoring specimens benefit from the lighter SVG path and do not need a multipage PDF document viewer.
 - Upgraded portable Crispy Format exports to schema v3. Schema v1 and v2 imports remain supported and migrate the former Report `is_advanced` value into `raw_typst`.
@@ -95,6 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed Report View, Download, and Print so they reuse the already compiled in-memory PDF instead of recompiling Typst without the retained `crispy-report-data.json` input or depending on an expired preview snapshot.
+- Fixed the DocType Print action, which previously displayed only a placeholder message, so it prints the cached preview PDF and records the normal issued-document snapshot.
 - Fixed PDF.js text-layer integration by assigning each retained layer the actual page viewport `--scale-factor` before rendering, removing the PDF.js contract warning while preserving canvas/text alignment under shared preview zoom.
 - Fixed backend normal-document assembly order so safe empty header/footer blocks precede the runtime and format preambles, while dedicated `doc_header` and `doc_footer` definitions remain authoritative before page setup; browser and backend compilation now share the same precedence.
 - Fixed a runaway standalone Report Preview compile loop caused by the runtime orchestration function shadowing the report compile API import. The API and orchestration paths now have distinct names, equivalent effective payloads are deduplicated, presentation settings resolve before scheduling, and only the latest genuinely changed intent is replayed.
@@ -146,8 +157,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added frontend coverage for Basic generator v2, native chart source generation, Branding Profile production-chart specimens, disabled-grid propagation, and non-persistent preview font fallback.
 - Added backend and frontend coverage for TTC face discovery, safe chart-representation overrides, protected accounting chart semantics, report chart controls, and every Branding Profile specimen chart kind.
 - Added CI coverage for the vendored Typst package checksum and license inventory.
-- Focused validation for this round passed 26 frontend tests covering report/Branding chart controls and generation, 42 compile/font API tests, 14 chart contract tests, and the changed format-default test.
-- The full frontend and backend application suites have not yet been rerun after the Lilaq-first chart changes.
+- The complete Beta 2 frontend suite passed 269 tests across 63 files under Node.js `24.18.0`.
+- The complete backend application suite passed 439 tests with 5 skipped and no failures.
+- TypeScript checks, pre-commit hooks, ESLint, Prettier, the full Bench asset build, and real-browser DocType/Report preview and printing smoke tests passed.
 
 ## [0.2.0-beta.1] - 2026-07-01
 
@@ -358,6 +370,7 @@ See [README.md - Known Limitations](README.md#known-limitations) for full list.
 - Vue 3, Pinia (state management)
 - Vite, Vitest (testing)
 
+[0.2.0-beta.2]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.2.0-beta.2
 [0.2.0-beta.1]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.2.0-beta.1
 [0.1.0-alpha.3]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/agatho-daemon/crispy_print/releases/tag/v0.1.0-alpha.2

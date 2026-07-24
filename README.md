@@ -7,38 +7,49 @@
 
 > [!CAUTION]
 >
-> # MAJOR UPDATE
+> # BETA 2 FRESH-INSTALL POLICY
 >
-> ## This release will break existing formats.
+> Crispy Print `0.2.0-beta.2` must be installed as a fresh application installation on a
+> site where an earlier Crispy Print alpha or beta has not been installed.
 >
-> This is due to changes in fields representation in the backend and exchange of that data between Python and TS/JS parts along with Typst translation logic. Please backup your formats before pulling this update.
+> There is no supported in-place upgrade path from Beta 1 or any alpha release, and no
+> guarantee that earlier database records, formats, templates, issued-document data,
+> exports, or other persisted state remain compatible. Do not rely on `bench update` or
+> `bench migrate` to convert an earlier Crispy Print installation to Beta 2.
 >
-> A migration patch is provided to convert existing formats to the new structure, but complex custom layouts may require manual adjustments in the builder after migration.
+> Keep the previous site or a database backup if historical test data matters. Exports
+> may be retained as design references, but successful import into Beta 2 is not
+> guaranteed. Beta data models and public behavior may continue to change before the
+> stable release.
 >
-> Typst CLI `0.15.0` or newer is required because Crispy Print ships variable fonts alongside static and TrueType Collection fonts, and Typst supports variable fonts starting in `0.15.0`. Upgrade Typst before running previews, PDF generation, or migration verification; older Typst versions are rejected at compile time.
->
-> After update run `bench migrate` to apply database changes and data migration. Then open each format in the builder and verify that the layout is correct. Some fields may need to be re-dragged or reconfigured due to changes in field properties and layout structure.
->
-> Existing `Crispy Template` records are also renamed to canonical document IDs during migration. If a site already has both a legacy template name and its target canonical name, migration stops instead of merging or overwriting records. Take a database backup before upgrading sites with existing templates and resolve duplicate template records manually if the patch reports a collision.
+> Typst CLI `0.15.0` or newer and the Node/Yarn versions listed below are required.
 
-## Beta 1 Testing Request
+## Beta 2 Testing Request
 
-Crispy Print `0.2.0-beta.1` is the first beta release, tested against Frappe v15, Frappe v16, and current dev-17 as of 2026-07-01. Please test existing workflows and report bugs, regressions, confusing behavior, and documentation gaps.
+Crispy Print `0.2.0-beta.2` is a fresh-install beta release. Its primary release
+verification was performed on Frappe v15 with Node.js `24.18.0`, Yarn Classic
+`1.22.22`, Typst `0.15.0+`, and current Chrome as of 2026-07-24. Frappe v16 and
+current dev-17 remain compatibility targets and need continued tester coverage.
+Please report bugs, regressions, confusing behavior, and documentation gaps.
 
 - Test DocType print preview and PDF generation with real documents.
 - Test the visual format builder: drag fields, configure tables, save, reload, reset, and export/import formats.
 - Test Branding Profile Builder, including logo, letterhead, typography, margins, and QR placement.
 - Test Raw Typst mode, private image helpers, reusable Typst blocks, regular-mode image insertion, and font/typography controls.
 - Test QR and document-code flows where applicable. Regulatory QR support especially needs feedback from users in tax-regulated regions because the maintainer cannot validate real-world tax QR requirements locally; the maintainer's country does not currently have tax-related document QR regulations. Please test whether QR Regulatory Profiles, Fiscal Credentials, Document Code Profiles, and generated payloads can model your local authority requirements, invoice fields, environment rules, and verification expectations. If your region requires additional fields for QR generation, please report the required field names, data types, source documents, validation rules, and example payload structure where possible.
-- Test report preview and report PDF generation, but treat report support as a beta stabilization area. Contract support is still foundation-level and remains **WIP**.
+- Test report preview and report PDF generation across representative report families. The report architecture is complete for Beta 2, while report-family and site-specific production acceptance remains ongoing. Contract support is still foundation-level and remains **WIP**.
 - Include Frappe version, Typst version, browser, console errors, server traceback, and reproduction steps when opening issues.
 
 > [!NOTE]
-> This README describes the current beta architecture at a high level. For exact migration details and edge-case behavior, prefer the checked-in patches and tests as the source of truth.
+> This README describes the current beta architecture at a high level. For exact
+> implementation and edge-case behavior, prefer the checked-in code and tests as the
+> source of truth.
 
 ## Project Status
 
-**Beta / stabilization.** Core document-format workflows are ready for broader testing, while report and contract workflows are still being refined.
+**Beta / stabilization.** Core document-format workflows and the Beta 2 report
+architecture are ready for broader testing. Report-family acceptance remains ongoing,
+and contract workflows remain foundation-level.
 
 Crispy Print is a next-generation document publishing engine for ERPNext built around deterministic rendering, structured document composition, and publication-grade PDF generation. Instead of treating business documents as browser pages exported to PDF, Crispy Print treats them as formal documents with stable pagination, precise layout control, reusable branding systems, and machine-verifiable document workflows. Built on [Typst](https://typst.app/), Crispy Print moves ERP printing beyond fragile HTML print pipelines into a modern, regulation-ready publishing architecture designed for invoices, quotations, vouchers, contracts, compliance documents, technical reports, and future digital business-document ecosystems.
 
@@ -75,7 +86,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Crispy Issued Document Registry (CID)** - Immutable issued-document snapshots linked to frozen templates, with opaque verification tokens, render-hash facts, artifact tracking, trust-event and regulatory-submission child tables, and revocation/supersession state.
 - **Per-Format PDF Standard** - Output standard selection with a PDF/A-2u default plus PDF/A-3u, PDF/A-4, PDF 1.7, and PDF 2.0.
 - **Global Print Settings** - Crispy Print Settings DocType for font configuration (uploaded/system fonts, search paths, font discovery refresh), render timeout, and draft/cancelled print policy.
-- **Report Renderer Infrastructure (WIP)** - Renderer-based formats for generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation, with curated Basic-mode sections, secured full-result snapshots, no-rerun Builder projection, managed pagination and RTL accounting output, immutable publication gates, metadata-only output auditing, guarded Advanced Typst overrides, and offline Lilaq-first charts with sanitized Frappe SVG fallback. Branding designers can cycle through supported specimen chart kinds, while Basic report formats may retain the ERPNext chart or request a compatible bar, line, or horizontal-bar representation. Report formats are created only by an explicit designer action and are never seeded during migration.
+- **Report Publishing Architecture** - Complete Beta 2 renderer architecture for generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation, with curated Basic-mode sections, secured full-result snapshots, no-rerun Builder projection, managed pagination and RTL accounting output, immutable publication gates, metadata-only output auditing, guarded Advanced Typst overrides, and offline Lilaq-first charts with sanitized Frappe SVG fallback. Branding designers can cycle through supported specimen chart kinds, while Basic report formats may retain the ERPNext chart or request a compatible bar, line, or horizontal-bar representation. Report formats are created only by an explicit designer action and are never seeded automatically. Production acceptance across every report family, filter combination, and customized site remains ongoing.
 - **Contract Format Foundation (WIP)** - Contract format support is reserved for future structured contract publishing workflows.
 - **Regulatory QR Layer** - QR Regulatory Profiles, Fiscal Credentials, and helper APIs for building machine-verifiable fiscal and compliance QR payloads.
 - **Document Code Infrastructure** - Document Code Profiles and Rules for deterministic reference codes, naming patterns, and compliance-oriented document identifiers.
@@ -87,6 +98,15 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Typed Frontend Architecture** - Vue 3 and TypeScript modules for builder state, report state, presentation settings, Typst translation, workers, and sanitization utilities.
 
 ## Requirements
+
+### Build Toolchain
+
+- **Node.js:** `24.18.0` LTS
+- **Yarn:** `1.22.22` Classic
+- **Python:** `3.10+`
+
+Node `24.18.0` is the pinned development and asset-build runtime for Beta 2. Yarn
+Modern (2+) is not part of the supported Frappe v15 build workflow.
 
 ### Typst CLI (Required)
 
@@ -121,7 +141,7 @@ Crispy Print ships a compact mix of variable, static, and collection fonts. Vari
 
 ### Frappe Compatibility
 
-- **Frappe:** v15, v16, and current dev-17 as tested on 2026-07-01 (all Python/Node.js dependencies already satisfied)
+- **Frappe:** v15, v16, and current dev-17 are compatibility targets. Beta 2 release verification used Frappe v15; v16 and dev-17 require continued beta retesting.
 - **Frappe v15:** Uses the classic `/app/crispy` workspace route and v15-compatible Desk assets.
 - **Frappe v16/dev-17:** Ships a curated **Crispy Studio** Workspace Sidebar so newer Desk renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of relying on the auto-generated sidebar. The v16+ **Crispy Print** app tile uses Frappe's native `add_to_apps_screen` `has_permission` parameter to hide the tile from website-only users and show it only to users with read access to user-facing Crispy Print records.
 - **Frappe dev-17:** Supported on the current development branch tested for this beta; retest before production use because dev-17 is still moving.
@@ -131,6 +151,10 @@ Crispy Print ships a compact mix of variable, static, and collection fonts. Vari
 
 ## Installation
 
+Beta 2 installation is supported only on a site where Crispy Print has not previously
+been installed. Create a new test site or install the app on an existing site that has
+no earlier Crispy Print schema or data.
+
 ### 1. Install Typst CLI
 
 See [Requirements](#requirements) above - Typst must be installed first.
@@ -139,7 +163,7 @@ See [Requirements](#requirements) above - Typst must be installed first.
 
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/agatho-daemon/crispy_print --branch v0.2.0-beta.1
+bench get-app https://github.com/agatho-daemon/crispy_print --branch v0.2.0-beta.2
 bench --site your-site install-app crispy_print
 bench restart
 ```
@@ -357,7 +381,8 @@ Configured quality tools:
 
 GitHub Actions workflows are present in the repository but are not used for release gating yet. Tests are currently run manually using `yarn test:unit`, `bench run-tests`, and `pre-commit run --all-files`.
 
-Keep feature changes small during the beta 1 stabilization period unless they directly fix release-blocking bugs.
+Keep feature changes small during Beta 2 stabilization unless they directly fix
+release-blocking bugs.
 
 ## License
 

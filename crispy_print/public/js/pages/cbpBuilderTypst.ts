@@ -367,7 +367,8 @@ function toTypstValue(value: any): string {
 function assetFilename(path: string) {
   if (!path) return "";
   const clean = String(path).split("?")[0].split("#")[0];
-  return decodeURIComponent(clean.split("/").filter(Boolean).at(-1) || "");
+  const segments = clean.split("/").filter(Boolean);
+  return decodeURIComponent(segments[segments.length - 1] || "");
 }
 
 function parseChartPalette(value: unknown) {

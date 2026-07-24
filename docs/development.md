@@ -6,7 +6,8 @@ _Part of the [Crispy Print documentation](README.md)._
 
 This app includes comprehensive test coverage:
 
-- **449 tests/test methods** (187 frontend + 262 backend)
+- **269 frontend tests** across 63 Vitest files
+- **439 backend tests** in the complete Frappe application suite (5 skipped in the Beta 2 release run)
 - **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
@@ -18,6 +19,15 @@ load them through the Sample Format Catalog APIs. Do not re-add
 file for demo data; rich local demo generation belongs in `crispy_print/dev_utils/`.
 
 ## Development
+
+### Required Toolchain
+
+- Node.js `24.18.0` LTS (pinned by `.node-version`)
+- Yarn `1.22.22` Classic
+- Python `3.10+`
+- Typst CLI `0.15.0+`
+
+Yarn Modern is not supported by the Frappe v15 build workflow used for Beta 2.
 
 ### Frontend Dependencies
 
@@ -79,11 +89,11 @@ bench --site your-site run-tests --module crispy_print.tests.test_api
 bench --site your-site run-tests --doctype "Crispy Format"
 ```
 
-**Test Coverage:**
+**Beta 2 release validation:**
 
-- **Frontend:** 187 tests across 52 test files
-- **Backend:** 262 test methods across 22 test files
-- **Total:** 449 tests/test methods
+- **Frontend:** 269 tests across 63 test files
+- **Backend:** 439 tests, 5 skipped, 0 failures
+- **Additional gates:** TypeScript checks, pre-commit, ESLint, Prettier, complete Bench asset build, and real-browser DocType/Report preview and printing smoke tests
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 

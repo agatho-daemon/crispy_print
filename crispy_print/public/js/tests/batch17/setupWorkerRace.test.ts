@@ -150,7 +150,7 @@ describe("setupWorker race guards", () => {
 		)
 
 		expect(worker.messages.length).toBe(postCountBefore + 1)
-		expect(worker.messages.at(-1).requestId).toBe("download")
+		expect(worker.messages[worker.messages.length - 1].requestId).toBe("download")
 	})
 
 	it("cancels pending compile timers on cleanup", async () => {

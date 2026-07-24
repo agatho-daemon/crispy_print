@@ -4,9 +4,15 @@ _Part of the [Crispy Print documentation](README.md)._
 
 As a **beta release**, Crispy Print has several known limitations:
 
+### Beta Installation and Compatibility
+
+- **Fresh Install Only**: Beta 2 has no supported in-place upgrade path from Beta 1 or any alpha release. Install it where Crispy Print has not previously been installed.
+- **No Persisted-Data Guarantee**: Database records, formats, templates, issued-document data, exports, and other persisted state may change incompatibly between beta releases. Keep earlier sites or backups when historical test data matters.
+
 ### System & Dependencies
 
 - **Typst CLI Required**: Must be installed separately; document rendering will not work without it.
+- **Node/Yarn Build Toolchain**: Development and asset builds are pinned to Node.js `24.18.0` LTS and Yarn Classic `1.22.22`.
 - **Frappe v15/v16/current dev-17 Only**: Older Frappe versions are not supported. dev-17 compatibility reflects the development branch tested for this beta and should be retested before production use.
 - **Server-Side Rendering**: PDF and SVG compilation happen on the server through Typst CLI.
 - **Font Discovery**: Depends on bundled fonts, uploaded site fonts, system font configuration, and `TYPST_FONT_PATHS`.
@@ -17,7 +23,7 @@ As a **beta release**, Crispy Print has several known limitations:
 - **Field Coverage**: Standard document fields and child tables are the main target; complex custom fields may require Raw Typst.
 - **Grid Model**: The visual builder uses a constrained column layout to keep output predictable.
 - **Conditional Logic**: Visual conditional visibility is not implemented yet.
-- **Report Scope (WIP)**: The renderer architecture currently covers generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation. It has not completed comprehensive acceptance testing, so every generated report PDF must be reviewed before operational or accounting use.
+- **Report Acceptance Scope**: The Beta 2 renderer architecture covers generic reports, receivables/payables, financial statements, General Ledger, and Bank Reconciliation. Comprehensive family/site acceptance is still ongoing, so every generated report PDF must be reviewed before operational or accounting use.
 - **Report Family Coverage**: Known renderer mappings are curated. New or renamed ERPNext reports fall back to the generic renderer until deliberately classified and tested.
 - **Upstream Report Changes**: Composite HTML/JavaScript/JSON/Python fingerprints and Report registry checks warn when reviewed Frappe/ERPNext sources change, but native Typst renderers are not automatically regenerated. A designer must review structural snapshots and representative PDFs, acknowledge the current fingerprint, and publish a new template version where required.
 - **Report Edge Cases**: Dynamic columns, unusual filters, empty datasets, very wide reports, long values, multiple pages, charts, totals, RTL content, and custom ERPNext modifications require report-specific testing. Advanced Raw Typst may still be necessary.

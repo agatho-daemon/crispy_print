@@ -11,6 +11,7 @@ _Part of the [Crispy Print documentation](README.md)._
 - [x] Crispy Issued Document (CID) registry with verification tokens, artifact tracking, trust-event and regulatory-submission child tables, and revocation/supersession state
 - [x] Frappe v16 curated Workspace Sidebar
 - [x] Fully template-driven document preview
+- [x] Beta 2 report publishing architecture for generic, receivable/payable, financial statement, General Ledger, and Bank Reconciliation families
 
 ### Future Features
 

@@ -16,7 +16,7 @@ describe("ChartPaletteField", () => {
       .findAll(".chart-palette-field__order-actions button")[0]
       .trigger("click");
 
-    expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toBe(
+    expect(wrapper.emitted("update:modelValue")?.slice(-1)[0]?.[0]).toBe(
       "#445566, #112233, #778899",
     );
   });
@@ -28,17 +28,19 @@ describe("ChartPaletteField", () => {
     });
 
     await wrapper.find(".chart-palette-field__add").trigger("click");
-    expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toBe(
+    expect(wrapper.emitted("update:modelValue")?.slice(-1)[0]?.[0]).toBe(
       "#AA0000, #00AA00",
     );
 
     await wrapper.find(".chart-palette-field__remove").trigger("click");
-    expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toBe("#AA0000");
+    expect(wrapper.emitted("update:modelValue")?.slice(-1)[0]?.[0]).toBe(
+      "#AA0000",
+    );
 
     await wrapper
       .find(".chart-palette-field__label-row button")
       .trigger("click");
-    expect(wrapper.emitted("update:modelValue")?.at(-1)?.[0]).toBe(
+    expect(wrapper.emitted("update:modelValue")?.slice(-1)[0]?.[0]).toBe(
       "#AA0000, #00AA00",
     );
   });

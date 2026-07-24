@@ -116,7 +116,7 @@ crispy_print/
 
 **Pages:**
 
-- **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType, Report (WIP), and Contract (WIP) formats.
+- **Crispy Format Builder** (`/app/crispy-format-builder`) - Main document builder for DocType and Beta 2 Report formats, plus foundation-level Contract (WIP) formats.
 - **Crispy Print Preview** (`/app/crispy-print-preview/{doctype}/{docname}/{format}`) - Server-rendered document preview and PDF workflow.
 - **Crispy Branding Profile Builder** (`/app/cbp-builder`) - Dedicated builder for reusable page, typography, branding, table, and QR presentation profiles.
 
@@ -143,7 +143,7 @@ Backend:
 - **`api/v1/branding_profiles.py`** - Branding Profile read/write APIs used by the profile builder and format preview flow.
 - **`api/v1/reports.py`** - Report execution, user/report/company/tab-bound retained snapshots, Typst source generation, combined preview compilation, and metadata-only output audit creation.
 - **`report_lifecycle.py`** - Exact-report publication gates, current Basic generator/fingerprint checks, and centralized report format resolution precedence.
-- **`report_renderers.py`** - Report-family registry, curated sections, composite upstream fingerprints, installed-version/Report registry diagnostics, and compatibility acknowledgement metadata. Report rendering remains WIP pending full family acceptance testing.
+- **`report_renderers.py`** - Complete Beta 2 report-family registry architecture, curated sections, composite upstream fingerprints, installed-version/Report registry diagnostics, and compatibility acknowledgement metadata. Full family and site-specific production acceptance remains ongoing.
 - **`report_charts.py`** - Stable chart-spec normalization, safe format-level bar/line/horizontal-bar representation overrides, protected accounting semantics, accounting chart limits, accessibility summaries, theme normalization, and deterministic Lilaq/Frappe-SVG/omission policy.
 - **`@local/crispy-charts:0.1.1`** - The only report-template chart API. It wraps vendored Lilaq 0.6.0 and compiles exclusively through the application package path.
 - **`api/v1/document_codes.py`** - Document-code resolution and generation for regulatory/compliance workflows.

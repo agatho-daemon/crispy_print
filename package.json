@@ -8,7 +8,7 @@
     "test:unit": "cd crispy_print/public/js && yarn test:unit"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
+    "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
@@ -19,7 +19,7 @@
     "vue-eslint-parser": "^9.4.3"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=24.18.0 <25",
     "yarn": ">=1.22.0"
   }
 }
