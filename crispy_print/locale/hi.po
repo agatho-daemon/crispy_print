@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Crispy Print VERSION\n"
 "Report-Msgid-Bugs-To: agatho_daemon@icloud.com\n"
-"POT-Creation-Date: 2026-07-25 06:40+0307\n"
+"POT-Creation-Date: 2026-07-25 11:21+0307\n"
 "PO-Revision-Date: 2026-07-25 06:40+0307\n"
 "Last-Translator: Crispy Print Contributors\n"
 "Language: hi\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.13.1\n"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1128
+#: crispy_print/public/js/components/SettingsPane.vue:1154
 msgid "1 field selected"
 msgstr "1 फ़ील्ड चयनित"
 
@@ -192,7 +192,7 @@ msgstr "एक लेटर हेड स्वयं का स्थान न
 msgid "A label used to organize and filter blocks in the library. It does not affect where or how the block is rendered."
 msgstr "लाइब्रेरी में ब्लॉकों को व्यवस्थित और फ़िल्टर करने के लिए उपयोग किया जाने वाला एक लेबल। इसका इस बात पर कोई प्रभाव नहीं पड़ता कि ब्लॉक कहाँ और कैसे प्रस्तुत किया गया है।"
 
-#: crispy_print/api/v1/reports.py:892
+#: crispy_print/api/v1/reports.py:896
 msgid "A saved Report format is required for audited output."
 msgstr "ऑडिटेड आउटपुट के लिए एक सहेजा गया रिपोर्ट प्रारूप आवश्यक है।"
 
@@ -203,7 +203,7 @@ msgid "A3"
 msgstr "ए3"
 
 #: crispy_print/public/js/components/SettingsPane.vue:145
-#: crispy_print/public/js/pages/CrispyPP.vue:324
+#: crispy_print/public/js/pages/CrispyPP.vue:338
 msgid "A3 (297 × 420 mm)"
 msgstr "ए3 (297 × 420 मिमी)"
 
@@ -214,7 +214,7 @@ msgid "A4"
 msgstr "A4"
 
 #: crispy_print/public/js/components/SettingsPane.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:325
+#: crispy_print/public/js/pages/CrispyPP.vue:339
 msgid "A4 (210 × 297 mm)"
 msgstr "ए4 (210 × 297 मिमी)"
 
@@ -225,7 +225,7 @@ msgid "A5"
 msgstr "ए5"
 
 #: crispy_print/public/js/components/SettingsPane.vue:147
-#: crispy_print/public/js/pages/CrispyPP.vue:326
+#: crispy_print/public/js/pages/CrispyPP.vue:340
 msgid "A5 (148 × 210 mm)"
 msgstr "ए5 (148 × 210 मिमी)"
 
@@ -308,7 +308,7 @@ msgstr "सक्रिय"
 msgid "Active fiscal credential available: {0}"
 msgstr "सक्रिय राजकोषीय क्रेडेंशियल उपलब्ध: {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:105
+#: crispy_print/public/js/components/TableColumnsDialog.vue:116
 msgid "Add"
 msgstr "जोड़ना"
 
@@ -335,12 +335,12 @@ msgstr "पहले एक दस्तावेज़ नियम जोड�
 msgid "Add color"
 msgstr "रंग जोड़ें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:169
-#: crispy_print/public/js/components/TableColumnsDialog.vue:83
+#: crispy_print/public/js/components/LayoutPane.vue:177
+#: crispy_print/public/js/components/TableColumnsDialog.vue:94
 msgid "Add column"
 msgstr "कॉलम जोड़ें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:201
+#: crispy_print/public/js/components/LayoutPane.vue:209
 msgid "Add page break"
 msgstr "पेज ब्रेक जोड़ें"
 
@@ -348,11 +348,11 @@ msgstr "पेज ब्रेक जोड़ें"
 msgid "Add rows from the backend QR field registry. Field metadata is filled automatically."
 msgstr "बैकएंड QR फ़ील्ड रजिस्ट्री से पंक्तियाँ जोड़ें। फ़ील्ड मेटाडेटा स्वचालित रूप से भर जाता है."
 
-#: crispy_print/public/js/components/LayoutPane.vue:148
+#: crispy_print/public/js/components/LayoutPane.vue:156
 msgid "Add section above"
 msgstr "ऊपर अनुभाग जोड़ें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:156
+#: crispy_print/public/js/components/LayoutPane.vue:164
 msgid "Add section below"
 msgstr "नीचे अनुभाग जोड़ें"
 
@@ -366,15 +366,15 @@ msgstr "{0} QR फ़ील्ड जोड़े गए।"
 msgid "Adds marker and line-pattern distinctions so charts remain understandable without relying on color alone."
 msgstr "मार्कर और लाइन-पैटर्न भेद जोड़ता है ताकि चार्ट केवल रंग पर निर्भर हुए बिना भी समझ में आ सकें।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:385
+#: crispy_print/public/js/components/LayoutPane.vue:417
 msgid "Align"
 msgstr "संरेखित करें"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:48
+#: crispy_print/public/js/components/TableColumnsDialog.vue:59
 msgid "Align: {0}"
 msgstr "संरेखित करें: {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:399
+#: crispy_print/public/js/components/LayoutPane.vue:431
 msgid "Alignment options"
 msgstr "संरेखण विकल्प"
 
@@ -436,6 +436,12 @@ msgstr "इस टेम्पलेट दायरे के लिए एक 
 msgid "An enabled fiscal credential already exists for this company, regulatory profile, authority code, and environment: {0}"
 msgstr "इस कंपनी, नियामक प्रोफ़ाइल, प्राधिकरण कोड और पर्यावरण के लिए एक सक्षम राजकोषीय क्रेडेंशियल पहले से मौजूद है: {0}"
 
+#: crispy_print/public/js/components/SettingsPane.vue:713
+#: crispy_print/public/js/components/SettingsPane.vue:850
+#: crispy_print/public/js/pages/CrispyPP.vue:275
+msgid "Anchor"
+msgstr "एंकर"
+
 #. Label of a Section Break field in DocType 'Crispy Typst Block'
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
 msgid "Applicability"
@@ -447,10 +453,10 @@ msgid "Applicable Documents"
 msgstr "लागू दस्तावेज़"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:108
-#: crispy_print/public/js/components/LayoutPane.vue:1288
-#: crispy_print/public/js/components/LayoutPane.vue:1696
-#: crispy_print/public/js/components/LayoutPane.vue:1736
-#: crispy_print/public/js/components/LayoutPane.vue:1800
+#: crispy_print/public/js/components/LayoutPane.vue:1284
+#: crispy_print/public/js/components/LayoutPane.vue:1708
+#: crispy_print/public/js/components/LayoutPane.vue:1748
+#: crispy_print/public/js/components/LayoutPane.vue:1812
 #: crispy_print/public/js/components/QrFieldsDialog.vue:54
 msgid "Apply"
 msgstr "लागू करें"
@@ -586,7 +592,7 @@ msgstr "प्राधिकरण {0}"
 #. Option for the 'Data labels' (Select) field in DocType 'Crispy Branding
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/CrispyImageDialog.vue:63
-#: crispy_print/public/js/components/SettingsPane.vue:810
+#: crispy_print/public/js/components/SettingsPane.vue:823
 #: crispy_print/public/js/pages/CbpBuilder.vue:500
 msgid "Auto"
 msgstr "ऑटो"
@@ -632,7 +638,7 @@ msgstr "अक्ष रेखा की चौड़ाई (पीटी)"
 msgid "Aztec"
 msgstr "एज़्टेक"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:358
+#: crispy_print/public/js/pages/CrispyPP.vue:372
 msgid "B"
 msgstr "बी"
 
@@ -708,7 +714,7 @@ msgstr "बेसलाइन शिफ्ट (पीटी)"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:893
+#: crispy_print/public/js/components/SettingsPane.vue:919
 msgid "Basic QR"
 msgstr "बेसिक QR"
 
@@ -784,7 +790,7 @@ msgstr "सीमाएँ"
 #: crispy_print/public/js/components/BoxSidesEditor.vue:38
 #: crispy_print/public/js/pages/CbpBuilder.vue:77
 #: crispy_print/public/js/pages/CbpBuilder.vue:116
-#: crispy_print/public/js/pages/CrispyPP.vue:362
+#: crispy_print/public/js/pages/CrispyPP.vue:376
 #: crispy_print/public/js/pages/CtbBuilder.vue:62
 msgid "Bottom"
 msgstr "तल"
@@ -821,7 +827,7 @@ msgstr "ब्रांडिंग बिल्डर"
 #: crispy_print/crispy_print/page/cbp_builder/cbp_builder.js:121
 #: crispy_print/public/js/components/CrispyTemplatePublishDialog.vue:38
 #: crispy_print/public/js/components/SettingsPane.vue:55
-#: crispy_print/public/js/pages/CrispyPP.vue:600
+#: crispy_print/public/js/pages/CrispyPP.vue:614
 msgid "Branding Profile"
 msgstr "ब्रांडिंग प्रोफ़ाइल"
 
@@ -906,7 +912,7 @@ msgstr "सी40"
 msgid "CAdES/CMS"
 msgstr "सीएडीईएस/सीएमएस"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:622
+#: crispy_print/public/js/pages/CrispyPP.vue:636
 msgid "Cache Hit"
 msgstr "कैश हिट"
 
@@ -994,10 +1000,6 @@ msgstr "सेल इनसेट"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 msgid "Cell inset (pt)"
 msgstr "सेल इनसेट (पीटी)"
-
-#: crispy_print/public/js/components/LayoutPane.vue:453
-msgid "Center"
-msgstr "केंद्र"
 
 #. Option for the 'Document Role' (Select) field in DocType 'Crispy Document
 #. Code Rule'
@@ -1112,7 +1114,7 @@ msgstr "के लिए एक प्रारूप चुनें"
 msgid "Choose and reorder colors visually. Color codes are managed automatically."
 msgstr "रंगों को दृष्टिगत रूप से चुनें और पुन: व्यवस्थित करें। रंग कोड स्वचालित रूप से प्रबंधित होते हैं।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:531
+#: crispy_print/public/js/components/LayoutPane.vue:514
 msgid "Choose block"
 msgstr "ब्लॉक चुनें"
 
@@ -1121,7 +1123,7 @@ msgid "Choose fields to include in the QR payload."
 msgstr "QR पेलोड में शामिल करने के लिए फ़ील्ड चुनें।"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:6
-#: crispy_print/public/js/components/LayoutPane.vue:541
+#: crispy_print/public/js/components/LayoutPane.vue:524
 msgid "Choose image"
 msgstr "छवि चुनें"
 
@@ -1137,7 +1139,7 @@ msgstr "चयनित श्रृंखला का रंग चुने�
 msgid "Choose the report variables below, then run a live preview using ERPNext data."
 msgstr "नीचे रिपोर्ट वेरिएबल चुनें, फिर ERPNext डेटा का उपयोग करके लाइव पूर्वावलोकन चलाएं।"
 
-#: crispy_print/api/v1/formats.py:752
+#: crispy_print/api/v1/formats.py:753
 msgid "Cleared source Branding Profile {0} because it belongs to another company."
 msgstr "स्रोत ब्रांडिंग प्रोफ़ाइल {0} को साफ़ कर दिया गया क्योंकि यह किसी अन्य कंपनी से संबंधित है।"
 
@@ -1150,7 +1152,7 @@ msgstr "प्रत्येक परिवर्तन के बाद स�
 #: crispy_print/public/js/components/CrispyTypstBlockDialog.vue:62
 #: crispy_print/public/js/components/DuplicateForCompanyDialog.vue:15
 #: crispy_print/public/js/components/SampleFormatsDialog.vue:15
-#: crispy_print/public/js/components/TableColumnsDialog.vue:112
+#: crispy_print/public/js/components/TableColumnsDialog.vue:123
 msgid "Close"
 msgstr "बंद करें"
 
@@ -1216,7 +1218,7 @@ msgstr "प्रस्तुति संक्षिप्त करें"
 
 #. Label of a Color field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/LayoutPane.vue:1795
+#: crispy_print/public/js/components/LayoutPane.vue:1807
 #: crispy_print/public/js/components/SettingsPane.vue:515
 #: crispy_print/public/js/components/SettingsPane.vue:626
 #: crispy_print/public/js/components/TypographyStyleEditor.vue:140
@@ -1227,9 +1229,13 @@ msgstr "रंग"
 msgid "Colors"
 msgstr "रंग"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:40
+#: crispy_print/public/js/components/TableColumnsDialog.vue:51
 msgid "Column label"
 msgstr "कॉलम लेबल"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:24
+msgid "Column order"
+msgstr "स्तंभ क्रम"
 
 #: crispy_print/public/js/components/TableColumnsDialog.vue:22
 #: crispy_print/public/js/pages/CrispyPP.vue:101
@@ -1283,7 +1289,7 @@ msgstr "कॉम्पैक्ट लेबल"
 #: crispy_print/public/js/components/SettingsPane.vue:35
 #: crispy_print/public/js/pages/CbpBuilder.vue:20
 #: crispy_print/public/js/pages/CrispyPP.vue:251
-#: crispy_print/public/js/pages/CrispyPP.vue:596
+#: crispy_print/public/js/pages/CrispyPP.vue:610
 msgid "Company"
 msgstr "कंपनी"
 
@@ -1351,7 +1357,7 @@ msgstr "संकलित PDF का उत्पादन नहीं कि�
 msgid "Compiled SVG was not produced"
 msgstr "संकलित SVG का उत्पादन नहीं किया गया था"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:217
+#: crispy_print/public/js/components/PreviewRenderer.vue:218
 msgid "Compiling PDF…"
 msgstr "PDF संकलित किया जा रहा है..."
 
@@ -1406,20 +1412,20 @@ msgstr "स्थिति JSON की आवश्यकता तब होत
 msgid "Condition Type"
 msgstr "शर्त प्रकार"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1773
+#: crispy_print/public/js/components/LayoutPane.vue:1785
 msgid "Configure Divider"
 msgstr "विभाजक कॉन्फ़िगर करें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1725
+#: crispy_print/public/js/components/LayoutPane.vue:1737
 msgid "Configure Spacer"
 msgstr "स्पेसर कॉन्फ़िगर करें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:504
+#: crispy_print/public/js/components/LayoutPane.vue:487
 #: crispy_print/public/js/components/TableColumnsDialog.vue:6
 msgid "Configure columns"
 msgstr "कॉलम कॉन्फ़िगर करें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:569
+#: crispy_print/public/js/components/LayoutPane.vue:552
 msgid "Configure divider"
 msgstr "विभाजक कॉन्फ़िगर करें"
 
@@ -1427,7 +1433,7 @@ msgstr "विभाजक कॉन्फ़िगर करें"
 msgid "Configure page size, margins, and typography for Typst."
 msgstr "Typst के लिए पृष्ठ आकार, मार्जिन और टाइपोग्राफी कॉन्फ़िगर करें।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:555
+#: crispy_print/public/js/components/LayoutPane.vue:538
 msgid "Configure spacer"
 msgstr "स्पेसर कॉन्फ़िगर करें"
 
@@ -1486,7 +1492,7 @@ msgstr "अनुबंध आवश्यक है"
 msgid "Contract preview is not available yet."
 msgstr "अनुबंध पूर्वावलोकन अभी तक उपलब्ध नहीं है."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:110
+#: crispy_print/public/js/components/PreviewRenderer.vue:111
 msgid "Copy"
 msgstr "प्रतिलिपि"
 
@@ -1511,7 +1517,7 @@ msgstr "भ्रष्ट"
 msgid "Could not acquire default-setting lock for {0}. Please retry."
 msgstr "{0} के लिए डिफ़ॉल्ट-सेटिंग लॉक प्राप्त नहीं किया जा सका। कृपया फिर से कोशिश करें।"
 
-#: crispy_print/api/v1/formats.py:914
+#: crispy_print/api/v1/formats.py:915
 msgid "Could not resolve selected Crispy Branding Profile for reference checks"
 msgstr "संदर्भ जाँच के लिए चयनित Crispy ब्रांडिंग प्रोफ़ाइल का समाधान नहीं किया जा सका"
 
@@ -1806,8 +1812,8 @@ msgstr "Crispy Typst ब्लॉक सहेजा गया"
 msgid "Crispy Typst Block {0} was not found."
 msgstr "Crispy Typst ब्लॉक {0} नहीं मिला।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:769
-#: crispy_print/public/js/components/LayoutPane.vue:1429
+#: crispy_print/public/js/components/LayoutPane.vue:762
+#: crispy_print/public/js/components/LayoutPane.vue:1434
 msgid "Currency"
 msgstr "मुद्रा"
 
@@ -1832,7 +1838,7 @@ msgstr "वर्तमान स्वरूप"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/public/js/components/SettingsPane.vue:58
-#: crispy_print/public/js/pages/CrispyPP.vue:604
+#: crispy_print/public/js/pages/CrispyPP.vue:618
 msgid "Custom"
 msgstr "रिवाज"
 
@@ -1889,8 +1895,8 @@ msgstr "डेटा बिंदु आकार"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:768
-#: crispy_print/public/js/components/LayoutPane.vue:1422
+#: crispy_print/public/js/components/LayoutPane.vue:761
+#: crispy_print/public/js/components/LayoutPane.vue:1427
 msgid "Data Type"
 msgstr "डेटा प्रकार"
 
@@ -1917,7 +1923,7 @@ msgstr "डेटा बिंदु आकार (पीटी)"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/components/SettingsPane.vue:777
+#: crispy_print/public/js/components/SettingsPane.vue:790
 #: crispy_print/public/js/pages/CbpBuilder.vue:485
 msgid "DataMatrix"
 msgstr "डेटामैट्रिक्स"
@@ -1940,11 +1946,11 @@ msgstr "डेटामैट्रिक्स एनकोडेशन"
 msgid "DataMatrix Symbols"
 msgstr "डेटामैट्रिक्स प्रतीक"
 
-#: crispy_print/public/js/components/SettingsPane.vue:803
+#: crispy_print/public/js/components/SettingsPane.vue:816
 msgid "DataMatrix encodation"
 msgstr "डेटामैट्रिक्स एन्कोडेशन"
 
-#: crispy_print/public/js/components/SettingsPane.vue:824
+#: crispy_print/public/js/components/SettingsPane.vue:837
 msgid "DataMatrix symbols"
 msgstr "डेटामैट्रिक्स प्रतीक"
 
@@ -2027,7 +2033,7 @@ msgid "Detached"
 msgstr "अलग"
 
 #: crispy_print/public/js/pages/CrispyPFB.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:429
+#: crispy_print/public/js/pages/CrispyPP.vue:443
 msgid "Diagnostics"
 msgstr "निदान"
 
@@ -2068,7 +2074,7 @@ msgstr "दस्तावेज़"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:895
+#: crispy_print/public/js/components/SettingsPane.vue:921
 msgid "Document Code Profile"
 msgstr "दस्तावेज़ कोड प्रोफ़ाइल"
 
@@ -2135,7 +2141,7 @@ msgstr "दस्तावेज़ प्रकार {0} लागू दस�
 msgid "Document UUID"
 msgstr "दस्तावेज़ UUID"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:119
+#: crispy_print/public/js/components/TableColumnsDialog.vue:130
 msgid "Done"
 msgstr "डन"
 
@@ -2161,11 +2167,11 @@ msgstr "पीडीएफ़ डाउनलोड करें"
 msgid "Draft"
 msgstr "प्रारूप"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:34
+#: crispy_print/public/js/components/TableColumnsDialog.vue:45
 msgid "Drag"
 msgstr "खींचें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:256
+#: crispy_print/public/js/components/LayoutPane.vue:264
 msgid "Drag field"
 msgstr "फ़ील्ड खींचें"
 
@@ -2189,7 +2195,7 @@ msgstr "पुनः व्यवस्थित करने के लिए �
 msgid "Drag to resize builder and preview"
 msgstr "बिल्डर का आकार बदलने और पूर्वावलोकन करने के लिए खींचें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:617
+#: crispy_print/public/js/components/LayoutPane.vue:600
 msgid "Drop fields here"
 msgstr "फ़ील्ड यहां छोड़ें"
 
@@ -2262,12 +2268,12 @@ msgstr "मौजूदा संपादित करें"
 msgid "Edit Properties"
 msgstr "गुण संपादित करें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1677
-#: crispy_print/public/js/components/LayoutPane.vue:1685
+#: crispy_print/public/js/components/LayoutPane.vue:1689
+#: crispy_print/public/js/components/LayoutPane.vue:1697
 msgid "Edit Raw Typst Field"
 msgstr "रॉ Typst फ़ील्ड संपादित करें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:518
+#: crispy_print/public/js/components/LayoutPane.vue:501
 msgid "Edit code"
 msgstr "कोड संपादित करें"
 
@@ -2322,7 +2328,7 @@ msgstr "चार्ट सक्षम करें"
 
 #. Label of a Check field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:760
+#: crispy_print/public/js/components/SettingsPane.vue:773
 msgid "Enable QR Code"
 msgstr "QR कोड सक्षम करें"
 
@@ -2390,6 +2396,12 @@ msgstr "एनकोडर कुंजी"
 msgid "Encoding"
 msgstr "एन्कोडिंग"
 
+#: crispy_print/public/js/components/SettingsPane.vue:722
+#: crispy_print/public/js/components/SettingsPane.vue:859
+#: crispy_print/public/js/pages/CrispyPP.vue:284
+msgid "End"
+msgstr "अंत"
+
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:190
 msgid "Enter a six-digit hex color such as #2563EB."
 msgstr "छह अंकों का हेक्स रंग दर्ज करें जैसे #2563ईबी।"
@@ -2418,7 +2430,7 @@ msgstr "त्रुटि सुधार"
 
 #. Label of a Select field in DocType 'Crispy QR Regulatory Profile'
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:785
+#: crispy_print/public/js/components/SettingsPane.vue:798
 #: crispy_print/public/js/pages/CbpBuilder.vue:489
 msgid "Error correction"
 msgstr "त्रुटि सुधार"
@@ -2523,23 +2535,23 @@ msgstr "QR SVG उत्पन्न करने में विफल: {0}"
 msgid "Failed to import format."
 msgstr "प्रारूप आयात करने में विफल."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1130
+#: crispy_print/public/js/pages/CrispyPP.vue:1144
 msgid "Failed to initialize preview: {0}"
 msgstr "पूर्वावलोकन आरंभ करने में विफल: {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1583
+#: crispy_print/public/js/components/LayoutPane.vue:1595
 msgid "Failed to load Crispy Typst Blocks"
 msgstr "Crispy Typst ब्लॉक लोड करने में विफल"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1297
+#: crispy_print/public/js/pages/CrispyPP.vue:1311
 msgid "Failed to load active template"
 msgstr "सक्रिय टेम्प्लेट लोड करने में विफल"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1219
+#: crispy_print/public/js/pages/CrispyPP.vue:1233
 msgid "Failed to load active templates"
 msgstr "सक्रिय टेम्प्लेट लोड करने में विफल"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1193
+#: crispy_print/public/js/pages/CrispyPP.vue:1207
 msgid "Failed to load format: {0}"
 msgstr "प्रारूप लोड करने में विफल: {0}"
 
@@ -2547,7 +2559,7 @@ msgstr "प्रारूप लोड करने में विफल: {0}
 msgid "Failed to load private images"
 msgstr "निजी छवियाँ लोड करने में विफल"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:820
+#: crispy_print/public/js/pages/CrispyPP.vue:834
 msgid "Failed to load report formats."
 msgstr "रिपोर्ट प्रारूप लोड करने में विफल."
 
@@ -2604,11 +2616,11 @@ msgstr "फ़ील्ड लेबल फ़ॉन्ट"
 msgid "Field label font size"
 msgstr "फ़ील्ड लेबल फ़ॉन्ट आकार"
 
-#: crispy_print/public/js/components/LayoutPane.vue:318
+#: crispy_print/public/js/components/LayoutPane.vue:326
 msgid "Field menu"
 msgstr "फ़ील्ड मेनू"
 
-#: crispy_print/public/js/components/LayoutPane.vue:210
+#: crispy_print/public/js/components/LayoutPane.vue:218
 msgid "Field orientation"
 msgstr "क्षेत्र उन्मुखीकरण"
 
@@ -2640,7 +2652,7 @@ msgstr "फ़ाइल"
 msgid "File Hash"
 msgstr "फ़ाइल हैश"
 
-#: crispy_print/api/v1/formats.py:929
+#: crispy_print/api/v1/formats.py:930
 msgid "File not found for logo image path: {0}"
 msgstr "लोगो छवि पथ के लिए फ़ाइल नहीं मिली: {0}"
 
@@ -2774,7 +2786,7 @@ msgstr "बहुपृष्ठ कलाकृतियों के लिए
 msgid "Form"
 msgstr "प्रपत्र"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:592
+#: crispy_print/public/js/pages/CrispyPP.vue:606
 msgid "Format"
 msgstr "प्रारूप"
 
@@ -3059,6 +3071,15 @@ msgstr "ऊंचाई"
 msgid "Height (mm)"
 msgstr "ऊंचाई (मिमी)"
 
+#: crispy_print/public/js/components/FieldsPane.vue:19
+#: crispy_print/public/js/components/LayoutPane.vue:45
+#: crispy_print/public/js/components/PreviewPane.vue:68
+#: crispy_print/public/js/components/SettingsPane.vue:18
+#: crispy_print/public/js/components/TypstCodePane.vue:17
+#: crispy_print/public/js/pages/CrispyPP.vue:147
+msgid "Help symbol"
+msgstr "?"
+
 #. Option for the 'Output Encoding' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3071,7 +3092,7 @@ msgstr "हेक्स"
 msgid "Hidden"
 msgstr "छिपा हुआ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:492
+#: crispy_print/public/js/components/LayoutPane.vue:475
 msgid "Hide label"
 msgstr "लेबल छिपाएँ"
 
@@ -3093,7 +3114,7 @@ msgstr "पदानुक्रम इंडेंट (पीटी)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:795
+#: crispy_print/public/js/components/SettingsPane.vue:808
 #: crispy_print/public/js/pages/CbpBuilder.vue:494
 msgid "High"
 msgstr "उच्च"
@@ -3172,7 +3193,7 @@ msgstr "आयात विफल"
 msgid "Import Warnings"
 msgstr "आयात चेतावनी"
 
-#: crispy_print/api/v1/formats.py:768
+#: crispy_print/api/v1/formats.py:769
 msgid "Import payload cannot be empty"
 msgstr "आयात पेलोड खाली नहीं हो सकता"
 
@@ -3213,8 +3234,8 @@ msgstr "हैश शामिल करें"
 msgid "Include signature"
 msgstr "हस्ताक्षर शामिल करें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:767
-#: crispy_print/public/js/components/LayoutPane.vue:1415
+#: crispy_print/public/js/components/LayoutPane.vue:760
+#: crispy_print/public/js/components/LayoutPane.vue:1420
 msgid "Indicator"
 msgstr "सूचक"
 
@@ -3223,11 +3244,11 @@ msgstr "सूचक"
 msgid "Info"
 msgstr "जानकारी"
 
-#: crispy_print/public/js/components/SettingsPane.vue:891
+#: crispy_print/public/js/components/SettingsPane.vue:917
 msgid "Inherit branding default"
 msgstr "ब्रांडिंग डिफ़ॉल्ट इनहेरिट करें"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1074
+#: crispy_print/public/js/components/SettingsPane.vue:1100
 msgid "Inherited from the selected Branding Profile."
 msgstr "चयनित ब्रांडिंग प्रोफ़ाइल से विरासत में मिला।"
 
@@ -3266,7 +3287,7 @@ msgstr "अमान्य"
 msgid "Invalid Crispy Template status: {0}"
 msgstr "अमान्य Crispy टेम्पलेट स्थिति: {0}"
 
-#: crispy_print/api/v1/formats.py:772
+#: crispy_print/api/v1/formats.py:773
 msgid "Invalid JSON payload"
 msgstr "अमान्य JSON पेलोड"
 
@@ -3282,11 +3303,11 @@ msgstr ""
 msgid "Invalid business status: {0}"
 msgstr "अमान्य व्यावसायिक स्थिति: {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:188
+#: crispy_print/public/js/components/TableColumnsDialog.vue:207
 msgid "Invalid column width values: {0}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc."
 msgstr "अमान्य स्तंभ चौड़ाई मान: {0}. Typst इकाइयों का उपयोग करें जैसे: ऑटो, 1fr, 2fr, 100pt, 50%, 2cm, आदि।"
 
-#: crispy_print/api/v1/reports.py:394
+#: crispy_print/api/v1/reports.py:398
 msgid "Invalid column_config format"
 msgstr "अमान्य column_config प्रारूप"
 
@@ -3294,11 +3315,11 @@ msgstr "अमान्य column_config प्रारूप"
 msgid "Invalid conflict action: {0}"
 msgstr "अमान्य विरोध कार्रवाई: {0}"
 
-#: crispy_print/api/v1/formats.py:707
+#: crispy_print/api/v1/formats.py:708
 msgid "Invalid duplicate name strategy: {0}"
 msgstr "अमान्य डुप्लिकेट नाम रणनीति: {0}"
 
-#: crispy_print/api/v1/reports.py:382
+#: crispy_print/api/v1/reports.py:386
 msgid "Invalid filters format"
 msgstr "अमान्य फ़िल्टर प्रारूप"
 
@@ -3418,7 +3439,7 @@ msgstr "जारी किए गए दस्तावेज़ रिकॉ�
 msgid "Issued document revoked."
 msgstr "जारी किया गया दस्तावेज़ निरस्त कर दिया गया."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1518
+#: crispy_print/public/js/pages/CrispyPP.vue:1532
 msgid "Issued document snapshot recorded: {0}"
 msgstr "जारी किए गए दस्तावेज़ का स्नैपशॉट रिकॉर्ड किया गया: {0}"
 
@@ -3462,7 +3483,7 @@ msgstr "JSON, XML, आदि।"
 msgid "KSeF"
 msgstr "केएसईएफ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:367
+#: crispy_print/public/js/pages/CrispyPP.vue:381
 msgid "L"
 msgstr "एल"
 
@@ -3474,10 +3495,10 @@ msgstr "एलएचडीएन ई-चालान"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:759
-#: crispy_print/public/js/components/LayoutPane.vue:765
-#: crispy_print/public/js/components/LayoutPane.vue:1382
-#: crispy_print/public/js/components/LayoutPane.vue:1401
+#: crispy_print/public/js/components/LayoutPane.vue:752
+#: crispy_print/public/js/components/LayoutPane.vue:758
+#: crispy_print/public/js/components/LayoutPane.vue:1387
+#: crispy_print/public/js/components/LayoutPane.vue:1406
 msgid "Label"
 msgstr "लेबल"
 
@@ -3497,7 +3518,7 @@ msgstr "लेबल और श्रृंखला"
 
 #: crispy_print/public/js/components/SettingsPane.vue:169
 #: crispy_print/public/js/pages/CbpBuilder.vue:71
-#: crispy_print/public/js/pages/CrispyPP.vue:341
+#: crispy_print/public/js/pages/CrispyPP.vue:355
 #: crispy_print/public/js/pages/CtbBuilder.vue:38
 msgid "Landscape"
 msgstr "परिदृश्य"
@@ -3542,13 +3563,18 @@ msgstr "इस टेम्पलेट को वैश्विक मान�
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:39
-#: crispy_print/public/js/components/LayoutPane.vue:426
 #: crispy_print/public/js/pages/CbpBuilder.vue:78
 #: crispy_print/public/js/pages/CbpBuilder.vue:118
-#: crispy_print/public/js/pages/CrispyPP.vue:371
+#: crispy_print/public/js/pages/CrispyPP.vue:385
 #: crispy_print/public/js/pages/CtbBuilder.vue:70
 msgid "Left"
 msgstr "वाम"
+
+#: crispy_print/public/js/components/SettingsPane.vue:719
+#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/pages/CrispyPP.vue:281
+msgid "Left (physical)"
+msgstr "बायाँ (भौतिक)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:295
 msgid "Left margin"
@@ -3559,7 +3585,7 @@ msgstr "बायां हाशिया"
 msgid "Left margin (mm)"
 msgstr "बायां मार्जिन (मिमी)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1360
+#: crispy_print/public/js/components/LayoutPane.vue:1365
 msgid "Left-Right"
 msgstr "बाएँ-दाएँ"
 
@@ -3586,7 +3612,7 @@ msgid "Legal"
 msgstr "कानूनी"
 
 #: crispy_print/public/js/components/SettingsPane.vue:151
-#: crispy_print/public/js/pages/CrispyPP.vue:330
+#: crispy_print/public/js/pages/CrispyPP.vue:344
 msgid "Legal (8.5 × 14 in)"
 msgstr "कानूनी (8.5 × 14 इंच)"
 
@@ -3599,7 +3625,7 @@ msgstr "किंवदंती स्थिति"
 msgid "Legend position"
 msgstr "पौराणिक स्थिति"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1778
+#: crispy_print/public/js/components/LayoutPane.vue:1790
 msgid "Length"
 msgstr "लंबाई"
 
@@ -3610,7 +3636,7 @@ msgid "Letter"
 msgstr "patr"
 
 #: crispy_print/public/js/components/SettingsPane.vue:149
-#: crispy_print/public/js/pages/CrispyPP.vue:328
+#: crispy_print/public/js/pages/CrispyPP.vue:342
 msgid "Letter (8.5 × 11 in)"
 msgstr "पत्र (8.5 × 11 इंच)"
 
@@ -3670,7 +3696,7 @@ msgstr "लाइव रिपोर्ट पूर्वावलोकन"
 msgid "Load default"
 msgstr "डिफ़ॉल्ट लोड करें"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:218
+#: crispy_print/public/js/components/PreviewRenderer.vue:219
 msgid "Loading PDF…"
 msgstr "PDF लोड हो रहा है..."
 
@@ -3734,6 +3760,10 @@ msgstr "टेम्प्लेट लोड हो रहे हैं..."
 msgid "Loading..."
 msgstr "लोड हो रहा है ..."
 
+#: crispy_print/public/js/components/TableColumnsDialog.vue:30
+msgid "Logical (direction-aware)"
+msgstr "तार्किक (दिशा-अनुसार)"
+
 #. Option for the 'Code Purpose' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3794,7 +3824,7 @@ msgstr "लोगो की चौड़ाई शून्य से अधि�
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:792
+#: crispy_print/public/js/components/SettingsPane.vue:805
 #: crispy_print/public/js/pages/CbpBuilder.vue:491
 msgid "Low"
 msgstr "निम्न"
@@ -3812,7 +3842,7 @@ msgid "Make cloned template active"
 msgstr "क्लोन किए गए टेम्पलेट को सक्रिय बनाएं"
 
 #: crispy_print/public/js/components/SettingsPane.vue:175
-#: crispy_print/public/js/pages/CrispyPP.vue:346
+#: crispy_print/public/js/pages/CrispyPP.vue:360
 msgid "Margins (mm)"
 msgstr "मार्जिन (मिमी)"
 
@@ -3849,7 +3879,7 @@ msgstr "मीडिया प्रकार"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:793
+#: crispy_print/public/js/components/SettingsPane.vue:806
 #: crispy_print/public/js/pages/CbpBuilder.vue:492
 msgid "Medium"
 msgstr "मध्यम"
@@ -3886,23 +3916,23 @@ msgstr "छोटे ग्रिड"
 msgid "Missing export payload"
 msgstr "निर्यात पेलोड गुम है"
 
-#: crispy_print/api/v1/formats.py:923
+#: crispy_print/api/v1/formats.py:924
 msgid "Missing reference: Company '{0}'"
 msgstr "अनुपलब्ध संदर्भ: कंपनी '{0}'"
 
-#: crispy_print/api/v1/formats.py:944
+#: crispy_print/api/v1/formats.py:945
 msgid "Missing reference: Company '{0}' (metadata)"
 msgstr "अनुपलब्ध संदर्भ: कंपनी '{0}' (मेटाडेटा)"
 
-#: crispy_print/api/v1/formats.py:954
+#: crispy_print/api/v1/formats.py:955
 msgid "Missing reference: Crispy Template '{0}' (metadata)"
 msgstr "अनुपलब्ध संदर्भ: Crispy टेम्पलेट '{0}' (मेटाडेटा)"
 
-#: crispy_print/api/v1/formats.py:918
+#: crispy_print/api/v1/formats.py:919
 msgid "Missing reference: Letter Head '{0}'"
 msgstr "अनुपलब्ध संदर्भ: लेटर हेड '{0}'"
 
-#: crispy_print/api/v1/formats.py:897
+#: crispy_print/api/v1/formats.py:898
 msgid "Missing reference: {0} '{1}' (field: {2})"
 msgstr "अनुपलब्ध संदर्भ: {0} '{1}' (फ़ील्ड: {2})"
 
@@ -3932,7 +3962,7 @@ msgstr "मॉड्यूल"
 msgid "Module Size (pt)"
 msgstr "मॉड्यूल आकार (पीटी)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/components/SettingsPane.vue:882
 msgid "Module size"
 msgstr "मॉड्यूल का आकार"
 
@@ -4048,11 +4078,11 @@ msgstr "इन फ़िल्टर के लिए कोई सक्रि�
 msgid "No active templates"
 msgstr "कोई सक्रिय टेम्पलेट नहीं"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:638
+#: crispy_print/public/js/pages/CrispyPP.vue:652
 msgid "No approved Crispy Template is available for this document context."
 msgstr "इस दस्तावेज़ संदर्भ के लिए कोई अनुमोदित Crispy टेम्पलेट उपलब्ध नहीं है।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1562
+#: crispy_print/public/js/components/LayoutPane.vue:1574
 msgid "No block selected"
 msgstr "कोई ब्लॉक चयनित नहीं"
 
@@ -4060,7 +4090,7 @@ msgstr "कोई ब्लॉक चयनित नहीं"
 msgid "No columns available"
 msgstr "कोई कॉलम उपलब्ध नहीं है"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:78
+#: crispy_print/public/js/components/TableColumnsDialog.vue:89
 msgid "No columns yet. Add one below."
 msgstr "अभी तक कोई कॉलम नहीं. नीचे एक जोड़ें."
 
@@ -4088,7 +4118,7 @@ msgstr "कोई फ़ील्ड नहीं मिला."
 msgid "No fields match {0}!"
 msgstr "कोई फ़ील्ड {0} से मेल नहीं खाती!"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1127
+#: crispy_print/public/js/components/SettingsPane.vue:1153
 msgid "No fields selected"
 msgstr "कोई फ़ील्ड चयनित नहीं"
 
@@ -4096,7 +4126,7 @@ msgstr "कोई फ़ील्ड चयनित नहीं"
 msgid "No fiscal credential found for these filters."
 msgstr "इन फ़िल्टर के लिए कोई वित्तीय प्रमाण-पत्र नहीं मिला।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1570
+#: crispy_print/public/js/components/LayoutPane.vue:1582
 msgid "No image selected"
 msgstr "कोई छवि चयनित नहीं"
 
@@ -4120,7 +4150,7 @@ msgstr "जोड़ने के लिए कोई नया आवश्य�
 msgid "No obvious format issues found."
 msgstr "कोई स्पष्ट प्रारूप समस्या नहीं मिली."
 
-#: crispy_print/api/v1/reports.py:1809
+#: crispy_print/api/v1/reports.py:1813
 msgid "No print format found for report '{0}'"
 msgstr "रिपोर्ट '{0}' के लिए कोई प्रिंट प्रारूप नहीं मिला"
 
@@ -4262,7 +4292,7 @@ msgstr "वैकल्पिक: पेलोड फ़ील्ड को स�
 
 #: crispy_print/public/js/components/SettingsPane.vue:162
 #: crispy_print/public/js/pages/CbpBuilder.vue:68
-#: crispy_print/public/js/pages/CrispyPP.vue:335
+#: crispy_print/public/js/pages/CrispyPP.vue:349
 #: crispy_print/public/js/pages/CtbBuilder.vue:35
 #: crispy_print/public/js/report_button.bundle.js:255
 msgid "Orientation"
@@ -4358,11 +4388,11 @@ msgstr "PDF SHA-256"
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:607
+#: crispy_print/public/js/pages/CrispyPP.vue:621
 msgid "PDF Standard"
 msgstr "PDF मानक"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1607
+#: crispy_print/public/js/pages/CrispyPP.vue:1621
 msgid "PDF download started."
 msgstr "PDF डाउनलोड प्रारंभ हुआ."
 
@@ -4375,7 +4405,7 @@ msgstr "PDF सफलतापूर्वक उत्पन्न हुआ"
 msgid "PDF generation not available"
 msgstr "PDF पीढ़ी उपलब्ध नहीं है"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1613
+#: crispy_print/public/js/pages/CrispyPP.vue:1627
 msgid "PDF opened in a new tab."
 msgstr "PDF एक नए टैब में खुला।"
 
@@ -4406,7 +4436,7 @@ msgstr ""
 "  नोट: PDF/A आउटपुट फ़ॉन्ट एम्बेड करता है, इसलिए चयनित फ़ॉन्ट को PDF एम्बेडिंग/सबसेटिंग की अनुमति देनी होगी।\n"
 "</span>"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:332
+#: crispy_print/public/js/components/PreviewRenderer.vue:333
 msgid "PDF preview failed."
 msgstr "PDF पूर्वावलोकन विफल रहा."
 
@@ -4465,12 +4495,12 @@ msgstr "PDF/A-4"
 msgid "PDF417"
 msgstr "पीडीएफ417"
 
-#: crispy_print/api/v1/reports.py:1835
+#: crispy_print/api/v1/reports.py:1839
 #: crispy_print/public/js/pages/CbpBuilder.vue:57
 msgid "Page"
 msgstr "पृष्ठ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:623
+#: crispy_print/public/js/components/LayoutPane.vue:606
 msgid "Page Break"
 msgstr "पृष्ठातर"
 
@@ -4489,7 +4519,7 @@ msgstr "पेज नंबर"
 msgid "Page Settings"
 msgstr "पृष्ठ सेटिंग्स"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:322
+#: crispy_print/public/js/pages/CrispyPP.vue:336
 msgid "Page Size"
 msgstr "पृष्ठ का आकार"
 
@@ -4503,7 +4533,7 @@ msgstr "पेज ओरिएंटेशन"
 msgid "Page size"
 msgstr "पृष्ठ का आकार"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:614
+#: crispy_print/public/js/pages/CrispyPP.vue:628
 msgid "Pages"
 msgstr "पन्ने"
 
@@ -4551,15 +4581,15 @@ msgstr "जब सामग्री स्रोत स्थिर पाठ �
 msgid "Payload format"
 msgstr "पेलोड प्रारूप"
 
-#: crispy_print/api/v1/formats.py:779
+#: crispy_print/api/v1/formats.py:780
 msgid "Payload must be a JSON object"
 msgstr "पेलोड एक JSON ऑब्जेक्ट होना चाहिए"
 
-#: crispy_print/api/v1/formats.py:776
+#: crispy_print/api/v1/formats.py:777
 msgid "Payload must be a JSON object or JSON string"
 msgstr "पेलोड एक JSON ऑब्जेक्ट या JSON स्ट्रिंग होना चाहिए"
 
-#: crispy_print/api/v1/formats.py:790
+#: crispy_print/api/v1/formats.py:791
 msgid "Payload must include a 'format' object"
 msgstr "पेलोड में एक 'प्रारूप' ऑब्जेक्ट शामिल होना चाहिए"
 
@@ -4596,6 +4626,10 @@ msgstr "अपूर्ण"
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 msgid "Peppol BIS"
 msgstr "पेप्पोल बीआईएस"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:31
+msgid "Physical (fixed)"
+msgstr "भौतिक (स्थिर)"
 
 #: crispy_print/public/js/components/PreviewPane.vue:84
 msgid "Pick a document to preview."
@@ -4645,7 +4679,7 @@ msgstr "पोर्टल लिंक"
 
 #: crispy_print/public/js/components/SettingsPane.vue:168
 #: crispy_print/public/js/pages/CbpBuilder.vue:70
-#: crispy_print/public/js/pages/CrispyPP.vue:340
+#: crispy_print/public/js/pages/CrispyPP.vue:354
 #: crispy_print/public/js/pages/CtbBuilder.vue:37
 msgid "Portrait"
 msgstr "चित्र"
@@ -4670,7 +4704,7 @@ msgstr "प्रेजेंटेशन ओवरराइड JSON"
 #. Label of a Code field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
-#: crispy_print/public/js/pages/CrispyPP.vue:318
+#: crispy_print/public/js/pages/CrispyPP.vue:332
 msgid "Presentation Settings"
 msgstr "प्रस्तुति सेटिंग्स"
 
@@ -4722,7 +4756,7 @@ msgstr "पूर्वावलोकन फोकस"
 msgid "Preview is not ready to print."
 msgstr "पूर्वावलोकन मुद्रण के लिए तैयार नहीं है."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:92
+#: crispy_print/public/js/components/PreviewRenderer.vue:93
 msgid "Preview output will render here."
 msgstr "पूर्वावलोकन आउटपुट यहां प्रस्तुत किया जाएगा।"
 
@@ -4730,7 +4764,7 @@ msgstr "पूर्वावलोकन आउटपुट यहां प्
 msgid "Preview shrinks to content with 2.5cm margins. Use for compact self-sizing blocks, not tables, grids, or long text."
 msgstr "पूर्वावलोकन 2.5 सेमी मार्जिन वाली सामग्री तक सिकुड़ जाता है। कॉम्पैक्ट सेल्फ-साइज़िंग ब्लॉक के लिए उपयोग करें, न कि टेबल, ग्रिड या लंबे टेक्स्ट के लिए।"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1036
+#: crispy_print/public/js/pages/CrispyPP.vue:1050
 msgid "Preview truncated to {0} rows (from {1}). PDF output may also be limited."
 msgstr "पूर्वावलोकन को {0} पंक्तियों में छोटा कर दिया गया ({1} से)। PDF आउटपुट भी सीमित हो सकता है।"
 
@@ -4795,7 +4829,7 @@ msgstr "शून्य राशि वाले टैक्स प्रि�
 msgid "Print UOM after Quantity"
 msgstr "मात्रा के बाद UOM प्रिंट करें"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1566
+#: crispy_print/public/js/pages/CrispyPP.vue:1580
 msgid "Print dialog opened."
 msgstr "प्रिंट संवाद खोला गया."
 
@@ -4925,7 +4959,7 @@ msgstr "पायथन बारकोड फ़ॉलबैक केवल QR
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
-#: crispy_print/public/js/components/SettingsPane.vue:776
+#: crispy_print/public/js/components/SettingsPane.vue:789
 #: crispy_print/public/js/pages/CbpBuilder.vue:475
 #: crispy_print/public/js/pages/CbpBuilder.vue:484
 msgid "QR Code"
@@ -4939,7 +4973,7 @@ msgstr "QR कोड फ़ील्ड"
 msgid "QR Code X position"
 msgstr "QR कोड X स्थिति"
 
-#: crispy_print/public/js/components/SettingsPane.vue:767
+#: crispy_print/public/js/components/SettingsPane.vue:780
 msgid "QR Code is anchored to bottom-left using #place()."
 msgstr "QR कोड को #place() का उपयोग करके नीचे-बाईं ओर एंकर किया गया है।"
 
@@ -5003,19 +5037,19 @@ msgstr "QR फ़ील्ड {0}.{1} में {2} गायब है।"
 msgid "QR field {0}.{1} must be an object."
 msgstr "QR फ़ील्ड {0}.{1} एक ऑब्जेक्ट होना चाहिए।"
 
-#: crispy_print/public/js/components/SettingsPane.vue:910
+#: crispy_print/public/js/components/SettingsPane.vue:936
 msgid "QR fields"
 msgstr "QR फ़ील्ड"
 
-#: crispy_print/public/js/components/SettingsPane.vue:926
+#: crispy_print/public/js/components/SettingsPane.vue:952
 msgid "QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
 msgstr "QR पेलोड फ़ील्ड को दस्तावेज़ कोड प्रोफ़ाइल मोड में अनदेखा कर दिया जाता है क्योंकि बैकएंड अंतिम एन्कोडेड मान को हल करता है।"
 
-#: crispy_print/public/js/components/SettingsPane.vue:884
+#: crispy_print/public/js/components/SettingsPane.vue:910
 msgid "QR source"
 msgstr "QR स्रोत"
 
-#: crispy_print/public/js/components/SettingsPane.vue:765
+#: crispy_print/public/js/components/SettingsPane.vue:778
 msgid "QR-Code"
 msgstr "QR-कोड"
 
@@ -5028,7 +5062,7 @@ msgstr "QR-कोड"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:794
+#: crispy_print/public/js/components/SettingsPane.vue:807
 #: crispy_print/public/js/pages/CbpBuilder.vue:493
 msgid "Quartile"
 msgstr "चतुर्थक"
@@ -5047,7 +5081,7 @@ msgstr "शांत"
 msgid "Quiet Zone"
 msgstr "शांत क्षेत्र"
 
-#: crispy_print/public/js/components/SettingsPane.vue:846
+#: crispy_print/public/js/components/SettingsPane.vue:872
 msgid "Quiet zone"
 msgstr "शांत क्षेत्र"
 
@@ -5057,7 +5091,7 @@ msgstr "शांत क्षेत्र"
 msgid "Quotation"
 msgstr "उद्धरण"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:376
+#: crispy_print/public/js/pages/CrispyPP.vue:390
 msgid "R"
 msgstr "आर"
 
@@ -5077,11 +5111,11 @@ msgstr "आरएसए"
 #. Label of a Check field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:623
+#: crispy_print/public/js/pages/CrispyPP.vue:637
 msgid "Raw Typst"
 msgstr "कच्चा Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1690
+#: crispy_print/public/js/components/LayoutPane.vue:1702
 msgid "Raw Typst Field"
 msgstr "कच्चा Typst फ़ील्ड"
 
@@ -5126,7 +5160,7 @@ msgstr "रिकार्ड सत्यनिष्ठा जांच"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:832
+#: crispy_print/public/js/components/SettingsPane.vue:845
 #: crispy_print/public/js/pages/CbpBuilder.vue:513
 msgid "Rectangular"
 msgstr "आयताकार"
@@ -5267,25 +5301,25 @@ msgstr "संबंधित कलाकृतियाँ"
 msgid "Reload"
 msgstr "सीमा से अधिक लादना"
 
-#: crispy_print/public/js/components/LayoutPane.vue:588
-#: crispy_print/public/js/components/TableColumnsDialog.vue:66
+#: crispy_print/public/js/components/LayoutPane.vue:571
+#: crispy_print/public/js/components/TableColumnsDialog.vue:77
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:95
 msgid "Remove"
 msgstr "हटा"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:311
+#: crispy_print/public/js/pages/CrispyPP.vue:325
 msgid "Remove QRCode"
 msgstr "QRCode हटाएँ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:178
+#: crispy_print/public/js/components/LayoutPane.vue:186
 msgid "Remove column"
 msgstr "कॉलम हटाएँ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:200
+#: crispy_print/public/js/components/LayoutPane.vue:208
 msgid "Remove page break"
 msgstr "पृष्ठ विराम हटाएँ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:224
+#: crispy_print/public/js/components/LayoutPane.vue:232
 msgid "Remove section"
 msgstr "अनुभाग हटाएँ"
 
@@ -5299,7 +5333,7 @@ msgstr "रेंडर सेटिंग्स"
 msgid "Render Status"
 msgstr "स्थिति प्रस्तुत करें"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:616
+#: crispy_print/public/js/pages/CrispyPP.vue:630
 msgid "Render Time"
 msgstr "समय प्रस्तुत करें"
 
@@ -5345,7 +5379,7 @@ msgstr "Typst के माध्यम से ब्रांडिंग प�
 msgid "Rendering custom Typst with branding profile specimen data."
 msgstr "ब्रांडिंग प्रोफ़ाइल नमूना डेटा के साथ कस्टम Typst का प्रतिपादन।"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:219
+#: crispy_print/public/js/components/PreviewRenderer.vue:220
 msgid "Rendering preview…"
 msgstr "पूर्वावलोकन प्रस्तुत किया जा रहा है..."
 
@@ -5376,7 +5410,7 @@ msgstr "रिपोर्ट कवरेज सभी संगत रिप�
 msgid "Report Format"
 msgstr "रिपोर्ट प्रारूप"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1621
+#: crispy_print/public/js/pages/CrispyPP.vue:1635
 msgid "Report PDF generation failed."
 msgstr "रिपोर्ट PDF पीढ़ी विफल रही।"
 
@@ -5447,12 +5481,12 @@ msgstr "रिपोर्ट आउटपुट ऑडिट रिकॉर्
 msgid "Report output audit records cannot be deleted."
 msgstr "रिपोर्ट आउटपुट ऑडिट रिकॉर्ड को हटाया नहीं जा सकता."
 
-#: crispy_print/api/v1/reports.py:896
+#: crispy_print/api/v1/reports.py:900
 msgid "Report output audit requires a Report format."
 msgstr "रिपोर्ट आउटपुट ऑडिट के लिए एक रिपोर्ट प्रारूप की आवश्यकता होती है।"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1056
-#: crispy_print/public/js/pages/CrispyPP.vue:1062
+#: crispy_print/public/js/pages/CrispyPP.vue:1070
+#: crispy_print/public/js/pages/CrispyPP.vue:1076
 msgid "Report preview access expired. Run Preview again."
 msgstr "रिपोर्ट पूर्वावलोकन पहुंच समाप्त हो गई. पूर्वावलोकन फिर से चलाएँ."
 
@@ -5464,12 +5498,12 @@ msgstr "रिपोर्ट पूर्वावलोकन पहुंच 
 msgid "Report preview data has expired. Run Preview again."
 msgstr "रिपोर्ट पूर्वावलोकन डेटा समाप्त हो गया है. पूर्वावलोकन फिर से चलाएँ."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1063
+#: crispy_print/public/js/pages/CrispyPP.vue:1077
 msgid "Report preview failed."
 msgstr "रिपोर्ट पूर्वावलोकन विफल रहा."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1556
-#: crispy_print/public/js/pages/CrispyPP.vue:1589
+#: crispy_print/public/js/pages/CrispyPP.vue:1570
+#: crispy_print/public/js/pages/CrispyPP.vue:1603
 msgid "Report preview not ready yet."
 msgstr "रिपोर्ट पूर्वावलोकन अभी तैयार नहीं है."
 
@@ -5485,11 +5519,11 @@ msgstr "रिपोर्ट पूर्वावलोकन के लिए
 msgid "Report previews need filters, selected columns, and generated result data. Open the report first, configure the view you want, then launch Crispy Print Preview from that report."
 msgstr "रिपोर्ट पूर्वावलोकन के लिए फ़िल्टर, चयनित कॉलम और जेनरेट किए गए परिणाम डेटा की आवश्यकता होती है। पहले रिपोर्ट खोलें, अपने इच्छित दृश्य को कॉन्फ़िगर करें, फिर उस रिपोर्ट से Crispy Print पूर्वावलोकन लॉन्च करें।"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1573
+#: crispy_print/public/js/pages/CrispyPP.vue:1587
 msgid "Report printing failed."
 msgstr "रिपोर्ट मुद्रण विफल रहा."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1580
+#: crispy_print/public/js/pages/CrispyPP.vue:1594
 msgid "Report printing was blocked by the browser."
 msgstr "ब्राउज़र द्वारा रिपोर्ट मुद्रण अवरुद्ध कर दिया गया था."
 
@@ -5581,7 +5615,7 @@ msgstr "परिवर्तन रीसेट करें"
 msgid "Reset View Defaults"
 msgstr "दृश्य डिफ़ॉल्ट रीसेट करें"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1507
+#: crispy_print/public/js/components/LayoutPane.vue:1513
 msgid "Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
 msgstr "लेआउट को DocType डिफ़ॉल्ट पर रीसेट करें (मेटा से)? यह सभी लेआउट परिवर्तनों को हटा देता है और शुरुआती अनुभागों/स्तंभों/फ़ील्ड व्यवस्था को पुनर्स्थापित करता है।"
 
@@ -5692,13 +5726,18 @@ msgstr "पर निरस्त किया गया"
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:40
-#: crispy_print/public/js/components/LayoutPane.vue:480
 #: crispy_print/public/js/pages/CbpBuilder.vue:79
 #: crispy_print/public/js/pages/CbpBuilder.vue:113
-#: crispy_print/public/js/pages/CrispyPP.vue:380
+#: crispy_print/public/js/pages/CrispyPP.vue:394
 #: crispy_print/public/js/pages/CtbBuilder.vue:78
 msgid "Right"
 msgstr "सही"
+
+#: crispy_print/public/js/components/SettingsPane.vue:720
+#: crispy_print/public/js/components/SettingsPane.vue:857
+#: crispy_print/public/js/pages/CrispyPP.vue:282
+msgid "Right (physical)"
+msgstr "दायाँ (भौतिक)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:294
 msgid "Right margin"
@@ -5727,7 +5766,7 @@ msgstr "पूर्वावलोकन चलाएँ"
 msgid "Run Preview again"
 msgstr "पूर्वावलोकन फिर से चलाएँ"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:216
+#: crispy_print/public/js/components/PreviewRenderer.vue:217
 msgid "Running report…"
 msgstr "चल रही रिपोर्ट..."
 
@@ -5894,7 +5933,7 @@ msgstr "अनुभाग लेबल"
 msgid "Section Labels"
 msgstr "अनुभाग लेबल"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1286
+#: crispy_print/public/js/components/LayoutPane.vue:1282
 msgid "Section Settings"
 msgstr "अनुभाग सेटिंग्स"
 
@@ -5911,7 +5950,7 @@ msgstr "अनुभाग लेबल फ़ॉन्ट आकार"
 msgid "Section menu"
 msgstr "अनुभाग मेनू"
 
-#: crispy_print/public/js/components/LayoutPane.vue:190
+#: crispy_print/public/js/components/LayoutPane.vue:198
 msgid "Section settings"
 msgstr "अनुभाग सेटिंग्स"
 
@@ -5969,11 +6008,11 @@ msgstr "कॉलम चुनें और चौड़ाई सेट कर�
 msgid "Select company"
 msgstr "कंपनी चुनें"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:90
+#: crispy_print/public/js/components/TableColumnsDialog.vue:101
 msgid "Select field"
 msgstr "फ़ील्ड चुनें"
 
-#: crispy_print/public/js/components/SettingsPane.vue:917
+#: crispy_print/public/js/components/SettingsPane.vue:943
 msgid "Select fields"
 msgstr "फ़ील्ड चुनें"
 
@@ -6164,11 +6203,11 @@ msgstr "कुल दिखाएं"
 msgid "Show filters block"
 msgstr "फ़िल्टर ब्लॉक दिखाएँ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:493
+#: crispy_print/public/js/components/LayoutPane.vue:476
 msgid "Show label"
 msgstr "लेबल दिखाएँ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:426
+#: crispy_print/public/js/pages/CrispyPP.vue:440
 msgid "Show preview diagnostics"
 msgstr "पूर्वावलोकन निदान दिखाएँ"
 
@@ -6241,9 +6280,9 @@ msgstr "आकार"
 
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:714
-#: crispy_print/public/js/components/SettingsPane.vue:837
-#: crispy_print/public/js/pages/CrispyPP.vue:275
+#: crispy_print/public/js/components/SettingsPane.vue:727
+#: crispy_print/public/js/components/SettingsPane.vue:863
+#: crispy_print/public/js/pages/CrispyPP.vue:289
 msgid "Size (mm)"
 msgstr "आकार (मिमी)"
 
@@ -6315,7 +6354,7 @@ msgstr "स्रोत Crispy प्रारूप कंपनी को ए�
 msgid "Source Crispy Format does not belong to company {0}."
 msgstr "स्रोत Crispy प्रारूप कंपनी {0} से संबंधित नहीं है।"
 
-#: crispy_print/api/v1/formats.py:621
+#: crispy_print/api/v1/formats.py:622
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:370
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:420
 msgid "Source Crispy Format is required."
@@ -6375,7 +6414,7 @@ msgstr "स्रोत टेम्पलेट"
 msgid "Source document {0} {1} does not exist."
 msgstr "स्रोत दस्तावेज़ {0} {1} मौजूद नहीं है।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1730
+#: crispy_print/public/js/components/LayoutPane.vue:1742
 msgid "Spacer Value"
 msgstr "स्पेसर मान"
 
@@ -6399,12 +6438,12 @@ msgstr "स्पेसिंग टॉप (पीटी)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:831
+#: crispy_print/public/js/components/SettingsPane.vue:844
 #: crispy_print/public/js/pages/CbpBuilder.vue:512
 msgid "Square"
 msgstr "चौकोर"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:215
+#: crispy_print/public/js/components/TableColumnsDialog.vue:234
 msgid "Sr No."
 msgstr "क्रमांक"
 
@@ -6421,6 +6460,12 @@ msgstr "इस ब्लॉक को टेम्प्लेट या को�
 msgid "Standard"
 msgstr "मानक"
 
+#: crispy_print/public/js/components/SettingsPane.vue:721
+#: crispy_print/public/js/components/SettingsPane.vue:858
+#: crispy_print/public/js/pages/CrispyPP.vue:283
+msgid "Start"
+msgstr "आरंभ"
+
 #. Option for the 'Content Source' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -6431,7 +6476,7 @@ msgstr "स्थैतिक पाठ"
 #. Label of a Select field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:591
+#: crispy_print/public/js/pages/CrispyPP.vue:605
 msgid "Status"
 msgstr "हैसियत"
 
@@ -6479,7 +6524,7 @@ msgstr "पट्टी बांधना"
 msgid "Stroke (pt)"
 msgstr "स्ट्रोक (पीटी)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1786
+#: crispy_print/public/js/components/LayoutPane.vue:1798
 msgid "Stroke Width"
 msgstr "स्ट्रोक की चौड़ाई"
 
@@ -6580,7 +6625,7 @@ msgstr "जारी किया गया दस्तावेज़ {0} न�
 
 #. Label of a Select field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:770
+#: crispy_print/public/js/components/SettingsPane.vue:783
 #: crispy_print/public/js/pages/CbpBuilder.vue:482
 msgid "Symbology"
 msgstr "प्रतीकवाद"
@@ -6603,7 +6648,7 @@ msgstr "प्रतीक"
 msgid "System Manager"
 msgstr "सिस्टम प्रबंधक"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:349
+#: crispy_print/public/js/pages/CrispyPP.vue:363
 msgid "T"
 msgstr "टी"
 
@@ -6691,7 +6736,7 @@ msgstr "लक्ष्य कंपनी"
 msgid "Target company is required."
 msgstr "लक्ष्य कंपनी की आवश्यकता है."
 
-#: crispy_print/api/v1/formats.py:628 crispy_print/api/v1/templates.py:168
+#: crispy_print/api/v1/formats.py:629 crispy_print/api/v1/templates.py:168
 msgid "Target company must be different from the source company."
 msgstr "लक्ष्य कंपनी स्रोत कंपनी से भिन्न होनी चाहिए."
 
@@ -6701,7 +6746,7 @@ msgid "Tax"
 msgstr "कर"
 
 #: crispy_print/public/js/pages/CrispyPP.vue:137
-#: crispy_print/public/js/pages/CrispyPP.vue:593
+#: crispy_print/public/js/pages/CrispyPP.vue:607
 msgid "Template"
 msgstr "टेम्पलेट"
 
@@ -6734,7 +6779,7 @@ msgstr "टेम्पलेट स्रोत"
 
 #. Label of a Data field in DocType 'Crispy Report Output Audit'
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
-#: crispy_print/public/js/pages/CrispyPP.vue:594
+#: crispy_print/public/js/pages/CrispyPP.vue:608
 msgid "Template Version"
 msgstr "टेम्पलेट संस्करण"
 
@@ -6797,7 +6842,7 @@ msgstr "इस प्रारूप की समीक्षा के बा�
 msgid "The upstream report sources are unavailable; the review cannot be acknowledged."
 msgstr "अपस्ट्रीम रिपोर्ट स्रोत अनुपलब्ध हैं; समीक्षा को स्वीकार नहीं किया जा सकता."
 
-#: crispy_print/api/v1/reports.py:645
+#: crispy_print/api/v1/reports.py:649
 msgid "This Basic report format has no generated Typst code. Open it in the Report Format Builder, save it, and try again."
 msgstr "इस मूल रिपोर्ट प्रारूप में कोई जनरेट किया गया Typst कोड नहीं है। इसे रिपोर्ट फ़ॉर्मेट बिल्डर में खोलें, सहेजें और पुनः प्रयास करें।"
 
@@ -6895,7 +6940,7 @@ msgstr "बहुत सारे अनुरोध. कृपया एक क
 #: crispy_print/public/js/components/BoxSidesEditor.vue:37
 #: crispy_print/public/js/pages/CbpBuilder.vue:76
 #: crispy_print/public/js/pages/CbpBuilder.vue:112
-#: crispy_print/public/js/pages/CrispyPP.vue:353
+#: crispy_print/public/js/pages/CrispyPP.vue:367
 #: crispy_print/public/js/pages/CtbBuilder.vue:58
 msgid "Top"
 msgstr "ऊपर"
@@ -6909,7 +6954,7 @@ msgstr "शीर्ष मार्जिन"
 msgid "Top margin (mm)"
 msgstr "शीर्ष मार्जिन (मिमी)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1361
+#: crispy_print/public/js/components/LayoutPane.vue:1366
 msgid "Top-Down"
 msgstr "ऊपर से नीचे"
 
@@ -6936,6 +6981,7 @@ msgstr "ट्रस्ट इवेंट प्रकार आवश्यक
 
 #. Label of a Select field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
+#: crispy_print/public/js/components/LayoutPane.vue:11
 #: crispy_print/public/js/components/SettingsPane.vue:668
 msgid "Type"
 msgstr "टाइप"
@@ -6980,7 +7026,7 @@ msgstr "कच्चे Typst टेम्पलेट्स के लिए Ty
 msgid "Typst Code is required when Code Only is enabled."
 msgstr "केवल कोड सक्षम होने पर Typst कोड की आवश्यकता होती है।"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:108
+#: crispy_print/public/js/components/PreviewRenderer.vue:109
 #: crispy_print/public/js/pages/CbpBuilder.vue:792
 msgid "Typst Error"
 msgstr "Typst त्रुटि"
@@ -7011,11 +7057,11 @@ msgstr "Typst स्रोत हैश"
 #. Label of a Data field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:611
+#: crispy_print/public/js/pages/CrispyPP.vue:625
 msgid "Typst Version"
 msgstr "Typst संस्करण"
 
-#: crispy_print/api/v1/reports.py:599
+#: crispy_print/api/v1/reports.py:603
 msgid "Typst code is required for an unsaved report preview."
 msgstr "बिना सहेजे गए रिपोर्ट पूर्वावलोकन के लिए Typst कोड आवश्यक है।"
 
@@ -7048,19 +7094,19 @@ msgstr "Typst स्रोत कोड आवश्यक है"
 msgid "Typst specimen preview"
 msgstr "Typst नमूना पूर्वावलोकन"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1787
+#: crispy_print/public/js/components/LayoutPane.vue:1799
 msgid "Typst units: 0.5pt, 1pt, 2pt, etc."
 msgstr "Typst इकाइयाँ: 0.5pt, 1pt, 2pt, आदि।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1779
+#: crispy_print/public/js/components/LayoutPane.vue:1791
 msgid "Typst units: 100%, 80%, 10cm, etc."
 msgstr "Typst इकाइयाँ: 100%, 80%, 10 सेमी, आदि।"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1731
+#: crispy_print/public/js/components/LayoutPane.vue:1743
 msgid "Typst units: 1em, 2cm, 10pt, 5mm, etc."
 msgstr "Typst इकाइयाँ: 1em, 2cm, 10pt, 5mm, आदि।"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:62
+#: crispy_print/public/js/components/TableColumnsDialog.vue:73
 msgid "Typst width: auto, 1fr, 2fr, 100pt, etc."
 msgstr "Typst चौड़ाई: ऑटो, 1fr, 2fr, 100pt, आदि।"
 
@@ -7212,7 +7258,7 @@ msgstr "असमर्थित एनकोडर कुंजी: {0}"
 msgid "Unsupported font file type. Allowed extensions: {0}"
 msgstr "असमर्थित फ़ॉन्ट फ़ाइल प्रकार. अनुमत एक्सटेंशन: {0}"
 
-#: crispy_print/api/v1/formats.py:794
+#: crispy_print/api/v1/formats.py:795
 msgid "Unsupported import fields: {0}"
 msgstr "असमर्थित आयात फ़ील्ड: {0}"
 
@@ -7224,7 +7270,7 @@ msgstr "असमर्थित आउटपुट एन्कोडिंग:
 msgid "Unsupported payload format: {0}"
 msgstr "असमर्थित पेलोड प्रारूप: {0}"
 
-#: crispy_print/api/v1/formats.py:786
+#: crispy_print/api/v1/formats.py:787
 msgid "Unsupported schema_version. Expected {0}"
 msgstr "असमर्थित स्कीम_संस्करण. अपेक्षित {0}"
 
@@ -7285,7 +7331,7 @@ msgstr "छवि पूर्वावलोकन अपलोड किया
 msgid "Uploaded letterhead preview"
 msgstr "लेटरहेड पूर्वावलोकन अपलोड किया गया"
 
-#: crispy_print/public/js/components/SettingsPane.vue:900
+#: crispy_print/public/js/components/SettingsPane.vue:926
 msgid "Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
 msgstr "वर्तमान फ़ील्ड-सूची पेलोड के लिए बेसिक QR का उपयोग करें, या बैकएंड दस्तावेज़-कोड कॉन्फ़िगरेशन से विनियमित QR आउटपुट को हल करने के लिए दस्तावेज़ कोड प्रोफ़ाइल का उपयोग करें।"
 
@@ -7373,10 +7419,10 @@ msgstr "सत्यापन संदेश"
 msgid "Validation Status"
 msgstr "सत्यापन स्थिति"
 
-#: crispy_print/public/js/components/LayoutPane.vue:760
-#: crispy_print/public/js/components/LayoutPane.vue:766
-#: crispy_print/public/js/components/LayoutPane.vue:1389
-#: crispy_print/public/js/components/LayoutPane.vue:1408
+#: crispy_print/public/js/components/LayoutPane.vue:753
+#: crispy_print/public/js/components/LayoutPane.vue:759
+#: crispy_print/public/js/components/LayoutPane.vue:1394
+#: crispy_print/public/js/components/LayoutPane.vue:1413
 msgid "Value"
 msgstr "मूल्य"
 
@@ -7525,7 +7571,7 @@ msgstr "चौडाई"
 msgid "Width (mm)"
 msgstr "चौड़ाई (मिमी)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:606
+#: crispy_print/public/js/components/LayoutPane.vue:589
 msgid "Width: {0}%"
 msgstr "चौड़ाई: {0}%"
 
@@ -7627,11 +7673,11 @@ msgstr "शीर्ष से Y (मिमी)"
 msgid "Yes"
 msgstr "हाँ"
 
-#: crispy_print/api/v1/formats.py:882
+#: crispy_print/api/v1/formats.py:883
 msgid "You don't have permission to create Crispy Format"
 msgstr "आपके पास Crispy फ़ॉर्मेट बनाने की अनुमति नहीं है"
 
-#: crispy_print/api/v1/reports.py:596
+#: crispy_print/api/v1/reports.py:600
 msgid "You need permission to create Crispy Format before previewing an unsaved report."
 msgstr "किसी सहेजी न गई रिपोर्ट का पूर्वावलोकन करने से पहले आपको Crispy प्रारूप बनाने की अनुमति की आवश्यकता है।"
 
@@ -7691,7 +7737,7 @@ msgid "asset_files must be a list of image file paths"
 msgstr "एसेट_फ़ाइल्स छवि फ़ाइल पथों की एक सूची होनी चाहिए"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:57
-#: crispy_print/public/js/components/TableColumnsDialog.vue:55
+#: crispy_print/public/js/components/TableColumnsDialog.vue:66
 #: crispy_print/public/js/pages/CrispyPP.vue:126
 #: crispy_print/public/js/report_button.bundle.js:471
 msgid "auto"
@@ -7733,15 +7779,15 @@ msgstr "कस्टम"
 msgid "doctype and name are required"
 msgstr "दस्तावेज़ प्रकार और नाम आवश्यक है"
 
-#: crispy_print/public/js/components/SettingsPane.vue:724
-#: crispy_print/public/js/components/SettingsPane.vue:866
-#: crispy_print/public/js/pages/CrispyPP.vue:287
+#: crispy_print/public/js/components/SettingsPane.vue:737
+#: crispy_print/public/js/components/SettingsPane.vue:892
+#: crispy_print/public/js/pages/CrispyPP.vue:301
 msgid "dx (mm)"
 msgstr "डीएक्स (मिमी)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:733
-#: crispy_print/public/js/components/SettingsPane.vue:875
-#: crispy_print/public/js/pages/CrispyPP.vue:297
+#: crispy_print/public/js/components/SettingsPane.vue:746
+#: crispy_print/public/js/components/SettingsPane.vue:901
+#: crispy_print/public/js/pages/CrispyPP.vue:311
 msgid "dy (mm)"
 msgstr "डाई (मिमी)"
 
@@ -7851,11 +7897,11 @@ msgstr "तिरछा"
 msgid "portrait"
 msgstr "चित्र"
 
-#: crispy_print/api/v1/formats.py:906
+#: crispy_print/api/v1/formats.py:907
 msgid "presentation_settings could not be parsed for reference checks"
 msgstr "संदर्भ जांच के लिए प्रेजेंटेशन_सेटिंग्स को पार्स नहीं किया जा सका"
 
-#: crispy_print/api/v1/formats.py:738
+#: crispy_print/api/v1/formats.py:739
 msgid "presentation_settings could not be parsed while retargeting company"
 msgstr "कंपनी को पुनः लक्षित करते समय प्रेजेंटेशन_सेटिंग्स को पार्स नहीं किया जा सका"
 
@@ -7941,7 +7987,7 @@ msgstr "{0} चेक(ओं) की समीक्षा की आवश्�
 msgid "{0} could not be opened safely: {1}"
 msgstr "{0} को सुरक्षित रूप से नहीं खोला जा सका: {1}"
 
-#: crispy_print/api/v1/formats.py:809
+#: crispy_print/api/v1/formats.py:810
 msgid "{0} exceeds the maximum size of {1} KB"
 msgstr "{0}, {1} KB के अधिकतम आकार से अधिक है"
 
@@ -7949,7 +7995,7 @@ msgstr "{0}, {1} KB के अधिकतम आकार से अधिक �
 msgid "{0} exceeds the maximum size of {1} KB."
 msgstr "{0}, {1} KB के अधिकतम आकार से अधिक है।"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1129
+#: crispy_print/public/js/components/SettingsPane.vue:1155
 msgid "{0} fields selected"
 msgstr "{0} फ़ील्ड चयनित"
 
@@ -8013,7 +8059,7 @@ msgstr "{0}, {1} और {2} के बीच होना चाहिए।"
 msgid "{0} must be greater than zero."
 msgstr "{0} शून्य से अधिक होना चाहिए।"
 
-#: crispy_print/api/v1/formats.py:802
+#: crispy_print/api/v1/formats.py:803
 msgid "{0} must contain valid JSON"
 msgstr "{0} में वैध JSON होना चाहिए"
 
@@ -8051,4 +8097,3 @@ msgstr "{0}.{1} एक सूची होनी चाहिए."
 #: crispy_print/qr_registry/loader.py:200
 msgid "{0}.{1} references unknown fields: {2}"
 msgstr "{0}.{1} अज्ञात फ़ील्ड का संदर्भ देता है: {2}"
-

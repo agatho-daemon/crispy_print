@@ -1,4 +1,4 @@
-# Translations template for Crispy Print.
+# Chinese translations for Crispy Print.
 # Copyright (C) 2026 Agathodaemon
 # This file is distributed under the same license as the Crispy Print project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Crispy Print VERSION\n"
 "Report-Msgid-Bugs-To: agatho_daemon@icloud.com\n"
-"POT-Creation-Date: 2026-07-25 06:40+0307\n"
+"POT-Creation-Date: 2026-07-25 11:21+0307\n"
 "PO-Revision-Date: 2026-07-25 06:40+0307\n"
 "Last-Translator: Crispy Print Contributors\n"
 "Language: zh\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.13.1\n"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1128
+#: crispy_print/public/js/components/SettingsPane.vue:1154
 msgid "1 field selected"
 msgstr "已选择 1 个字段"
 
@@ -153,7 +153,7 @@ msgstr "信头不能取代它自己。"
 msgid "A label used to organize and filter blocks in the library. It does not affect where or how the block is rendered."
 msgstr "用于组织和过滤库中的块的标签。它不会影响块的渲染位置或方式。"
 
-#: crispy_print/api/v1/reports.py:892
+#: crispy_print/api/v1/reports.py:896
 msgid "A saved Report format is required for audited output."
 msgstr "审核输出需要保存的报表格式。"
 
@@ -164,7 +164,7 @@ msgid "A3"
 msgstr "A3"
 
 #: crispy_print/public/js/components/SettingsPane.vue:145
-#: crispy_print/public/js/pages/CrispyPP.vue:324
+#: crispy_print/public/js/pages/CrispyPP.vue:338
 msgid "A3 (297 × 420 mm)"
 msgstr "A3 (297 × 420 mm)"
 
@@ -175,7 +175,7 @@ msgid "A4"
 msgstr "A4"
 
 #: crispy_print/public/js/components/SettingsPane.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:325
+#: crispy_print/public/js/pages/CrispyPP.vue:339
 msgid "A4 (210 × 297 mm)"
 msgstr "A4 (210 × 297 mm)"
 
@@ -186,7 +186,7 @@ msgid "A5"
 msgstr "A5"
 
 #: crispy_print/public/js/components/SettingsPane.vue:147
-#: crispy_print/public/js/pages/CrispyPP.vue:326
+#: crispy_print/public/js/pages/CrispyPP.vue:340
 msgid "A5 (148 × 210 mm)"
 msgstr "A5 (148 × 210 mm)"
 
@@ -269,7 +269,7 @@ msgstr "活动"
 msgid "Active fiscal credential available: {0}"
 msgstr "可用的有效财务凭证：{0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:105
+#: crispy_print/public/js/components/TableColumnsDialog.vue:116
 msgid "Add"
 msgstr "添加"
 
@@ -296,12 +296,12 @@ msgstr "首先添加文档规则，以便 Crispy Print 知道要加载哪个注�
 msgid "Add color"
 msgstr "添加颜色"
 
-#: crispy_print/public/js/components/LayoutPane.vue:169
-#: crispy_print/public/js/components/TableColumnsDialog.vue:83
+#: crispy_print/public/js/components/LayoutPane.vue:177
+#: crispy_print/public/js/components/TableColumnsDialog.vue:94
 msgid "Add column"
 msgstr "添加列"
 
-#: crispy_print/public/js/components/LayoutPane.vue:201
+#: crispy_print/public/js/components/LayoutPane.vue:209
 msgid "Add page break"
 msgstr "添加分页"
 
@@ -309,11 +309,11 @@ msgstr "添加分页"
 msgid "Add rows from the backend QR field registry. Field metadata is filled automatically."
 msgstr "从后端 QR 字段注册表添加行。字段元数据会自动填充。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:148
+#: crispy_print/public/js/components/LayoutPane.vue:156
 msgid "Add section above"
 msgstr "在上方添加分区"
 
-#: crispy_print/public/js/components/LayoutPane.vue:156
+#: crispy_print/public/js/components/LayoutPane.vue:164
 msgid "Add section below"
 msgstr "在下方添加分区"
 
@@ -327,15 +327,15 @@ msgstr "添加了 {0} 个 QR 字段。"
 msgid "Adds marker and line-pattern distinctions so charts remain understandable without relying on color alone."
 msgstr "添加标记和线条图案的区别，使图表保持易于理解，而无需单独依赖颜色。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:385
+#: crispy_print/public/js/components/LayoutPane.vue:417
 msgid "Align"
 msgstr "对齐"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:48
+#: crispy_print/public/js/components/TableColumnsDialog.vue:59
 msgid "Align: {0}"
 msgstr "对齐：{0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:399
+#: crispy_print/public/js/components/LayoutPane.vue:431
 msgid "Alignment options"
 msgstr "对齐选项"
 
@@ -397,6 +397,12 @@ msgstr "此模板范围已存在有效的 Crispy 模板：{0}。"
 msgid "An enabled fiscal credential already exists for this company, regulatory profile, authority code, and environment: {0}"
 msgstr "该公司、监管概况、授权代码和环境已存在启用的财务凭证：{0}"
 
+#: crispy_print/public/js/components/SettingsPane.vue:713
+#: crispy_print/public/js/components/SettingsPane.vue:850
+#: crispy_print/public/js/pages/CrispyPP.vue:275
+msgid "Anchor"
+msgstr "锚点"
+
 #. Label of a Section Break field in DocType 'Crispy Typst Block'
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
 msgid "Applicability"
@@ -408,10 +414,10 @@ msgid "Applicable Documents"
 msgstr "适用文件"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:108
-#: crispy_print/public/js/components/LayoutPane.vue:1288
-#: crispy_print/public/js/components/LayoutPane.vue:1696
-#: crispy_print/public/js/components/LayoutPane.vue:1736
-#: crispy_print/public/js/components/LayoutPane.vue:1800
+#: crispy_print/public/js/components/LayoutPane.vue:1284
+#: crispy_print/public/js/components/LayoutPane.vue:1708
+#: crispy_print/public/js/components/LayoutPane.vue:1748
+#: crispy_print/public/js/components/LayoutPane.vue:1812
 #: crispy_print/public/js/components/QrFieldsDialog.vue:54
 msgid "Apply"
 msgstr "应用"
@@ -547,7 +553,7 @@ msgstr "权威{0}"
 #. Option for the 'Data labels' (Select) field in DocType 'Crispy Branding
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/CrispyImageDialog.vue:63
-#: crispy_print/public/js/components/SettingsPane.vue:810
+#: crispy_print/public/js/components/SettingsPane.vue:823
 #: crispy_print/public/js/pages/CbpBuilder.vue:500
 msgid "Auto"
 msgstr "自动"
@@ -593,7 +599,7 @@ msgstr "轴线宽度（pt）"
 msgid "Aztec"
 msgstr "阿兹特克人"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:358
+#: crispy_print/public/js/pages/CrispyPP.vue:372
 msgid "B"
 msgstr "B"
 
@@ -669,7 +675,7 @@ msgstr "基线偏移 (pt)"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:893
+#: crispy_print/public/js/components/SettingsPane.vue:919
 msgid "Basic QR"
 msgstr "基本二维码"
 
@@ -745,7 +751,7 @@ msgstr "边框"
 #: crispy_print/public/js/components/BoxSidesEditor.vue:38
 #: crispy_print/public/js/pages/CbpBuilder.vue:77
 #: crispy_print/public/js/pages/CbpBuilder.vue:116
-#: crispy_print/public/js/pages/CrispyPP.vue:362
+#: crispy_print/public/js/pages/CrispyPP.vue:376
 #: crispy_print/public/js/pages/CtbBuilder.vue:62
 msgid "Bottom"
 msgstr "下"
@@ -782,7 +788,7 @@ msgstr "品牌建设者"
 #: crispy_print/crispy_print/page/cbp_builder/cbp_builder.js:121
 #: crispy_print/public/js/components/CrispyTemplatePublishDialog.vue:38
 #: crispy_print/public/js/components/SettingsPane.vue:55
-#: crispy_print/public/js/pages/CrispyPP.vue:600
+#: crispy_print/public/js/pages/CrispyPP.vue:614
 msgid "Branding Profile"
 msgstr "品牌配置文件"
 
@@ -867,7 +873,7 @@ msgstr "C40"
 msgid "CAdES/CMS"
 msgstr "CADES/CMS"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:622
+#: crispy_print/public/js/pages/CrispyPP.vue:636
 msgid "Cache Hit"
 msgstr "缓存命中"
 
@@ -955,10 +961,6 @@ msgstr "细胞插图"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 msgid "Cell inset (pt)"
 msgstr "单元格插入（pt）"
-
-#: crispy_print/public/js/components/LayoutPane.vue:453
-msgid "Center"
-msgstr "居中"
 
 #. Option for the 'Document Role' (Select) field in DocType 'Crispy Document
 #. Code Rule'
@@ -1073,7 +1075,7 @@ msgstr "选择格式"
 msgid "Choose and reorder colors visually. Color codes are managed automatically."
 msgstr "直观地选择和重新排列颜色。颜色代码自动管理。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:531
+#: crispy_print/public/js/components/LayoutPane.vue:514
 msgid "Choose block"
 msgstr "选择区块"
 
@@ -1082,7 +1084,7 @@ msgid "Choose fields to include in the QR payload."
 msgstr "选择要包含在 QR 载荷中的字段。"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:6
-#: crispy_print/public/js/components/LayoutPane.vue:541
+#: crispy_print/public/js/components/LayoutPane.vue:524
 msgid "Choose image"
 msgstr "选择图片"
 
@@ -1098,7 +1100,7 @@ msgstr "选择所选系列颜色"
 msgid "Choose the report variables below, then run a live preview using ERPNext data."
 msgstr "选择下面的报表变量，然后使用 ERPNext 数据运行实时预览。"
 
-#: crispy_print/api/v1/formats.py:752
+#: crispy_print/api/v1/formats.py:753
 msgid "Cleared source Branding Profile {0} because it belongs to another company."
 msgstr "已清除源品牌配置文件 {0}，因为它属于另一家公司。"
 
@@ -1111,7 +1113,7 @@ msgstr "每次更改后单击刷新或 Command/Ctrl-Enter 进行编译。"
 #: crispy_print/public/js/components/CrispyTypstBlockDialog.vue:62
 #: crispy_print/public/js/components/DuplicateForCompanyDialog.vue:15
 #: crispy_print/public/js/components/SampleFormatsDialog.vue:15
-#: crispy_print/public/js/components/TableColumnsDialog.vue:112
+#: crispy_print/public/js/components/TableColumnsDialog.vue:123
 msgid "Close"
 msgstr "关闭"
 
@@ -1177,7 +1179,7 @@ msgstr "折叠演示"
 
 #. Label of a Color field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/LayoutPane.vue:1795
+#: crispy_print/public/js/components/LayoutPane.vue:1807
 #: crispy_print/public/js/components/SettingsPane.vue:515
 #: crispy_print/public/js/components/SettingsPane.vue:626
 #: crispy_print/public/js/components/TypographyStyleEditor.vue:140
@@ -1188,9 +1190,13 @@ msgstr "颜色"
 msgid "Colors"
 msgstr "颜色"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:40
+#: crispy_print/public/js/components/TableColumnsDialog.vue:51
 msgid "Column label"
 msgstr "列标签"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:24
+msgid "Column order"
+msgstr "列顺序"
 
 #: crispy_print/public/js/components/TableColumnsDialog.vue:22
 #: crispy_print/public/js/pages/CrispyPP.vue:101
@@ -1244,7 +1250,7 @@ msgstr "紧凑型标签"
 #: crispy_print/public/js/components/SettingsPane.vue:35
 #: crispy_print/public/js/pages/CbpBuilder.vue:20
 #: crispy_print/public/js/pages/CrispyPP.vue:251
-#: crispy_print/public/js/pages/CrispyPP.vue:596
+#: crispy_print/public/js/pages/CrispyPP.vue:610
 msgid "Company"
 msgstr "公司"
 
@@ -1312,7 +1318,7 @@ msgstr "未生成编译后的 PDF"
 msgid "Compiled SVG was not produced"
 msgstr "未生成编译后的 SVG"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:217
+#: crispy_print/public/js/components/PreviewRenderer.vue:218
 msgid "Compiling PDF…"
 msgstr "正在编译 PDF..."
 
@@ -1367,20 +1373,20 @@ msgstr "当条件类型为过滤器 JSON 时，需要条件 JSON。"
 msgid "Condition Type"
 msgstr "条件类型"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1773
+#: crispy_print/public/js/components/LayoutPane.vue:1785
 msgid "Configure Divider"
 msgstr "配置分隔线"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1725
+#: crispy_print/public/js/components/LayoutPane.vue:1737
 msgid "Configure Spacer"
 msgstr "配置间距"
 
-#: crispy_print/public/js/components/LayoutPane.vue:504
+#: crispy_print/public/js/components/LayoutPane.vue:487
 #: crispy_print/public/js/components/TableColumnsDialog.vue:6
 msgid "Configure columns"
 msgstr "配置列"
 
-#: crispy_print/public/js/components/LayoutPane.vue:569
+#: crispy_print/public/js/components/LayoutPane.vue:552
 msgid "Configure divider"
 msgstr "配置分隔线"
 
@@ -1388,7 +1394,7 @@ msgstr "配置分隔线"
 msgid "Configure page size, margins, and typography for Typst."
 msgstr "配置 Typst 的页面大小、边距和排版。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:555
+#: crispy_print/public/js/components/LayoutPane.vue:538
 msgid "Configure spacer"
 msgstr "配置间隔"
 
@@ -1447,7 +1453,7 @@ msgstr "合同为必填项"
 msgid "Contract preview is not available yet."
 msgstr "合同预览尚不可用。"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:110
+#: crispy_print/public/js/components/PreviewRenderer.vue:111
 msgid "Copy"
 msgstr "复制"
 
@@ -1472,7 +1478,7 @@ msgstr "已损坏"
 msgid "Could not acquire default-setting lock for {0}. Please retry."
 msgstr "无法获取 {0} 的默认设置锁定。请重试。"
 
-#: crispy_print/api/v1/formats.py:914
+#: crispy_print/api/v1/formats.py:915
 msgid "Could not resolve selected Crispy Branding Profile for reference checks"
 msgstr "无法解析所选的 Crispy 品牌配置文件以进行参考检查"
 
@@ -1767,8 +1773,8 @@ msgstr "脆皮Typst块已保存"
 msgid "Crispy Typst Block {0} was not found."
 msgstr "未找到脆皮Typst块 {0}。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:769
-#: crispy_print/public/js/components/LayoutPane.vue:1429
+#: crispy_print/public/js/components/LayoutPane.vue:762
+#: crispy_print/public/js/components/LayoutPane.vue:1434
 msgid "Currency"
 msgstr "币种"
 
@@ -1793,7 +1799,7 @@ msgstr "当前格式"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/public/js/components/SettingsPane.vue:58
-#: crispy_print/public/js/pages/CrispyPP.vue:604
+#: crispy_print/public/js/pages/CrispyPP.vue:618
 msgid "Custom"
 msgstr "自定义"
 
@@ -1850,8 +1856,8 @@ msgstr "数据点大小"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:768
-#: crispy_print/public/js/components/LayoutPane.vue:1422
+#: crispy_print/public/js/components/LayoutPane.vue:761
+#: crispy_print/public/js/components/LayoutPane.vue:1427
 msgid "Data Type"
 msgstr "数据类型"
 
@@ -1878,7 +1884,7 @@ msgstr "数据点大小 (pt)"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/components/SettingsPane.vue:777
+#: crispy_print/public/js/components/SettingsPane.vue:790
 #: crispy_print/public/js/pages/CbpBuilder.vue:485
 msgid "DataMatrix"
 msgstr "数据矩阵"
@@ -1901,11 +1907,11 @@ msgstr "数据矩阵编码"
 msgid "DataMatrix Symbols"
 msgstr "数据矩阵符号"
 
-#: crispy_print/public/js/components/SettingsPane.vue:803
+#: crispy_print/public/js/components/SettingsPane.vue:816
 msgid "DataMatrix encodation"
 msgstr "数据矩阵编码"
 
-#: crispy_print/public/js/components/SettingsPane.vue:824
+#: crispy_print/public/js/components/SettingsPane.vue:837
 msgid "DataMatrix symbols"
 msgstr "数据矩阵符号"
 
@@ -1988,7 +1994,7 @@ msgid "Detached"
 msgstr "独立的"
 
 #: crispy_print/public/js/pages/CrispyPFB.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:429
+#: crispy_print/public/js/pages/CrispyPP.vue:443
 msgid "Diagnostics"
 msgstr "诊断"
 
@@ -2029,7 +2035,7 @@ msgstr "文档"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:895
+#: crispy_print/public/js/components/SettingsPane.vue:921
 msgid "Document Code Profile"
 msgstr "文档代码配置文件"
 
@@ -2096,7 +2102,7 @@ msgstr "文件类型 {0} 在适用文件中多次列出。"
 msgid "Document UUID"
 msgstr "文档UUID"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:119
+#: crispy_print/public/js/components/TableColumnsDialog.vue:130
 msgid "Done"
 msgstr "完成"
 
@@ -2122,11 +2128,11 @@ msgstr "下载PDF"
 msgid "Draft"
 msgstr "草案"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:34
+#: crispy_print/public/js/components/TableColumnsDialog.vue:45
 msgid "Drag"
 msgstr "拖动"
 
-#: crispy_print/public/js/components/LayoutPane.vue:256
+#: crispy_print/public/js/components/LayoutPane.vue:264
 msgid "Drag field"
 msgstr "拖拽字段"
 
@@ -2150,7 +2156,7 @@ msgstr "拖拽可重新排序。宽度使用 Typst 单位：auto、1fr、2fr、1
 msgid "Drag to resize builder and preview"
 msgstr "拖动以调整构建器大小并预览"
 
-#: crispy_print/public/js/components/LayoutPane.vue:617
+#: crispy_print/public/js/components/LayoutPane.vue:600
 msgid "Drop fields here"
 msgstr "将字段拖放到此处"
 
@@ -2223,12 +2229,12 @@ msgstr "编辑现有"
 msgid "Edit Properties"
 msgstr "编辑属性"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1677
-#: crispy_print/public/js/components/LayoutPane.vue:1685
+#: crispy_print/public/js/components/LayoutPane.vue:1689
+#: crispy_print/public/js/components/LayoutPane.vue:1697
 msgid "Edit Raw Typst Field"
 msgstr "编辑原始 Typst 字段"
 
-#: crispy_print/public/js/components/LayoutPane.vue:518
+#: crispy_print/public/js/components/LayoutPane.vue:501
 msgid "Edit code"
 msgstr "编辑代码"
 
@@ -2283,7 +2289,7 @@ msgstr "启用图表"
 
 #. Label of a Check field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:760
+#: crispy_print/public/js/components/SettingsPane.vue:773
 msgid "Enable QR Code"
 msgstr "启用二维码"
 
@@ -2351,6 +2357,12 @@ msgstr "编码器键"
 msgid "Encoding"
 msgstr "编码"
 
+#: crispy_print/public/js/components/SettingsPane.vue:722
+#: crispy_print/public/js/components/SettingsPane.vue:859
+#: crispy_print/public/js/pages/CrispyPP.vue:284
+msgid "End"
+msgstr "末端"
+
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:190
 msgid "Enter a six-digit hex color such as #2563EB."
 msgstr "输入六位数的十六进制颜色，例如#2563EB。"
@@ -2379,7 +2391,7 @@ msgstr "纠错"
 
 #. Label of a Select field in DocType 'Crispy QR Regulatory Profile'
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:785
+#: crispy_print/public/js/components/SettingsPane.vue:798
 #: crispy_print/public/js/pages/CbpBuilder.vue:489
 msgid "Error correction"
 msgstr "纠错"
@@ -2484,23 +2496,23 @@ msgstr "无法生成 QR SVG：{0}"
 msgid "Failed to import format."
 msgstr "导入格式失败。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1130
+#: crispy_print/public/js/pages/CrispyPP.vue:1144
 msgid "Failed to initialize preview: {0}"
 msgstr "初始化预览失败：{0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1583
+#: crispy_print/public/js/components/LayoutPane.vue:1595
 msgid "Failed to load Crispy Typst Blocks"
 msgstr "无法加载脆皮Typst块"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1297
+#: crispy_print/public/js/pages/CrispyPP.vue:1311
 msgid "Failed to load active template"
 msgstr "无法加载活动模板"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1219
+#: crispy_print/public/js/pages/CrispyPP.vue:1233
 msgid "Failed to load active templates"
 msgstr "无法加载活动模板"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1193
+#: crispy_print/public/js/pages/CrispyPP.vue:1207
 msgid "Failed to load format: {0}"
 msgstr "加载格式失败：{0}"
 
@@ -2508,7 +2520,7 @@ msgstr "加载格式失败：{0}"
 msgid "Failed to load private images"
 msgstr "私有镜像加载失败"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:820
+#: crispy_print/public/js/pages/CrispyPP.vue:834
 msgid "Failed to load report formats."
 msgstr "加载报表格式失败。"
 
@@ -2565,11 +2577,11 @@ msgstr "字段标签字体"
 msgid "Field label font size"
 msgstr "字段标签字体大小"
 
-#: crispy_print/public/js/components/LayoutPane.vue:318
+#: crispy_print/public/js/components/LayoutPane.vue:326
 msgid "Field menu"
 msgstr "字段菜单"
 
-#: crispy_print/public/js/components/LayoutPane.vue:210
+#: crispy_print/public/js/components/LayoutPane.vue:218
 msgid "Field orientation"
 msgstr "字段方向"
 
@@ -2601,7 +2613,7 @@ msgstr "文件"
 msgid "File Hash"
 msgstr "文件哈希"
 
-#: crispy_print/api/v1/formats.py:929
+#: crispy_print/api/v1/formats.py:930
 msgid "File not found for logo image path: {0}"
 msgstr "未找到 Logo 图片路径对应文件：{0}"
 
@@ -2735,7 +2747,7 @@ msgstr "对于多页工件，例如SVG、JPEG、PNG 等"
 msgid "Form"
 msgstr "表单"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:592
+#: crispy_print/public/js/pages/CrispyPP.vue:606
 msgid "Format"
 msgstr "格式"
 
@@ -3020,6 +3032,15 @@ msgstr "身高"
 msgid "Height (mm)"
 msgstr "高度（毫米）"
 
+#: crispy_print/public/js/components/FieldsPane.vue:19
+#: crispy_print/public/js/components/LayoutPane.vue:45
+#: crispy_print/public/js/components/PreviewPane.vue:68
+#: crispy_print/public/js/components/SettingsPane.vue:18
+#: crispy_print/public/js/components/TypstCodePane.vue:17
+#: crispy_print/public/js/pages/CrispyPP.vue:147
+msgid "Help symbol"
+msgstr "?"
+
 #. Option for the 'Output Encoding' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3032,7 +3053,7 @@ msgstr "十六进制"
 msgid "Hidden"
 msgstr "隐"
 
-#: crispy_print/public/js/components/LayoutPane.vue:492
+#: crispy_print/public/js/components/LayoutPane.vue:475
 msgid "Hide label"
 msgstr "隐藏标签"
 
@@ -3054,7 +3075,7 @@ msgstr "层次结构缩进 (pt)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:795
+#: crispy_print/public/js/components/SettingsPane.vue:808
 #: crispy_print/public/js/pages/CbpBuilder.vue:494
 msgid "High"
 msgstr "高"
@@ -3133,7 +3154,7 @@ msgstr "导入失败"
 msgid "Import Warnings"
 msgstr "导入警告"
 
-#: crispy_print/api/v1/formats.py:768
+#: crispy_print/api/v1/formats.py:769
 msgid "Import payload cannot be empty"
 msgstr "导入载荷不能为空"
 
@@ -3174,8 +3195,8 @@ msgstr "包含哈希值"
 msgid "Include signature"
 msgstr "包括签名"
 
-#: crispy_print/public/js/components/LayoutPane.vue:767
-#: crispy_print/public/js/components/LayoutPane.vue:1415
+#: crispy_print/public/js/components/LayoutPane.vue:760
+#: crispy_print/public/js/components/LayoutPane.vue:1420
 msgid "Indicator"
 msgstr "指示器"
 
@@ -3184,11 +3205,11 @@ msgstr "指示器"
 msgid "Info"
 msgstr "信息"
 
-#: crispy_print/public/js/components/SettingsPane.vue:891
+#: crispy_print/public/js/components/SettingsPane.vue:917
 msgid "Inherit branding default"
 msgstr "继承品牌默认设置"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1074
+#: crispy_print/public/js/components/SettingsPane.vue:1100
 msgid "Inherited from the selected Branding Profile."
 msgstr "继承自选定的品牌配置文件。"
 
@@ -3227,7 +3248,7 @@ msgstr "无效"
 msgid "Invalid Crispy Template status: {0}"
 msgstr "无效的 Crispy 模板状态：{0}"
 
-#: crispy_print/api/v1/formats.py:772
+#: crispy_print/api/v1/formats.py:773
 msgid "Invalid JSON payload"
 msgstr "JSON 载荷无效"
 
@@ -3243,11 +3264,11 @@ msgstr ""
 msgid "Invalid business status: {0}"
 msgstr "无效的企业状态：{0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:188
+#: crispy_print/public/js/components/TableColumnsDialog.vue:207
 msgid "Invalid column width values: {0}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc."
 msgstr "列宽值无效：{0}。请使用 Typst 单位，例如：auto、1fr、2fr、100pt、50%、2cm 等。"
 
-#: crispy_print/api/v1/reports.py:394
+#: crispy_print/api/v1/reports.py:398
 msgid "Invalid column_config format"
 msgstr "column_config 格式无效"
 
@@ -3255,11 +3276,11 @@ msgstr "column_config 格式无效"
 msgid "Invalid conflict action: {0}"
 msgstr "冲突处理动作无效：{0}"
 
-#: crispy_print/api/v1/formats.py:707
+#: crispy_print/api/v1/formats.py:708
 msgid "Invalid duplicate name strategy: {0}"
 msgstr "无效的重复名称策略：{0}"
 
-#: crispy_print/api/v1/reports.py:382
+#: crispy_print/api/v1/reports.py:386
 msgid "Invalid filters format"
 msgstr "filters 格式无效"
 
@@ -3379,7 +3400,7 @@ msgstr "签发文件记录在签发开始后无法删除。"
 msgid "Issued document revoked."
 msgstr "已签发文档被撤销。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1518
+#: crispy_print/public/js/pages/CrispyPP.vue:1532
 msgid "Issued document snapshot recorded: {0}"
 msgstr "已记录的已已签发文档快照：{0}"
 
@@ -3423,7 +3444,7 @@ msgstr "JSON、XML 等"
 msgid "KSeF"
 msgstr "氟化钾"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:367
+#: crispy_print/public/js/pages/CrispyPP.vue:381
 msgid "L"
 msgstr "L"
 
@@ -3435,10 +3456,10 @@ msgstr "LHDN 电子发票"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:759
-#: crispy_print/public/js/components/LayoutPane.vue:765
-#: crispy_print/public/js/components/LayoutPane.vue:1382
-#: crispy_print/public/js/components/LayoutPane.vue:1401
+#: crispy_print/public/js/components/LayoutPane.vue:752
+#: crispy_print/public/js/components/LayoutPane.vue:758
+#: crispy_print/public/js/components/LayoutPane.vue:1387
+#: crispy_print/public/js/components/LayoutPane.vue:1406
 msgid "Label"
 msgstr "标签"
 
@@ -3458,7 +3479,7 @@ msgstr "标签及系列"
 
 #: crispy_print/public/js/components/SettingsPane.vue:169
 #: crispy_print/public/js/pages/CbpBuilder.vue:71
-#: crispy_print/public/js/pages/CrispyPP.vue:341
+#: crispy_print/public/js/pages/CrispyPP.vue:355
 #: crispy_print/public/js/pages/CtbBuilder.vue:38
 msgid "Landscape"
 msgstr "横向"
@@ -3503,13 +3524,18 @@ msgstr "留空以将此模板视为全局模板。设置公司以使其特定于
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:39
-#: crispy_print/public/js/components/LayoutPane.vue:426
 #: crispy_print/public/js/pages/CbpBuilder.vue:78
 #: crispy_print/public/js/pages/CbpBuilder.vue:118
-#: crispy_print/public/js/pages/CrispyPP.vue:371
+#: crispy_print/public/js/pages/CrispyPP.vue:385
 #: crispy_print/public/js/pages/CtbBuilder.vue:70
 msgid "Left"
 msgstr "左"
+
+#: crispy_print/public/js/components/SettingsPane.vue:719
+#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/pages/CrispyPP.vue:281
+msgid "Left (physical)"
+msgstr "左侧（物理）"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:295
 msgid "Left margin"
@@ -3520,7 +3546,7 @@ msgstr "左边距"
 msgid "Left margin (mm)"
 msgstr "左边距（毫米）"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1360
+#: crispy_print/public/js/components/LayoutPane.vue:1365
 msgid "Left-Right"
 msgstr "左到右"
 
@@ -3547,7 +3573,7 @@ msgid "Legal"
 msgstr "法律"
 
 #: crispy_print/public/js/components/SettingsPane.vue:151
-#: crispy_print/public/js/pages/CrispyPP.vue:330
+#: crispy_print/public/js/pages/CrispyPP.vue:344
 msgid "Legal (8.5 × 14 in)"
 msgstr "Legal (8.5 × 14 in)"
 
@@ -3560,7 +3586,7 @@ msgstr "图例位置"
 msgid "Legend position"
 msgstr "图例位置"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1778
+#: crispy_print/public/js/components/LayoutPane.vue:1790
 msgid "Length"
 msgstr "长度"
 
@@ -3571,7 +3597,7 @@ msgid "Letter"
 msgstr "信"
 
 #: crispy_print/public/js/components/SettingsPane.vue:149
-#: crispy_print/public/js/pages/CrispyPP.vue:328
+#: crispy_print/public/js/pages/CrispyPP.vue:342
 msgid "Letter (8.5 × 11 in)"
 msgstr "Letter (8.5 × 11 in)"
 
@@ -3631,7 +3657,7 @@ msgstr "实时报表预览"
 msgid "Load default"
 msgstr "加载默认"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:218
+#: crispy_print/public/js/components/PreviewRenderer.vue:219
 msgid "Loading PDF…"
 msgstr "正在加载 PDF..."
 
@@ -3695,6 +3721,10 @@ msgstr "正在加载模板..."
 msgid "Loading..."
 msgstr "载入中..."
 
+#: crispy_print/public/js/components/TableColumnsDialog.vue:30
+msgid "Logical (direction-aware)"
+msgstr "逻辑（感知方向）"
+
 #. Option for the 'Code Purpose' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3755,7 +3785,7 @@ msgstr "徽标宽度必须大于零。"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:792
+#: crispy_print/public/js/components/SettingsPane.vue:805
 #: crispy_print/public/js/pages/CbpBuilder.vue:491
 msgid "Low"
 msgstr "低"
@@ -3773,7 +3803,7 @@ msgid "Make cloned template active"
 msgstr "使克隆模板处于活动状态"
 
 #: crispy_print/public/js/components/SettingsPane.vue:175
-#: crispy_print/public/js/pages/CrispyPP.vue:346
+#: crispy_print/public/js/pages/CrispyPP.vue:360
 msgid "Margins (mm)"
 msgstr "边距（mm）"
 
@@ -3810,7 +3840,7 @@ msgstr "媒体类型"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:793
+#: crispy_print/public/js/components/SettingsPane.vue:806
 #: crispy_print/public/js/pages/CbpBuilder.vue:492
 msgid "Medium"
 msgstr "中等"
@@ -3847,23 +3877,23 @@ msgstr "小网格"
 msgid "Missing export payload"
 msgstr "缺少导出载荷"
 
-#: crispy_print/api/v1/formats.py:923
+#: crispy_print/api/v1/formats.py:924
 msgid "Missing reference: Company '{0}'"
 msgstr "缺少引用：公司 '{0}'"
 
-#: crispy_print/api/v1/formats.py:944
+#: crispy_print/api/v1/formats.py:945
 msgid "Missing reference: Company '{0}' (metadata)"
 msgstr "缺少参考：公司“{0}”（元数据）"
 
-#: crispy_print/api/v1/formats.py:954
+#: crispy_print/api/v1/formats.py:955
 msgid "Missing reference: Crispy Template '{0}' (metadata)"
 msgstr "缺少参考：Crispy 模板“{0}”（元数据）"
 
-#: crispy_print/api/v1/formats.py:918
+#: crispy_print/api/v1/formats.py:919
 msgid "Missing reference: Letter Head '{0}'"
 msgstr "缺少引用：信头 '{0}'"
 
-#: crispy_print/api/v1/formats.py:897
+#: crispy_print/api/v1/formats.py:898
 msgid "Missing reference: {0} '{1}' (field: {2})"
 msgstr "缺少引用：{0} '{1}'（字段：{2}）"
 
@@ -3893,7 +3923,7 @@ msgstr "模块"
 msgid "Module Size (pt)"
 msgstr "模块尺寸（磅）"
 
-#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/components/SettingsPane.vue:882
 msgid "Module size"
 msgstr "模块尺寸"
 
@@ -4009,11 +4039,11 @@ msgstr "没有找到这些过滤器的有效财政凭证。"
 msgid "No active templates"
 msgstr "没有活动模板"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:638
+#: crispy_print/public/js/pages/CrispyPP.vue:652
 msgid "No approved Crispy Template is available for this document context."
 msgstr "没有批准的 Crispy 模板可用于此文档上下文。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1562
+#: crispy_print/public/js/components/LayoutPane.vue:1574
 msgid "No block selected"
 msgstr "未选择任何块"
 
@@ -4021,7 +4051,7 @@ msgstr "未选择任何块"
 msgid "No columns available"
 msgstr "没有可用列"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:78
+#: crispy_print/public/js/components/TableColumnsDialog.vue:89
 msgid "No columns yet. Add one below."
 msgstr "尚无列。在下方添加一个。"
 
@@ -4049,7 +4079,7 @@ msgstr "未找到字段。"
 msgid "No fields match {0}!"
 msgstr "没有字段匹配 {0}！"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1127
+#: crispy_print/public/js/components/SettingsPane.vue:1153
 msgid "No fields selected"
 msgstr "未选择字段"
 
@@ -4057,7 +4087,7 @@ msgstr "未选择字段"
 msgid "No fiscal credential found for these filters."
 msgstr "没有找到这些过滤器的财政凭证。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1570
+#: crispy_print/public/js/components/LayoutPane.vue:1582
 msgid "No image selected"
 msgstr "未选择图像"
 
@@ -4081,7 +4111,7 @@ msgstr "无需添加新的必需权限字段。"
 msgid "No obvious format issues found."
 msgstr "没有发现明显的格式问题。"
 
-#: crispy_print/api/v1/reports.py:1809
+#: crispy_print/api/v1/reports.py:1813
 msgid "No print format found for report '{0}'"
 msgstr "未找到报表 '{0}' 的打印格式"
 
@@ -4223,7 +4253,7 @@ msgstr "可选：添加 `// fields: customer, items.item_code` 来缩小载荷�
 
 #: crispy_print/public/js/components/SettingsPane.vue:162
 #: crispy_print/public/js/pages/CbpBuilder.vue:68
-#: crispy_print/public/js/pages/CrispyPP.vue:335
+#: crispy_print/public/js/pages/CrispyPP.vue:349
 #: crispy_print/public/js/pages/CtbBuilder.vue:35
 #: crispy_print/public/js/report_button.bundle.js:255
 msgid "Orientation"
@@ -4319,11 +4349,11 @@ msgstr "PDF SHA-256"
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:607
+#: crispy_print/public/js/pages/CrispyPP.vue:621
 msgid "PDF Standard"
 msgstr "PDF标准"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1607
+#: crispy_print/public/js/pages/CrispyPP.vue:1621
 msgid "PDF download started."
 msgstr "PDF 下载已开始。"
 
@@ -4336,7 +4366,7 @@ msgstr "PDF 生成成功"
 msgid "PDF generation not available"
 msgstr "PDF 生成功能不可用"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1613
+#: crispy_print/public/js/pages/CrispyPP.vue:1627
 msgid "PDF opened in a new tab."
 msgstr "PDF 已在新标签页打开。"
 
@@ -4367,7 +4397,7 @@ msgstr ""
 "  注意：PDF/A 输出嵌入字体，因此所选字体必须允许 PDF 嵌入/子集化。\n"
 "</span>"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:332
+#: crispy_print/public/js/components/PreviewRenderer.vue:333
 msgid "PDF preview failed."
 msgstr "PDF 预览失败。"
 
@@ -4426,12 +4456,12 @@ msgstr "PDF/A-4"
 msgid "PDF417"
 msgstr "PDF417"
 
-#: crispy_print/api/v1/reports.py:1835
+#: crispy_print/api/v1/reports.py:1839
 #: crispy_print/public/js/pages/CbpBuilder.vue:57
 msgid "Page"
 msgstr "页"
 
-#: crispy_print/public/js/components/LayoutPane.vue:623
+#: crispy_print/public/js/components/LayoutPane.vue:606
 msgid "Page Break"
 msgstr "分页符"
 
@@ -4450,7 +4480,7 @@ msgstr "页码"
 msgid "Page Settings"
 msgstr "页面设置"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:322
+#: crispy_print/public/js/pages/CrispyPP.vue:336
 msgid "Page Size"
 msgstr "页面大小"
 
@@ -4464,7 +4494,7 @@ msgstr "页面方向"
 msgid "Page size"
 msgstr "页面尺寸"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:614
+#: crispy_print/public/js/pages/CrispyPP.vue:628
 msgid "Pages"
 msgstr "页数"
 
@@ -4512,15 +4542,15 @@ msgstr "当内容源为静态文本时，需要负载模板。"
 msgid "Payload format"
 msgstr "有效负载格式"
 
-#: crispy_print/api/v1/formats.py:779
+#: crispy_print/api/v1/formats.py:780
 msgid "Payload must be a JSON object"
 msgstr "载荷必须是 JSON 对象"
 
-#: crispy_print/api/v1/formats.py:776
+#: crispy_print/api/v1/formats.py:777
 msgid "Payload must be a JSON object or JSON string"
 msgstr "载荷必须是 JSON 对象或 JSON 字符串"
 
-#: crispy_print/api/v1/formats.py:790
+#: crispy_print/api/v1/formats.py:791
 msgid "Payload must include a 'format' object"
 msgstr "载荷必须包含 'format' 对象"
 
@@ -4557,6 +4587,10 @@ msgstr "有待"
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 msgid "Peppol BIS"
 msgstr "佩波尔·BIS"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:31
+msgid "Physical (fixed)"
+msgstr "物理（固定）"
 
 #: crispy_print/public/js/components/PreviewPane.vue:84
 msgid "Pick a document to preview."
@@ -4606,7 +4640,7 @@ msgstr "传送门链接"
 
 #: crispy_print/public/js/components/SettingsPane.vue:168
 #: crispy_print/public/js/pages/CbpBuilder.vue:70
-#: crispy_print/public/js/pages/CrispyPP.vue:340
+#: crispy_print/public/js/pages/CrispyPP.vue:354
 #: crispy_print/public/js/pages/CtbBuilder.vue:37
 msgid "Portrait"
 msgstr "纵向"
@@ -4631,7 +4665,7 @@ msgstr "演示覆盖 JSON"
 #. Label of a Code field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
-#: crispy_print/public/js/pages/CrispyPP.vue:318
+#: crispy_print/public/js/pages/CrispyPP.vue:332
 msgid "Presentation Settings"
 msgstr "演示设置"
 
@@ -4683,7 +4717,7 @@ msgstr "预览焦点"
 msgid "Preview is not ready to print."
 msgstr "预览尚未准备好打印。"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:92
+#: crispy_print/public/js/components/PreviewRenderer.vue:93
 msgid "Preview output will render here."
 msgstr "预览输出将显示在此处。"
 
@@ -4691,7 +4725,7 @@ msgstr "预览输出将显示在此处。"
 msgid "Preview shrinks to content with 2.5cm margins. Use for compact self-sizing blocks, not tables, grids, or long text."
 msgstr "预览缩小到边距为 2.5 厘米的内容。用于紧凑的自调整大小块，而不是表格、网格或长文本。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1036
+#: crispy_print/public/js/pages/CrispyPP.vue:1050
 msgid "Preview truncated to {0} rows (from {1}). PDF output may also be limited."
 msgstr "预览被截断为 {0} 行（从 {1} 行开始）。 PDF 输出也可能受到限制。"
 
@@ -4756,7 +4790,7 @@ msgstr "打印零金额税款"
 msgid "Print UOM after Quantity"
 msgstr "数量后打印UOM"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1566
+#: crispy_print/public/js/pages/CrispyPP.vue:1580
 msgid "Print dialog opened."
 msgstr "打印对话框打开。"
 
@@ -4886,7 +4920,7 @@ msgstr "Python 条形码回退仅支持 QR 码。 DataMatrix 需要 Zebra。"
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
-#: crispy_print/public/js/components/SettingsPane.vue:776
+#: crispy_print/public/js/components/SettingsPane.vue:789
 #: crispy_print/public/js/pages/CbpBuilder.vue:475
 #: crispy_print/public/js/pages/CbpBuilder.vue:484
 msgid "QR Code"
@@ -4900,7 +4934,7 @@ msgstr "QR 码字段"
 msgid "QR Code X position"
 msgstr "二维码X位置"
 
-#: crispy_print/public/js/components/SettingsPane.vue:767
+#: crispy_print/public/js/components/SettingsPane.vue:780
 msgid "QR Code is anchored to bottom-left using #place()."
 msgstr "二维码通过 #place() 锚定在左下角。"
 
@@ -4964,19 +4998,19 @@ msgstr "QR 字段 {0}.{1} 缺少 {2}。"
 msgid "QR field {0}.{1} must be an object."
 msgstr "QR 字段 {0}.{1} 必须是一个对象。"
 
-#: crispy_print/public/js/components/SettingsPane.vue:910
+#: crispy_print/public/js/components/SettingsPane.vue:936
 msgid "QR fields"
 msgstr "QR 字段"
 
-#: crispy_print/public/js/components/SettingsPane.vue:926
+#: crispy_print/public/js/components/SettingsPane.vue:952
 msgid "QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
 msgstr "在文档代码配置文件模式中，QR 有效负载字段将被忽略，因为后端会解析最终的编码值。"
 
-#: crispy_print/public/js/components/SettingsPane.vue:884
+#: crispy_print/public/js/components/SettingsPane.vue:910
 msgid "QR source"
 msgstr "二维码来源"
 
-#: crispy_print/public/js/components/SettingsPane.vue:765
+#: crispy_print/public/js/components/SettingsPane.vue:778
 msgid "QR-Code"
 msgstr "QR 码"
 
@@ -4989,7 +5023,7 @@ msgstr "QR 码"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:794
+#: crispy_print/public/js/components/SettingsPane.vue:807
 #: crispy_print/public/js/pages/CbpBuilder.vue:493
 msgid "Quartile"
 msgstr "四分位数"
@@ -5008,7 +5042,7 @@ msgstr "安静"
 msgid "Quiet Zone"
 msgstr "安静区"
 
-#: crispy_print/public/js/components/SettingsPane.vue:846
+#: crispy_print/public/js/components/SettingsPane.vue:872
 msgid "Quiet zone"
 msgstr "安静区"
 
@@ -5018,7 +5052,7 @@ msgstr "安静区"
 msgid "Quotation"
 msgstr "报价"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:376
+#: crispy_print/public/js/pages/CrispyPP.vue:390
 msgid "R"
 msgstr "R"
 
@@ -5038,11 +5072,11 @@ msgstr "RSA"
 #. Label of a Check field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:623
+#: crispy_print/public/js/pages/CrispyPP.vue:637
 msgid "Raw Typst"
 msgstr "原始 Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1690
+#: crispy_print/public/js/components/LayoutPane.vue:1702
 msgid "Raw Typst Field"
 msgstr "原始 Typst 字段"
 
@@ -5087,7 +5121,7 @@ msgstr "记录完整性检查"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:832
+#: crispy_print/public/js/components/SettingsPane.vue:845
 #: crispy_print/public/js/pages/CbpBuilder.vue:513
 msgid "Rectangular"
 msgstr "长方形"
@@ -5228,25 +5262,25 @@ msgstr "相关制品"
 msgid "Reload"
 msgstr "重新载入"
 
-#: crispy_print/public/js/components/LayoutPane.vue:588
-#: crispy_print/public/js/components/TableColumnsDialog.vue:66
+#: crispy_print/public/js/components/LayoutPane.vue:571
+#: crispy_print/public/js/components/TableColumnsDialog.vue:77
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:95
 msgid "Remove"
 msgstr "移除"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:311
+#: crispy_print/public/js/pages/CrispyPP.vue:325
 msgid "Remove QRCode"
 msgstr "移除二维码"
 
-#: crispy_print/public/js/components/LayoutPane.vue:178
+#: crispy_print/public/js/components/LayoutPane.vue:186
 msgid "Remove column"
 msgstr "移除列"
 
-#: crispy_print/public/js/components/LayoutPane.vue:200
+#: crispy_print/public/js/components/LayoutPane.vue:208
 msgid "Remove page break"
 msgstr "移除分页"
 
-#: crispy_print/public/js/components/LayoutPane.vue:224
+#: crispy_print/public/js/components/LayoutPane.vue:232
 msgid "Remove section"
 msgstr "移除分区"
 
@@ -5260,7 +5294,7 @@ msgstr "渲染设置"
 msgid "Render Status"
 msgstr "渲染状态"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:616
+#: crispy_print/public/js/pages/CrispyPP.vue:630
 msgid "Render Time"
 msgstr "渲染时间"
 
@@ -5306,7 +5340,7 @@ msgstr "通过 Typst 呈现品牌配置文件设置。"
 msgid "Rendering custom Typst with branding profile specimen data."
 msgstr "使用品牌配置文件样本数据渲染自定义 Typst。"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:219
+#: crispy_print/public/js/components/PreviewRenderer.vue:220
 msgid "Rendering preview…"
 msgstr "渲染预览..."
 
@@ -5337,7 +5371,7 @@ msgstr "报表范围必须是所有兼容报表或选定报表。"
 msgid "Report Format"
 msgstr "报表格式"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1621
+#: crispy_print/public/js/pages/CrispyPP.vue:1635
 msgid "Report PDF generation failed."
 msgstr "报表 PDF 生成失败。"
 
@@ -5408,12 +5442,12 @@ msgstr "报表输出审核记录是不可变的。"
 msgid "Report output audit records cannot be deleted."
 msgstr "报表输出审核记录无法删除。"
 
-#: crispy_print/api/v1/reports.py:896
+#: crispy_print/api/v1/reports.py:900
 msgid "Report output audit requires a Report format."
 msgstr "报表输出审核需要报表格式。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1056
-#: crispy_print/public/js/pages/CrispyPP.vue:1062
+#: crispy_print/public/js/pages/CrispyPP.vue:1070
+#: crispy_print/public/js/pages/CrispyPP.vue:1076
 msgid "Report preview access expired. Run Preview again."
 msgstr "报表预览访问权限已过期。再次运行预览。"
 
@@ -5425,12 +5459,12 @@ msgstr "报表预览访问权限已更改。再次运行预览。"
 msgid "Report preview data has expired. Run Preview again."
 msgstr "报表预览数据已过期。再次运行预览。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1063
+#: crispy_print/public/js/pages/CrispyPP.vue:1077
 msgid "Report preview failed."
 msgstr "报表预览失败。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1556
-#: crispy_print/public/js/pages/CrispyPP.vue:1589
+#: crispy_print/public/js/pages/CrispyPP.vue:1570
+#: crispy_print/public/js/pages/CrispyPP.vue:1603
 msgid "Report preview not ready yet."
 msgstr "报表预览尚未就绪。"
 
@@ -5446,11 +5480,11 @@ msgstr "报表预览需要实时报表上下文，包括过滤器、选定的列
 msgid "Report previews need filters, selected columns, and generated result data. Open the report first, configure the view you want, then launch Crispy Print Preview from that report."
 msgstr "报表预览需要过滤器、选定的列和生成的结果数据。首先打开报表，配置所需的视图，然后从该报表启动 Crispy Print Preview。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1573
+#: crispy_print/public/js/pages/CrispyPP.vue:1587
 msgid "Report printing failed."
 msgstr "报表打印失败。"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1580
+#: crispy_print/public/js/pages/CrispyPP.vue:1594
 msgid "Report printing was blocked by the browser."
 msgstr "报表打印被浏览器阻止。"
 
@@ -5542,7 +5576,7 @@ msgstr "重置更改"
 msgid "Reset View Defaults"
 msgstr "重置视图默认值"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1507
+#: crispy_print/public/js/components/LayoutPane.vue:1513
 msgid "Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
 msgstr "将布局重置为 DocType 默认值（来自元）？这将放弃所有布局更改并恢复起始部分/列/字段的排列。"
 
@@ -5653,13 +5687,18 @@ msgstr "撤销于"
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:40
-#: crispy_print/public/js/components/LayoutPane.vue:480
 #: crispy_print/public/js/pages/CbpBuilder.vue:79
 #: crispy_print/public/js/pages/CbpBuilder.vue:113
-#: crispy_print/public/js/pages/CrispyPP.vue:380
+#: crispy_print/public/js/pages/CrispyPP.vue:394
 #: crispy_print/public/js/pages/CtbBuilder.vue:78
 msgid "Right"
 msgstr "右"
+
+#: crispy_print/public/js/components/SettingsPane.vue:720
+#: crispy_print/public/js/components/SettingsPane.vue:857
+#: crispy_print/public/js/pages/CrispyPP.vue:282
+msgid "Right (physical)"
+msgstr "右侧（物理）"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:294
 msgid "Right margin"
@@ -5688,7 +5727,7 @@ msgstr "运行预览"
 msgid "Run Preview again"
 msgstr "再次运行预览"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:216
+#: crispy_print/public/js/components/PreviewRenderer.vue:217
 msgid "Running report…"
 msgstr "运行报表..."
 
@@ -5855,7 +5894,7 @@ msgstr "部分标签"
 msgid "Section Labels"
 msgstr "分区标签"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1286
+#: crispy_print/public/js/components/LayoutPane.vue:1282
 msgid "Section Settings"
 msgstr "分区设置"
 
@@ -5872,7 +5911,7 @@ msgstr "部分标签字体大小"
 msgid "Section menu"
 msgstr "分区菜单"
 
-#: crispy_print/public/js/components/LayoutPane.vue:190
+#: crispy_print/public/js/components/LayoutPane.vue:198
 msgid "Section settings"
 msgstr "分区设置"
 
@@ -5930,11 +5969,11 @@ msgstr "选择列并设置宽度（例如，auto、1fr、2cm、100pt）"
 msgid "Select company"
 msgstr "选择公司"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:90
+#: crispy_print/public/js/components/TableColumnsDialog.vue:101
 msgid "Select field"
 msgstr "选择字段"
 
-#: crispy_print/public/js/components/SettingsPane.vue:917
+#: crispy_print/public/js/components/SettingsPane.vue:943
 msgid "Select fields"
 msgstr "选择字段"
 
@@ -6125,11 +6164,11 @@ msgstr "显示合计"
 msgid "Show filters block"
 msgstr "显示筛选区块"
 
-#: crispy_print/public/js/components/LayoutPane.vue:493
+#: crispy_print/public/js/components/LayoutPane.vue:476
 msgid "Show label"
 msgstr "显示标签"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:426
+#: crispy_print/public/js/pages/CrispyPP.vue:440
 msgid "Show preview diagnostics"
 msgstr "显示预览诊断"
 
@@ -6202,9 +6241,9 @@ msgstr "大小"
 
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:714
-#: crispy_print/public/js/components/SettingsPane.vue:837
-#: crispy_print/public/js/pages/CrispyPP.vue:275
+#: crispy_print/public/js/components/SettingsPane.vue:727
+#: crispy_print/public/js/components/SettingsPane.vue:863
+#: crispy_print/public/js/pages/CrispyPP.vue:289
 msgid "Size (mm)"
 msgstr "大小（mm）"
 
@@ -6276,7 +6315,7 @@ msgstr "来源 Crispy Format 公司需要发布 Crispy 模板。"
 msgid "Source Crispy Format does not belong to company {0}."
 msgstr "Source Crispy Format 不属于公司 {0}。"
 
-#: crispy_print/api/v1/formats.py:621
+#: crispy_print/api/v1/formats.py:622
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:370
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:420
 msgid "Source Crispy Format is required."
@@ -6336,7 +6375,7 @@ msgstr "源模板"
 msgid "Source document {0} {1} does not exist."
 msgstr "源文档 {0} {1} 不存在。"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1730
+#: crispy_print/public/js/components/LayoutPane.vue:1742
 msgid "Spacer Value"
 msgstr "间距值"
 
@@ -6360,12 +6399,12 @@ msgstr "上间距（pt）"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:831
+#: crispy_print/public/js/components/SettingsPane.vue:844
 #: crispy_print/public/js/pages/CbpBuilder.vue:512
 msgid "Square"
 msgstr "广场"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:215
+#: crispy_print/public/js/components/TableColumnsDialog.vue:234
 msgid "Sr No."
 msgstr "序号"
 
@@ -6382,6 +6421,12 @@ msgstr "用于从模板或代码引用此块的稳定标识符。使用以下划
 msgid "Standard"
 msgstr "标准"
 
+#: crispy_print/public/js/components/SettingsPane.vue:721
+#: crispy_print/public/js/components/SettingsPane.vue:858
+#: crispy_print/public/js/pages/CrispyPP.vue:283
+msgid "Start"
+msgstr "起始"
+
 #. Option for the 'Content Source' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -6392,7 +6437,7 @@ msgstr "静态文本"
 #. Label of a Select field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:591
+#: crispy_print/public/js/pages/CrispyPP.vue:605
 msgid "Status"
 msgstr "状态"
 
@@ -6440,7 +6485,7 @@ msgstr "斑马纹"
 msgid "Stroke (pt)"
 msgstr "线宽（pt）"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1786
+#: crispy_print/public/js/components/LayoutPane.vue:1798
 msgid "Stroke Width"
 msgstr "线宽"
 
@@ -6541,7 +6586,7 @@ msgstr "未找到取代已发布的文档 {0}。"
 
 #. Label of a Select field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:770
+#: crispy_print/public/js/components/SettingsPane.vue:783
 #: crispy_print/public/js/pages/CbpBuilder.vue:482
 msgid "Symbology"
 msgstr "符号学"
@@ -6564,7 +6609,7 @@ msgstr "符号"
 msgid "System Manager"
 msgstr "系统管理员"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:349
+#: crispy_print/public/js/pages/CrispyPP.vue:363
 msgid "T"
 msgstr "T"
 
@@ -6652,7 +6697,7 @@ msgstr "目标公司"
 msgid "Target company is required."
 msgstr "目标公司为必填项。"
 
-#: crispy_print/api/v1/formats.py:628 crispy_print/api/v1/templates.py:168
+#: crispy_print/api/v1/formats.py:629 crispy_print/api/v1/templates.py:168
 msgid "Target company must be different from the source company."
 msgstr "目标公司必须与源公司不同。"
 
@@ -6662,7 +6707,7 @@ msgid "Tax"
 msgstr "税项"
 
 #: crispy_print/public/js/pages/CrispyPP.vue:137
-#: crispy_print/public/js/pages/CrispyPP.vue:593
+#: crispy_print/public/js/pages/CrispyPP.vue:607
 msgid "Template"
 msgstr "模板"
 
@@ -6695,7 +6740,7 @@ msgstr "模板源"
 
 #. Label of a Data field in DocType 'Crispy Report Output Audit'
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
-#: crispy_print/public/js/pages/CrispyPP.vue:594
+#: crispy_print/public/js/pages/CrispyPP.vue:608
 msgid "Template Version"
 msgstr "模板版本"
 
@@ -6758,7 +6803,7 @@ msgstr "审核此格式后，上游报表渲染器发生了更改。在发布之
 msgid "The upstream report sources are unavailable; the review cannot be acknowledged."
 msgstr "上游报表来源不可用；审查不能被承认。"
 
-#: crispy_print/api/v1/reports.py:645
+#: crispy_print/api/v1/reports.py:649
 msgid "This Basic report format has no generated Typst code. Open it in the Report Format Builder, save it, and try again."
 msgstr "此基本报表格式没有生成 Typst 代码。在报表格式生成器中打开它，保存它，然后重试。"
 
@@ -6856,7 +6901,7 @@ msgstr "请求太多。请稍等片刻，然后重试。"
 #: crispy_print/public/js/components/BoxSidesEditor.vue:37
 #: crispy_print/public/js/pages/CbpBuilder.vue:76
 #: crispy_print/public/js/pages/CbpBuilder.vue:112
-#: crispy_print/public/js/pages/CrispyPP.vue:353
+#: crispy_print/public/js/pages/CrispyPP.vue:367
 #: crispy_print/public/js/pages/CtbBuilder.vue:58
 msgid "Top"
 msgstr "上"
@@ -6870,7 +6915,7 @@ msgstr "上边距"
 msgid "Top margin (mm)"
 msgstr "上边距（毫米）"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1361
+#: crispy_print/public/js/components/LayoutPane.vue:1366
 msgid "Top-Down"
 msgstr "上到下"
 
@@ -6897,6 +6942,7 @@ msgstr "信任事件类型是必需的。"
 
 #. Label of a Select field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
+#: crispy_print/public/js/components/LayoutPane.vue:11
 #: crispy_print/public/js/components/SettingsPane.vue:668
 msgid "Type"
 msgstr "类型"
@@ -6941,7 +6987,7 @@ msgstr "原始 Typst 模板需要 Typst 代码。"
 msgid "Typst Code is required when Code Only is enabled."
 msgstr "当启用“仅代码”时，需要输入Typst代码。"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:108
+#: crispy_print/public/js/components/PreviewRenderer.vue:109
 #: crispy_print/public/js/pages/CbpBuilder.vue:792
 msgid "Typst Error"
 msgstr "Typst 错误"
@@ -6972,11 +7018,11 @@ msgstr "Typst 源哈希"
 #. Label of a Data field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:611
+#: crispy_print/public/js/pages/CrispyPP.vue:625
 msgid "Typst Version"
 msgstr "Typst版本"
 
-#: crispy_print/api/v1/reports.py:599
+#: crispy_print/api/v1/reports.py:603
 msgid "Typst code is required for an unsaved report preview."
 msgstr "未保存的报表预览需要 Typst 代码。"
 
@@ -7009,19 +7055,19 @@ msgstr "必须提供 Typst 源代码"
 msgid "Typst specimen preview"
 msgstr "Typst样本预览"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1787
+#: crispy_print/public/js/components/LayoutPane.vue:1799
 msgid "Typst units: 0.5pt, 1pt, 2pt, etc."
 msgstr "Typst 单位：0.5pt、1pt、2pt 等"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1779
+#: crispy_print/public/js/components/LayoutPane.vue:1791
 msgid "Typst units: 100%, 80%, 10cm, etc."
 msgstr "Typst 单位：100%、80%、10cm 等"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1731
+#: crispy_print/public/js/components/LayoutPane.vue:1743
 msgid "Typst units: 1em, 2cm, 10pt, 5mm, etc."
 msgstr "Typst 单位：1em、2cm、10pt、5mm 等"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:62
+#: crispy_print/public/js/components/TableColumnsDialog.vue:73
 msgid "Typst width: auto, 1fr, 2fr, 100pt, etc."
 msgstr "Typst 宽度：auto、1fr、2fr、100pt 等。"
 
@@ -7173,7 +7219,7 @@ msgstr "不支持的编码器密钥：{0}"
 msgid "Unsupported font file type. Allowed extensions: {0}"
 msgstr "不支持的字体文件类型。允许的扩展名：{0}"
 
-#: crispy_print/api/v1/formats.py:794
+#: crispy_print/api/v1/formats.py:795
 msgid "Unsupported import fields: {0}"
 msgstr "不支持的导入字段：{0}"
 
@@ -7185,7 +7231,7 @@ msgstr "不支持的输出编码：{0}"
 msgid "Unsupported payload format: {0}"
 msgstr "不支持的负载格式：{0}"
 
-#: crispy_print/api/v1/formats.py:786
+#: crispy_print/api/v1/formats.py:787
 msgid "Unsupported schema_version. Expected {0}"
 msgstr "不支持的 schema_version。期望值：{0}"
 
@@ -7246,7 +7292,7 @@ msgstr "上传图片预览"
 msgid "Uploaded letterhead preview"
 msgstr "上传的信头预览"
 
-#: crispy_print/public/js/components/SettingsPane.vue:900
+#: crispy_print/public/js/components/SettingsPane.vue:926
 msgid "Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
 msgstr "对当前字段列表有效负载使用基本 QR，或使用文档代码配置文件来解析后端文档代码配置中受监管的 QR 输出。"
 
@@ -7334,10 +7380,10 @@ msgstr "验证消息"
 msgid "Validation Status"
 msgstr "验证状态"
 
-#: crispy_print/public/js/components/LayoutPane.vue:760
-#: crispy_print/public/js/components/LayoutPane.vue:766
-#: crispy_print/public/js/components/LayoutPane.vue:1389
-#: crispy_print/public/js/components/LayoutPane.vue:1408
+#: crispy_print/public/js/components/LayoutPane.vue:753
+#: crispy_print/public/js/components/LayoutPane.vue:759
+#: crispy_print/public/js/components/LayoutPane.vue:1394
+#: crispy_print/public/js/components/LayoutPane.vue:1413
 msgid "Value"
 msgstr "值"
 
@@ -7486,7 +7532,7 @@ msgstr "宽度"
 msgid "Width (mm)"
 msgstr "宽度（毫米）"
 
-#: crispy_print/public/js/components/LayoutPane.vue:606
+#: crispy_print/public/js/components/LayoutPane.vue:589
 msgid "Width: {0}%"
 msgstr "宽度：{0}%"
 
@@ -7588,11 +7634,11 @@ msgstr "Y 距顶部 (mm)"
 msgid "Yes"
 msgstr "是"
 
-#: crispy_print/api/v1/formats.py:882
+#: crispy_print/api/v1/formats.py:883
 msgid "You don't have permission to create Crispy Format"
 msgstr "你没有权限创建 Crispy 格式"
 
-#: crispy_print/api/v1/reports.py:596
+#: crispy_print/api/v1/reports.py:600
 msgid "You need permission to create Crispy Format before previewing an unsaved report."
 msgstr "在预览未保存的报表之前，您需要创建 Crispy Format 的权限。"
 
@@ -7652,7 +7698,7 @@ msgid "asset_files must be a list of image file paths"
 msgstr "asset_files 必须是图片文件路径列表"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:57
-#: crispy_print/public/js/components/TableColumnsDialog.vue:55
+#: crispy_print/public/js/components/TableColumnsDialog.vue:66
 #: crispy_print/public/js/pages/CrispyPP.vue:126
 #: crispy_print/public/js/report_button.bundle.js:471
 msgid "auto"
@@ -7694,15 +7740,15 @@ msgstr "定制"
 msgid "doctype and name are required"
 msgstr "doctype 和 name 为必填项"
 
-#: crispy_print/public/js/components/SettingsPane.vue:724
-#: crispy_print/public/js/components/SettingsPane.vue:866
-#: crispy_print/public/js/pages/CrispyPP.vue:287
+#: crispy_print/public/js/components/SettingsPane.vue:737
+#: crispy_print/public/js/components/SettingsPane.vue:892
+#: crispy_print/public/js/pages/CrispyPP.vue:301
 msgid "dx (mm)"
 msgstr "dx（mm）"
 
-#: crispy_print/public/js/components/SettingsPane.vue:733
-#: crispy_print/public/js/components/SettingsPane.vue:875
-#: crispy_print/public/js/pages/CrispyPP.vue:297
+#: crispy_print/public/js/components/SettingsPane.vue:746
+#: crispy_print/public/js/components/SettingsPane.vue:901
+#: crispy_print/public/js/pages/CrispyPP.vue:311
 msgid "dy (mm)"
 msgstr "dy（mm）"
 
@@ -7812,11 +7858,11 @@ msgstr "斜的"
 msgid "portrait"
 msgstr "肖像"
 
-#: crispy_print/api/v1/formats.py:906
+#: crispy_print/api/v1/formats.py:907
 msgid "presentation_settings could not be parsed for reference checks"
 msgstr "无法解析 presentation_settings 以进行引用检查"
 
-#: crispy_print/api/v1/formats.py:738
+#: crispy_print/api/v1/formats.py:739
 msgid "presentation_settings could not be parsed while retargeting company"
 msgstr "重定向公司时无法解析presentation_settings"
 
@@ -7902,7 +7948,7 @@ msgstr "{0} 张支票需要审核。"
 msgid "{0} could not be opened safely: {1}"
 msgstr "无法安全打开{0}：{1}"
 
-#: crispy_print/api/v1/formats.py:809
+#: crispy_print/api/v1/formats.py:810
 msgid "{0} exceeds the maximum size of {1} KB"
 msgstr "{0} 超出了 {1} KB 的最大大小"
 
@@ -7910,7 +7956,7 @@ msgstr "{0} 超出了 {1} KB 的最大大小"
 msgid "{0} exceeds the maximum size of {1} KB."
 msgstr "{0} 超出了 {1} KB 的最大大小。"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1129
+#: crispy_print/public/js/components/SettingsPane.vue:1155
 msgid "{0} fields selected"
 msgstr "已选择 {0} 个字段"
 
@@ -7974,7 +8020,7 @@ msgstr "{0} 必须介于 {1} 和 {2} 之间。"
 msgid "{0} must be greater than zero."
 msgstr "{0} 必须大于零。"
 
-#: crispy_print/api/v1/formats.py:802
+#: crispy_print/api/v1/formats.py:803
 msgid "{0} must contain valid JSON"
 msgstr "{0} 必须包含有效的 JSON"
 

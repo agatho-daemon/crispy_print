@@ -53,6 +53,12 @@ describe("RTL Typst generation parity", () => {
     expect(typst).toContain(
       "#align(left)[#text(dir: ltr, ..fieldValueStyle)[#doc.grand_total]]",
     );
+    expect(typst).toContain(
+      "cp_measure_value_table_cell(value) = table.cell(stroke: (left: none))[#box[#text(dir: ltr",
+    );
+    expect(typst).toContain(
+      "box(text(dir: ltr, ..tableCellLabelStyle)[#label])",
+    );
     expect(typst).toContain('"Noto Naskh Arabic"');
   });
 

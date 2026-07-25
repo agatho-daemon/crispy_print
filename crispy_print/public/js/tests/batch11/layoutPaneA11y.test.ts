@@ -153,7 +153,7 @@ describe("LayoutPane accessibility", () => {
     const fieldMenuBtn = wrapper.find(".field-card__menu-btn");
     expect(fieldMenuBtn.exists()).toBe(true);
 
-    await fieldMenuBtn.trigger("click");
+    await fieldMenuBtn.trigger("keydown", { key: "Enter" });
     await nextTick();
     await nextTick();
 

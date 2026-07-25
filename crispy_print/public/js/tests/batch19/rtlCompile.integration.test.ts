@@ -49,6 +49,27 @@ describe.skipIf(!enabled)("real RTL Typst PDF", () => {
                     label: "الإجمالي",
                     align: "end",
                   },
+                  {
+                    id: "items",
+                    fieldtype: "Table",
+                    fieldname: "items",
+                    label: "البنود",
+                    table_order: "logical",
+                    table_columns: [
+                      {
+                        fieldname: "item_code",
+                        fieldtype: "Data",
+                        label: "رمز الصنف",
+                        align: "start",
+                      },
+                      {
+                        fieldname: "amount",
+                        fieldtype: "Currency",
+                        label: "المبلغ",
+                        align: "end",
+                      },
+                    ],
+                  },
                 ],
               },
             ],
@@ -60,8 +81,12 @@ describe.skipIf(!enabled)("real RTL Typst PDF", () => {
       {
         customer_name: "شركة Example تهران",
         grand_total: "KWD -12.375",
+        items: [{ item_code: "RTL-001", amount: "KWD -700.000" }],
       },
-      { language: "ar-KW" },
+      {
+        language: "ar-KW",
+        table: { cellLabel: { enabled: true } },
+      },
     );
     const input = join(workdir, "rtl.typ");
     const output = join(workdir, "rtl.pdf");
@@ -77,6 +102,8 @@ describe.skipIf(!enabled)("real RTL Typst PDF", () => {
         encoding: "utf8",
       });
       expect(text).toContain("KWD -12.375");
+      expect(text).toContain("-700.000");
+      expect(text).not.toContain("700.000-");
       expect(text).toMatch(/Example|العميل|الإجمالي/);
     } catch (error: any) {
       if (error?.code !== "ENOENT") throw error;

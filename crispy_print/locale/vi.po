@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Crispy Print VERSION\n"
 "Report-Msgid-Bugs-To: agatho_daemon@icloud.com\n"
-"POT-Creation-Date: 2026-07-25 06:40+0307\n"
+"POT-Creation-Date: 2026-07-25 11:21+0307\n"
 "PO-Revision-Date: 2026-07-25 06:40+0307\n"
 "Last-Translator: Crispy Print Contributors\n"
 "Language: vi\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.13.1\n"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1128
+#: crispy_print/public/js/components/SettingsPane.vue:1154
 msgid "1 field selected"
 msgstr "Đã chọn 1 trường"
 
@@ -153,7 +153,7 @@ msgstr "Tiêu đề thư không thể thay thế chính nó."
 msgid "A label used to organize and filter blocks in the library. It does not affect where or how the block is rendered."
 msgstr "Một nhãn dùng để sắp xếp và lọc các khối trong thư viện. Nó không ảnh hưởng đến vị trí hoặc cách khối được hiển thị."
 
-#: crispy_print/api/v1/reports.py:892
+#: crispy_print/api/v1/reports.py:896
 msgid "A saved Report format is required for audited output."
 msgstr "Cần có định dạng Báo cáo đã lưu cho đầu ra được kiểm tra."
 
@@ -164,7 +164,7 @@ msgid "A3"
 msgstr "A3"
 
 #: crispy_print/public/js/components/SettingsPane.vue:145
-#: crispy_print/public/js/pages/CrispyPP.vue:324
+#: crispy_print/public/js/pages/CrispyPP.vue:338
 msgid "A3 (297 × 420 mm)"
 msgstr "A3 (297×420mm)"
 
@@ -175,7 +175,7 @@ msgid "A4"
 msgstr "A4"
 
 #: crispy_print/public/js/components/SettingsPane.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:325
+#: crispy_print/public/js/pages/CrispyPP.vue:339
 msgid "A4 (210 × 297 mm)"
 msgstr "A4 (210×297mm)"
 
@@ -186,7 +186,7 @@ msgid "A5"
 msgstr "A5"
 
 #: crispy_print/public/js/components/SettingsPane.vue:147
-#: crispy_print/public/js/pages/CrispyPP.vue:326
+#: crispy_print/public/js/pages/CrispyPP.vue:340
 msgid "A5 (148 × 210 mm)"
 msgstr "A5 (148×210mm)"
 
@@ -269,7 +269,7 @@ msgstr "có hiệu lực"
 msgid "Active fiscal credential available: {0}"
 msgstr "Thông tin tài chính đang hoạt động có sẵn: {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:105
+#: crispy_print/public/js/components/TableColumnsDialog.vue:116
 msgid "Add"
 msgstr "Thêm"
 
@@ -296,12 +296,12 @@ msgstr "Trước tiên, hãy thêm Quy tắc tài liệu để Crispy Print bi�
 msgid "Add color"
 msgstr "Thêm màu sắc"
 
-#: crispy_print/public/js/components/LayoutPane.vue:169
-#: crispy_print/public/js/components/TableColumnsDialog.vue:83
+#: crispy_print/public/js/components/LayoutPane.vue:177
+#: crispy_print/public/js/components/TableColumnsDialog.vue:94
 msgid "Add column"
 msgstr "Thêm cột"
 
-#: crispy_print/public/js/components/LayoutPane.vue:201
+#: crispy_print/public/js/components/LayoutPane.vue:209
 msgid "Add page break"
 msgstr "Thêm ngắt trang"
 
@@ -309,11 +309,11 @@ msgstr "Thêm ngắt trang"
 msgid "Add rows from the backend QR field registry. Field metadata is filled automatically."
 msgstr "Thêm hàng từ sổ đăng ký trường QR phụ trợ. Siêu dữ liệu trường được điền tự động."
 
-#: crispy_print/public/js/components/LayoutPane.vue:148
+#: crispy_print/public/js/components/LayoutPane.vue:156
 msgid "Add section above"
 msgstr "Thêm phần trên"
 
-#: crispy_print/public/js/components/LayoutPane.vue:156
+#: crispy_print/public/js/components/LayoutPane.vue:164
 msgid "Add section below"
 msgstr "Thêm phần bên dưới"
 
@@ -327,15 +327,15 @@ msgstr "Đã thêm các trường {0} QR."
 msgid "Adds marker and line-pattern distinctions so charts remain understandable without relying on color alone."
 msgstr "Thêm điểm khác biệt về điểm đánh dấu và mẫu đường để biểu đồ vẫn dễ hiểu mà không cần chỉ dựa vào màu sắc."
 
-#: crispy_print/public/js/components/LayoutPane.vue:385
+#: crispy_print/public/js/components/LayoutPane.vue:417
 msgid "Align"
 msgstr "Căn chỉnh"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:48
+#: crispy_print/public/js/components/TableColumnsDialog.vue:59
 msgid "Align: {0}"
 msgstr "Căn chỉnh: {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:399
+#: crispy_print/public/js/components/LayoutPane.vue:431
 msgid "Alignment options"
 msgstr "Tùy chọn căn chỉnh"
 
@@ -397,6 +397,12 @@ msgstr "Mẫu Crispy đang hoạt động đã tồn tại cho phạm vi mẫu n
 msgid "An enabled fiscal credential already exists for this company, regulatory profile, authority code, and environment: {0}"
 msgstr "Đã tồn tại thông tin xác thực tài chính được kích hoạt cho công ty, hồ sơ quy định, mã thẩm quyền và môi trường này: {0}"
 
+#: crispy_print/public/js/components/SettingsPane.vue:713
+#: crispy_print/public/js/components/SettingsPane.vue:850
+#: crispy_print/public/js/pages/CrispyPP.vue:275
+msgid "Anchor"
+msgstr "Điểm neo"
+
 #. Label of a Section Break field in DocType 'Crispy Typst Block'
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
 msgid "Applicability"
@@ -408,10 +414,10 @@ msgid "Applicable Documents"
 msgstr "Tài liệu áp dụng"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:108
-#: crispy_print/public/js/components/LayoutPane.vue:1288
-#: crispy_print/public/js/components/LayoutPane.vue:1696
-#: crispy_print/public/js/components/LayoutPane.vue:1736
-#: crispy_print/public/js/components/LayoutPane.vue:1800
+#: crispy_print/public/js/components/LayoutPane.vue:1284
+#: crispy_print/public/js/components/LayoutPane.vue:1708
+#: crispy_print/public/js/components/LayoutPane.vue:1748
+#: crispy_print/public/js/components/LayoutPane.vue:1812
 #: crispy_print/public/js/components/QrFieldsDialog.vue:54
 msgid "Apply"
 msgstr "Ứng dụng"
@@ -547,7 +553,7 @@ msgstr "Cơ quan {0}"
 #. Option for the 'Data labels' (Select) field in DocType 'Crispy Branding
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/CrispyImageDialog.vue:63
-#: crispy_print/public/js/components/SettingsPane.vue:810
+#: crispy_print/public/js/components/SettingsPane.vue:823
 #: crispy_print/public/js/pages/CbpBuilder.vue:500
 msgid "Auto"
 msgstr "Tự động"
@@ -593,7 +599,7 @@ msgstr "Chiều rộng đường trục (pt)"
 msgid "Aztec"
 msgstr "người Aztec"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:358
+#: crispy_print/public/js/pages/CrispyPP.vue:372
 msgid "B"
 msgstr "B"
 
@@ -669,7 +675,7 @@ msgstr "Sự thay đổi đường cơ sở (pt)"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:893
+#: crispy_print/public/js/components/SettingsPane.vue:919
 msgid "Basic QR"
 msgstr "QR cơ bản"
 
@@ -745,7 +751,7 @@ msgstr "Biên giới"
 #: crispy_print/public/js/components/BoxSidesEditor.vue:38
 #: crispy_print/public/js/pages/CbpBuilder.vue:77
 #: crispy_print/public/js/pages/CbpBuilder.vue:116
-#: crispy_print/public/js/pages/CrispyPP.vue:362
+#: crispy_print/public/js/pages/CrispyPP.vue:376
 #: crispy_print/public/js/pages/CtbBuilder.vue:62
 msgid "Bottom"
 msgstr "Dưới cùng"
@@ -782,7 +788,7 @@ msgstr "Người xây dựng thương hiệu"
 #: crispy_print/crispy_print/page/cbp_builder/cbp_builder.js:121
 #: crispy_print/public/js/components/CrispyTemplatePublishDialog.vue:38
 #: crispy_print/public/js/components/SettingsPane.vue:55
-#: crispy_print/public/js/pages/CrispyPP.vue:600
+#: crispy_print/public/js/pages/CrispyPP.vue:614
 msgid "Branding Profile"
 msgstr "Hồ sơ xây dựng thương hiệu"
 
@@ -867,7 +873,7 @@ msgstr "C40"
 msgid "CAdES/CMS"
 msgstr "CADES/CMS"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:622
+#: crispy_print/public/js/pages/CrispyPP.vue:636
 msgid "Cache Hit"
 msgstr "Lượt truy cập bộ đệm"
 
@@ -955,10 +961,6 @@ msgstr "Chèn tế bào"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 msgid "Cell inset (pt)"
 msgstr "Chèn ô (pt)"
-
-#: crispy_print/public/js/components/LayoutPane.vue:453
-msgid "Center"
-msgstr "Trung tâm"
 
 #. Option for the 'Document Role' (Select) field in DocType 'Crispy Document
 #. Code Rule'
@@ -1073,7 +1075,7 @@ msgstr "Chọn một định dạng cho"
 msgid "Choose and reorder colors visually. Color codes are managed automatically."
 msgstr "Chọn và sắp xếp lại màu sắc một cách trực quan. Mã màu được quản lý tự động."
 
-#: crispy_print/public/js/components/LayoutPane.vue:531
+#: crispy_print/public/js/components/LayoutPane.vue:514
 msgid "Choose block"
 msgstr "Chọn khối"
 
@@ -1082,7 +1084,7 @@ msgid "Choose fields to include in the QR payload."
 msgstr "Chọn các trường để đưa vào tải trọng QR."
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:6
-#: crispy_print/public/js/components/LayoutPane.vue:541
+#: crispy_print/public/js/components/LayoutPane.vue:524
 msgid "Choose image"
 msgstr "Chọn hình ảnh"
 
@@ -1098,7 +1100,7 @@ msgstr "Chọn màu chuỗi đã chọn"
 msgid "Choose the report variables below, then run a live preview using ERPNext data."
 msgstr "Chọn các biến báo cáo bên dưới, sau đó chạy bản xem trước trực tiếp bằng dữ liệu ERPNext."
 
-#: crispy_print/api/v1/formats.py:752
+#: crispy_print/api/v1/formats.py:753
 msgid "Cleared source Branding Profile {0} because it belongs to another company."
 msgstr "Đã xóa nguồn Hồ sơ thương hiệu {0} vì nó thuộc về công ty khác."
 
@@ -1111,7 +1113,7 @@ msgstr "Bấm vào Làm mới hoặc Lệnh/Ctrl-Enter để biên dịch sau m�
 #: crispy_print/public/js/components/CrispyTypstBlockDialog.vue:62
 #: crispy_print/public/js/components/DuplicateForCompanyDialog.vue:15
 #: crispy_print/public/js/components/SampleFormatsDialog.vue:15
-#: crispy_print/public/js/components/TableColumnsDialog.vue:112
+#: crispy_print/public/js/components/TableColumnsDialog.vue:123
 msgid "Close"
 msgstr "Đóng"
 
@@ -1177,7 +1179,7 @@ msgstr "Thu gọn bản trình bày"
 
 #. Label of a Color field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/LayoutPane.vue:1795
+#: crispy_print/public/js/components/LayoutPane.vue:1807
 #: crispy_print/public/js/components/SettingsPane.vue:515
 #: crispy_print/public/js/components/SettingsPane.vue:626
 #: crispy_print/public/js/components/TypographyStyleEditor.vue:140
@@ -1188,9 +1190,13 @@ msgstr "Màu"
 msgid "Colors"
 msgstr "Màu sắc"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:40
+#: crispy_print/public/js/components/TableColumnsDialog.vue:51
 msgid "Column label"
 msgstr "Nhãn cột"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:24
+msgid "Column order"
+msgstr "Thứ tự cột"
 
 #: crispy_print/public/js/components/TableColumnsDialog.vue:22
 #: crispy_print/public/js/pages/CrispyPP.vue:101
@@ -1244,7 +1250,7 @@ msgstr "Nhãn nhỏ gọn"
 #: crispy_print/public/js/components/SettingsPane.vue:35
 #: crispy_print/public/js/pages/CbpBuilder.vue:20
 #: crispy_print/public/js/pages/CrispyPP.vue:251
-#: crispy_print/public/js/pages/CrispyPP.vue:596
+#: crispy_print/public/js/pages/CrispyPP.vue:610
 msgid "Company"
 msgstr "Giỏ hàng Giá liệt kê"
 
@@ -1312,7 +1318,7 @@ msgstr "PDF đã biên dịch không được sản xuất"
 msgid "Compiled SVG was not produced"
 msgstr "SVG đã biên dịch không được sản xuất"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:217
+#: crispy_print/public/js/components/PreviewRenderer.vue:218
 msgid "Compiling PDF…"
 msgstr "Đang biên dịch PDF…"
 
@@ -1367,20 +1373,20 @@ msgstr "Điều kiện JSON là bắt buộc khi Loại điều kiện là Bộ 
 msgid "Condition Type"
 msgstr "Loại tình trạng"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1773
+#: crispy_print/public/js/components/LayoutPane.vue:1785
 msgid "Configure Divider"
 msgstr "Cấu hình bộ chia"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1725
+#: crispy_print/public/js/components/LayoutPane.vue:1737
 msgid "Configure Spacer"
 msgstr "Định cấu hình Spacer"
 
-#: crispy_print/public/js/components/LayoutPane.vue:504
+#: crispy_print/public/js/components/LayoutPane.vue:487
 #: crispy_print/public/js/components/TableColumnsDialog.vue:6
 msgid "Configure columns"
 msgstr "Định cấu hình cột"
 
-#: crispy_print/public/js/components/LayoutPane.vue:569
+#: crispy_print/public/js/components/LayoutPane.vue:552
 msgid "Configure divider"
 msgstr "Cấu hình bộ chia"
 
@@ -1388,7 +1394,7 @@ msgstr "Cấu hình bộ chia"
 msgid "Configure page size, margins, and typography for Typst."
 msgstr "Định cấu hình kích thước trang, lề và kiểu chữ cho Typst."
 
-#: crispy_print/public/js/components/LayoutPane.vue:555
+#: crispy_print/public/js/components/LayoutPane.vue:538
 msgid "Configure spacer"
 msgstr "Định cấu hình miếng đệm"
 
@@ -1447,7 +1453,7 @@ msgstr "Hợp đồng là bắt buộc"
 msgid "Contract preview is not available yet."
 msgstr "Bản xem trước hợp đồng chưa có sẵn."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:110
+#: crispy_print/public/js/components/PreviewRenderer.vue:111
 msgid "Copy"
 msgstr "Sao chép"
 
@@ -1472,7 +1478,7 @@ msgstr "bị hỏng"
 msgid "Could not acquire default-setting lock for {0}. Please retry."
 msgstr "Không thể lấy khóa cài đặt mặc định cho {0}. Vui lòng thử lại."
 
-#: crispy_print/api/v1/formats.py:914
+#: crispy_print/api/v1/formats.py:915
 msgid "Could not resolve selected Crispy Branding Profile for reference checks"
 msgstr "Không thể giải quyết Hồ sơ thương hiệu Crispy đã chọn để kiểm tra tham chiếu"
 
@@ -1767,8 +1773,8 @@ msgstr "Đã lưu khối Crispy Typst"
 msgid "Crispy Typst Block {0} was not found."
 msgstr "Không tìm thấy Crispy Typst Khối {0}."
 
-#: crispy_print/public/js/components/LayoutPane.vue:769
-#: crispy_print/public/js/components/LayoutPane.vue:1429
+#: crispy_print/public/js/components/LayoutPane.vue:762
+#: crispy_print/public/js/components/LayoutPane.vue:1434
 msgid "Currency"
 msgstr "Tiền tệ"
 
@@ -1793,7 +1799,7 @@ msgstr "Định dạng hiện tại"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/public/js/components/SettingsPane.vue:58
-#: crispy_print/public/js/pages/CrispyPP.vue:604
+#: crispy_print/public/js/pages/CrispyPP.vue:618
 msgid "Custom"
 msgstr "Tuỳ chỉnh"
 
@@ -1850,8 +1856,8 @@ msgstr "Kích thước điểm dữ liệu"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:768
-#: crispy_print/public/js/components/LayoutPane.vue:1422
+#: crispy_print/public/js/components/LayoutPane.vue:761
+#: crispy_print/public/js/components/LayoutPane.vue:1427
 msgid "Data Type"
 msgstr "Kiểu dữ liệu"
 
@@ -1878,7 +1884,7 @@ msgstr "Kích thước điểm dữ liệu (pt)"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/components/SettingsPane.vue:777
+#: crispy_print/public/js/components/SettingsPane.vue:790
 #: crispy_print/public/js/pages/CbpBuilder.vue:485
 msgid "DataMatrix"
 msgstr "Ma trận dữ liệu"
@@ -1901,11 +1907,11 @@ msgstr "Mã hóa DataMatrix"
 msgid "DataMatrix Symbols"
 msgstr "Ký hiệu DataMatrix"
 
-#: crispy_print/public/js/components/SettingsPane.vue:803
+#: crispy_print/public/js/components/SettingsPane.vue:816
 msgid "DataMatrix encodation"
 msgstr "Mã hóa DataMatrix"
 
-#: crispy_print/public/js/components/SettingsPane.vue:824
+#: crispy_print/public/js/components/SettingsPane.vue:837
 msgid "DataMatrix symbols"
 msgstr "Ký hiệu DataMatrix"
 
@@ -1988,7 +1994,7 @@ msgid "Detached"
 msgstr "tách ra"
 
 #: crispy_print/public/js/pages/CrispyPFB.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:429
+#: crispy_print/public/js/pages/CrispyPP.vue:443
 msgid "Diagnostics"
 msgstr "Chẩn đoán"
 
@@ -2029,7 +2035,7 @@ msgstr "Tài liệu"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:895
+#: crispy_print/public/js/components/SettingsPane.vue:921
 msgid "Document Code Profile"
 msgstr "Hồ sơ mã tài liệu"
 
@@ -2096,7 +2102,7 @@ msgstr "Loại Tài liệu {0} được liệt kê nhiều lần trong Tài li�
 msgid "Document UUID"
 msgstr "Tài liệu UUID"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:119
+#: crispy_print/public/js/components/TableColumnsDialog.vue:130
 msgid "Done"
 msgstr "Hoàn thành"
 
@@ -2122,11 +2128,11 @@ msgstr "Tải về PDF"
 msgid "Draft"
 msgstr "Bản nháp"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:34
+#: crispy_print/public/js/components/TableColumnsDialog.vue:45
 msgid "Drag"
 msgstr "Kéo"
 
-#: crispy_print/public/js/components/LayoutPane.vue:256
+#: crispy_print/public/js/components/LayoutPane.vue:264
 msgid "Drag field"
 msgstr "Trường kéo"
 
@@ -2150,7 +2156,7 @@ msgstr "Kéo để sắp xếp lại. Độ rộng sử dụng các đơn vị T
 msgid "Drag to resize builder and preview"
 msgstr "Kéo để đổi kích thước trình tạo và xem trước"
 
-#: crispy_print/public/js/components/LayoutPane.vue:617
+#: crispy_print/public/js/components/LayoutPane.vue:600
 msgid "Drop fields here"
 msgstr "Thả các trường vào đây"
 
@@ -2223,12 +2229,12 @@ msgstr "Chỉnh sửa hiện có"
 msgid "Edit Properties"
 msgstr "Chỉnh sửa tài sản"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1677
-#: crispy_print/public/js/components/LayoutPane.vue:1685
+#: crispy_print/public/js/components/LayoutPane.vue:1689
+#: crispy_print/public/js/components/LayoutPane.vue:1697
 msgid "Edit Raw Typst Field"
 msgstr "Chỉnh sửa trường Typst thô"
 
-#: crispy_print/public/js/components/LayoutPane.vue:518
+#: crispy_print/public/js/components/LayoutPane.vue:501
 msgid "Edit code"
 msgstr "Chỉnh sửa mã"
 
@@ -2283,7 +2289,7 @@ msgstr "Bật biểu đồ"
 
 #. Label of a Check field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:760
+#: crispy_print/public/js/components/SettingsPane.vue:773
 msgid "Enable QR Code"
 msgstr "Kích hoạt mã QR"
 
@@ -2351,6 +2357,12 @@ msgstr "Khóa mã hóa"
 msgid "Encoding"
 msgstr "Mã hóa"
 
+#: crispy_print/public/js/components/SettingsPane.vue:722
+#: crispy_print/public/js/components/SettingsPane.vue:859
+#: crispy_print/public/js/pages/CrispyPP.vue:284
+msgid "End"
+msgstr "Cuối"
+
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:190
 msgid "Enter a six-digit hex color such as #2563EB."
 msgstr "Nhập màu hex gồm sáu chữ số, chẳng hạn như #2563EB."
@@ -2379,7 +2391,7 @@ msgstr "Sửa lỗi"
 
 #. Label of a Select field in DocType 'Crispy QR Regulatory Profile'
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:785
+#: crispy_print/public/js/components/SettingsPane.vue:798
 #: crispy_print/public/js/pages/CbpBuilder.vue:489
 msgid "Error correction"
 msgstr "Sửa lỗi"
@@ -2484,23 +2496,23 @@ msgstr "Không thể tạo QR SVG: {0}"
 msgid "Failed to import format."
 msgstr "Không thể nhập định dạng."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1130
+#: crispy_print/public/js/pages/CrispyPP.vue:1144
 msgid "Failed to initialize preview: {0}"
 msgstr "Không thể khởi tạo bản xem trước: {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1583
+#: crispy_print/public/js/components/LayoutPane.vue:1595
 msgid "Failed to load Crispy Typst Blocks"
 msgstr "Không thể tải Khối Crispy Typst"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1297
+#: crispy_print/public/js/pages/CrispyPP.vue:1311
 msgid "Failed to load active template"
 msgstr "Không tải được mẫu đang hoạt động"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1219
+#: crispy_print/public/js/pages/CrispyPP.vue:1233
 msgid "Failed to load active templates"
 msgstr "Không tải được mẫu đang hoạt động"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1193
+#: crispy_print/public/js/pages/CrispyPP.vue:1207
 msgid "Failed to load format: {0}"
 msgstr "Không tải được định dạng: {0}"
 
@@ -2508,7 +2520,7 @@ msgstr "Không tải được định dạng: {0}"
 msgid "Failed to load private images"
 msgstr "Không tải được hình ảnh riêng tư"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:820
+#: crispy_print/public/js/pages/CrispyPP.vue:834
 msgid "Failed to load report formats."
 msgstr "Không tải được định dạng báo cáo."
 
@@ -2565,11 +2577,11 @@ msgstr "Phông chữ nhãn trường"
 msgid "Field label font size"
 msgstr "Kích thước phông chữ của nhãn trường"
 
-#: crispy_print/public/js/components/LayoutPane.vue:318
+#: crispy_print/public/js/components/LayoutPane.vue:326
 msgid "Field menu"
 msgstr "Trình đơn trường"
 
-#: crispy_print/public/js/components/LayoutPane.vue:210
+#: crispy_print/public/js/components/LayoutPane.vue:218
 msgid "Field orientation"
 msgstr "Định hướng trường"
 
@@ -2601,7 +2613,7 @@ msgstr "Tập tin"
 msgid "File Hash"
 msgstr "Băm tệp"
 
-#: crispy_print/api/v1/formats.py:929
+#: crispy_print/api/v1/formats.py:930
 msgid "File not found for logo image path: {0}"
 msgstr "Không tìm thấy tệp cho đường dẫn hình ảnh logo: {0}"
 
@@ -2735,7 +2747,7 @@ msgstr "Đối với các tạo phẩm nhiều trang, ví dụ: SVG, JPEG, PNG, 
 msgid "Form"
 msgstr "biểu mẫu"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:592
+#: crispy_print/public/js/pages/CrispyPP.vue:606
 msgid "Format"
 msgstr "định dạng"
 
@@ -3020,6 +3032,15 @@ msgstr "Chiều cao"
 msgid "Height (mm)"
 msgstr "Chiều cao (mm)"
 
+#: crispy_print/public/js/components/FieldsPane.vue:19
+#: crispy_print/public/js/components/LayoutPane.vue:45
+#: crispy_print/public/js/components/PreviewPane.vue:68
+#: crispy_print/public/js/components/SettingsPane.vue:18
+#: crispy_print/public/js/components/TypstCodePane.vue:17
+#: crispy_print/public/js/pages/CrispyPP.vue:147
+msgid "Help symbol"
+msgstr "?"
+
 #. Option for the 'Output Encoding' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3032,7 +3053,7 @@ msgstr "lục giác"
 msgid "Hidden"
 msgstr "Ẩn"
 
-#: crispy_print/public/js/components/LayoutPane.vue:492
+#: crispy_print/public/js/components/LayoutPane.vue:475
 msgid "Hide label"
 msgstr "Ẩn nhãn"
 
@@ -3054,7 +3075,7 @@ msgstr "Thụt lề phân cấp (pt)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:795
+#: crispy_print/public/js/components/SettingsPane.vue:808
 #: crispy_print/public/js/pages/CbpBuilder.vue:494
 msgid "High"
 msgstr "Cao"
@@ -3133,7 +3154,7 @@ msgstr "Nhập không thành công"
 msgid "Import Warnings"
 msgstr "Cảnh báo nhập khẩu"
 
-#: crispy_print/api/v1/formats.py:768
+#: crispy_print/api/v1/formats.py:769
 msgid "Import payload cannot be empty"
 msgstr "Tải trọng nhập khẩu không được để trống"
 
@@ -3174,8 +3195,8 @@ msgstr "Bao gồm hàm băm"
 msgid "Include signature"
 msgstr "Bao gồm chữ ký"
 
-#: crispy_print/public/js/components/LayoutPane.vue:767
-#: crispy_print/public/js/components/LayoutPane.vue:1415
+#: crispy_print/public/js/components/LayoutPane.vue:760
+#: crispy_print/public/js/components/LayoutPane.vue:1420
 msgid "Indicator"
 msgstr "chỉ số"
 
@@ -3184,11 +3205,11 @@ msgstr "chỉ số"
 msgid "Info"
 msgstr "Thông tin"
 
-#: crispy_print/public/js/components/SettingsPane.vue:891
+#: crispy_print/public/js/components/SettingsPane.vue:917
 msgid "Inherit branding default"
 msgstr "Kế thừa thương hiệu mặc định"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1074
+#: crispy_print/public/js/components/SettingsPane.vue:1100
 msgid "Inherited from the selected Branding Profile."
 msgstr "Kế thừa từ Hồ sơ thương hiệu đã chọn."
 
@@ -3227,7 +3248,7 @@ msgstr "không hợp lệ"
 msgid "Invalid Crispy Template status: {0}"
 msgstr "Trạng thái mẫu Crispy không hợp lệ: {0}"
 
-#: crispy_print/api/v1/formats.py:772
+#: crispy_print/api/v1/formats.py:773
 msgid "Invalid JSON payload"
 msgstr "Tải trọng JSON không hợp lệ"
 
@@ -3243,11 +3264,11 @@ msgstr ""
 msgid "Invalid business status: {0}"
 msgstr "Trạng thái doanh nghiệp không hợp lệ: {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:188
+#: crispy_print/public/js/components/TableColumnsDialog.vue:207
 msgid "Invalid column width values: {0}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc."
 msgstr "Giá trị độ rộng cột không hợp lệ: {0}. Sử dụng các đơn vị Typst như: auto, 1fr, 2fr, 100pt, 50%, 2cm, v.v."
 
-#: crispy_print/api/v1/reports.py:394
+#: crispy_print/api/v1/reports.py:398
 msgid "Invalid column_config format"
 msgstr "Định dạng cột_config không hợp lệ"
 
@@ -3255,11 +3276,11 @@ msgstr "Định dạng cột_config không hợp lệ"
 msgid "Invalid conflict action: {0}"
 msgstr "Hành động xung đột không hợp lệ: {0}"
 
-#: crispy_print/api/v1/formats.py:707
+#: crispy_print/api/v1/formats.py:708
 msgid "Invalid duplicate name strategy: {0}"
 msgstr "Chiến lược tên trùng lặp không hợp lệ: {0}"
 
-#: crispy_print/api/v1/reports.py:382
+#: crispy_print/api/v1/reports.py:386
 msgid "Invalid filters format"
 msgstr "Định dạng bộ lọc không hợp lệ"
 
@@ -3379,7 +3400,7 @@ msgstr "Hồ sơ tài liệu đã phát hành không thể bị xóa sau khi b�
 msgid "Issued document revoked."
 msgstr "Tài liệu đã ban hành bị thu hồi."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1518
+#: crispy_print/public/js/pages/CrispyPP.vue:1532
 msgid "Issued document snapshot recorded: {0}"
 msgstr "Ảnh chụp nhanh tài liệu đã phát hành được ghi lại: {0}"
 
@@ -3423,7 +3444,7 @@ msgstr "JSON, XML, v.v."
 msgid "KSeF"
 msgstr "KSeF"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:367
+#: crispy_print/public/js/pages/CrispyPP.vue:381
 msgid "L"
 msgstr "L"
 
@@ -3435,10 +3456,10 @@ msgstr "Hóa đơn điện tử LHDN"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:759
-#: crispy_print/public/js/components/LayoutPane.vue:765
-#: crispy_print/public/js/components/LayoutPane.vue:1382
-#: crispy_print/public/js/components/LayoutPane.vue:1401
+#: crispy_print/public/js/components/LayoutPane.vue:752
+#: crispy_print/public/js/components/LayoutPane.vue:758
+#: crispy_print/public/js/components/LayoutPane.vue:1387
+#: crispy_print/public/js/components/LayoutPane.vue:1406
 msgid "Label"
 msgstr "Nhãn"
 
@@ -3458,7 +3479,7 @@ msgstr "Nhãn và loạt"
 
 #: crispy_print/public/js/components/SettingsPane.vue:169
 #: crispy_print/public/js/pages/CbpBuilder.vue:71
-#: crispy_print/public/js/pages/CrispyPP.vue:341
+#: crispy_print/public/js/pages/CrispyPP.vue:355
 #: crispy_print/public/js/pages/CtbBuilder.vue:38
 msgid "Landscape"
 msgstr "Phong cảnh"
@@ -3503,13 +3524,18 @@ msgstr "Để trống để coi mẫu này là mẫu chung. Thiết lập một 
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:39
-#: crispy_print/public/js/components/LayoutPane.vue:426
 #: crispy_print/public/js/pages/CbpBuilder.vue:78
 #: crispy_print/public/js/pages/CbpBuilder.vue:118
-#: crispy_print/public/js/pages/CrispyPP.vue:371
+#: crispy_print/public/js/pages/CrispyPP.vue:385
 #: crispy_print/public/js/pages/CtbBuilder.vue:70
 msgid "Left"
 msgstr "Trái"
+
+#: crispy_print/public/js/components/SettingsPane.vue:719
+#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/pages/CrispyPP.vue:281
+msgid "Left (physical)"
+msgstr "Trái (vật lý)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:295
 msgid "Left margin"
@@ -3520,7 +3546,7 @@ msgstr "Lề trái"
 msgid "Left margin (mm)"
 msgstr "Lề trái (mm)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1360
+#: crispy_print/public/js/components/LayoutPane.vue:1365
 msgid "Left-Right"
 msgstr "Trái-Phải"
 
@@ -3547,7 +3573,7 @@ msgid "Legal"
 msgstr "Hợp lêk"
 
 #: crispy_print/public/js/components/SettingsPane.vue:151
-#: crispy_print/public/js/pages/CrispyPP.vue:330
+#: crispy_print/public/js/pages/CrispyPP.vue:344
 msgid "Legal (8.5 × 14 in)"
 msgstr "Pháp lý (8,5 × 14 inch)"
 
@@ -3560,7 +3586,7 @@ msgstr "Vị trí huyền thoại"
 msgid "Legend position"
 msgstr "Vị trí huyền thoại"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1778
+#: crispy_print/public/js/components/LayoutPane.vue:1790
 msgid "Length"
 msgstr "Chiều dài"
 
@@ -3571,7 +3597,7 @@ msgid "Letter"
 msgstr "Chữ"
 
 #: crispy_print/public/js/components/SettingsPane.vue:149
-#: crispy_print/public/js/pages/CrispyPP.vue:328
+#: crispy_print/public/js/pages/CrispyPP.vue:342
 msgid "Letter (8.5 × 11 in)"
 msgstr "Chữ cái (8,5 × 11 in)"
 
@@ -3631,7 +3657,7 @@ msgstr "Xem trước báo cáo trực tiếp"
 msgid "Load default"
 msgstr "Tải mặc định"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:218
+#: crispy_print/public/js/components/PreviewRenderer.vue:219
 msgid "Loading PDF…"
 msgstr "Đang tải PDF…"
 
@@ -3695,6 +3721,10 @@ msgstr "Đang tải mẫu..."
 msgid "Loading..."
 msgstr "Đang tải..."
 
+#: crispy_print/public/js/components/TableColumnsDialog.vue:30
+msgid "Logical (direction-aware)"
+msgstr "Lô-gic (theo hướng)"
+
 #. Option for the 'Code Purpose' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3755,7 +3785,7 @@ msgstr "Chiều rộng của biểu tượng phải lớn hơn 0."
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:792
+#: crispy_print/public/js/components/SettingsPane.vue:805
 #: crispy_print/public/js/pages/CbpBuilder.vue:491
 msgid "Low"
 msgstr "Thấp"
@@ -3773,7 +3803,7 @@ msgid "Make cloned template active"
 msgstr "Làm cho mẫu nhân bản hoạt động"
 
 #: crispy_print/public/js/components/SettingsPane.vue:175
-#: crispy_print/public/js/pages/CrispyPP.vue:346
+#: crispy_print/public/js/pages/CrispyPP.vue:360
 msgid "Margins (mm)"
 msgstr "Lề (mm)"
 
@@ -3810,7 +3840,7 @@ msgstr "Loại phương tiện"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:793
+#: crispy_print/public/js/components/SettingsPane.vue:806
 #: crispy_print/public/js/pages/CbpBuilder.vue:492
 msgid "Medium"
 msgstr "Trung bình"
@@ -3847,23 +3877,23 @@ msgstr "Lưới nhỏ"
 msgid "Missing export payload"
 msgstr "Thiếu tải trọng xuất"
 
-#: crispy_print/api/v1/formats.py:923
+#: crispy_print/api/v1/formats.py:924
 msgid "Missing reference: Company '{0}'"
 msgstr "Thiếu tài liệu tham khảo: Công ty '{0}'"
 
-#: crispy_print/api/v1/formats.py:944
+#: crispy_print/api/v1/formats.py:945
 msgid "Missing reference: Company '{0}' (metadata)"
 msgstr "Thiếu tham chiếu: Công ty '{0}' (siêu dữ liệu)"
 
-#: crispy_print/api/v1/formats.py:954
+#: crispy_print/api/v1/formats.py:955
 msgid "Missing reference: Crispy Template '{0}' (metadata)"
 msgstr "Thiếu tham chiếu: Mẫu Crispy '{0}' (siêu dữ liệu)"
 
-#: crispy_print/api/v1/formats.py:918
+#: crispy_print/api/v1/formats.py:919
 msgid "Missing reference: Letter Head '{0}'"
 msgstr "Thiếu tham chiếu: Tiêu đề thư '{0}'"
 
-#: crispy_print/api/v1/formats.py:897
+#: crispy_print/api/v1/formats.py:898
 msgid "Missing reference: {0} '{1}' (field: {2})"
 msgstr "Thiếu tham chiếu: {0} '{1}' (trường: {2})"
 
@@ -3893,7 +3923,7 @@ msgstr "Mô-đun"
 msgid "Module Size (pt)"
 msgstr "Kích thước mô-đun (pt)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/components/SettingsPane.vue:882
 msgid "Module size"
 msgstr "Kích thước mô-đun"
 
@@ -4009,11 +4039,11 @@ msgstr "Không tìm thấy thông tin xác thực tài chính đang hoạt độ
 msgid "No active templates"
 msgstr "Không có mẫu hoạt động"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:638
+#: crispy_print/public/js/pages/CrispyPP.vue:652
 msgid "No approved Crispy Template is available for this document context."
 msgstr "Không có Mẫu Crispy nào được phê duyệt cho ngữ cảnh tài liệu này."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1562
+#: crispy_print/public/js/components/LayoutPane.vue:1574
 msgid "No block selected"
 msgstr "Không có khối nào được chọn"
 
@@ -4021,7 +4051,7 @@ msgstr "Không có khối nào được chọn"
 msgid "No columns available"
 msgstr "Không có cột nào"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:78
+#: crispy_print/public/js/components/TableColumnsDialog.vue:89
 msgid "No columns yet. Add one below."
 msgstr "Chưa có cột nào. Thêm một cái bên dưới."
 
@@ -4049,7 +4079,7 @@ msgstr "Không tìm thấy trường nào."
 msgid "No fields match {0}!"
 msgstr "Không có trường nào khớp với {0}!"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1127
+#: crispy_print/public/js/components/SettingsPane.vue:1153
 msgid "No fields selected"
 msgstr "Không có trường nào được chọn"
 
@@ -4057,7 +4087,7 @@ msgstr "Không có trường nào được chọn"
 msgid "No fiscal credential found for these filters."
 msgstr "Không tìm thấy thông tin xác thực tài chính cho các bộ lọc này."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1570
+#: crispy_print/public/js/components/LayoutPane.vue:1582
 msgid "No image selected"
 msgstr "Không có hình ảnh nào được chọn"
 
@@ -4081,7 +4111,7 @@ msgstr "Không có trường thẩm quyền bắt buộc mới để thêm."
 msgid "No obvious format issues found."
 msgstr "Không tìm thấy vấn đề định dạng rõ ràng."
 
-#: crispy_print/api/v1/reports.py:1809
+#: crispy_print/api/v1/reports.py:1813
 msgid "No print format found for report '{0}'"
 msgstr "Không tìm thấy định dạng in cho báo cáo '{0}'"
 
@@ -4223,7 +4253,7 @@ msgstr "Tùy chọn: thêm `// trường: customer, items.item_code` để thu h
 
 #: crispy_print/public/js/components/SettingsPane.vue:162
 #: crispy_print/public/js/pages/CbpBuilder.vue:68
-#: crispy_print/public/js/pages/CrispyPP.vue:335
+#: crispy_print/public/js/pages/CrispyPP.vue:349
 #: crispy_print/public/js/pages/CtbBuilder.vue:35
 #: crispy_print/public/js/report_button.bundle.js:255
 msgid "Orientation"
@@ -4319,11 +4349,11 @@ msgstr "PDF SHA-256"
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:607
+#: crispy_print/public/js/pages/CrispyPP.vue:621
 msgid "PDF Standard"
 msgstr "Tiêu chuẩn PDF"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1607
+#: crispy_print/public/js/pages/CrispyPP.vue:1621
 msgid "PDF download started."
 msgstr "Quá trình tải xuống PDF đã bắt đầu."
 
@@ -4336,7 +4366,7 @@ msgstr "PDF được tạo thành công"
 msgid "PDF generation not available"
 msgstr "Thế hệ PDF không có sẵn"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1613
+#: crispy_print/public/js/pages/CrispyPP.vue:1627
 msgid "PDF opened in a new tab."
 msgstr "PDF đã mở trong tab mới."
 
@@ -4367,7 +4397,7 @@ msgstr ""
 "  Lưu ý: Đầu ra PDF/A nhúng phông chữ, vì vậy phông chữ được chọn phải cho phép nhúng/đặt lại PDF.\n"
 "</span>"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:332
+#: crispy_print/public/js/components/PreviewRenderer.vue:333
 msgid "PDF preview failed."
 msgstr "Xem trước PDF không thành công."
 
@@ -4426,12 +4456,12 @@ msgstr "PDF/A-4"
 msgid "PDF417"
 msgstr "PDF417"
 
-#: crispy_print/api/v1/reports.py:1835
+#: crispy_print/api/v1/reports.py:1839
 #: crispy_print/public/js/pages/CbpBuilder.vue:57
 msgid "Page"
 msgstr "Trang"
 
-#: crispy_print/public/js/components/LayoutPane.vue:623
+#: crispy_print/public/js/components/LayoutPane.vue:606
 msgid "Page Break"
 msgstr "Ngắt trang"
 
@@ -4450,7 +4480,7 @@ msgstr "Số trang"
 msgid "Page Settings"
 msgstr "Cài đặt trang"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:322
+#: crispy_print/public/js/pages/CrispyPP.vue:336
 msgid "Page Size"
 msgstr "Kích thước trang"
 
@@ -4464,7 +4494,7 @@ msgstr "Hướng trang"
 msgid "Page size"
 msgstr "Kích thước trang"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:614
+#: crispy_print/public/js/pages/CrispyPP.vue:628
 msgid "Pages"
 msgstr "Trang"
 
@@ -4512,15 +4542,15 @@ msgstr "Mẫu tải trọng là bắt buộc khi Nguồn nội dung là Văn b�
 msgid "Payload format"
 msgstr "Định dạng tải trọng"
 
-#: crispy_print/api/v1/formats.py:779
+#: crispy_print/api/v1/formats.py:780
 msgid "Payload must be a JSON object"
 msgstr "Tải trọng phải là đối tượng JSON"
 
-#: crispy_print/api/v1/formats.py:776
+#: crispy_print/api/v1/formats.py:777
 msgid "Payload must be a JSON object or JSON string"
 msgstr "Tải trọng phải là đối tượng JSON hoặc chuỗi JSON"
 
-#: crispy_print/api/v1/formats.py:790
+#: crispy_print/api/v1/formats.py:791
 msgid "Payload must include a 'format' object"
 msgstr "Tải trọng phải bao gồm đối tượng 'định dạng'"
 
@@ -4557,6 +4587,10 @@ msgstr "Chờ"
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 msgid "Peppol BIS"
 msgstr "Peppol BIS"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:31
+msgid "Physical (fixed)"
+msgstr "Vật lý (cố định)"
 
 #: crispy_print/public/js/components/PreviewPane.vue:84
 msgid "Pick a document to preview."
@@ -4606,7 +4640,7 @@ msgstr "Cổng liên kết"
 
 #: crispy_print/public/js/components/SettingsPane.vue:168
 #: crispy_print/public/js/pages/CbpBuilder.vue:70
-#: crispy_print/public/js/pages/CrispyPP.vue:340
+#: crispy_print/public/js/pages/CrispyPP.vue:354
 #: crispy_print/public/js/pages/CtbBuilder.vue:37
 msgid "Portrait"
 msgstr "Chân dung"
@@ -4631,7 +4665,7 @@ msgstr "Ghi đè bản trình bày JSON"
 #. Label of a Code field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
-#: crispy_print/public/js/pages/CrispyPP.vue:318
+#: crispy_print/public/js/pages/CrispyPP.vue:332
 msgid "Presentation Settings"
 msgstr "Cài đặt bản trình bày"
 
@@ -4683,7 +4717,7 @@ msgstr "Xem trước tiêu điểm"
 msgid "Preview is not ready to print."
 msgstr "Bản xem trước chưa sẵn sàng để in."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:92
+#: crispy_print/public/js/components/PreviewRenderer.vue:93
 msgid "Preview output will render here."
 msgstr "Đầu ra xem trước sẽ hiển thị ở đây."
 
@@ -4691,7 +4725,7 @@ msgstr "Đầu ra xem trước sẽ hiển thị ở đây."
 msgid "Preview shrinks to content with 2.5cm margins. Use for compact self-sizing blocks, not tables, grids, or long text."
 msgstr "Bản xem trước co lại thành nội dung có lề 2,5 cm. Sử dụng cho các khối tự định cỡ nhỏ gọn, không phải bảng, lưới hoặc văn bản dài."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1036
+#: crispy_print/public/js/pages/CrispyPP.vue:1050
 msgid "Preview truncated to {0} rows (from {1}). PDF output may also be limited."
 msgstr "Bản xem trước bị cắt bớt thành các hàng {0} (từ {1}). Đầu ra PDF cũng có thể bị hạn chế."
 
@@ -4756,7 +4790,7 @@ msgstr "In thuế với số tiền bằng 0"
 msgid "Print UOM after Quantity"
 msgstr "In UOM sau số lượng"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1566
+#: crispy_print/public/js/pages/CrispyPP.vue:1580
 msgid "Print dialog opened."
 msgstr "Đã mở hộp thoại in."
 
@@ -4886,7 +4920,7 @@ msgstr "Dự phòng mã vạch Python chỉ hỗ trợ Mã QR. DataMatrix yêu c
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
-#: crispy_print/public/js/components/SettingsPane.vue:776
+#: crispy_print/public/js/components/SettingsPane.vue:789
 #: crispy_print/public/js/pages/CbpBuilder.vue:475
 #: crispy_print/public/js/pages/CbpBuilder.vue:484
 msgid "QR Code"
@@ -4900,7 +4934,7 @@ msgstr "Các trường mã QR"
 msgid "QR Code X position"
 msgstr "QR Mã vị trí X"
 
-#: crispy_print/public/js/components/SettingsPane.vue:767
+#: crispy_print/public/js/components/SettingsPane.vue:780
 msgid "QR Code is anchored to bottom-left using #place()."
 msgstr "Mã QR được neo vào phía dưới bên trái bằng cách sử dụng #place()."
 
@@ -4964,19 +4998,19 @@ msgstr "Trường QR {0}.{1} bị thiếu {2}."
 msgid "QR field {0}.{1} must be an object."
 msgstr "Trường QR {0}.{1} phải là một đối tượng."
 
-#: crispy_print/public/js/components/SettingsPane.vue:910
+#: crispy_print/public/js/components/SettingsPane.vue:936
 msgid "QR fields"
 msgstr "Các trường QR"
 
-#: crispy_print/public/js/components/SettingsPane.vue:926
+#: crispy_print/public/js/components/SettingsPane.vue:952
 msgid "QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
 msgstr "Các trường tải trọng QR bị bỏ qua trong chế độ Cấu hình mã tài liệu vì phần phụ trợ giải quyết giá trị được mã hóa cuối cùng."
 
-#: crispy_print/public/js/components/SettingsPane.vue:884
+#: crispy_print/public/js/components/SettingsPane.vue:910
 msgid "QR source"
 msgstr "Nguồn QR"
 
-#: crispy_print/public/js/components/SettingsPane.vue:765
+#: crispy_print/public/js/components/SettingsPane.vue:778
 msgid "QR-Code"
 msgstr "Mã QR"
 
@@ -4989,7 +5023,7 @@ msgstr "Mã QR"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:794
+#: crispy_print/public/js/components/SettingsPane.vue:807
 #: crispy_print/public/js/pages/CbpBuilder.vue:493
 msgid "Quartile"
 msgstr "tứ phân vị"
@@ -5008,7 +5042,7 @@ msgstr "Yên tĩnh"
 msgid "Quiet Zone"
 msgstr "Khu yên tĩnh"
 
-#: crispy_print/public/js/components/SettingsPane.vue:846
+#: crispy_print/public/js/components/SettingsPane.vue:872
 msgid "Quiet zone"
 msgstr "Khu yên tĩnh"
 
@@ -5018,7 +5052,7 @@ msgstr "Khu yên tĩnh"
 msgid "Quotation"
 msgstr "Báo giá"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:376
+#: crispy_print/public/js/pages/CrispyPP.vue:390
 msgid "R"
 msgstr "R"
 
@@ -5038,11 +5072,11 @@ msgstr "RSA"
 #. Label of a Check field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:623
+#: crispy_print/public/js/pages/CrispyPP.vue:637
 msgid "Raw Typst"
 msgstr "Typst thô"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1690
+#: crispy_print/public/js/components/LayoutPane.vue:1702
 msgid "Raw Typst Field"
 msgstr "Trường Typst thô"
 
@@ -5087,7 +5121,7 @@ msgstr "Kiểm tra tính toàn vẹn của bản ghi"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:832
+#: crispy_print/public/js/components/SettingsPane.vue:845
 #: crispy_print/public/js/pages/CbpBuilder.vue:513
 msgid "Rectangular"
 msgstr "hình chữ nhật"
@@ -5228,25 +5262,25 @@ msgstr "Hiện vật liên quan"
 msgid "Reload"
 msgstr "Nạp lại"
 
-#: crispy_print/public/js/components/LayoutPane.vue:588
-#: crispy_print/public/js/components/TableColumnsDialog.vue:66
+#: crispy_print/public/js/components/LayoutPane.vue:571
+#: crispy_print/public/js/components/TableColumnsDialog.vue:77
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:95
 msgid "Remove"
 msgstr "Xóa Bỏ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:311
+#: crispy_print/public/js/pages/CrispyPP.vue:325
 msgid "Remove QRCode"
 msgstr "Xóa mã QR"
 
-#: crispy_print/public/js/components/LayoutPane.vue:178
+#: crispy_print/public/js/components/LayoutPane.vue:186
 msgid "Remove column"
 msgstr "Xóa cột"
 
-#: crispy_print/public/js/components/LayoutPane.vue:200
+#: crispy_print/public/js/components/LayoutPane.vue:208
 msgid "Remove page break"
 msgstr "Xóa ngắt trang"
 
-#: crispy_print/public/js/components/LayoutPane.vue:224
+#: crispy_print/public/js/components/LayoutPane.vue:232
 msgid "Remove section"
 msgstr "Xóa phần"
 
@@ -5260,7 +5294,7 @@ msgstr "Cài đặt kết xuất"
 msgid "Render Status"
 msgstr "Kết xuất trạng thái"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:616
+#: crispy_print/public/js/pages/CrispyPP.vue:630
 msgid "Render Time"
 msgstr "Thời gian kết xuất"
 
@@ -5306,7 +5340,7 @@ msgstr "Hiển thị cài đặt hồ sơ thương hiệu thông qua Typst."
 msgid "Rendering custom Typst with branding profile specimen data."
 msgstr "Hiển thị Typst tùy chỉnh với dữ liệu mẫu hồ sơ thương hiệu."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:219
+#: crispy_print/public/js/components/PreviewRenderer.vue:220
 msgid "Rendering preview…"
 msgstr "Đang hiển thị bản xem trước…"
 
@@ -5337,7 +5371,7 @@ msgstr "Phạm vi báo cáo phải là Tất cả các báo cáo tương thích 
 msgid "Report Format"
 msgstr "Định dạng báo cáo"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1621
+#: crispy_print/public/js/pages/CrispyPP.vue:1635
 msgid "Report PDF generation failed."
 msgstr "Báo cáo việc tạo PDF không thành công."
 
@@ -5408,12 +5442,12 @@ msgstr "Hồ sơ kiểm toán đầu ra báo cáo là bất biến."
 msgid "Report output audit records cannot be deleted."
 msgstr "Báo cáo đầu ra hồ sơ kiểm tra không thể bị xóa."
 
-#: crispy_print/api/v1/reports.py:896
+#: crispy_print/api/v1/reports.py:900
 msgid "Report output audit requires a Report format."
 msgstr "Kiểm tra đầu ra báo cáo yêu cầu định dạng Báo cáo."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1056
-#: crispy_print/public/js/pages/CrispyPP.vue:1062
+#: crispy_print/public/js/pages/CrispyPP.vue:1070
+#: crispy_print/public/js/pages/CrispyPP.vue:1076
 msgid "Report preview access expired. Run Preview again."
 msgstr "Quyền truy cập xem trước báo cáo đã hết hạn. Chạy Xem trước lại."
 
@@ -5425,12 +5459,12 @@ msgstr "Quyền truy cập xem trước báo cáo đã thay đổi. Chạy Xem t
 msgid "Report preview data has expired. Run Preview again."
 msgstr "Dữ liệu xem trước báo cáo đã hết hạn. Chạy Xem trước lại."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1063
+#: crispy_print/public/js/pages/CrispyPP.vue:1077
 msgid "Report preview failed."
 msgstr "Xem trước báo cáo không thành công."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1556
-#: crispy_print/public/js/pages/CrispyPP.vue:1589
+#: crispy_print/public/js/pages/CrispyPP.vue:1570
+#: crispy_print/public/js/pages/CrispyPP.vue:1603
 msgid "Report preview not ready yet."
 msgstr "Bản xem trước báo cáo chưa sẵn sàng."
 
@@ -5446,11 +5480,11 @@ msgstr "Bản xem trước báo cáo cần có ngữ cảnh báo cáo trực ti�
 msgid "Report previews need filters, selected columns, and generated result data. Open the report first, configure the view you want, then launch Crispy Print Preview from that report."
 msgstr "Bản xem trước báo cáo cần có bộ lọc, cột đã chọn và dữ liệu kết quả được tạo. Trước tiên hãy mở báo cáo, định cấu hình chế độ xem bạn muốn, sau đó khởi chạy Bản xem trước Crispy Print từ báo cáo đó."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1573
+#: crispy_print/public/js/pages/CrispyPP.vue:1587
 msgid "Report printing failed."
 msgstr "In báo cáo không thành công."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1580
+#: crispy_print/public/js/pages/CrispyPP.vue:1594
 msgid "Report printing was blocked by the browser."
 msgstr "Việc in báo cáo đã bị trình duyệt chặn."
 
@@ -5542,7 +5576,7 @@ msgstr "Đặt lại thay đổi"
 msgid "Reset View Defaults"
 msgstr "Đặt lại mặc định chế độ xem"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1507
+#: crispy_print/public/js/components/LayoutPane.vue:1513
 msgid "Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
 msgstr "Đặt lại bố cục về mặc định DocType (từ meta)? Thao tác này sẽ loại bỏ tất cả các thay đổi về bố cục và khôi phục cách sắp xếp các phần/cột/trường bắt đầu."
 
@@ -5653,13 +5687,18 @@ msgstr "Bị thu hồi tại"
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:40
-#: crispy_print/public/js/components/LayoutPane.vue:480
 #: crispy_print/public/js/pages/CbpBuilder.vue:79
 #: crispy_print/public/js/pages/CbpBuilder.vue:113
-#: crispy_print/public/js/pages/CrispyPP.vue:380
+#: crispy_print/public/js/pages/CrispyPP.vue:394
 #: crispy_print/public/js/pages/CtbBuilder.vue:78
 msgid "Right"
 msgstr "Được rồi."
+
+#: crispy_print/public/js/components/SettingsPane.vue:720
+#: crispy_print/public/js/components/SettingsPane.vue:857
+#: crispy_print/public/js/pages/CrispyPP.vue:282
+msgid "Right (physical)"
+msgstr "Phải (vật lý)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:294
 msgid "Right margin"
@@ -5688,7 +5727,7 @@ msgstr "Chạy xem trước"
 msgid "Run Preview again"
 msgstr "Chạy lại Xem trước"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:216
+#: crispy_print/public/js/components/PreviewRenderer.vue:217
 msgid "Running report…"
 msgstr "Báo cáo đang chạy…"
 
@@ -5855,7 +5894,7 @@ msgstr "Nhãn phần"
 msgid "Section Labels"
 msgstr "Nhãn phần"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1286
+#: crispy_print/public/js/components/LayoutPane.vue:1282
 msgid "Section Settings"
 msgstr "Cài đặt phần"
 
@@ -5872,7 +5911,7 @@ msgstr "Kích thước phông chữ nhãn phần"
 msgid "Section menu"
 msgstr "Trình đơn phần"
 
-#: crispy_print/public/js/components/LayoutPane.vue:190
+#: crispy_print/public/js/components/LayoutPane.vue:198
 msgid "Section settings"
 msgstr "Cài đặt phần"
 
@@ -5930,11 +5969,11 @@ msgstr "Chọn cột và đặt độ rộng (ví dụ: tự động, 1fr, 2cm, 
 msgid "Select company"
 msgstr "Chọn công ty"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:90
+#: crispy_print/public/js/components/TableColumnsDialog.vue:101
 msgid "Select field"
 msgstr "Chọn trường"
 
-#: crispy_print/public/js/components/SettingsPane.vue:917
+#: crispy_print/public/js/components/SettingsPane.vue:943
 msgid "Select fields"
 msgstr "Chọn trường"
 
@@ -6125,11 +6164,11 @@ msgstr "Hiện Totals"
 msgid "Show filters block"
 msgstr "Hiển thị khối bộ lọc"
 
-#: crispy_print/public/js/components/LayoutPane.vue:493
+#: crispy_print/public/js/components/LayoutPane.vue:476
 msgid "Show label"
 msgstr "Hiển thị nhãn"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:426
+#: crispy_print/public/js/pages/CrispyPP.vue:440
 msgid "Show preview diagnostics"
 msgstr "Hiển thị chẩn đoán xem trước"
 
@@ -6202,9 +6241,9 @@ msgstr "Kích thước"
 
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:714
-#: crispy_print/public/js/components/SettingsPane.vue:837
-#: crispy_print/public/js/pages/CrispyPP.vue:275
+#: crispy_print/public/js/components/SettingsPane.vue:727
+#: crispy_print/public/js/components/SettingsPane.vue:863
+#: crispy_print/public/js/pages/CrispyPP.vue:289
 msgid "Size (mm)"
 msgstr "Kích thước (mm)"
 
@@ -6276,7 +6315,7 @@ msgstr "Nguồn Công ty định dạng Crispy được yêu cầu xuất bản 
 msgid "Source Crispy Format does not belong to company {0}."
 msgstr "Nguồn Định dạng Crispy không thuộc về công ty {0}."
 
-#: crispy_print/api/v1/formats.py:621
+#: crispy_print/api/v1/formats.py:622
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:370
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:420
 msgid "Source Crispy Format is required."
@@ -6336,7 +6375,7 @@ msgstr "Mẫu nguồn"
 msgid "Source document {0} {1} does not exist."
 msgstr "Tài liệu nguồn {0} {1} không tồn tại."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1730
+#: crispy_print/public/js/components/LayoutPane.vue:1742
 msgid "Spacer Value"
 msgstr "Giá trị khoảng cách"
 
@@ -6360,12 +6399,12 @@ msgstr "Khoảng cách trên cùng (pt)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:831
+#: crispy_print/public/js/components/SettingsPane.vue:844
 #: crispy_print/public/js/pages/CbpBuilder.vue:512
 msgid "Square"
 msgstr "hình vuông"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:215
+#: crispy_print/public/js/components/TableColumnsDialog.vue:234
 msgid "Sr No."
 msgstr "Thưa ngài Không."
 
@@ -6382,6 +6421,12 @@ msgstr "Mã định danh ổn định được sử dụng để tham chiếu kh
 msgid "Standard"
 msgstr "Tiêu chuẩn"
 
+#: crispy_print/public/js/components/SettingsPane.vue:721
+#: crispy_print/public/js/components/SettingsPane.vue:858
+#: crispy_print/public/js/pages/CrispyPP.vue:283
+msgid "Start"
+msgstr "Đầu"
+
 #. Option for the 'Content Source' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -6392,7 +6437,7 @@ msgstr "Văn bản tĩnh"
 #. Label of a Select field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:591
+#: crispy_print/public/js/pages/CrispyPP.vue:605
 msgid "Status"
 msgstr "Trạng thái"
 
@@ -6440,7 +6485,7 @@ msgstr "Sọc"
 msgid "Stroke (pt)"
 msgstr "Đột quỵ (pt)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1786
+#: crispy_print/public/js/components/LayoutPane.vue:1798
 msgid "Stroke Width"
 msgstr "Chiều rộng nét"
 
@@ -6541,7 +6586,7 @@ msgstr "Không tìm thấy tài liệu đã phát hành thay thế {0}."
 
 #. Label of a Select field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:770
+#: crispy_print/public/js/components/SettingsPane.vue:783
 #: crispy_print/public/js/pages/CbpBuilder.vue:482
 msgid "Symbology"
 msgstr "Ký hiệu học"
@@ -6564,7 +6609,7 @@ msgstr "Biểu tượng"
 msgid "System Manager"
 msgstr "Hệ thống quản lý"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:349
+#: crispy_print/public/js/pages/CrispyPP.vue:363
 msgid "T"
 msgstr "T"
 
@@ -6652,7 +6697,7 @@ msgstr "Công ty mục tiêu"
 msgid "Target company is required."
 msgstr "Công ty mục tiêu là bắt buộc."
 
-#: crispy_print/api/v1/formats.py:628 crispy_print/api/v1/templates.py:168
+#: crispy_print/api/v1/formats.py:629 crispy_print/api/v1/templates.py:168
 msgid "Target company must be different from the source company."
 msgstr "Công ty mục tiêu phải khác với công ty nguồn."
 
@@ -6662,7 +6707,7 @@ msgid "Tax"
 msgstr "Thuế"
 
 #: crispy_print/public/js/pages/CrispyPP.vue:137
-#: crispy_print/public/js/pages/CrispyPP.vue:593
+#: crispy_print/public/js/pages/CrispyPP.vue:607
 msgid "Template"
 msgstr "Mẫu"
 
@@ -6695,7 +6740,7 @@ msgstr "Nguồn mẫu"
 
 #. Label of a Data field in DocType 'Crispy Report Output Audit'
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
-#: crispy_print/public/js/pages/CrispyPP.vue:594
+#: crispy_print/public/js/pages/CrispyPP.vue:608
 msgid "Template Version"
 msgstr "Phiên bản mẫu"
 
@@ -6758,7 +6803,7 @@ msgstr "Trình kết xuất báo cáo ngược dòng đã thay đổi sau khi đ
 msgid "The upstream report sources are unavailable; the review cannot be acknowledged."
 msgstr "Nguồn báo cáo ngược dòng không có sẵn; việc xem xét không thể được thừa nhận."
 
-#: crispy_print/api/v1/reports.py:645
+#: crispy_print/api/v1/reports.py:649
 msgid "This Basic report format has no generated Typst code. Open it in the Report Format Builder, save it, and try again."
 msgstr "Định dạng báo cáo Cơ bản này không có mã Typst được tạo. Hãy mở nó trong Trình tạo định dạng báo cáo, lưu nó và thử lại."
 
@@ -6856,7 +6901,7 @@ msgstr "Quá nhiều yêu cầu. Vui lòng đợi một lát và thử lại."
 #: crispy_print/public/js/components/BoxSidesEditor.vue:37
 #: crispy_print/public/js/pages/CbpBuilder.vue:76
 #: crispy_print/public/js/pages/CbpBuilder.vue:112
-#: crispy_print/public/js/pages/CrispyPP.vue:353
+#: crispy_print/public/js/pages/CrispyPP.vue:367
 #: crispy_print/public/js/pages/CtbBuilder.vue:58
 msgid "Top"
 msgstr "Hàng đầu"
@@ -6870,7 +6915,7 @@ msgstr "Lề trên"
 msgid "Top margin (mm)"
 msgstr "Lề trên (mm)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1361
+#: crispy_print/public/js/components/LayoutPane.vue:1366
 msgid "Top-Down"
 msgstr "Từ trên xuống"
 
@@ -6897,6 +6942,7 @@ msgstr "Loại sự kiện tin cậy là bắt buộc."
 
 #. Label of a Select field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
+#: crispy_print/public/js/components/LayoutPane.vue:11
 #: crispy_print/public/js/components/SettingsPane.vue:668
 msgid "Type"
 msgstr "Loại"
@@ -6941,7 +6987,7 @@ msgstr "Cần có mã Typst cho các mẫu Typst thô."
 msgid "Typst Code is required when Code Only is enabled."
 msgstr "Cần có mã Typst khi bật Chỉ mã."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:108
+#: crispy_print/public/js/components/PreviewRenderer.vue:109
 #: crispy_print/public/js/pages/CbpBuilder.vue:792
 msgid "Typst Error"
 msgstr "Lỗi Typst"
@@ -6972,11 +7018,11 @@ msgstr "Mã băm nguồn Typst"
 #. Label of a Data field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:611
+#: crispy_print/public/js/pages/CrispyPP.vue:625
 msgid "Typst Version"
 msgstr "Phiên bản Typst"
 
-#: crispy_print/api/v1/reports.py:599
+#: crispy_print/api/v1/reports.py:603
 msgid "Typst code is required for an unsaved report preview."
 msgstr "Cần có mã Typst để xem trước báo cáo chưa được lưu."
 
@@ -7009,19 +7055,19 @@ msgstr "Cần có mã nguồn Typst"
 msgid "Typst specimen preview"
 msgstr "Xem trước mẫu Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1787
+#: crispy_print/public/js/components/LayoutPane.vue:1799
 msgid "Typst units: 0.5pt, 1pt, 2pt, etc."
 msgstr "Đơn vị Typst: 0,5pt, 1pt, 2pt, v.v."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1779
+#: crispy_print/public/js/components/LayoutPane.vue:1791
 msgid "Typst units: 100%, 80%, 10cm, etc."
 msgstr "Đơn vị Typst: 100%, 80%, 10cm, v.v."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1731
+#: crispy_print/public/js/components/LayoutPane.vue:1743
 msgid "Typst units: 1em, 2cm, 10pt, 5mm, etc."
 msgstr "Đơn vị Typst: 1em, 2cm, 10pt, 5 mm, v.v."
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:62
+#: crispy_print/public/js/components/TableColumnsDialog.vue:73
 msgid "Typst width: auto, 1fr, 2fr, 100pt, etc."
 msgstr "Chiều rộng Typst: tự động, 1fr, 2fr, 100pt, v.v."
 
@@ -7173,7 +7219,7 @@ msgstr "Khóa mã hóa không được hỗ trợ: {0}"
 msgid "Unsupported font file type. Allowed extensions: {0}"
 msgstr "Loại tệp phông chữ không được hỗ trợ. Tiện ích mở rộng được phép: {0}"
 
-#: crispy_print/api/v1/formats.py:794
+#: crispy_print/api/v1/formats.py:795
 msgid "Unsupported import fields: {0}"
 msgstr "Các trường nhập không được hỗ trợ: {0}"
 
@@ -7185,7 +7231,7 @@ msgstr "Mã hóa đầu ra không được hỗ trợ: {0}"
 msgid "Unsupported payload format: {0}"
 msgstr "Định dạng tải trọng không được hỗ trợ: {0}"
 
-#: crispy_print/api/v1/formats.py:786
+#: crispy_print/api/v1/formats.py:787
 msgid "Unsupported schema_version. Expected {0}"
 msgstr "Schema_version không được hỗ trợ. Dự kiến {0}"
 
@@ -7246,7 +7292,7 @@ msgstr "Xem trước hình ảnh đã tải lên"
 msgid "Uploaded letterhead preview"
 msgstr "Bản xem trước tiêu đề thư đã tải lên"
 
-#: crispy_print/public/js/components/SettingsPane.vue:900
+#: crispy_print/public/js/components/SettingsPane.vue:926
 msgid "Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
 msgstr "Sử dụng QR cơ bản cho tải trọng danh sách trường hiện tại hoặc Hồ sơ mã tài liệu để giải quyết đầu ra QR được quy định từ cấu hình mã tài liệu phụ trợ."
 
@@ -7334,10 +7380,10 @@ msgstr "Thông báo xác thực"
 msgid "Validation Status"
 msgstr "Trạng thái xác thực"
 
-#: crispy_print/public/js/components/LayoutPane.vue:760
-#: crispy_print/public/js/components/LayoutPane.vue:766
-#: crispy_print/public/js/components/LayoutPane.vue:1389
-#: crispy_print/public/js/components/LayoutPane.vue:1408
+#: crispy_print/public/js/components/LayoutPane.vue:753
+#: crispy_print/public/js/components/LayoutPane.vue:759
+#: crispy_print/public/js/components/LayoutPane.vue:1394
+#: crispy_print/public/js/components/LayoutPane.vue:1413
 msgid "Value"
 msgstr "Giá trị"
 
@@ -7486,7 +7532,7 @@ msgstr "Chiều rộng"
 msgid "Width (mm)"
 msgstr "Chiều rộng (mm)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:606
+#: crispy_print/public/js/components/LayoutPane.vue:589
 msgid "Width: {0}%"
 msgstr "Chiều rộng: {0}%"
 
@@ -7588,11 +7634,11 @@ msgstr "Y từ trên xuống (mm)"
 msgid "Yes"
 msgstr "Đồng ý"
 
-#: crispy_print/api/v1/formats.py:882
+#: crispy_print/api/v1/formats.py:883
 msgid "You don't have permission to create Crispy Format"
 msgstr "Bạn không có quyền tạo Định dạng Crispy"
 
-#: crispy_print/api/v1/reports.py:596
+#: crispy_print/api/v1/reports.py:600
 msgid "You need permission to create Crispy Format before previewing an unsaved report."
 msgstr "Bạn cần có quyền tạo Định dạng Crispy trước khi xem trước báo cáo chưa được lưu."
 
@@ -7652,7 +7698,7 @@ msgid "asset_files must be a list of image file paths"
 msgstr "assets_files phải là danh sách đường dẫn tệp hình ảnh"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:57
-#: crispy_print/public/js/components/TableColumnsDialog.vue:55
+#: crispy_print/public/js/components/TableColumnsDialog.vue:66
 #: crispy_print/public/js/pages/CrispyPP.vue:126
 #: crispy_print/public/js/report_button.bundle.js:471
 msgid "auto"
@@ -7694,15 +7740,15 @@ msgstr "tùy chỉnh"
 msgid "doctype and name are required"
 msgstr "loại tài liệu và tên là bắt buộc"
 
-#: crispy_print/public/js/components/SettingsPane.vue:724
-#: crispy_print/public/js/components/SettingsPane.vue:866
-#: crispy_print/public/js/pages/CrispyPP.vue:287
+#: crispy_print/public/js/components/SettingsPane.vue:737
+#: crispy_print/public/js/components/SettingsPane.vue:892
+#: crispy_print/public/js/pages/CrispyPP.vue:301
 msgid "dx (mm)"
 msgstr "dx (mm)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:733
-#: crispy_print/public/js/components/SettingsPane.vue:875
-#: crispy_print/public/js/pages/CrispyPP.vue:297
+#: crispy_print/public/js/components/SettingsPane.vue:746
+#: crispy_print/public/js/components/SettingsPane.vue:901
+#: crispy_print/public/js/pages/CrispyPP.vue:311
 msgid "dy (mm)"
 msgstr "nhuộm (mm)"
 
@@ -7812,11 +7858,11 @@ msgstr "xiên"
 msgid "portrait"
 msgstr "Chân dung"
 
-#: crispy_print/api/v1/formats.py:906
+#: crispy_print/api/v1/formats.py:907
 msgid "presentation_settings could not be parsed for reference checks"
 msgstr "không thể phân tích cú pháp trình bày_settings để kiểm tra tham chiếu"
 
-#: crispy_print/api/v1/formats.py:738
+#: crispy_print/api/v1/formats.py:739
 msgid "presentation_settings could not be parsed while retargeting company"
 msgstr "không thể phân tích cú pháp bản trình bày trong khi nhắm mục tiêu lại công ty"
 
@@ -7902,7 +7948,7 @@ msgstr "(Các) kiểm tra {0} cần được xem xét."
 msgid "{0} could not be opened safely: {1}"
 msgstr "{0} không thể mở an toàn: {1}"
 
-#: crispy_print/api/v1/formats.py:809
+#: crispy_print/api/v1/formats.py:810
 msgid "{0} exceeds the maximum size of {1} KB"
 msgstr "{0} vượt quá kích thước tối đa của {1} KB"
 
@@ -7910,7 +7956,7 @@ msgstr "{0} vượt quá kích thước tối đa của {1} KB"
 msgid "{0} exceeds the maximum size of {1} KB."
 msgstr "{0} vượt quá kích thước tối đa của {1} KB."
 
-#: crispy_print/public/js/components/SettingsPane.vue:1129
+#: crispy_print/public/js/components/SettingsPane.vue:1155
 msgid "{0} fields selected"
 msgstr "Đã chọn các trường {0}"
 
@@ -7974,7 +8020,7 @@ msgstr "{0} phải nằm trong khoảng {1} và {2}."
 msgid "{0} must be greater than zero."
 msgstr "{0} phải lớn hơn 0."
 
-#: crispy_print/api/v1/formats.py:802
+#: crispy_print/api/v1/formats.py:803
 msgid "{0} must contain valid JSON"
 msgstr "{0} phải chứa JSON hợp lệ"
 
@@ -8012,4 +8058,3 @@ msgstr "{0}.{1} phải là một danh sách."
 #: crispy_print/qr_registry/loader.py:200
 msgid "{0}.{1} references unknown fields: {2}"
 msgstr "{0}.{1} tham chiếu các trường không xác định: {2}"
-

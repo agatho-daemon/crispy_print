@@ -88,6 +88,7 @@
 								v-if="!pdfBytes"
 								id="typst-preview-placeholder"
 								class="preview-placeholder"
+								dir="auto"
 							>
 								{{ __("Preview output will render here.") }}
 							</div>

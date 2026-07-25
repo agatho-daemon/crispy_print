@@ -16,7 +16,7 @@
 						aria-haspopup="dialog"
 						aria-controls="fields-help"
 					>
-						?
+						{{ __("Help symbol") }}
 					</button>
 					<div id="fields-help" popover class="fields-pane__help-popover">
 						<ul class="fields-pane__help-list">
@@ -308,6 +308,12 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	border-radius: 3px;
 	white-space: nowrap;
 	flex-shrink: 0;
+}
+
+.fields-pane:dir(rtl) .field-item,
+.fields-pane:dir(rtl) .field-label {
+	direction: rtl;
+	text-align: start;
 }
 
 .fields-pane__header :deep(.section-head-content) {

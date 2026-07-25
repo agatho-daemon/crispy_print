@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Crispy Print VERSION\n"
 "Report-Msgid-Bugs-To: agatho_daemon@icloud.com\n"
-"POT-Creation-Date: 2026-07-25 06:40+0307\n"
+"POT-Creation-Date: 2026-07-25 11:21+0307\n"
 "PO-Revision-Date: 2026-07-25 06:40+0307\n"
 "Last-Translator: Crispy Print Contributors\n"
 "Language: th\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.13.1\n"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1128
+#: crispy_print/public/js/components/SettingsPane.vue:1154
 msgid "1 field selected"
 msgstr "เลือกแล้ว 1 ช่อง"
 
@@ -153,7 +153,7 @@ msgstr "หัวจดหมายไม่สามารถแทนที่
 msgid "A label used to organize and filter blocks in the library. It does not affect where or how the block is rendered."
 msgstr "ป้ายกำกับที่ใช้ในการจัดระเบียบและกรองบล็อกในไลบรารี ไม่ส่งผลต่อตำแหน่งหรือวิธีการสร้างการแสดงผลบล็อก"
 
-#: crispy_print/api/v1/reports.py:892
+#: crispy_print/api/v1/reports.py:896
 msgid "A saved Report format is required for audited output."
 msgstr "จำเป็นต้องมีรูปแบบรายงานที่บันทึกไว้สำหรับผลลัพธ์ที่ได้รับการตรวจสอบ"
 
@@ -164,7 +164,7 @@ msgid "A3"
 msgstr "A3"
 
 #: crispy_print/public/js/components/SettingsPane.vue:145
-#: crispy_print/public/js/pages/CrispyPP.vue:324
+#: crispy_print/public/js/pages/CrispyPP.vue:338
 msgid "A3 (297 × 420 mm)"
 msgstr "A3 (297 × 420 มม.)"
 
@@ -175,7 +175,7 @@ msgid "A4"
 msgstr "A4"
 
 #: crispy_print/public/js/components/SettingsPane.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:325
+#: crispy_print/public/js/pages/CrispyPP.vue:339
 msgid "A4 (210 × 297 mm)"
 msgstr "A4 (210 × 297 มม.)"
 
@@ -186,7 +186,7 @@ msgid "A5"
 msgstr "A5"
 
 #: crispy_print/public/js/components/SettingsPane.vue:147
-#: crispy_print/public/js/pages/CrispyPP.vue:326
+#: crispy_print/public/js/pages/CrispyPP.vue:340
 msgid "A5 (148 × 210 mm)"
 msgstr "A5 (148 × 210 มม.)"
 
@@ -269,7 +269,7 @@ msgstr "ใช้งาน"
 msgid "Active fiscal credential available: {0}"
 msgstr "มีข้อมูลรับรองทางการเงินที่ใช้งานอยู่: {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:105
+#: crispy_print/public/js/components/TableColumnsDialog.vue:116
 msgid "Add"
 msgstr "เพิ่ม"
 
@@ -296,12 +296,12 @@ msgstr "เพิ่มกฎเอกสารก่อนเพื่อให
 msgid "Add color"
 msgstr "เพิ่มสีสัน"
 
-#: crispy_print/public/js/components/LayoutPane.vue:169
-#: crispy_print/public/js/components/TableColumnsDialog.vue:83
+#: crispy_print/public/js/components/LayoutPane.vue:177
+#: crispy_print/public/js/components/TableColumnsDialog.vue:94
 msgid "Add column"
 msgstr "เพิ่มคอลัมน์"
 
-#: crispy_print/public/js/components/LayoutPane.vue:201
+#: crispy_print/public/js/components/LayoutPane.vue:209
 msgid "Add page break"
 msgstr "เพิ่มตัวแบ่งหน้า"
 
@@ -309,11 +309,11 @@ msgstr "เพิ่มตัวแบ่งหน้า"
 msgid "Add rows from the backend QR field registry. Field metadata is filled automatically."
 msgstr "เพิ่มแถวจากรีจิสทรีฟิลด์ QR แบ็กเอนด์ ข้อมูลเมตาของฟิลด์จะถูกกรอกโดยอัตโนมัติ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:148
+#: crispy_print/public/js/components/LayoutPane.vue:156
 msgid "Add section above"
 msgstr "เพิ่มส่วนด้านบน"
 
-#: crispy_print/public/js/components/LayoutPane.vue:156
+#: crispy_print/public/js/components/LayoutPane.vue:164
 msgid "Add section below"
 msgstr "เพิ่มส่วนด้านล่าง"
 
@@ -327,15 +327,15 @@ msgstr "เพิ่มฟิลด์ {0} QR"
 msgid "Adds marker and line-pattern distinctions so charts remain understandable without relying on color alone."
 msgstr "เพิ่มความแตกต่างของเครื่องหมายและรูปแบบเส้น เพื่อให้แผนภูมิยังคงเข้าใจได้โดยไม่ต้องใช้สีเพียงอย่างเดียว"
 
-#: crispy_print/public/js/components/LayoutPane.vue:385
+#: crispy_print/public/js/components/LayoutPane.vue:417
 msgid "Align"
 msgstr "จัดตำแหน่ง"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:48
+#: crispy_print/public/js/components/TableColumnsDialog.vue:59
 msgid "Align: {0}"
 msgstr "จัดแนว: {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:399
+#: crispy_print/public/js/components/LayoutPane.vue:431
 msgid "Alignment options"
 msgstr "ตัวเลือกการจัดตำแหน่ง"
 
@@ -397,6 +397,12 @@ msgstr "มีเทมเพลต Crispy ที่ใช้งานอยู�
 msgid "An enabled fiscal credential already exists for this company, regulatory profile, authority code, and environment: {0}"
 msgstr "ข้อมูลรับรองทางการเงินที่เปิดใช้งานมีอยู่แล้วสำหรับบริษัทนี้ โปรไฟล์ด้านกฎระเบียบ รหัสหน่วยงาน และสภาพแวดล้อม: {0}"
 
+#: crispy_print/public/js/components/SettingsPane.vue:713
+#: crispy_print/public/js/components/SettingsPane.vue:850
+#: crispy_print/public/js/pages/CrispyPP.vue:275
+msgid "Anchor"
+msgstr "จุดยึด"
+
 #. Label of a Section Break field in DocType 'Crispy Typst Block'
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
 msgid "Applicability"
@@ -408,10 +414,10 @@ msgid "Applicable Documents"
 msgstr "เอกสารที่ใช้บังคับ"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:108
-#: crispy_print/public/js/components/LayoutPane.vue:1288
-#: crispy_print/public/js/components/LayoutPane.vue:1696
-#: crispy_print/public/js/components/LayoutPane.vue:1736
-#: crispy_print/public/js/components/LayoutPane.vue:1800
+#: crispy_print/public/js/components/LayoutPane.vue:1284
+#: crispy_print/public/js/components/LayoutPane.vue:1708
+#: crispy_print/public/js/components/LayoutPane.vue:1748
+#: crispy_print/public/js/components/LayoutPane.vue:1812
 #: crispy_print/public/js/components/QrFieldsDialog.vue:54
 msgid "Apply"
 msgstr "ใช้"
@@ -547,7 +553,7 @@ msgstr "ผู้มีอำนาจ {0}"
 #. Option for the 'Data labels' (Select) field in DocType 'Crispy Branding
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/CrispyImageDialog.vue:63
-#: crispy_print/public/js/components/SettingsPane.vue:810
+#: crispy_print/public/js/components/SettingsPane.vue:823
 #: crispy_print/public/js/pages/CbpBuilder.vue:500
 msgid "Auto"
 msgstr "รถยนต์"
@@ -593,7 +599,7 @@ msgstr "ความกว้างของเส้นแกน (pt)"
 msgid "Aztec"
 msgstr "แอซเท็ก"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:358
+#: crispy_print/public/js/pages/CrispyPP.vue:372
 msgid "B"
 msgstr "บี"
 
@@ -669,7 +675,7 @@ msgstr "การเปลี่ยนแปลงพื้นฐาน (pt)"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:893
+#: crispy_print/public/js/components/SettingsPane.vue:919
 msgid "Basic QR"
 msgstr "พื้นฐาน QR"
 
@@ -745,7 +751,7 @@ msgstr "เส้นขอบ"
 #: crispy_print/public/js/components/BoxSidesEditor.vue:38
 #: crispy_print/public/js/pages/CbpBuilder.vue:77
 #: crispy_print/public/js/pages/CbpBuilder.vue:116
-#: crispy_print/public/js/pages/CrispyPP.vue:362
+#: crispy_print/public/js/pages/CrispyPP.vue:376
 #: crispy_print/public/js/pages/CtbBuilder.vue:62
 msgid "Bottom"
 msgstr "ด้านล่าง"
@@ -782,7 +788,7 @@ msgstr "เครื่องมือสร้างแบรนด์"
 #: crispy_print/crispy_print/page/cbp_builder/cbp_builder.js:121
 #: crispy_print/public/js/components/CrispyTemplatePublishDialog.vue:38
 #: crispy_print/public/js/components/SettingsPane.vue:55
-#: crispy_print/public/js/pages/CrispyPP.vue:600
+#: crispy_print/public/js/pages/CrispyPP.vue:614
 msgid "Branding Profile"
 msgstr "โปรไฟล์การสร้างแบรนด์"
 
@@ -867,7 +873,7 @@ msgstr "C40"
 msgid "CAdES/CMS"
 msgstr "CAdES/CMS"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:622
+#: crispy_print/public/js/pages/CrispyPP.vue:636
 msgid "Cache Hit"
 msgstr "แคชฮิต"
 
@@ -955,10 +961,6 @@ msgstr "การแทรกเซลล์"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 msgid "Cell inset (pt)"
 msgstr "การแทรกเซลล์ (pt)"
-
-#: crispy_print/public/js/components/LayoutPane.vue:453
-msgid "Center"
-msgstr "ศูนย์"
 
 #. Option for the 'Document Role' (Select) field in DocType 'Crispy Document
 #. Code Rule'
@@ -1073,7 +1075,7 @@ msgstr "เลือกรูปแบบสำหรับ"
 msgid "Choose and reorder colors visually. Color codes are managed automatically."
 msgstr "เลือกและเรียงลำดับสีใหม่ด้วยสายตา รหัสสีได้รับการจัดการโดยอัตโนมัติ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:531
+#: crispy_print/public/js/components/LayoutPane.vue:514
 msgid "Choose block"
 msgstr "เลือกบล็อก"
 
@@ -1082,7 +1084,7 @@ msgid "Choose fields to include in the QR payload."
 msgstr "เลือกฟิลด์ที่จะรวมไว้ในเพย์โหลด QR"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:6
-#: crispy_print/public/js/components/LayoutPane.vue:541
+#: crispy_print/public/js/components/LayoutPane.vue:524
 msgid "Choose image"
 msgstr "เลือกรูปภาพ"
 
@@ -1098,7 +1100,7 @@ msgstr "เลือกสีซีรีส์ที่เลือก"
 msgid "Choose the report variables below, then run a live preview using ERPNext data."
 msgstr "เลือกตัวแปรรายงานด้านล่าง จากนั้นเรียกใช้การแสดงตัวอย่างสดโดยใช้ข้อมูล ERPNext"
 
-#: crispy_print/api/v1/formats.py:752
+#: crispy_print/api/v1/formats.py:753
 msgid "Cleared source Branding Profile {0} because it belongs to another company."
 msgstr "ล้างโปรไฟล์การสร้างแบรนด์แหล่งที่มา {0} เนื่องจากเป็นของบริษัทอื่น"
 
@@ -1111,7 +1113,7 @@ msgstr "คลิก Refresh หรือ Command/Ctrl-Enter เพื่อค�
 #: crispy_print/public/js/components/CrispyTypstBlockDialog.vue:62
 #: crispy_print/public/js/components/DuplicateForCompanyDialog.vue:15
 #: crispy_print/public/js/components/SampleFormatsDialog.vue:15
-#: crispy_print/public/js/components/TableColumnsDialog.vue:112
+#: crispy_print/public/js/components/TableColumnsDialog.vue:123
 msgid "Close"
 msgstr "ปิด"
 
@@ -1177,7 +1179,7 @@ msgstr "ยุบการนำเสนอ"
 
 #. Label of a Color field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/LayoutPane.vue:1795
+#: crispy_print/public/js/components/LayoutPane.vue:1807
 #: crispy_print/public/js/components/SettingsPane.vue:515
 #: crispy_print/public/js/components/SettingsPane.vue:626
 #: crispy_print/public/js/components/TypographyStyleEditor.vue:140
@@ -1188,9 +1190,13 @@ msgstr "สี"
 msgid "Colors"
 msgstr "สี"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:40
+#: crispy_print/public/js/components/TableColumnsDialog.vue:51
 msgid "Column label"
 msgstr "ป้ายกำกับคอลัมน์"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:24
+msgid "Column order"
+msgstr "ลำดับคอลัมน์"
 
 #: crispy_print/public/js/components/TableColumnsDialog.vue:22
 #: crispy_print/public/js/pages/CrispyPP.vue:101
@@ -1244,7 +1250,7 @@ msgstr "ฉลากขนาดกะทัดรัด"
 #: crispy_print/public/js/components/SettingsPane.vue:35
 #: crispy_print/public/js/pages/CbpBuilder.vue:20
 #: crispy_print/public/js/pages/CrispyPP.vue:251
-#: crispy_print/public/js/pages/CrispyPP.vue:596
+#: crispy_print/public/js/pages/CrispyPP.vue:610
 msgid "Company"
 msgstr "บริษัท"
 
@@ -1312,7 +1318,7 @@ msgstr "PDF ที่คอมไพล์ไม่ได้ถูกสร้�
 msgid "Compiled SVG was not produced"
 msgstr "SVG ที่คอมไพล์ไม่ได้ถูกสร้างขึ้น"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:217
+#: crispy_print/public/js/components/PreviewRenderer.vue:218
 msgid "Compiling PDF…"
 msgstr "กำลังรวบรวม PDF..."
 
@@ -1367,20 +1373,20 @@ msgstr "จำเป็นต้องมีเงื่อนไข JSON เม
 msgid "Condition Type"
 msgstr "ประเภทเงื่อนไข"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1773
+#: crispy_print/public/js/components/LayoutPane.vue:1785
 msgid "Configure Divider"
 msgstr "กำหนดค่าตัวแบ่ง"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1725
+#: crispy_print/public/js/components/LayoutPane.vue:1737
 msgid "Configure Spacer"
 msgstr "กำหนดค่าตัวเว้นวรรค"
 
-#: crispy_print/public/js/components/LayoutPane.vue:504
+#: crispy_print/public/js/components/LayoutPane.vue:487
 #: crispy_print/public/js/components/TableColumnsDialog.vue:6
 msgid "Configure columns"
 msgstr "กำหนดค่าคอลัมน์"
 
-#: crispy_print/public/js/components/LayoutPane.vue:569
+#: crispy_print/public/js/components/LayoutPane.vue:552
 msgid "Configure divider"
 msgstr "กำหนดค่าตัวแบ่ง"
 
@@ -1388,7 +1394,7 @@ msgstr "กำหนดค่าตัวแบ่ง"
 msgid "Configure page size, margins, and typography for Typst."
 msgstr "กำหนดค่าขนาดหน้า ระยะขอบ และตัวพิมพ์สำหรับ Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:555
+#: crispy_print/public/js/components/LayoutPane.vue:538
 msgid "Configure spacer"
 msgstr "กำหนดค่าตัวเว้นวรรค"
 
@@ -1447,7 +1453,7 @@ msgstr "จำเป็นต้องมีสัญญา"
 msgid "Contract preview is not available yet."
 msgstr "การดูตัวอย่างสัญญายังไม่พร้อมใช้งาน"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:110
+#: crispy_print/public/js/components/PreviewRenderer.vue:111
 msgid "Copy"
 msgstr "คัดลอก"
 
@@ -1472,7 +1478,7 @@ msgstr "เสียหาย"
 msgid "Could not acquire default-setting lock for {0}. Please retry."
 msgstr "ไม่สามารถรับการล็อคการตั้งค่าเริ่มต้นสำหรับ {0} กรุณาลองอีกครั้ง"
 
-#: crispy_print/api/v1/formats.py:914
+#: crispy_print/api/v1/formats.py:915
 msgid "Could not resolve selected Crispy Branding Profile for reference checks"
 msgstr "ไม่สามารถแก้ไขโปรไฟล์แบรนด์ Crispy ที่เลือกสำหรับการตรวจสอบอ้างอิงได้"
 
@@ -1767,8 +1773,8 @@ msgstr "บันทึกบล็อก Crispy Typst แล้ว"
 msgid "Crispy Typst Block {0} was not found."
 msgstr "ไม่พบ Crispy Typst บล็อก {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:769
-#: crispy_print/public/js/components/LayoutPane.vue:1429
+#: crispy_print/public/js/components/LayoutPane.vue:762
+#: crispy_print/public/js/components/LayoutPane.vue:1434
 msgid "Currency"
 msgstr "เงินตรา"
 
@@ -1793,7 +1799,7 @@ msgstr "รูปแบบปัจจุบัน"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/public/js/components/SettingsPane.vue:58
-#: crispy_print/public/js/pages/CrispyPP.vue:604
+#: crispy_print/public/js/pages/CrispyPP.vue:618
 msgid "Custom"
 msgstr "ประเพณี"
 
@@ -1850,8 +1856,8 @@ msgstr "ขนาดจุดข้อมูล"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:768
-#: crispy_print/public/js/components/LayoutPane.vue:1422
+#: crispy_print/public/js/components/LayoutPane.vue:761
+#: crispy_print/public/js/components/LayoutPane.vue:1427
 msgid "Data Type"
 msgstr "ประเภทข้อมูล"
 
@@ -1878,7 +1884,7 @@ msgstr "ขนาดจุดข้อมูล (pt)"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/components/SettingsPane.vue:777
+#: crispy_print/public/js/components/SettingsPane.vue:790
 #: crispy_print/public/js/pages/CbpBuilder.vue:485
 msgid "DataMatrix"
 msgstr "ดาต้าเมทริกซ์"
@@ -1901,11 +1907,11 @@ msgstr "การเข้ารหัส DataMatrix"
 msgid "DataMatrix Symbols"
 msgstr "สัญลักษณ์ดาต้าแมทริกซ์"
 
-#: crispy_print/public/js/components/SettingsPane.vue:803
+#: crispy_print/public/js/components/SettingsPane.vue:816
 msgid "DataMatrix encodation"
 msgstr "การเข้ารหัส DataMatrix"
 
-#: crispy_print/public/js/components/SettingsPane.vue:824
+#: crispy_print/public/js/components/SettingsPane.vue:837
 msgid "DataMatrix symbols"
 msgstr "สัญลักษณ์ดาต้าแมทริกซ์"
 
@@ -1988,7 +1994,7 @@ msgid "Detached"
 msgstr "เดี่ยว"
 
 #: crispy_print/public/js/pages/CrispyPFB.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:429
+#: crispy_print/public/js/pages/CrispyPP.vue:443
 msgid "Diagnostics"
 msgstr "การวินิจฉัย"
 
@@ -2029,7 +2035,7 @@ msgstr "เอกสาร"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:895
+#: crispy_print/public/js/components/SettingsPane.vue:921
 msgid "Document Code Profile"
 msgstr "โปรไฟล์รหัสเอกสาร"
 
@@ -2096,7 +2102,7 @@ msgstr "ประเภทเอกสาร {0} ถูกระบุมาก�
 msgid "Document UUID"
 msgstr "เอกสาร UUID"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:119
+#: crispy_print/public/js/components/TableColumnsDialog.vue:130
 msgid "Done"
 msgstr "เสร็จสิ้น"
 
@@ -2122,11 +2128,11 @@ msgstr "ดาวน์โหลดไฟล์ PDF"
 msgid "Draft"
 msgstr "ร่าง"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:34
+#: crispy_print/public/js/components/TableColumnsDialog.vue:45
 msgid "Drag"
 msgstr "ลาก"
 
-#: crispy_print/public/js/components/LayoutPane.vue:256
+#: crispy_print/public/js/components/LayoutPane.vue:264
 msgid "Drag field"
 msgstr "ลากฟิลด์"
 
@@ -2150,7 +2156,7 @@ msgstr "ลากเพื่อเรียงลำดับใหม่ ค�
 msgid "Drag to resize builder and preview"
 msgstr "ลากเพื่อปรับขนาดตัวสร้างและดูตัวอย่าง"
 
-#: crispy_print/public/js/components/LayoutPane.vue:617
+#: crispy_print/public/js/components/LayoutPane.vue:600
 msgid "Drop fields here"
 msgstr "วางฟิลด์ที่นี่"
 
@@ -2223,12 +2229,12 @@ msgstr "แก้ไขที่มีอยู่"
 msgid "Edit Properties"
 msgstr "แก้ไขคุณสมบัติ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1677
-#: crispy_print/public/js/components/LayoutPane.vue:1685
+#: crispy_print/public/js/components/LayoutPane.vue:1689
+#: crispy_print/public/js/components/LayoutPane.vue:1697
 msgid "Edit Raw Typst Field"
 msgstr "แก้ไขฟิลด์ Raw Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:518
+#: crispy_print/public/js/components/LayoutPane.vue:501
 msgid "Edit code"
 msgstr "แก้ไขโค้ด"
 
@@ -2283,7 +2289,7 @@ msgstr "เปิดใช้งานแผนภูมิ"
 
 #. Label of a Check field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:760
+#: crispy_print/public/js/components/SettingsPane.vue:773
 msgid "Enable QR Code"
 msgstr "เปิดใช้งานรหัส QR"
 
@@ -2351,6 +2357,12 @@ msgstr "คีย์ตัวเข้ารหัส"
 msgid "Encoding"
 msgstr "การเข้ารหัส"
 
+#: crispy_print/public/js/components/SettingsPane.vue:722
+#: crispy_print/public/js/components/SettingsPane.vue:859
+#: crispy_print/public/js/pages/CrispyPP.vue:284
+msgid "End"
+msgstr "สิ้นสุด"
+
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:190
 msgid "Enter a six-digit hex color such as #2563EB."
 msgstr "ป้อนสีฐานสิบหกหกหลัก เช่น #2563EB"
@@ -2379,7 +2391,7 @@ msgstr "การแก้ไขข้อผิดพลาด"
 
 #. Label of a Select field in DocType 'Crispy QR Regulatory Profile'
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:785
+#: crispy_print/public/js/components/SettingsPane.vue:798
 #: crispy_print/public/js/pages/CbpBuilder.vue:489
 msgid "Error correction"
 msgstr "การแก้ไขข้อผิดพลาด"
@@ -2484,23 +2496,23 @@ msgstr "ไม่สามารถสร้าง QR SVG: {0}"
 msgid "Failed to import format."
 msgstr "ไม่สามารถนำเข้ารูปแบบ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1130
+#: crispy_print/public/js/pages/CrispyPP.vue:1144
 msgid "Failed to initialize preview: {0}"
 msgstr "ไม่สามารถเริ่มต้นการแสดงตัวอย่าง: {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1583
+#: crispy_print/public/js/components/LayoutPane.vue:1595
 msgid "Failed to load Crispy Typst Blocks"
 msgstr "ไม่สามารถโหลดบล็อก Crispy Typst"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1297
+#: crispy_print/public/js/pages/CrispyPP.vue:1311
 msgid "Failed to load active template"
 msgstr "ไม่สามารถโหลดเทมเพลตที่ใช้งานอยู่"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1219
+#: crispy_print/public/js/pages/CrispyPP.vue:1233
 msgid "Failed to load active templates"
 msgstr "ไม่สามารถโหลดเทมเพลตที่ใช้งานอยู่"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1193
+#: crispy_print/public/js/pages/CrispyPP.vue:1207
 msgid "Failed to load format: {0}"
 msgstr "ไม่สามารถโหลดรูปแบบ: {0}"
 
@@ -2508,7 +2520,7 @@ msgstr "ไม่สามารถโหลดรูปแบบ: {0}"
 msgid "Failed to load private images"
 msgstr "โหลดภาพส่วนตัวไม่สำเร็จ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:820
+#: crispy_print/public/js/pages/CrispyPP.vue:834
 msgid "Failed to load report formats."
 msgstr "โหลดรูปแบบรายงานไม่สำเร็จ"
 
@@ -2565,11 +2577,11 @@ msgstr "แบบอักษรป้ายกำกับฟิลด์"
 msgid "Field label font size"
 msgstr "ขนาดตัวอักษรของป้ายกำกับฟิลด์"
 
-#: crispy_print/public/js/components/LayoutPane.vue:318
+#: crispy_print/public/js/components/LayoutPane.vue:326
 msgid "Field menu"
 msgstr "เมนูภาคสนาม"
 
-#: crispy_print/public/js/components/LayoutPane.vue:210
+#: crispy_print/public/js/components/LayoutPane.vue:218
 msgid "Field orientation"
 msgstr "การวางแนวสนาม"
 
@@ -2601,7 +2613,7 @@ msgstr "ไฟล์"
 msgid "File Hash"
 msgstr "ไฟล์แฮช"
 
-#: crispy_print/api/v1/formats.py:929
+#: crispy_print/api/v1/formats.py:930
 msgid "File not found for logo image path: {0}"
 msgstr "ไม่พบไฟล์สำหรับเส้นทางรูปภาพโลโก้: {0}"
 
@@ -2735,7 +2747,7 @@ msgstr "สำหรับสิ่งประดิษฐ์ที่มีห
 msgid "Form"
 msgstr "แบบฟอร์ม"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:592
+#: crispy_print/public/js/pages/CrispyPP.vue:606
 msgid "Format"
 msgstr "รูป"
 
@@ -3020,6 +3032,15 @@ msgstr "ส่วนสูง"
 msgid "Height (mm)"
 msgstr "ความสูง (มม.)"
 
+#: crispy_print/public/js/components/FieldsPane.vue:19
+#: crispy_print/public/js/components/LayoutPane.vue:45
+#: crispy_print/public/js/components/PreviewPane.vue:68
+#: crispy_print/public/js/components/SettingsPane.vue:18
+#: crispy_print/public/js/components/TypstCodePane.vue:17
+#: crispy_print/public/js/pages/CrispyPP.vue:147
+msgid "Help symbol"
+msgstr "?"
+
 #. Option for the 'Output Encoding' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3032,7 +3053,7 @@ msgstr "ฐานสิบหก"
 msgid "Hidden"
 msgstr "ซ่อนเร้น"
 
-#: crispy_print/public/js/components/LayoutPane.vue:492
+#: crispy_print/public/js/components/LayoutPane.vue:475
 msgid "Hide label"
 msgstr "ซ่อนป้ายกำกับ"
 
@@ -3054,7 +3075,7 @@ msgstr "เยื้องลำดับชั้น (pt)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:795
+#: crispy_print/public/js/components/SettingsPane.vue:808
 #: crispy_print/public/js/pages/CbpBuilder.vue:494
 msgid "High"
 msgstr "สูง"
@@ -3133,7 +3154,7 @@ msgstr "การนำเข้าล้มเหลว"
 msgid "Import Warnings"
 msgstr "คำเตือนการนำเข้า"
 
-#: crispy_print/api/v1/formats.py:768
+#: crispy_print/api/v1/formats.py:769
 msgid "Import payload cannot be empty"
 msgstr "เพย์โหลดการนำเข้าต้องไม่ว่างเปล่า"
 
@@ -3174,8 +3195,8 @@ msgstr "รวมแฮช"
 msgid "Include signature"
 msgstr "รวมลายเซ็นด้วย"
 
-#: crispy_print/public/js/components/LayoutPane.vue:767
-#: crispy_print/public/js/components/LayoutPane.vue:1415
+#: crispy_print/public/js/components/LayoutPane.vue:760
+#: crispy_print/public/js/components/LayoutPane.vue:1420
 msgid "Indicator"
 msgstr "ตัวบ่งชี้"
 
@@ -3184,11 +3205,11 @@ msgstr "ตัวบ่งชี้"
 msgid "Info"
 msgstr "ข้อมูล"
 
-#: crispy_print/public/js/components/SettingsPane.vue:891
+#: crispy_print/public/js/components/SettingsPane.vue:917
 msgid "Inherit branding default"
 msgstr "สืบทอดค่าเริ่มต้นของการสร้างแบรนด์"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1074
+#: crispy_print/public/js/components/SettingsPane.vue:1100
 msgid "Inherited from the selected Branding Profile."
 msgstr "สืบทอดมาจากโปรไฟล์แบรนด์ที่เลือก"
 
@@ -3227,7 +3248,7 @@ msgstr "โมฆะ"
 msgid "Invalid Crispy Template status: {0}"
 msgstr "สถานะเทมเพลต Crispy ไม่ถูกต้อง: {0}"
 
-#: crispy_print/api/v1/formats.py:772
+#: crispy_print/api/v1/formats.py:773
 msgid "Invalid JSON payload"
 msgstr "เพย์โหลด JSON ไม่ถูกต้อง"
 
@@ -3243,11 +3264,11 @@ msgstr ""
 msgid "Invalid business status: {0}"
 msgstr "สถานะธุรกิจไม่ถูกต้อง: {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:188
+#: crispy_print/public/js/components/TableColumnsDialog.vue:207
 msgid "Invalid column width values: {0}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc."
 msgstr "ค่าความกว้างคอลัมน์ไม่ถูกต้อง: {0} ใช้หน่วย Typst เช่น: auto, 1fr, 2fr, 100pt, 50%, 2cm เป็นต้น"
 
-#: crispy_print/api/v1/reports.py:394
+#: crispy_print/api/v1/reports.py:398
 msgid "Invalid column_config format"
 msgstr "รูปแบบ column_config ไม่ถูกต้อง"
 
@@ -3255,11 +3276,11 @@ msgstr "รูปแบบ column_config ไม่ถูกต้อง"
 msgid "Invalid conflict action: {0}"
 msgstr "การดำเนินการขัดแย้งไม่ถูกต้อง: {0}"
 
-#: crispy_print/api/v1/formats.py:707
+#: crispy_print/api/v1/formats.py:708
 msgid "Invalid duplicate name strategy: {0}"
 msgstr "กลยุทธ์ชื่อซ้ำไม่ถูกต้อง: {0}"
 
-#: crispy_print/api/v1/reports.py:382
+#: crispy_print/api/v1/reports.py:386
 msgid "Invalid filters format"
 msgstr "รูปแบบตัวกรองไม่ถูกต้อง"
 
@@ -3379,7 +3400,7 @@ msgstr "บันทึกเอกสารที่ออกแล้วไม
 msgid "Issued document revoked."
 msgstr "เอกสารที่ออกถูกเพิกถอน"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1518
+#: crispy_print/public/js/pages/CrispyPP.vue:1532
 msgid "Issued document snapshot recorded: {0}"
 msgstr "บันทึกสแนปชอตเอกสารที่ออก: {0}"
 
@@ -3423,7 +3444,7 @@ msgstr "JSON, XML ฯลฯ"
 msgid "KSeF"
 msgstr "กศน"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:367
+#: crispy_print/public/js/pages/CrispyPP.vue:381
 msgid "L"
 msgstr "ล"
 
@@ -3435,10 +3456,10 @@ msgstr "LHDN eInvoice"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:759
-#: crispy_print/public/js/components/LayoutPane.vue:765
-#: crispy_print/public/js/components/LayoutPane.vue:1382
-#: crispy_print/public/js/components/LayoutPane.vue:1401
+#: crispy_print/public/js/components/LayoutPane.vue:752
+#: crispy_print/public/js/components/LayoutPane.vue:758
+#: crispy_print/public/js/components/LayoutPane.vue:1387
+#: crispy_print/public/js/components/LayoutPane.vue:1406
 msgid "Label"
 msgstr "ฉลาก"
 
@@ -3458,7 +3479,7 @@ msgstr "ป้ายกำกับและซีรีส์"
 
 #: crispy_print/public/js/components/SettingsPane.vue:169
 #: crispy_print/public/js/pages/CbpBuilder.vue:71
-#: crispy_print/public/js/pages/CrispyPP.vue:341
+#: crispy_print/public/js/pages/CrispyPP.vue:355
 #: crispy_print/public/js/pages/CtbBuilder.vue:38
 msgid "Landscape"
 msgstr "ภูมิประเทศ"
@@ -3503,13 +3524,18 @@ msgstr "เว้นว่างไว้เพื่อให้ถือว่
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:39
-#: crispy_print/public/js/components/LayoutPane.vue:426
 #: crispy_print/public/js/pages/CbpBuilder.vue:78
 #: crispy_print/public/js/pages/CbpBuilder.vue:118
-#: crispy_print/public/js/pages/CrispyPP.vue:371
+#: crispy_print/public/js/pages/CrispyPP.vue:385
 #: crispy_print/public/js/pages/CtbBuilder.vue:70
 msgid "Left"
 msgstr "ซ้าย"
+
+#: crispy_print/public/js/components/SettingsPane.vue:719
+#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/pages/CrispyPP.vue:281
+msgid "Left (physical)"
+msgstr "ซ้าย (กายภาพ)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:295
 msgid "Left margin"
@@ -3520,7 +3546,7 @@ msgstr "ขอบซ้าย"
 msgid "Left margin (mm)"
 msgstr "ขอบซ้าย (มม.)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1360
+#: crispy_print/public/js/components/LayoutPane.vue:1365
 msgid "Left-Right"
 msgstr "ซ้าย-ขวา"
 
@@ -3547,7 +3573,7 @@ msgid "Legal"
 msgstr "กฎหมาย"
 
 #: crispy_print/public/js/components/SettingsPane.vue:151
-#: crispy_print/public/js/pages/CrispyPP.vue:330
+#: crispy_print/public/js/pages/CrispyPP.vue:344
 msgid "Legal (8.5 × 14 in)"
 msgstr "Legal (8.5 × 14 นิ้ว)"
 
@@ -3560,7 +3586,7 @@ msgstr "ตำแหน่งตำนาน"
 msgid "Legend position"
 msgstr "ตำแหน่งในตำนาน"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1778
+#: crispy_print/public/js/components/LayoutPane.vue:1790
 msgid "Length"
 msgstr "ระยะ"
 
@@ -3571,7 +3597,7 @@ msgid "Letter"
 msgstr "จดหมาย"
 
 #: crispy_print/public/js/components/SettingsPane.vue:149
-#: crispy_print/public/js/pages/CrispyPP.vue:328
+#: crispy_print/public/js/pages/CrispyPP.vue:342
 msgid "Letter (8.5 × 11 in)"
 msgstr "Letter (8.5 × 11 นิ้ว)"
 
@@ -3631,7 +3657,7 @@ msgstr "ตัวอย่างรายงานสด"
 msgid "Load default"
 msgstr "โหลดค่าเริ่มต้น"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:218
+#: crispy_print/public/js/components/PreviewRenderer.vue:219
 msgid "Loading PDF…"
 msgstr "กำลังโหลด PDF..."
 
@@ -3695,6 +3721,10 @@ msgstr "กำลังโหลดเทมเพลต..."
 msgid "Loading..."
 msgstr "กำลังโหลด ..."
 
+#: crispy_print/public/js/components/TableColumnsDialog.vue:30
+msgid "Logical (direction-aware)"
+msgstr "เชิงตรรกะ (ตามทิศทาง)"
+
 #. Option for the 'Code Purpose' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3755,7 +3785,7 @@ msgstr "ความกว้างของโลโก้ต้องมาก
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:792
+#: crispy_print/public/js/components/SettingsPane.vue:805
 #: crispy_print/public/js/pages/CbpBuilder.vue:491
 msgid "Low"
 msgstr "ต่ำ"
@@ -3773,7 +3803,7 @@ msgid "Make cloned template active"
 msgstr "ทำให้เทมเพลตที่โคลนใช้งานได้"
 
 #: crispy_print/public/js/components/SettingsPane.vue:175
-#: crispy_print/public/js/pages/CrispyPP.vue:346
+#: crispy_print/public/js/pages/CrispyPP.vue:360
 msgid "Margins (mm)"
 msgstr "ขอบ (มม.)"
 
@@ -3810,7 +3840,7 @@ msgstr "ประเภทสื่อ"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:793
+#: crispy_print/public/js/components/SettingsPane.vue:806
 #: crispy_print/public/js/pages/CbpBuilder.vue:492
 msgid "Medium"
 msgstr "กลาง"
@@ -3847,23 +3877,23 @@ msgstr "กริดไมเนอร์"
 msgid "Missing export payload"
 msgstr "ไม่มีเพย์โหลดการส่งออก"
 
-#: crispy_print/api/v1/formats.py:923
+#: crispy_print/api/v1/formats.py:924
 msgid "Missing reference: Company '{0}'"
 msgstr "ไม่มีการอ้างอิง: บริษัท '{0}'"
 
-#: crispy_print/api/v1/formats.py:944
+#: crispy_print/api/v1/formats.py:945
 msgid "Missing reference: Company '{0}' (metadata)"
 msgstr "ไม่มีการอ้างอิง: บริษัท '{0}' (ข้อมูลเมตา)"
 
-#: crispy_print/api/v1/formats.py:954
+#: crispy_print/api/v1/formats.py:955
 msgid "Missing reference: Crispy Template '{0}' (metadata)"
 msgstr "ไม่มีการอ้างอิง: เทมเพลต Crispy '{0}' (ข้อมูลเมตา)"
 
-#: crispy_print/api/v1/formats.py:918
+#: crispy_print/api/v1/formats.py:919
 msgid "Missing reference: Letter Head '{0}'"
 msgstr "ไม่มีการอ้างอิง: หัวจดหมาย '{0}'"
 
-#: crispy_print/api/v1/formats.py:897
+#: crispy_print/api/v1/formats.py:898
 msgid "Missing reference: {0} '{1}' (field: {2})"
 msgstr "ไม่มีการอ้างอิง: {0} '{1}' (ฟิลด์: {2})"
 
@@ -3893,7 +3923,7 @@ msgstr "โมดูล"
 msgid "Module Size (pt)"
 msgstr "ขนาดโมดูล (pt)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/components/SettingsPane.vue:882
 msgid "Module size"
 msgstr "ขนาดโมดูล"
 
@@ -4009,11 +4039,11 @@ msgstr "ไม่พบข้อมูลรับรองทางการเ
 msgid "No active templates"
 msgstr "ไม่มีเทมเพลตที่ใช้งานอยู่"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:638
+#: crispy_print/public/js/pages/CrispyPP.vue:652
 msgid "No approved Crispy Template is available for this document context."
 msgstr "ไม่มีเทมเพลต Crispy ที่ได้รับการอนุมัติสำหรับบริบทของเอกสารนี้"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1562
+#: crispy_print/public/js/components/LayoutPane.vue:1574
 msgid "No block selected"
 msgstr "ไม่ได้เลือกบล็อก"
 
@@ -4021,7 +4051,7 @@ msgstr "ไม่ได้เลือกบล็อก"
 msgid "No columns available"
 msgstr "ไม่มีคอลัมน์"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:78
+#: crispy_print/public/js/components/TableColumnsDialog.vue:89
 msgid "No columns yet. Add one below."
 msgstr "ยังไม่มีคอลัมน์ เพิ่มหนึ่งรายการด้านล่าง"
 
@@ -4049,7 +4079,7 @@ msgstr "ไม่พบช่องข้อมูล"
 msgid "No fields match {0}!"
 msgstr "ไม่มีฟิลด์ที่ตรงกับ {0}!"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1127
+#: crispy_print/public/js/components/SettingsPane.vue:1153
 msgid "No fields selected"
 msgstr "ไม่มีช่องที่เลือก"
 
@@ -4057,7 +4087,7 @@ msgstr "ไม่มีช่องที่เลือก"
 msgid "No fiscal credential found for these filters."
 msgstr "ไม่พบข้อมูลรับรองทางการเงินสำหรับตัวกรองเหล่านี้"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1570
+#: crispy_print/public/js/components/LayoutPane.vue:1582
 msgid "No image selected"
 msgstr "ไม่ได้เลือกรูปภาพ"
 
@@ -4081,7 +4111,7 @@ msgstr "ไม่มีฟิลด์สิทธิ์ที่จำเป็
 msgid "No obvious format issues found."
 msgstr "ไม่พบปัญหารูปแบบที่ชัดเจน"
 
-#: crispy_print/api/v1/reports.py:1809
+#: crispy_print/api/v1/reports.py:1813
 msgid "No print format found for report '{0}'"
 msgstr "ไม่พบรูปแบบการพิมพ์สำหรับรายงาน '{0}'"
 
@@ -4223,7 +4253,7 @@ msgstr "ไม่บังคับ: เพิ่ม `// ช่อง: ลูก
 
 #: crispy_print/public/js/components/SettingsPane.vue:162
 #: crispy_print/public/js/pages/CbpBuilder.vue:68
-#: crispy_print/public/js/pages/CrispyPP.vue:335
+#: crispy_print/public/js/pages/CrispyPP.vue:349
 #: crispy_print/public/js/pages/CtbBuilder.vue:35
 #: crispy_print/public/js/report_button.bundle.js:255
 msgid "Orientation"
@@ -4319,11 +4349,11 @@ msgstr "PDF SHA-256"
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:607
+#: crispy_print/public/js/pages/CrispyPP.vue:621
 msgid "PDF Standard"
 msgstr "มาตรฐาน PDF"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1607
+#: crispy_print/public/js/pages/CrispyPP.vue:1621
 msgid "PDF download started."
 msgstr "เริ่มดาวน์โหลด PDF แล้ว"
 
@@ -4336,7 +4366,7 @@ msgstr "สร้าง PDF สำเร็จแล้ว"
 msgid "PDF generation not available"
 msgstr "รุ่น PDF ไม่พร้อมใช้งาน"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1613
+#: crispy_print/public/js/pages/CrispyPP.vue:1627
 msgid "PDF opened in a new tab."
 msgstr "PDF เปิดในแท็บใหม่"
 
@@ -4367,7 +4397,7 @@ msgstr ""
 "  หมายเหตุ: เอาต์พุต PDF/A จะฝังแบบอักษร ดังนั้นแบบอักษรที่เลือกจะต้องอนุญาตให้ฝัง/ตั้งค่าย่อย PDF ได้\n"
 "</span>"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:332
+#: crispy_print/public/js/components/PreviewRenderer.vue:333
 msgid "PDF preview failed."
 msgstr "การแสดงตัวอย่าง PDF ล้มเหลว"
 
@@ -4426,12 +4456,12 @@ msgstr "PDF/A-4"
 msgid "PDF417"
 msgstr "PDF417"
 
-#: crispy_print/api/v1/reports.py:1835
+#: crispy_print/api/v1/reports.py:1839
 #: crispy_print/public/js/pages/CbpBuilder.vue:57
 msgid "Page"
 msgstr "หน้า"
 
-#: crispy_print/public/js/components/LayoutPane.vue:623
+#: crispy_print/public/js/components/LayoutPane.vue:606
 msgid "Page Break"
 msgstr "แบ่งหน้า"
 
@@ -4450,7 +4480,7 @@ msgstr "หมายเลขหน้า"
 msgid "Page Settings"
 msgstr "การตั้งค่าหน้าเว็บ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:322
+#: crispy_print/public/js/pages/CrispyPP.vue:336
 msgid "Page Size"
 msgstr "ขนาดหน้า"
 
@@ -4464,7 +4494,7 @@ msgstr "การวางแนวหน้า"
 msgid "Page size"
 msgstr "ขนาดหน้า"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:614
+#: crispy_print/public/js/pages/CrispyPP.vue:628
 msgid "Pages"
 msgstr "หน้า"
 
@@ -4512,15 +4542,15 @@ msgstr "จำเป็นต้องมีเทมเพลตเพย์โ
 msgid "Payload format"
 msgstr "รูปแบบเพย์โหลด"
 
-#: crispy_print/api/v1/formats.py:779
+#: crispy_print/api/v1/formats.py:780
 msgid "Payload must be a JSON object"
 msgstr "เพย์โหลดต้องเป็นอ็อบเจ็กต์ JSON"
 
-#: crispy_print/api/v1/formats.py:776
+#: crispy_print/api/v1/formats.py:777
 msgid "Payload must be a JSON object or JSON string"
 msgstr "เพย์โหลดต้องเป็นอ็อบเจ็กต์ JSON หรือสตริง JSON"
 
-#: crispy_print/api/v1/formats.py:790
+#: crispy_print/api/v1/formats.py:791
 msgid "Payload must include a 'format' object"
 msgstr "เพย์โหลดต้องมีวัตถุ 'รูปแบบ'"
 
@@ -4557,6 +4587,10 @@ msgstr "คาราคาซัง"
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 msgid "Peppol BIS"
 msgstr "เปปโปล บีไอเอส"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:31
+msgid "Physical (fixed)"
+msgstr "กายภาพ (คงที่)"
 
 #: crispy_print/public/js/components/PreviewPane.vue:84
 msgid "Pick a document to preview."
@@ -4606,7 +4640,7 @@ msgstr "ลิงค์พอร์ทัล"
 
 #: crispy_print/public/js/components/SettingsPane.vue:168
 #: crispy_print/public/js/pages/CbpBuilder.vue:70
-#: crispy_print/public/js/pages/CrispyPP.vue:340
+#: crispy_print/public/js/pages/CrispyPP.vue:354
 #: crispy_print/public/js/pages/CtbBuilder.vue:37
 msgid "Portrait"
 msgstr "ภาพเหมือน"
@@ -4631,7 +4665,7 @@ msgstr "แทนที่การนำเสนอ JSON"
 #. Label of a Code field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
-#: crispy_print/public/js/pages/CrispyPP.vue:318
+#: crispy_print/public/js/pages/CrispyPP.vue:332
 msgid "Presentation Settings"
 msgstr "การตั้งค่าการนำเสนอ"
 
@@ -4683,7 +4717,7 @@ msgstr "ดูตัวอย่างโฟกัส"
 msgid "Preview is not ready to print."
 msgstr "การแสดงตัวอย่างไม่พร้อมที่จะพิมพ์"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:92
+#: crispy_print/public/js/components/PreviewRenderer.vue:93
 msgid "Preview output will render here."
 msgstr "เอาต์พุตตัวอย่างจะแสดงผลที่นี่"
 
@@ -4691,7 +4725,7 @@ msgstr "เอาต์พุตตัวอย่างจะแสดงผล
 msgid "Preview shrinks to content with 2.5cm margins. Use for compact self-sizing blocks, not tables, grids, or long text."
 msgstr "ดูตัวอย่างย่อขนาดเนื้อหาโดยมีระยะขอบ 2.5 ซม. ใช้สำหรับบล็อกที่ปรับขนาดได้เองแบบกะทัดรัด ไม่ใช่ตาราง ตารางกริด หรือข้อความยาว"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1036
+#: crispy_print/public/js/pages/CrispyPP.vue:1050
 msgid "Preview truncated to {0} rows (from {1}). PDF output may also be limited."
 msgstr "การแสดงตัวอย่างถูกตัดทอนเป็นแถว {0} (จาก {1}) เอาต์พุต PDF อาจถูกจำกัดเช่นกัน"
 
@@ -4756,7 +4790,7 @@ msgstr "พิมพ์ภาษีด้วยจำนวนเป็นศู
 msgid "Print UOM after Quantity"
 msgstr "พิมพ์ UOM หลังจำนวน"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1566
+#: crispy_print/public/js/pages/CrispyPP.vue:1580
 msgid "Print dialog opened."
 msgstr "เปิดกล่องโต้ตอบการพิมพ์แล้ว"
 
@@ -4886,7 +4920,7 @@ msgstr "ทางเลือกบาร์โค้ด Python รองรั�
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
-#: crispy_print/public/js/components/SettingsPane.vue:776
+#: crispy_print/public/js/components/SettingsPane.vue:789
 #: crispy_print/public/js/pages/CbpBuilder.vue:475
 #: crispy_print/public/js/pages/CbpBuilder.vue:484
 msgid "QR Code"
@@ -4900,7 +4934,7 @@ msgstr "ฟิลด์รหัส QR"
 msgid "QR Code X position"
 msgstr "QR รหัสตำแหน่ง X"
 
-#: crispy_print/public/js/components/SettingsPane.vue:767
+#: crispy_print/public/js/components/SettingsPane.vue:780
 msgid "QR Code is anchored to bottom-left using #place()."
 msgstr "รหัส QR จะยึดไว้ที่ด้านซ้ายล่างโดยใช้ #place()"
 
@@ -4964,19 +4998,19 @@ msgstr "ฟิลด์ QR {0}.{1} หายไป {2}"
 msgid "QR field {0}.{1} must be an object."
 msgstr "ฟิลด์ QR {0}.{1} ต้องเป็นออบเจ็กต์"
 
-#: crispy_print/public/js/components/SettingsPane.vue:910
+#: crispy_print/public/js/components/SettingsPane.vue:936
 msgid "QR fields"
 msgstr "ฟิลด์ QR"
 
-#: crispy_print/public/js/components/SettingsPane.vue:926
+#: crispy_print/public/js/components/SettingsPane.vue:952
 msgid "QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
 msgstr "ฟิลด์เพย์โหลด QR จะถูกละเว้นในโหมดโปรไฟล์รหัสเอกสาร เนื่องจากแบ็กเอนด์แก้ไขค่าที่เข้ารหัสสุดท้าย"
 
-#: crispy_print/public/js/components/SettingsPane.vue:884
+#: crispy_print/public/js/components/SettingsPane.vue:910
 msgid "QR source"
 msgstr "แหล่งที่มา QR"
 
-#: crispy_print/public/js/components/SettingsPane.vue:765
+#: crispy_print/public/js/components/SettingsPane.vue:778
 msgid "QR-Code"
 msgstr "รหัส QR"
 
@@ -4989,7 +5023,7 @@ msgstr "รหัส QR"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:794
+#: crispy_print/public/js/components/SettingsPane.vue:807
 #: crispy_print/public/js/pages/CbpBuilder.vue:493
 msgid "Quartile"
 msgstr "ควอร์ไทล์"
@@ -5008,7 +5042,7 @@ msgstr "เงียบ"
 msgid "Quiet Zone"
 msgstr "โซนเงียบ"
 
-#: crispy_print/public/js/components/SettingsPane.vue:846
+#: crispy_print/public/js/components/SettingsPane.vue:872
 msgid "Quiet zone"
 msgstr "โซนเงียบสงบ"
 
@@ -5018,7 +5052,7 @@ msgstr "โซนเงียบสงบ"
 msgid "Quotation"
 msgstr "ใบเสนอราคา"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:376
+#: crispy_print/public/js/pages/CrispyPP.vue:390
 msgid "R"
 msgstr "ร"
 
@@ -5038,11 +5072,11 @@ msgstr "อาร์เอสเอ"
 #. Label of a Check field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:623
+#: crispy_print/public/js/pages/CrispyPP.vue:637
 msgid "Raw Typst"
 msgstr "ดิบ Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1690
+#: crispy_print/public/js/components/LayoutPane.vue:1702
 msgid "Raw Typst Field"
 msgstr "ฟิลด์ Typst ดิบ"
 
@@ -5087,7 +5121,7 @@ msgstr "บันทึกการตรวจสอบความสมบู
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:832
+#: crispy_print/public/js/components/SettingsPane.vue:845
 #: crispy_print/public/js/pages/CbpBuilder.vue:513
 msgid "Rectangular"
 msgstr "สี่เหลี่ยม"
@@ -5228,25 +5262,25 @@ msgstr "สิ่งประดิษฐ์ที่เกี่ยวข้อ
 msgid "Reload"
 msgstr "โหลด"
 
-#: crispy_print/public/js/components/LayoutPane.vue:588
-#: crispy_print/public/js/components/TableColumnsDialog.vue:66
+#: crispy_print/public/js/components/LayoutPane.vue:571
+#: crispy_print/public/js/components/TableColumnsDialog.vue:77
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:95
 msgid "Remove"
 msgstr "เอาออก"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:311
+#: crispy_print/public/js/pages/CrispyPP.vue:325
 msgid "Remove QRCode"
 msgstr "ลบคิวอาร์โค้ด"
 
-#: crispy_print/public/js/components/LayoutPane.vue:178
+#: crispy_print/public/js/components/LayoutPane.vue:186
 msgid "Remove column"
 msgstr "ลบคอลัมน์"
 
-#: crispy_print/public/js/components/LayoutPane.vue:200
+#: crispy_print/public/js/components/LayoutPane.vue:208
 msgid "Remove page break"
 msgstr "ลบตัวแบ่งหน้า"
 
-#: crispy_print/public/js/components/LayoutPane.vue:224
+#: crispy_print/public/js/components/LayoutPane.vue:232
 msgid "Remove section"
 msgstr "ลบส่วน"
 
@@ -5260,7 +5294,7 @@ msgstr "การตั้งค่าการแสดงผล"
 msgid "Render Status"
 msgstr "สถานะการเรนเดอร์"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:616
+#: crispy_print/public/js/pages/CrispyPP.vue:630
 msgid "Render Time"
 msgstr "เวลาเรนเดอร์"
 
@@ -5306,7 +5340,7 @@ msgstr "การแสดงการตั้งค่าโปรไฟล์
 msgid "Rendering custom Typst with branding profile specimen data."
 msgstr "การเรนเดอร์ Typst แบบกำหนดเองพร้อมข้อมูลตัวอย่างโปรไฟล์การสร้างแบรนด์"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:219
+#: crispy_print/public/js/components/PreviewRenderer.vue:220
 msgid "Rendering preview…"
 msgstr "กำลังแสดงตัวอย่าง..."
 
@@ -5337,7 +5371,7 @@ msgstr "ความครอบคลุมของรายงานต้อ
 msgid "Report Format"
 msgstr "รูปแบบรายงาน"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1621
+#: crispy_print/public/js/pages/CrispyPP.vue:1635
 msgid "Report PDF generation failed."
 msgstr "รายงานการสร้าง PDF ล้มเหลว"
 
@@ -5408,12 +5442,12 @@ msgstr "บันทึกการตรวจสอบผลลัพธ์ข
 msgid "Report output audit records cannot be deleted."
 msgstr "บันทึกการตรวจสอบเอาต์พุตรายงานไม่สามารถลบได้"
 
-#: crispy_print/api/v1/reports.py:896
+#: crispy_print/api/v1/reports.py:900
 msgid "Report output audit requires a Report format."
 msgstr "การตรวจสอบผลลัพธ์ของรายงานจำเป็นต้องมีรูปแบบรายงาน"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1056
-#: crispy_print/public/js/pages/CrispyPP.vue:1062
+#: crispy_print/public/js/pages/CrispyPP.vue:1070
+#: crispy_print/public/js/pages/CrispyPP.vue:1076
 msgid "Report preview access expired. Run Preview again."
 msgstr "การเข้าถึงตัวอย่างรายงานหมดอายุแล้ว เรียกใช้การแสดงตัวอย่างอีกครั้ง"
 
@@ -5425,12 +5459,12 @@ msgstr "การเข้าถึงการแสดงตัวอย่า
 msgid "Report preview data has expired. Run Preview again."
 msgstr "ข้อมูลตัวอย่างรายงานหมดอายุแล้ว เรียกใช้การแสดงตัวอย่างอีกครั้ง"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1063
+#: crispy_print/public/js/pages/CrispyPP.vue:1077
 msgid "Report preview failed."
 msgstr "การแสดงตัวอย่างรายงานล้มเหลว"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1556
-#: crispy_print/public/js/pages/CrispyPP.vue:1589
+#: crispy_print/public/js/pages/CrispyPP.vue:1570
+#: crispy_print/public/js/pages/CrispyPP.vue:1603
 msgid "Report preview not ready yet."
 msgstr "ตัวอย่างรายงานยังไม่พร้อม"
 
@@ -5446,11 +5480,11 @@ msgstr "การแสดงตัวอย่างรายงานจำเ
 msgid "Report previews need filters, selected columns, and generated result data. Open the report first, configure the view you want, then launch Crispy Print Preview from that report."
 msgstr "การแสดงตัวอย่างรายงานจำเป็นต้องมีตัวกรอง คอลัมน์ที่เลือก และข้อมูลผลลัพธ์ที่สร้างขึ้น เปิดรายงานก่อน กำหนดค่ามุมมองที่คุณต้องการ จากนั้นเปิดการแสดงตัวอย่าง Crispy Print จากรายงานนั้น"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1573
+#: crispy_print/public/js/pages/CrispyPP.vue:1587
 msgid "Report printing failed."
 msgstr "การพิมพ์รายงานล้มเหลว"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1580
+#: crispy_print/public/js/pages/CrispyPP.vue:1594
 msgid "Report printing was blocked by the browser."
 msgstr "การพิมพ์รายงานถูกบล็อกโดยเบราว์เซอร์"
 
@@ -5542,7 +5576,7 @@ msgstr "รีเซ็ตการเปลี่ยนแปลง"
 msgid "Reset View Defaults"
 msgstr "รีเซ็ตค่าเริ่มต้นของมุมมอง"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1507
+#: crispy_print/public/js/components/LayoutPane.vue:1513
 msgid "Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
 msgstr "รีเซ็ตเลย์เอาต์เป็นค่าเริ่มต้น DocType (จากเมตาดาต้า) หรือไม่ การดำเนินการนี้จะละทิ้งการเปลี่ยนแปลงเค้าโครงทั้งหมด และคืนค่าการจัดเรียงส่วน/คอลัมน์/ฟิลด์เริ่มต้น"
 
@@ -5653,13 +5687,18 @@ msgstr "เพิกถอน ณ"
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:40
-#: crispy_print/public/js/components/LayoutPane.vue:480
 #: crispy_print/public/js/pages/CbpBuilder.vue:79
 #: crispy_print/public/js/pages/CbpBuilder.vue:113
-#: crispy_print/public/js/pages/CrispyPP.vue:380
+#: crispy_print/public/js/pages/CrispyPP.vue:394
 #: crispy_print/public/js/pages/CtbBuilder.vue:78
 msgid "Right"
 msgstr "ขวา"
+
+#: crispy_print/public/js/components/SettingsPane.vue:720
+#: crispy_print/public/js/components/SettingsPane.vue:857
+#: crispy_print/public/js/pages/CrispyPP.vue:282
+msgid "Right (physical)"
+msgstr "ขวา (กายภาพ)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:294
 msgid "Right margin"
@@ -5688,7 +5727,7 @@ msgstr "เรียกใช้การแสดงตัวอย่าง"
 msgid "Run Preview again"
 msgstr "เรียกใช้การแสดงตัวอย่างอีกครั้ง"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:216
+#: crispy_print/public/js/components/PreviewRenderer.vue:217
 msgid "Running report…"
 msgstr "กำลังดำเนินการรายงาน..."
 
@@ -5855,7 +5894,7 @@ msgstr "ป้ายกำกับส่วน"
 msgid "Section Labels"
 msgstr "ป้ายกำกับส่วน"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1286
+#: crispy_print/public/js/components/LayoutPane.vue:1282
 msgid "Section Settings"
 msgstr "การตั้งค่าส่วน"
 
@@ -5872,7 +5911,7 @@ msgstr "ขนาดตัวอักษรของป้ายกำกับ
 msgid "Section menu"
 msgstr "เมนูส่วน"
 
-#: crispy_print/public/js/components/LayoutPane.vue:190
+#: crispy_print/public/js/components/LayoutPane.vue:198
 msgid "Section settings"
 msgstr "การตั้งค่าส่วน"
 
@@ -5930,11 +5969,11 @@ msgstr "เลือกคอลัมน์และตั้งค่าคว
 msgid "Select company"
 msgstr "เลือกบริษัท"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:90
+#: crispy_print/public/js/components/TableColumnsDialog.vue:101
 msgid "Select field"
 msgstr "เลือกฟิลด์"
 
-#: crispy_print/public/js/components/SettingsPane.vue:917
+#: crispy_print/public/js/components/SettingsPane.vue:943
 msgid "Select fields"
 msgstr "เลือกฟิลด์"
 
@@ -6125,11 +6164,11 @@ msgstr "แสดงผลรวม"
 msgid "Show filters block"
 msgstr "แสดงบล็อกตัวกรอง"
 
-#: crispy_print/public/js/components/LayoutPane.vue:493
+#: crispy_print/public/js/components/LayoutPane.vue:476
 msgid "Show label"
 msgstr "แสดงป้ายกำกับ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:426
+#: crispy_print/public/js/pages/CrispyPP.vue:440
 msgid "Show preview diagnostics"
 msgstr "แสดงการวินิจฉัยตัวอย่าง"
 
@@ -6202,9 +6241,9 @@ msgstr "ขนาด"
 
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:714
-#: crispy_print/public/js/components/SettingsPane.vue:837
-#: crispy_print/public/js/pages/CrispyPP.vue:275
+#: crispy_print/public/js/components/SettingsPane.vue:727
+#: crispy_print/public/js/components/SettingsPane.vue:863
+#: crispy_print/public/js/pages/CrispyPP.vue:289
 msgid "Size (mm)"
 msgstr "ขนาด (มม.)"
 
@@ -6276,7 +6315,7 @@ msgstr "ต้องใช้รูปแบบ Source Crispy เพื่อเ
 msgid "Source Crispy Format does not belong to company {0}."
 msgstr "รูปแบบต้นทาง Crispy ไม่ได้เป็นของบริษัท {0}"
 
-#: crispy_print/api/v1/formats.py:621
+#: crispy_print/api/v1/formats.py:622
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:370
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:420
 msgid "Source Crispy Format is required."
@@ -6336,7 +6375,7 @@ msgstr "เทมเพลตแหล่งที่มา"
 msgid "Source document {0} {1} does not exist."
 msgstr "ไม่มีเอกสารต้นฉบับ {0} {1}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1730
+#: crispy_print/public/js/components/LayoutPane.vue:1742
 msgid "Spacer Value"
 msgstr "ค่าตัวเว้นวรรค"
 
@@ -6360,12 +6399,12 @@ msgstr "ระยะห่างด้านบน (pt)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:831
+#: crispy_print/public/js/components/SettingsPane.vue:844
 #: crispy_print/public/js/pages/CbpBuilder.vue:512
 msgid "Square"
 msgstr "สี่เหลี่ยมจัตุรัส"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:215
+#: crispy_print/public/js/components/TableColumnsDialog.vue:234
 msgid "Sr No."
 msgstr "หมายเลขอาวุโส"
 
@@ -6382,6 +6421,12 @@ msgstr "ตัวระบุที่เสถียรใช้เพื่อ
 msgid "Standard"
 msgstr "มาตรฐาน"
 
+#: crispy_print/public/js/components/SettingsPane.vue:721
+#: crispy_print/public/js/components/SettingsPane.vue:858
+#: crispy_print/public/js/pages/CrispyPP.vue:283
+msgid "Start"
+msgstr "เริ่มต้น"
+
 #. Option for the 'Content Source' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -6392,7 +6437,7 @@ msgstr "ข้อความคงที่"
 #. Label of a Select field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:591
+#: crispy_print/public/js/pages/CrispyPP.vue:605
 msgid "Status"
 msgstr "สถานะ"
 
@@ -6440,7 +6485,7 @@ msgstr "การสตริป"
 msgid "Stroke (pt)"
 msgstr "โรคหลอดเลือดสมอง (pt)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1786
+#: crispy_print/public/js/components/LayoutPane.vue:1798
 msgid "Stroke Width"
 msgstr "ความกว้างของเส้นขีด"
 
@@ -6541,7 +6586,7 @@ msgstr "ไม่พบเอกสารที่ออกแทนที่ {0
 
 #. Label of a Select field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:770
+#: crispy_print/public/js/components/SettingsPane.vue:783
 #: crispy_print/public/js/pages/CbpBuilder.vue:482
 msgid "Symbology"
 msgstr "สัญลักษณ์วิทยา"
@@ -6564,7 +6609,7 @@ msgstr "สัญลักษณ์"
 msgid "System Manager"
 msgstr "จัดการระบบ"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:349
+#: crispy_print/public/js/pages/CrispyPP.vue:363
 msgid "T"
 msgstr "ต"
 
@@ -6652,7 +6697,7 @@ msgstr "บริษัทเป้าหมาย"
 msgid "Target company is required."
 msgstr "ต้องระบุบริษัทเป้าหมาย"
 
-#: crispy_print/api/v1/formats.py:628 crispy_print/api/v1/templates.py:168
+#: crispy_print/api/v1/formats.py:629 crispy_print/api/v1/templates.py:168
 msgid "Target company must be different from the source company."
 msgstr "บริษัทเป้าหมายจะต้องแตกต่างจากบริษัทต้นทาง"
 
@@ -6662,7 +6707,7 @@ msgid "Tax"
 msgstr "ภาษี"
 
 #: crispy_print/public/js/pages/CrispyPP.vue:137
-#: crispy_print/public/js/pages/CrispyPP.vue:593
+#: crispy_print/public/js/pages/CrispyPP.vue:607
 msgid "Template"
 msgstr "แบบ"
 
@@ -6695,7 +6740,7 @@ msgstr "แหล่งที่มาของเทมเพลต"
 
 #. Label of a Data field in DocType 'Crispy Report Output Audit'
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
-#: crispy_print/public/js/pages/CrispyPP.vue:594
+#: crispy_print/public/js/pages/CrispyPP.vue:608
 msgid "Template Version"
 msgstr "เวอร์ชันเทมเพลต"
 
@@ -6758,7 +6803,7 @@ msgstr "ตัวแสดงรายงานอัปสตรีมเปล
 msgid "The upstream report sources are unavailable; the review cannot be acknowledged."
 msgstr "แหล่งที่มาของรายงานอัปสตรีมไม่พร้อมใช้งาน ไม่สามารถยอมรับการตรวจสอบได้"
 
-#: crispy_print/api/v1/reports.py:645
+#: crispy_print/api/v1/reports.py:649
 msgid "This Basic report format has no generated Typst code. Open it in the Report Format Builder, save it, and try again."
 msgstr "รูปแบบรายงานพื้นฐานนี้ไม่มีโค้ด Typst ที่สร้างขึ้น เปิดในตัวสร้างรูปแบบรายงาน บันทึก แล้วลองอีกครั้ง"
 
@@ -6856,7 +6901,7 @@ msgstr "คำขอมากเกินไป กรุณารอสัก�
 #: crispy_print/public/js/components/BoxSidesEditor.vue:37
 #: crispy_print/public/js/pages/CbpBuilder.vue:76
 #: crispy_print/public/js/pages/CbpBuilder.vue:112
-#: crispy_print/public/js/pages/CrispyPP.vue:353
+#: crispy_print/public/js/pages/CrispyPP.vue:367
 #: crispy_print/public/js/pages/CtbBuilder.vue:58
 msgid "Top"
 msgstr "ด้านบน"
@@ -6870,7 +6915,7 @@ msgstr "ขอบบน"
 msgid "Top margin (mm)"
 msgstr "ขอบบน (มม.)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1361
+#: crispy_print/public/js/components/LayoutPane.vue:1366
 msgid "Top-Down"
 msgstr "จากบนลงล่าง"
 
@@ -6897,6 +6942,7 @@ msgstr "ต้องระบุประเภทเหตุการณ์ก
 
 #. Label of a Select field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
+#: crispy_print/public/js/components/LayoutPane.vue:11
 #: crispy_print/public/js/components/SettingsPane.vue:668
 msgid "Type"
 msgstr "ชนิด"
@@ -6941,7 +6987,7 @@ msgstr "ต้องใช้รหัส Typst สำหรับเทมเ�
 msgid "Typst Code is required when Code Only is enabled."
 msgstr "ต้องใช้รหัส Typst เมื่อเปิดใช้งานรหัสเท่านั้น"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:108
+#: crispy_print/public/js/components/PreviewRenderer.vue:109
 #: crispy_print/public/js/pages/CbpBuilder.vue:792
 msgid "Typst Error"
 msgstr "ข้อผิดพลาด Typst"
@@ -6972,11 +7018,11 @@ msgstr "แฮชต้นทาง Typst"
 #. Label of a Data field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:611
+#: crispy_print/public/js/pages/CrispyPP.vue:625
 msgid "Typst Version"
 msgstr "เวอร์ชัน Typst"
 
-#: crispy_print/api/v1/reports.py:599
+#: crispy_print/api/v1/reports.py:603
 msgid "Typst code is required for an unsaved report preview."
 msgstr "ต้องใช้รหัส Typst สำหรับการแสดงตัวอย่างรายงานที่ยังไม่ได้บันทึก"
 
@@ -7009,19 +7055,19 @@ msgstr "ต้องมีซอร์สโค้ด Typst"
 msgid "Typst specimen preview"
 msgstr "ตัวอย่างตัวอย่าง Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1787
+#: crispy_print/public/js/components/LayoutPane.vue:1799
 msgid "Typst units: 0.5pt, 1pt, 2pt, etc."
 msgstr "หน่วย Typst: 0.5pt, 1pt, 2pt ฯลฯ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1779
+#: crispy_print/public/js/components/LayoutPane.vue:1791
 msgid "Typst units: 100%, 80%, 10cm, etc."
 msgstr "หน่วย Typst: 100%, 80%, 10 ซม. ฯลฯ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1731
+#: crispy_print/public/js/components/LayoutPane.vue:1743
 msgid "Typst units: 1em, 2cm, 10pt, 5mm, etc."
 msgstr "หน่วย Typst: 1em, 2 ซม., 10pt, 5 มม. ฯลฯ"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:62
+#: crispy_print/public/js/components/TableColumnsDialog.vue:73
 msgid "Typst width: auto, 1fr, 2fr, 100pt, etc."
 msgstr "ความกว้าง Typst: อัตโนมัติ, 1fr, 2fr, 100pt ฯลฯ"
 
@@ -7173,7 +7219,7 @@ msgstr "คีย์ตัวเข้ารหัสที่ไม่รอง
 msgid "Unsupported font file type. Allowed extensions: {0}"
 msgstr "ประเภทไฟล์ฟอนต์ที่ไม่รองรับ ส่วนขยายที่อนุญาต: {0}"
 
-#: crispy_print/api/v1/formats.py:794
+#: crispy_print/api/v1/formats.py:795
 msgid "Unsupported import fields: {0}"
 msgstr "ช่องนำเข้าที่ไม่รองรับ: {0}"
 
@@ -7185,7 +7231,7 @@ msgstr "การเข้ารหัสเอาต์พุตที่ไม
 msgid "Unsupported payload format: {0}"
 msgstr "รูปแบบเพย์โหลดที่ไม่รองรับ: {0}"
 
-#: crispy_print/api/v1/formats.py:786
+#: crispy_print/api/v1/formats.py:787
 msgid "Unsupported schema_version. Expected {0}"
 msgstr "schema_version ที่ไม่รองรับ คาดว่า {0}"
 
@@ -7246,7 +7292,7 @@ msgstr "ตัวอย่างภาพที่อัปโหลด"
 msgid "Uploaded letterhead preview"
 msgstr "ตัวอย่างหัวจดหมายที่อัปโหลด"
 
-#: crispy_print/public/js/components/SettingsPane.vue:900
+#: crispy_print/public/js/components/SettingsPane.vue:926
 msgid "Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
 msgstr "ใช้ QR พื้นฐานสำหรับเพย์โหลดรายการฟิลด์ปัจจุบัน หรือโปรไฟล์รหัสเอกสารเพื่อแก้ไขเอาต์พุต QR ที่ได้รับการควบคุมจากการกำหนดค่ารหัสเอกสารแบ็กเอนด์"
 
@@ -7334,10 +7380,10 @@ msgstr "ข้อความยืนยัน"
 msgid "Validation Status"
 msgstr "สถานะการตรวจสอบ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:760
-#: crispy_print/public/js/components/LayoutPane.vue:766
-#: crispy_print/public/js/components/LayoutPane.vue:1389
-#: crispy_print/public/js/components/LayoutPane.vue:1408
+#: crispy_print/public/js/components/LayoutPane.vue:753
+#: crispy_print/public/js/components/LayoutPane.vue:759
+#: crispy_print/public/js/components/LayoutPane.vue:1394
+#: crispy_print/public/js/components/LayoutPane.vue:1413
 msgid "Value"
 msgstr "ราคา"
 
@@ -7486,7 +7532,7 @@ msgstr "ความกว้าง"
 msgid "Width (mm)"
 msgstr "ความกว้าง (มม.)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:606
+#: crispy_print/public/js/components/LayoutPane.vue:589
 msgid "Width: {0}%"
 msgstr "ความกว้าง: {0}%"
 
@@ -7588,11 +7634,11 @@ msgstr "Y จากด้านบน (มม.)"
 msgid "Yes"
 msgstr "ใช่"
 
-#: crispy_print/api/v1/formats.py:882
+#: crispy_print/api/v1/formats.py:883
 msgid "You don't have permission to create Crispy Format"
 msgstr "คุณไม่ได้รับอนุญาตให้สร้างรูปแบบ Crispy"
 
-#: crispy_print/api/v1/reports.py:596
+#: crispy_print/api/v1/reports.py:600
 msgid "You need permission to create Crispy Format before previewing an unsaved report."
 msgstr "คุณต้องได้รับอนุญาตเพื่อสร้างรูปแบบ Crispy ก่อนที่จะดูตัวอย่างรายงานที่ยังไม่ได้บันทึก"
 
@@ -7652,7 +7698,7 @@ msgid "asset_files must be a list of image file paths"
 msgstr "Asset_files ต้องเป็นรายการเส้นทางไฟล์รูปภาพ"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:57
-#: crispy_print/public/js/components/TableColumnsDialog.vue:55
+#: crispy_print/public/js/components/TableColumnsDialog.vue:66
 #: crispy_print/public/js/pages/CrispyPP.vue:126
 #: crispy_print/public/js/report_button.bundle.js:471
 msgid "auto"
@@ -7694,15 +7740,15 @@ msgstr "กำหนดเอง"
 msgid "doctype and name are required"
 msgstr "ต้องระบุประเภทเอกสารและชื่อ"
 
-#: crispy_print/public/js/components/SettingsPane.vue:724
-#: crispy_print/public/js/components/SettingsPane.vue:866
-#: crispy_print/public/js/pages/CrispyPP.vue:287
+#: crispy_print/public/js/components/SettingsPane.vue:737
+#: crispy_print/public/js/components/SettingsPane.vue:892
+#: crispy_print/public/js/pages/CrispyPP.vue:301
 msgid "dx (mm)"
 msgstr "dx (มม.)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:733
-#: crispy_print/public/js/components/SettingsPane.vue:875
-#: crispy_print/public/js/pages/CrispyPP.vue:297
+#: crispy_print/public/js/components/SettingsPane.vue:746
+#: crispy_print/public/js/components/SettingsPane.vue:901
+#: crispy_print/public/js/pages/CrispyPP.vue:311
 msgid "dy (mm)"
 msgstr "ดี้ (มม.)"
 
@@ -7812,11 +7858,11 @@ msgstr "เฉียง"
 msgid "portrait"
 msgstr "แนวตั้ง"
 
-#: crispy_print/api/v1/formats.py:906
+#: crispy_print/api/v1/formats.py:907
 msgid "presentation_settings could not be parsed for reference checks"
 msgstr "ไม่สามารถแยกวิเคราะห์ Presentation_settings สำหรับการตรวจสอบการอ้างอิง"
 
-#: crispy_print/api/v1/formats.py:738
+#: crispy_print/api/v1/formats.py:739
 msgid "presentation_settings could not be parsed while retargeting company"
 msgstr "ไม่สามารถแยกวิเคราะห์ Presentation_settings ได้ในขณะที่กำหนดเป้าหมายบริษัทใหม่"
 
@@ -7902,7 +7948,7 @@ msgstr "การตรวจสอบ {0} จำเป็นต้องตร�
 msgid "{0} could not be opened safely: {1}"
 msgstr "ไม่สามารถเปิด {0} ได้อย่างปลอดภัย: {1}"
 
-#: crispy_print/api/v1/formats.py:809
+#: crispy_print/api/v1/formats.py:810
 msgid "{0} exceeds the maximum size of {1} KB"
 msgstr "{0} เกินขนาดสูงสุดของ {1} KB"
 
@@ -7910,7 +7956,7 @@ msgstr "{0} เกินขนาดสูงสุดของ {1} KB"
 msgid "{0} exceeds the maximum size of {1} KB."
 msgstr "{0} เกินขนาดสูงสุดของ {1} KB"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1129
+#: crispy_print/public/js/components/SettingsPane.vue:1155
 msgid "{0} fields selected"
 msgstr "เลือกฟิลด์ {0} แล้ว"
 
@@ -7974,7 +8020,7 @@ msgstr "{0} ต้องอยู่ระหว่าง {1} และ {2}"
 msgid "{0} must be greater than zero."
 msgstr "{0} ต้องมากกว่าศูนย์"
 
-#: crispy_print/api/v1/formats.py:802
+#: crispy_print/api/v1/formats.py:803
 msgid "{0} must contain valid JSON"
 msgstr "{0} ต้องมี JSON ที่ถูกต้อง"
 
@@ -8012,4 +8058,3 @@ msgstr "{0}.{1} ต้องเป็นรายการ"
 #: crispy_print/qr_registry/loader.py:200
 msgid "{0}.{1} references unknown fields: {2}"
 msgstr "{0}.{1} อ้างอิงฟิลด์ที่ไม่รู้จัก: {2}"
-

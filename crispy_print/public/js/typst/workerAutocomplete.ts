@@ -60,7 +60,7 @@ export function createSampleDocAutocomplete(options: {
 		initialized = true
 		skipNextInput = false
 
-		input.placeholder = `Search ${doctype}...`
+		input.placeholder = __("Search {0}...", [__(doctype)])
 		input.setAttribute("data-doctype", doctype)
 		input.value = ""
 		options.clearSelectedDocument()

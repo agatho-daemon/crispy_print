@@ -279,14 +279,14 @@ class JSONTypstTranslator {
     lines.push("}");
     lines.push("#let cp_measure_label_cell(label) = {");
     lines.push('  if tableCellLabelEnabled and label != "" {');
-    lines.push("    text(..tableCellLabelStyle)[#label]");
+    lines.push("    box(text(dir: ltr, ..tableCellLabelStyle)[#label])");
     lines.push("  }");
     lines.push("}");
     lines.push(
       "#let cp_measure_label_table_cell(label) = table.cell(stroke: (right: none))[#cp_measure_label_cell(label)]",
     );
     lines.push(
-      "#let cp_measure_value_table_cell(value) = table.cell(stroke: (left: none))[#text(..tableBodyStyle)[#value]]",
+      "#let cp_measure_value_table_cell(value) = table.cell(stroke: (left: none))[#box[#text(dir: ltr, ..tableBodyStyle)[#value]]]",
     );
     lines.push("#let cp_currency_parts(value) = {");
     lines.push("  let text = str(value)");

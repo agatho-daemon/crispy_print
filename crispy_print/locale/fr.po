@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Crispy Print VERSION\n"
 "Report-Msgid-Bugs-To: agatho_daemon@icloud.com\n"
-"POT-Creation-Date: 2026-07-25 06:40+0307\n"
+"POT-Creation-Date: 2026-07-25 11:21+0307\n"
 "PO-Revision-Date: 2026-07-25 06:40+0307\n"
 "Last-Translator: Crispy Print Contributors\n"
 "Language: fr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.13.1\n"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1128
+#: crispy_print/public/js/components/SettingsPane.vue:1154
 msgid "1 field selected"
 msgstr "1 champ sélectionné"
 
@@ -153,7 +153,7 @@ msgstr "Un en-tête de lettre ne peut pas se remplacer."
 msgid "A label used to organize and filter blocks in the library. It does not affect where or how the block is rendered."
 msgstr "Une étiquette utilisée pour organiser et filtrer les blocs dans la bibliothèque. Cela n'affecte pas l'endroit ni la manière dont le bloc est rendu."
 
-#: crispy_print/api/v1/reports.py:892
+#: crispy_print/api/v1/reports.py:896
 msgid "A saved Report format is required for audited output."
 msgstr "Un format de rapport enregistré est requis pour la sortie auditée."
 
@@ -164,7 +164,7 @@ msgid "A3"
 msgstr "A3"
 
 #: crispy_print/public/js/components/SettingsPane.vue:145
-#: crispy_print/public/js/pages/CrispyPP.vue:324
+#: crispy_print/public/js/pages/CrispyPP.vue:338
 msgid "A3 (297 × 420 mm)"
 msgstr "A3 (297 × 420 mm)"
 
@@ -175,7 +175,7 @@ msgid "A4"
 msgstr "A4"
 
 #: crispy_print/public/js/components/SettingsPane.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:325
+#: crispy_print/public/js/pages/CrispyPP.vue:339
 msgid "A4 (210 × 297 mm)"
 msgstr "A4 (210 × 297 mm)"
 
@@ -186,7 +186,7 @@ msgid "A5"
 msgstr "A5"
 
 #: crispy_print/public/js/components/SettingsPane.vue:147
-#: crispy_print/public/js/pages/CrispyPP.vue:326
+#: crispy_print/public/js/pages/CrispyPP.vue:340
 msgid "A5 (148 × 210 mm)"
 msgstr "A5 (148 × 210 mm)"
 
@@ -269,7 +269,7 @@ msgstr "actif"
 msgid "Active fiscal credential available: {0}"
 msgstr "Titre fiscal actif disponible : {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:105
+#: crispy_print/public/js/components/TableColumnsDialog.vue:116
 msgid "Add"
 msgstr "Ajouter"
 
@@ -296,12 +296,12 @@ msgstr "Ajoutez d’abord une règle de document pour que Crispy Print sache que
 msgid "Add color"
 msgstr "Ajouter de la couleur"
 
-#: crispy_print/public/js/components/LayoutPane.vue:169
-#: crispy_print/public/js/components/TableColumnsDialog.vue:83
+#: crispy_print/public/js/components/LayoutPane.vue:177
+#: crispy_print/public/js/components/TableColumnsDialog.vue:94
 msgid "Add column"
 msgstr "Ajouter une colonne"
 
-#: crispy_print/public/js/components/LayoutPane.vue:201
+#: crispy_print/public/js/components/LayoutPane.vue:209
 msgid "Add page break"
 msgstr "Ajouter un saut de page"
 
@@ -309,11 +309,11 @@ msgstr "Ajouter un saut de page"
 msgid "Add rows from the backend QR field registry. Field metadata is filled automatically."
 msgstr "Ajoutez des lignes du registre de champs principal QR. Les métadonnées des champs sont remplies automatiquement."
 
-#: crispy_print/public/js/components/LayoutPane.vue:148
+#: crispy_print/public/js/components/LayoutPane.vue:156
 msgid "Add section above"
 msgstr "Ajouter une section ci-dessus"
 
-#: crispy_print/public/js/components/LayoutPane.vue:156
+#: crispy_print/public/js/components/LayoutPane.vue:164
 msgid "Add section below"
 msgstr "Ajouter une section ci-dessous"
 
@@ -327,15 +327,15 @@ msgstr "Ajout des champs {0} QR."
 msgid "Adds marker and line-pattern distinctions so charts remain understandable without relying on color alone."
 msgstr "Ajoute des distinctions entre les marqueurs et les motifs de lignes afin que les graphiques restent compréhensibles sans se fier uniquement à la couleur."
 
-#: crispy_print/public/js/components/LayoutPane.vue:385
+#: crispy_print/public/js/components/LayoutPane.vue:417
 msgid "Align"
 msgstr "Aligner"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:48
+#: crispy_print/public/js/components/TableColumnsDialog.vue:59
 msgid "Align: {0}"
 msgstr "Aligner : {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:399
+#: crispy_print/public/js/components/LayoutPane.vue:431
 msgid "Alignment options"
 msgstr "Options d'alignement"
 
@@ -397,6 +397,12 @@ msgstr "Un modèle Crispy actif existe déjà pour cette étendue de modèle : 
 msgid "An enabled fiscal credential already exists for this company, regulatory profile, authority code, and environment: {0}"
 msgstr "Un justificatif fiscal activé existe déjà pour cette entreprise, ce profil réglementaire, ce code d'autorité et cet environnement : {0}."
 
+#: crispy_print/public/js/components/SettingsPane.vue:713
+#: crispy_print/public/js/components/SettingsPane.vue:850
+#: crispy_print/public/js/pages/CrispyPP.vue:275
+msgid "Anchor"
+msgstr "Point d’ancrage"
+
 #. Label of a Section Break field in DocType 'Crispy Typst Block'
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
 msgid "Applicability"
@@ -408,10 +414,10 @@ msgid "Applicable Documents"
 msgstr "Documents applicables"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:108
-#: crispy_print/public/js/components/LayoutPane.vue:1288
-#: crispy_print/public/js/components/LayoutPane.vue:1696
-#: crispy_print/public/js/components/LayoutPane.vue:1736
-#: crispy_print/public/js/components/LayoutPane.vue:1800
+#: crispy_print/public/js/components/LayoutPane.vue:1284
+#: crispy_print/public/js/components/LayoutPane.vue:1708
+#: crispy_print/public/js/components/LayoutPane.vue:1748
+#: crispy_print/public/js/components/LayoutPane.vue:1812
 #: crispy_print/public/js/components/QrFieldsDialog.vue:54
 msgid "Apply"
 msgstr "Postuler"
@@ -547,7 +553,7 @@ msgstr "Autorité {0}"
 #. Option for the 'Data labels' (Select) field in DocType 'Crispy Branding
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/CrispyImageDialog.vue:63
-#: crispy_print/public/js/components/SettingsPane.vue:810
+#: crispy_print/public/js/components/SettingsPane.vue:823
 #: crispy_print/public/js/pages/CbpBuilder.vue:500
 msgid "Auto"
 msgstr "Automatique"
@@ -593,7 +599,7 @@ msgstr "Largeur de ligne d'axe (pt)"
 msgid "Aztec"
 msgstr "Aztèque"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:358
+#: crispy_print/public/js/pages/CrispyPP.vue:372
 msgid "B"
 msgstr "B"
 
@@ -669,7 +675,7 @@ msgstr "Décalage de la ligne de base (pt)"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:893
+#: crispy_print/public/js/components/SettingsPane.vue:919
 msgid "Basic QR"
 msgstr "De base QR"
 
@@ -745,7 +751,7 @@ msgstr "Frontières"
 #: crispy_print/public/js/components/BoxSidesEditor.vue:38
 #: crispy_print/public/js/pages/CbpBuilder.vue:77
 #: crispy_print/public/js/pages/CbpBuilder.vue:116
-#: crispy_print/public/js/pages/CrispyPP.vue:362
+#: crispy_print/public/js/pages/CrispyPP.vue:376
 #: crispy_print/public/js/pages/CtbBuilder.vue:62
 msgid "Bottom"
 msgstr "En bas"
@@ -782,7 +788,7 @@ msgstr "Créateur de marque"
 #: crispy_print/crispy_print/page/cbp_builder/cbp_builder.js:121
 #: crispy_print/public/js/components/CrispyTemplatePublishDialog.vue:38
 #: crispy_print/public/js/components/SettingsPane.vue:55
-#: crispy_print/public/js/pages/CrispyPP.vue:600
+#: crispy_print/public/js/pages/CrispyPP.vue:614
 msgid "Branding Profile"
 msgstr "Profil de marque"
 
@@ -867,7 +873,7 @@ msgstr "C40"
 msgid "CAdES/CMS"
 msgstr "CADES/CMS"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:622
+#: crispy_print/public/js/pages/CrispyPP.vue:636
 msgid "Cache Hit"
 msgstr "Accès au cache"
 
@@ -955,10 +961,6 @@ msgstr "Encart de cellule"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 msgid "Cell inset (pt)"
 msgstr "Encart de cellule (pt)"
-
-#: crispy_print/public/js/components/LayoutPane.vue:453
-msgid "Center"
-msgstr "Centre"
 
 #. Option for the 'Document Role' (Select) field in DocType 'Crispy Document
 #. Code Rule'
@@ -1073,7 +1075,7 @@ msgstr "Choisissez un format pour"
 msgid "Choose and reorder colors visually. Color codes are managed automatically."
 msgstr "Choisissez et réorganisez les couleurs visuellement. Les codes couleurs sont gérés automatiquement."
 
-#: crispy_print/public/js/components/LayoutPane.vue:531
+#: crispy_print/public/js/components/LayoutPane.vue:514
 msgid "Choose block"
 msgstr "Choisir le bloc"
 
@@ -1082,7 +1084,7 @@ msgid "Choose fields to include in the QR payload."
 msgstr "Choisissez les champs à inclure dans la charge utile QR."
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:6
-#: crispy_print/public/js/components/LayoutPane.vue:541
+#: crispy_print/public/js/components/LayoutPane.vue:524
 msgid "Choose image"
 msgstr "Choisir une image"
 
@@ -1098,7 +1100,7 @@ msgstr "Choisissez la couleur de la série sélectionnée"
 msgid "Choose the report variables below, then run a live preview using ERPNext data."
 msgstr "Choisissez les variables du rapport ci-dessous, puis exécutez un aperçu en direct à l'aide des données ERPNext."
 
-#: crispy_print/api/v1/formats.py:752
+#: crispy_print/api/v1/formats.py:753
 msgid "Cleared source Branding Profile {0} because it belongs to another company."
 msgstr "Profil de marque source {0} effacé, car il appartient à une autre société."
 
@@ -1111,7 +1113,7 @@ msgstr "Cliquez sur Actualiser ou Commande/Ctrl-Entrée pour compiler après cha
 #: crispy_print/public/js/components/CrispyTypstBlockDialog.vue:62
 #: crispy_print/public/js/components/DuplicateForCompanyDialog.vue:15
 #: crispy_print/public/js/components/SampleFormatsDialog.vue:15
-#: crispy_print/public/js/components/TableColumnsDialog.vue:112
+#: crispy_print/public/js/components/TableColumnsDialog.vue:123
 msgid "Close"
 msgstr "Fermer"
 
@@ -1177,7 +1179,7 @@ msgstr "Réduire la présentation"
 
 #. Label of a Color field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/LayoutPane.vue:1795
+#: crispy_print/public/js/components/LayoutPane.vue:1807
 #: crispy_print/public/js/components/SettingsPane.vue:515
 #: crispy_print/public/js/components/SettingsPane.vue:626
 #: crispy_print/public/js/components/TypographyStyleEditor.vue:140
@@ -1188,9 +1190,13 @@ msgstr "Couleur"
 msgid "Colors"
 msgstr "Couleurs"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:40
+#: crispy_print/public/js/components/TableColumnsDialog.vue:51
 msgid "Column label"
 msgstr "Libellé de la colonne"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:24
+msgid "Column order"
+msgstr "Ordre des colonnes"
 
 #: crispy_print/public/js/components/TableColumnsDialog.vue:22
 #: crispy_print/public/js/pages/CrispyPP.vue:101
@@ -1244,7 +1250,7 @@ msgstr "Étiquettes compactes"
 #: crispy_print/public/js/components/SettingsPane.vue:35
 #: crispy_print/public/js/pages/CbpBuilder.vue:20
 #: crispy_print/public/js/pages/CrispyPP.vue:251
-#: crispy_print/public/js/pages/CrispyPP.vue:596
+#: crispy_print/public/js/pages/CrispyPP.vue:610
 msgid "Company"
 msgstr "Société"
 
@@ -1312,7 +1318,7 @@ msgstr "Le PDF compilé n'a pas été produit"
 msgid "Compiled SVG was not produced"
 msgstr "Le SVG compilé n'a pas été produit"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:217
+#: crispy_print/public/js/components/PreviewRenderer.vue:218
 msgid "Compiling PDF…"
 msgstr "Compilation de PDF…"
 
@@ -1367,20 +1373,20 @@ msgstr "La condition JSON est requise lorsque le type de condition est Filtre JS
 msgid "Condition Type"
 msgstr "Type de condition"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1773
+#: crispy_print/public/js/components/LayoutPane.vue:1785
 msgid "Configure Divider"
 msgstr "Configurer le diviseur"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1725
+#: crispy_print/public/js/components/LayoutPane.vue:1737
 msgid "Configure Spacer"
 msgstr "Configurer l'espaceur"
 
-#: crispy_print/public/js/components/LayoutPane.vue:504
+#: crispy_print/public/js/components/LayoutPane.vue:487
 #: crispy_print/public/js/components/TableColumnsDialog.vue:6
 msgid "Configure columns"
 msgstr "Configurer les colonnes"
 
-#: crispy_print/public/js/components/LayoutPane.vue:569
+#: crispy_print/public/js/components/LayoutPane.vue:552
 msgid "Configure divider"
 msgstr "Configurer le diviseur"
 
@@ -1388,7 +1394,7 @@ msgstr "Configurer le diviseur"
 msgid "Configure page size, margins, and typography for Typst."
 msgstr "Configurez la taille de la page, les marges et la typographie pour Typst."
 
-#: crispy_print/public/js/components/LayoutPane.vue:555
+#: crispy_print/public/js/components/LayoutPane.vue:538
 msgid "Configure spacer"
 msgstr "Configurer l'espaceur"
 
@@ -1447,7 +1453,7 @@ msgstr "Un contrat est requis"
 msgid "Contract preview is not available yet."
 msgstr "L'aperçu du contrat n'est pas encore disponible."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:110
+#: crispy_print/public/js/components/PreviewRenderer.vue:111
 msgid "Copy"
 msgstr "Copier"
 
@@ -1472,7 +1478,7 @@ msgstr "Corrompu"
 msgid "Could not acquire default-setting lock for {0}. Please retry."
 msgstr "Impossible d'acquérir le verrouillage des paramètres par défaut pour {0}. Veuillez réessayer."
 
-#: crispy_print/api/v1/formats.py:914
+#: crispy_print/api/v1/formats.py:915
 msgid "Could not resolve selected Crispy Branding Profile for reference checks"
 msgstr "Impossible de résoudre le profil de marque Crispy sélectionné pour la vérification des références"
 
@@ -1767,8 +1773,8 @@ msgstr "Crispy Typst Bloc enregistré"
 msgid "Crispy Typst Block {0} was not found."
 msgstr "Crispy Typst Le bloc {0} est introuvable."
 
-#: crispy_print/public/js/components/LayoutPane.vue:769
-#: crispy_print/public/js/components/LayoutPane.vue:1429
+#: crispy_print/public/js/components/LayoutPane.vue:762
+#: crispy_print/public/js/components/LayoutPane.vue:1434
 msgid "Currency"
 msgstr "Devise"
 
@@ -1793,7 +1799,7 @@ msgstr "Format actuel"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/public/js/components/SettingsPane.vue:58
-#: crispy_print/public/js/pages/CrispyPP.vue:604
+#: crispy_print/public/js/pages/CrispyPP.vue:618
 msgid "Custom"
 msgstr "Personnaliser"
 
@@ -1850,8 +1856,8 @@ msgstr "Taille du point de données"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:768
-#: crispy_print/public/js/components/LayoutPane.vue:1422
+#: crispy_print/public/js/components/LayoutPane.vue:761
+#: crispy_print/public/js/components/LayoutPane.vue:1427
 msgid "Data Type"
 msgstr "Type de données"
 
@@ -1878,7 +1884,7 @@ msgstr "Taille du point de données (pt)"
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/components/SettingsPane.vue:777
+#: crispy_print/public/js/components/SettingsPane.vue:790
 #: crispy_print/public/js/pages/CbpBuilder.vue:485
 msgid "DataMatrix"
 msgstr "DataMatrix"
@@ -1901,11 +1907,11 @@ msgstr "Encodage DataMatrix"
 msgid "DataMatrix Symbols"
 msgstr "Symboles DataMatrix"
 
-#: crispy_print/public/js/components/SettingsPane.vue:803
+#: crispy_print/public/js/components/SettingsPane.vue:816
 msgid "DataMatrix encodation"
 msgstr "Encodage DataMatrix"
 
-#: crispy_print/public/js/components/SettingsPane.vue:824
+#: crispy_print/public/js/components/SettingsPane.vue:837
 msgid "DataMatrix symbols"
 msgstr "Symboles DataMatrix"
 
@@ -1988,7 +1994,7 @@ msgid "Detached"
 msgstr "Détaché"
 
 #: crispy_print/public/js/pages/CrispyPFB.vue:146
-#: crispy_print/public/js/pages/CrispyPP.vue:429
+#: crispy_print/public/js/pages/CrispyPP.vue:443
 msgid "Diagnostics"
 msgstr "Diagnostic"
 
@@ -2029,7 +2035,7 @@ msgstr "Documenter"
 #. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
 #. Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:895
+#: crispy_print/public/js/components/SettingsPane.vue:921
 msgid "Document Code Profile"
 msgstr "Profil de code de document"
 
@@ -2096,7 +2102,7 @@ msgstr "Le type de document {0} est répertorié plusieurs fois dans Documents a
 msgid "Document UUID"
 msgstr "Document UUID"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:119
+#: crispy_print/public/js/components/TableColumnsDialog.vue:130
 msgid "Done"
 msgstr "Terminé"
 
@@ -2122,11 +2128,11 @@ msgstr "Télécharger au Format PDF"
 msgid "Draft"
 msgstr "Brouillon"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:34
+#: crispy_print/public/js/components/TableColumnsDialog.vue:45
 msgid "Drag"
 msgstr "Faites glisser"
 
-#: crispy_print/public/js/components/LayoutPane.vue:256
+#: crispy_print/public/js/components/LayoutPane.vue:264
 msgid "Drag field"
 msgstr "Champ de glisser"
 
@@ -2150,7 +2156,7 @@ msgstr "Faites glisser pour réorganiser. Les largeurs utilisent les unités Typ
 msgid "Drag to resize builder and preview"
 msgstr "Faites glisser pour redimensionner le générateur et prévisualiser"
 
-#: crispy_print/public/js/components/LayoutPane.vue:617
+#: crispy_print/public/js/components/LayoutPane.vue:600
 msgid "Drop fields here"
 msgstr "Déposez les champs ici"
 
@@ -2223,12 +2229,12 @@ msgstr "Modifier l'existant"
 msgid "Edit Properties"
 msgstr "Modifier les propriétés"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1677
-#: crispy_print/public/js/components/LayoutPane.vue:1685
+#: crispy_print/public/js/components/LayoutPane.vue:1689
+#: crispy_print/public/js/components/LayoutPane.vue:1697
 msgid "Edit Raw Typst Field"
 msgstr "Modifier le champ brut Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:518
+#: crispy_print/public/js/components/LayoutPane.vue:501
 msgid "Edit code"
 msgstr "Modifier le code"
 
@@ -2283,7 +2289,7 @@ msgstr "Activer le graphique"
 
 #. Label of a Check field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:760
+#: crispy_print/public/js/components/SettingsPane.vue:773
 msgid "Enable QR Code"
 msgstr "Activer le code QR"
 
@@ -2351,6 +2357,12 @@ msgstr "Clé d'encodeur"
 msgid "Encoding"
 msgstr "Encodage"
 
+#: crispy_print/public/js/components/SettingsPane.vue:722
+#: crispy_print/public/js/components/SettingsPane.vue:859
+#: crispy_print/public/js/pages/CrispyPP.vue:284
+msgid "End"
+msgstr "Fin"
+
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:190
 msgid "Enter a six-digit hex color such as #2563EB."
 msgstr "Entrez une couleur hexadécimale à six chiffres telle que #2563EB."
@@ -2379,7 +2391,7 @@ msgstr "Correction d'erreur"
 
 #. Label of a Select field in DocType 'Crispy QR Regulatory Profile'
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:785
+#: crispy_print/public/js/components/SettingsPane.vue:798
 #: crispy_print/public/js/pages/CbpBuilder.vue:489
 msgid "Error correction"
 msgstr "Correction d'erreur"
@@ -2484,23 +2496,23 @@ msgstr "Échec de la génération de QR SVG : {0}"
 msgid "Failed to import format."
 msgstr "Échec de l'importation du format."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1130
+#: crispy_print/public/js/pages/CrispyPP.vue:1144
 msgid "Failed to initialize preview: {0}"
 msgstr "Échec de l'initialisation de l'aperçu : {0}"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1583
+#: crispy_print/public/js/components/LayoutPane.vue:1595
 msgid "Failed to load Crispy Typst Blocks"
 msgstr "Échec du chargement des blocs Crispy Typst"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1297
+#: crispy_print/public/js/pages/CrispyPP.vue:1311
 msgid "Failed to load active template"
 msgstr "Échec du chargement du modèle actif"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1219
+#: crispy_print/public/js/pages/CrispyPP.vue:1233
 msgid "Failed to load active templates"
 msgstr "Échec du chargement des modèles actifs"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1193
+#: crispy_print/public/js/pages/CrispyPP.vue:1207
 msgid "Failed to load format: {0}"
 msgstr "Échec du chargement du format : {0}"
 
@@ -2508,7 +2520,7 @@ msgstr "Échec du chargement du format : {0}"
 msgid "Failed to load private images"
 msgstr "Échec du chargement des images privées"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:820
+#: crispy_print/public/js/pages/CrispyPP.vue:834
 msgid "Failed to load report formats."
 msgstr "Échec du chargement des formats de rapport."
 
@@ -2565,11 +2577,11 @@ msgstr "Police d'étiquette de champ"
 msgid "Field label font size"
 msgstr "Taille de la police de l'étiquette du champ"
 
-#: crispy_print/public/js/components/LayoutPane.vue:318
+#: crispy_print/public/js/components/LayoutPane.vue:326
 msgid "Field menu"
 msgstr "Menu de terrain"
 
-#: crispy_print/public/js/components/LayoutPane.vue:210
+#: crispy_print/public/js/components/LayoutPane.vue:218
 msgid "Field orientation"
 msgstr "Orientation sur le terrain"
 
@@ -2601,7 +2613,7 @@ msgstr "Fichier"
 msgid "File Hash"
 msgstr "Hachage de fichier"
 
-#: crispy_print/api/v1/formats.py:929
+#: crispy_print/api/v1/formats.py:930
 msgid "File not found for logo image path: {0}"
 msgstr "Fichier introuvable pour le chemin de l'image du logo : {0}"
 
@@ -2735,7 +2747,7 @@ msgstr "Pour les artefacts multipages, par ex. SVG, JPEG, PNG, etc."
 msgid "Form"
 msgstr "Formulaire"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:592
+#: crispy_print/public/js/pages/CrispyPP.vue:606
 msgid "Format"
 msgstr "Formater"
 
@@ -3020,6 +3032,15 @@ msgstr "Hauteur"
 msgid "Height (mm)"
 msgstr "Hauteur (mm)"
 
+#: crispy_print/public/js/components/FieldsPane.vue:19
+#: crispy_print/public/js/components/LayoutPane.vue:45
+#: crispy_print/public/js/components/PreviewPane.vue:68
+#: crispy_print/public/js/components/SettingsPane.vue:18
+#: crispy_print/public/js/components/TypstCodePane.vue:17
+#: crispy_print/public/js/pages/CrispyPP.vue:147
+msgid "Help symbol"
+msgstr "?"
+
 #. Option for the 'Output Encoding' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3032,7 +3053,7 @@ msgstr "Hex"
 msgid "Hidden"
 msgstr "Caché"
 
-#: crispy_print/public/js/components/LayoutPane.vue:492
+#: crispy_print/public/js/components/LayoutPane.vue:475
 msgid "Hide label"
 msgstr "Masquer l'étiquette"
 
@@ -3054,7 +3075,7 @@ msgstr "Retrait de la hiérarchie (pt)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:795
+#: crispy_print/public/js/components/SettingsPane.vue:808
 #: crispy_print/public/js/pages/CbpBuilder.vue:494
 msgid "High"
 msgstr "Haut"
@@ -3133,7 +3154,7 @@ msgstr "Échec de l'importation"
 msgid "Import Warnings"
 msgstr "Avertissements d&#39;importation"
 
-#: crispy_print/api/v1/formats.py:768
+#: crispy_print/api/v1/formats.py:769
 msgid "Import payload cannot be empty"
 msgstr "La charge utile d'importation ne peut pas être vide"
 
@@ -3174,8 +3195,8 @@ msgstr "Inclure le hachage"
 msgid "Include signature"
 msgstr "Inclure la signature"
 
-#: crispy_print/public/js/components/LayoutPane.vue:767
-#: crispy_print/public/js/components/LayoutPane.vue:1415
+#: crispy_print/public/js/components/LayoutPane.vue:760
+#: crispy_print/public/js/components/LayoutPane.vue:1420
 msgid "Indicator"
 msgstr "Indicateur"
 
@@ -3184,11 +3205,11 @@ msgstr "Indicateur"
 msgid "Info"
 msgstr "Informations"
 
-#: crispy_print/public/js/components/SettingsPane.vue:891
+#: crispy_print/public/js/components/SettingsPane.vue:917
 msgid "Inherit branding default"
 msgstr "Hériter de la marque par défaut"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1074
+#: crispy_print/public/js/components/SettingsPane.vue:1100
 msgid "Inherited from the selected Branding Profile."
 msgstr "Hérité du profil de marque sélectionné."
 
@@ -3227,7 +3248,7 @@ msgstr "Invalide"
 msgid "Invalid Crispy Template status: {0}"
 msgstr "Statut du modèle Crispy non valide : {0}"
 
-#: crispy_print/api/v1/formats.py:772
+#: crispy_print/api/v1/formats.py:773
 msgid "Invalid JSON payload"
 msgstr "Charge utile JSON non valide"
 
@@ -3243,11 +3264,11 @@ msgstr ""
 msgid "Invalid business status: {0}"
 msgstr "Statut d'entreprise non valide : {0}"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:188
+#: crispy_print/public/js/components/TableColumnsDialog.vue:207
 msgid "Invalid column width values: {0}. Use Typst units like: auto, 1fr, 2fr, 100pt, 50%, 2cm, etc."
 msgstr "Valeurs de largeur de colonne non valides : {0}. Utilisez les unités Typst comme : auto, 1fr, 2fr, 100pt, 50%, 2cm, etc."
 
-#: crispy_print/api/v1/reports.py:394
+#: crispy_print/api/v1/reports.py:398
 msgid "Invalid column_config format"
 msgstr "Format column_config non valide"
 
@@ -3255,11 +3276,11 @@ msgstr "Format column_config non valide"
 msgid "Invalid conflict action: {0}"
 msgstr "Action de conflit non valide : {0}"
 
-#: crispy_print/api/v1/formats.py:707
+#: crispy_print/api/v1/formats.py:708
 msgid "Invalid duplicate name strategy: {0}"
 msgstr "Stratégie de nom en double non valide : {0}"
 
-#: crispy_print/api/v1/reports.py:382
+#: crispy_print/api/v1/reports.py:386
 msgid "Invalid filters format"
 msgstr "Format de filtres invalide"
 
@@ -3379,7 +3400,7 @@ msgstr "Les enregistrements de documents émis ne peuvent pas être supprimés a
 msgid "Issued document revoked."
 msgstr "Document émis révoqué."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1518
+#: crispy_print/public/js/pages/CrispyPP.vue:1532
 msgid "Issued document snapshot recorded: {0}"
 msgstr "Instantané du document émis enregistré : {0}"
 
@@ -3423,7 +3444,7 @@ msgstr "JSON, XML, etc."
 msgid "KSeF"
 msgstr "KSeF"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:367
+#: crispy_print/public/js/pages/CrispyPP.vue:381
 msgid "L"
 msgstr "L"
 
@@ -3435,10 +3456,10 @@ msgstr "Facture électronique LHDN"
 
 #. Label of a Data field in DocType 'Crispy Document Code Field'
 #: crispy_print/crispy_print/doctype/crispy_document_code_field/crispy_document_code_field.json
-#: crispy_print/public/js/components/LayoutPane.vue:759
-#: crispy_print/public/js/components/LayoutPane.vue:765
-#: crispy_print/public/js/components/LayoutPane.vue:1382
-#: crispy_print/public/js/components/LayoutPane.vue:1401
+#: crispy_print/public/js/components/LayoutPane.vue:752
+#: crispy_print/public/js/components/LayoutPane.vue:758
+#: crispy_print/public/js/components/LayoutPane.vue:1387
+#: crispy_print/public/js/components/LayoutPane.vue:1406
 msgid "Label"
 msgstr "Étiquette"
 
@@ -3458,7 +3479,7 @@ msgstr "Étiquettes et séries"
 
 #: crispy_print/public/js/components/SettingsPane.vue:169
 #: crispy_print/public/js/pages/CbpBuilder.vue:71
-#: crispy_print/public/js/pages/CrispyPP.vue:341
+#: crispy_print/public/js/pages/CrispyPP.vue:355
 #: crispy_print/public/js/pages/CtbBuilder.vue:38
 msgid "Landscape"
 msgstr "Paysage"
@@ -3503,13 +3524,18 @@ msgstr "Laissez vide pour traiter ce modèle comme global. Définissez une entre
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:39
-#: crispy_print/public/js/components/LayoutPane.vue:426
 #: crispy_print/public/js/pages/CbpBuilder.vue:78
 #: crispy_print/public/js/pages/CbpBuilder.vue:118
-#: crispy_print/public/js/pages/CrispyPP.vue:371
+#: crispy_print/public/js/pages/CrispyPP.vue:385
 #: crispy_print/public/js/pages/CtbBuilder.vue:70
 msgid "Left"
 msgstr "Parti"
+
+#: crispy_print/public/js/components/SettingsPane.vue:719
+#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/pages/CrispyPP.vue:281
+msgid "Left (physical)"
+msgstr "Gauche (physique)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:295
 msgid "Left margin"
@@ -3520,7 +3546,7 @@ msgstr "Marge gauche"
 msgid "Left margin (mm)"
 msgstr "Marge gauche (mm)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1360
+#: crispy_print/public/js/components/LayoutPane.vue:1365
 msgid "Left-Right"
 msgstr "Gauche-Droite"
 
@@ -3547,7 +3573,7 @@ msgid "Legal"
 msgstr "Juridique"
 
 #: crispy_print/public/js/components/SettingsPane.vue:151
-#: crispy_print/public/js/pages/CrispyPP.vue:330
+#: crispy_print/public/js/pages/CrispyPP.vue:344
 msgid "Legal (8.5 × 14 in)"
 msgstr "Légal (8,5 × 14 po)"
 
@@ -3560,7 +3586,7 @@ msgstr "Position de la légende"
 msgid "Legend position"
 msgstr "Position de la légende"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1778
+#: crispy_print/public/js/components/LayoutPane.vue:1790
 msgid "Length"
 msgstr "Longueur"
 
@@ -3571,7 +3597,7 @@ msgid "Letter"
 msgstr "Lettre"
 
 #: crispy_print/public/js/components/SettingsPane.vue:149
-#: crispy_print/public/js/pages/CrispyPP.vue:328
+#: crispy_print/public/js/pages/CrispyPP.vue:342
 msgid "Letter (8.5 × 11 in)"
 msgstr "Lettre (8,5 × 11 pouces)"
 
@@ -3631,7 +3657,7 @@ msgstr "Aperçu du rapport en direct"
 msgid "Load default"
 msgstr "Charger la valeur par défaut"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:218
+#: crispy_print/public/js/components/PreviewRenderer.vue:219
 msgid "Loading PDF…"
 msgstr "Chargement de PDF…"
 
@@ -3695,6 +3721,10 @@ msgstr "Chargement des modèles..."
 msgid "Loading..."
 msgstr "Chargement en Cours ..."
 
+#: crispy_print/public/js/components/TableColumnsDialog.vue:30
+msgid "Logical (direction-aware)"
+msgstr "Logique (selon la direction)"
+
 #. Option for the 'Code Purpose' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -3755,7 +3785,7 @@ msgstr "La largeur du logo doit être supérieure à zéro."
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:792
+#: crispy_print/public/js/components/SettingsPane.vue:805
 #: crispy_print/public/js/pages/CbpBuilder.vue:491
 msgid "Low"
 msgstr "Bas"
@@ -3773,7 +3803,7 @@ msgid "Make cloned template active"
 msgstr "Rendre actif le modèle cloné"
 
 #: crispy_print/public/js/components/SettingsPane.vue:175
-#: crispy_print/public/js/pages/CrispyPP.vue:346
+#: crispy_print/public/js/pages/CrispyPP.vue:360
 msgid "Margins (mm)"
 msgstr "Marges (mm)"
 
@@ -3810,7 +3840,7 @@ msgstr "Type de média"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:793
+#: crispy_print/public/js/components/SettingsPane.vue:806
 #: crispy_print/public/js/pages/CbpBuilder.vue:492
 msgid "Medium"
 msgstr "Moyen"
@@ -3847,23 +3877,23 @@ msgstr "Grilles mineures"
 msgid "Missing export payload"
 msgstr "Charge utile d'exportation manquante"
 
-#: crispy_print/api/v1/formats.py:923
+#: crispy_print/api/v1/formats.py:924
 msgid "Missing reference: Company '{0}'"
 msgstr "Référence manquante : Société '{0}'"
 
-#: crispy_print/api/v1/formats.py:944
+#: crispy_print/api/v1/formats.py:945
 msgid "Missing reference: Company '{0}' (metadata)"
 msgstr "Référence manquante : Société '{0}' (métadonnées)"
 
-#: crispy_print/api/v1/formats.py:954
+#: crispy_print/api/v1/formats.py:955
 msgid "Missing reference: Crispy Template '{0}' (metadata)"
 msgstr "Référence manquante : modèle Crispy « {0} » (métadonnées)"
 
-#: crispy_print/api/v1/formats.py:918
+#: crispy_print/api/v1/formats.py:919
 msgid "Missing reference: Letter Head '{0}'"
 msgstr "Référence manquante : Lettre à en-tête « {0} »"
 
-#: crispy_print/api/v1/formats.py:897
+#: crispy_print/api/v1/formats.py:898
 msgid "Missing reference: {0} '{1}' (field: {2})"
 msgstr "Référence manquante : {0} '{1}' (champ : {2})"
 
@@ -3893,7 +3923,7 @@ msgstr "Module"
 msgid "Module Size (pt)"
 msgstr "Taille du module (pts)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:856
+#: crispy_print/public/js/components/SettingsPane.vue:882
 msgid "Module size"
 msgstr "Taille des modules"
 
@@ -4009,11 +4039,11 @@ msgstr "Aucun justificatif fiscal actif trouvé pour ces filtres."
 msgid "No active templates"
 msgstr "Aucun modèle actif"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:638
+#: crispy_print/public/js/pages/CrispyPP.vue:652
 msgid "No approved Crispy Template is available for this document context."
 msgstr "Aucun modèle Crispy approuvé n’est disponible pour ce contexte de document."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1562
+#: crispy_print/public/js/components/LayoutPane.vue:1574
 msgid "No block selected"
 msgstr "Aucun bloc sélectionné"
 
@@ -4021,7 +4051,7 @@ msgstr "Aucun bloc sélectionné"
 msgid "No columns available"
 msgstr "Aucune colonne disponible"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:78
+#: crispy_print/public/js/components/TableColumnsDialog.vue:89
 msgid "No columns yet. Add one below."
 msgstr "Aucune colonne pour l'instant. Ajoutez-en un ci-dessous."
 
@@ -4049,7 +4079,7 @@ msgstr "Aucun champ trouvé."
 msgid "No fields match {0}!"
 msgstr "Aucun champ ne correspond à {0} !"
 
-#: crispy_print/public/js/components/SettingsPane.vue:1127
+#: crispy_print/public/js/components/SettingsPane.vue:1153
 msgid "No fields selected"
 msgstr "Aucun champ sélectionné"
 
@@ -4057,7 +4087,7 @@ msgstr "Aucun champ sélectionné"
 msgid "No fiscal credential found for these filters."
 msgstr "Aucun justificatif fiscal trouvé pour ces filtres."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1570
+#: crispy_print/public/js/components/LayoutPane.vue:1582
 msgid "No image selected"
 msgstr "Aucune image sélectionnée"
 
@@ -4081,7 +4111,7 @@ msgstr "Aucun nouveau champ d'autorité requis à ajouter."
 msgid "No obvious format issues found."
 msgstr "Aucun problème de format évident trouvé."
 
-#: crispy_print/api/v1/reports.py:1809
+#: crispy_print/api/v1/reports.py:1813
 msgid "No print format found for report '{0}'"
 msgstr "Aucun format d'impression trouvé pour le rapport « {0} »"
 
@@ -4223,7 +4253,7 @@ msgstr "Facultatif : ajoutez `//fields : customer, items.item_code` pour affin
 
 #: crispy_print/public/js/components/SettingsPane.vue:162
 #: crispy_print/public/js/pages/CbpBuilder.vue:68
-#: crispy_print/public/js/pages/CrispyPP.vue:335
+#: crispy_print/public/js/pages/CrispyPP.vue:349
 #: crispy_print/public/js/pages/CtbBuilder.vue:35
 #: crispy_print/public/js/report_button.bundle.js:255
 msgid "Orientation"
@@ -4319,11 +4349,11 @@ msgstr "PDF SHA-256"
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:607
+#: crispy_print/public/js/pages/CrispyPP.vue:621
 msgid "PDF Standard"
 msgstr "Norme PDF"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1607
+#: crispy_print/public/js/pages/CrispyPP.vue:1621
 msgid "PDF download started."
 msgstr "Le téléchargement de PDF a démarré."
 
@@ -4336,7 +4366,7 @@ msgstr "PDF généré avec succès"
 msgid "PDF generation not available"
 msgstr "Génération PDF non disponible"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1613
+#: crispy_print/public/js/pages/CrispyPP.vue:1627
 msgid "PDF opened in a new tab."
 msgstr "PDF ouvert dans un nouvel onglet."
 
@@ -4367,7 +4397,7 @@ msgstr ""
 "  Remarque : La sortie PDF/A intègre des polices, les polices sélectionnées doivent donc permettre l'intégration/sous-ensemble de PDF.\n"
 "</span>"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:332
+#: crispy_print/public/js/components/PreviewRenderer.vue:333
 msgid "PDF preview failed."
 msgstr "L'aperçu PDF a échoué."
 
@@ -4426,12 +4456,12 @@ msgstr "PDF/A-4"
 msgid "PDF417"
 msgstr "PDF417"
 
-#: crispy_print/api/v1/reports.py:1835
+#: crispy_print/api/v1/reports.py:1839
 #: crispy_print/public/js/pages/CbpBuilder.vue:57
 msgid "Page"
 msgstr "Pages"
 
-#: crispy_print/public/js/components/LayoutPane.vue:623
+#: crispy_print/public/js/components/LayoutPane.vue:606
 msgid "Page Break"
 msgstr "Saut de Page"
 
@@ -4450,7 +4480,7 @@ msgstr "Numéro de page"
 msgid "Page Settings"
 msgstr "Paramètres des pages"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:322
+#: crispy_print/public/js/pages/CrispyPP.vue:336
 msgid "Page Size"
 msgstr "Taille des pages"
 
@@ -4464,7 +4494,7 @@ msgstr "Orientation des pages"
 msgid "Page size"
 msgstr "Taille des pages"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:614
+#: crispy_print/public/js/pages/CrispyPP.vue:628
 msgid "Pages"
 msgstr "Pages"
 
@@ -4512,15 +4542,15 @@ msgstr "Le modèle de charge utile est requis lorsque la source de contenu est d
 msgid "Payload format"
 msgstr "Format de charge utile"
 
-#: crispy_print/api/v1/formats.py:779
+#: crispy_print/api/v1/formats.py:780
 msgid "Payload must be a JSON object"
 msgstr "La charge utile doit être un objet JSON"
 
-#: crispy_print/api/v1/formats.py:776
+#: crispy_print/api/v1/formats.py:777
 msgid "Payload must be a JSON object or JSON string"
 msgstr "La charge utile doit être un objet JSON ou une chaîne JSON."
 
-#: crispy_print/api/v1/formats.py:790
+#: crispy_print/api/v1/formats.py:791
 msgid "Payload must include a 'format' object"
 msgstr "La charge utile doit inclure un objet « format »"
 
@@ -4557,6 +4587,10 @@ msgstr "En Attente"
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 msgid "Peppol BIS"
 msgstr "Peppol BIS"
+
+#: crispy_print/public/js/components/TableColumnsDialog.vue:31
+msgid "Physical (fixed)"
+msgstr "Physique (fixe)"
 
 #: crispy_print/public/js/components/PreviewPane.vue:84
 msgid "Pick a document to preview."
@@ -4606,7 +4640,7 @@ msgstr "Lien du portail"
 
 #: crispy_print/public/js/components/SettingsPane.vue:168
 #: crispy_print/public/js/pages/CbpBuilder.vue:70
-#: crispy_print/public/js/pages/CrispyPP.vue:340
+#: crispy_print/public/js/pages/CrispyPP.vue:354
 #: crispy_print/public/js/pages/CtbBuilder.vue:37
 msgid "Portrait"
 msgstr "Portrait"
@@ -4631,7 +4665,7 @@ msgstr "Remplacement de la présentation JSON"
 #. Label of a Code field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
-#: crispy_print/public/js/pages/CrispyPP.vue:318
+#: crispy_print/public/js/pages/CrispyPP.vue:332
 msgid "Presentation Settings"
 msgstr "Paramètres de présentation"
 
@@ -4683,7 +4717,7 @@ msgstr "Aperçu de l'accent"
 msgid "Preview is not ready to print."
 msgstr "L'aperçu n'est pas prêt à être imprimé."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:92
+#: crispy_print/public/js/components/PreviewRenderer.vue:93
 msgid "Preview output will render here."
 msgstr "La sortie d’aperçu sera rendue ici."
 
@@ -4691,7 +4725,7 @@ msgstr "La sortie d’aperçu sera rendue ici."
 msgid "Preview shrinks to content with 2.5cm margins. Use for compact self-sizing blocks, not tables, grids, or long text."
 msgstr "L'aperçu se réduit au contenu avec des marges de 2,5 cm. À utiliser pour les blocs compacts auto-dimensionnés, et non pour les tableaux, les grilles ou les textes longs."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1036
+#: crispy_print/public/js/pages/CrispyPP.vue:1050
 msgid "Preview truncated to {0} rows (from {1}). PDF output may also be limited."
 msgstr "Aperçu tronqué aux lignes {0} (à partir de {1}). La sortie PDF peut également être limitée."
 
@@ -4756,7 +4790,7 @@ msgstr "Imprimer les taxes avec un montant nul"
 msgid "Print UOM after Quantity"
 msgstr "Imprimer UdM après la quantité"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1566
+#: crispy_print/public/js/pages/CrispyPP.vue:1580
 msgid "Print dialog opened."
 msgstr "Boîte de dialogue Imprimer ouverte."
 
@@ -4886,7 +4920,7 @@ msgstr "La solution de secours du code-barres Python prend uniquement en charge 
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
 #: crispy_print/crispy_print/doctype/crispy_typst_block/crispy_typst_block.json
-#: crispy_print/public/js/components/SettingsPane.vue:776
+#: crispy_print/public/js/components/SettingsPane.vue:789
 #: crispy_print/public/js/pages/CbpBuilder.vue:475
 #: crispy_print/public/js/pages/CbpBuilder.vue:484
 msgid "QR Code"
@@ -4900,7 +4934,7 @@ msgstr "Champs de code QR"
 msgid "QR Code X position"
 msgstr "QR Code position X"
 
-#: crispy_print/public/js/components/SettingsPane.vue:767
+#: crispy_print/public/js/components/SettingsPane.vue:780
 msgid "QR Code is anchored to bottom-left using #place()."
 msgstr "Le code QR est ancré en bas à gauche à l’aide de #place()."
 
@@ -4964,19 +4998,19 @@ msgstr "Le champ QR {0}.{1} manque {2}."
 msgid "QR field {0}.{1} must be an object."
 msgstr "Champ QR {0}.{1} doit être un objet."
 
-#: crispy_print/public/js/components/SettingsPane.vue:910
+#: crispy_print/public/js/components/SettingsPane.vue:936
 msgid "QR fields"
 msgstr "Champs QR"
 
-#: crispy_print/public/js/components/SettingsPane.vue:926
+#: crispy_print/public/js/components/SettingsPane.vue:952
 msgid "QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
 msgstr "Les champs de charge utile QR sont ignorés en mode Profil de code de document car le backend résout la valeur codée finale."
 
-#: crispy_print/public/js/components/SettingsPane.vue:884
+#: crispy_print/public/js/components/SettingsPane.vue:910
 msgid "QR source"
 msgstr "Source QR"
 
-#: crispy_print/public/js/components/SettingsPane.vue:765
+#: crispy_print/public/js/components/SettingsPane.vue:778
 msgid "QR-Code"
 msgstr "Code QR"
 
@@ -4989,7 +5023,7 @@ msgstr "Code QR"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:794
+#: crispy_print/public/js/components/SettingsPane.vue:807
 #: crispy_print/public/js/pages/CbpBuilder.vue:493
 msgid "Quartile"
 msgstr "Quartile"
@@ -5008,7 +5042,7 @@ msgstr "Calme"
 msgid "Quiet Zone"
 msgstr "Zone tranquille"
 
-#: crispy_print/public/js/components/SettingsPane.vue:846
+#: crispy_print/public/js/components/SettingsPane.vue:872
 msgid "Quiet zone"
 msgstr "Zone calme"
 
@@ -5018,7 +5052,7 @@ msgstr "Zone calme"
 msgid "Quotation"
 msgstr "Devis"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:376
+#: crispy_print/public/js/pages/CrispyPP.vue:390
 msgid "R"
 msgstr "R."
 
@@ -5038,11 +5072,11 @@ msgstr "RSA"
 #. Label of a Check field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:623
+#: crispy_print/public/js/pages/CrispyPP.vue:637
 msgid "Raw Typst"
 msgstr "Brut Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1690
+#: crispy_print/public/js/components/LayoutPane.vue:1702
 msgid "Raw Typst Field"
 msgstr "Champ Typst brut"
 
@@ -5087,7 +5121,7 @@ msgstr "Vérification de l'intégrité des enregistrements"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:832
+#: crispy_print/public/js/components/SettingsPane.vue:845
 #: crispy_print/public/js/pages/CbpBuilder.vue:513
 msgid "Rectangular"
 msgstr "Rectangulaire"
@@ -5228,25 +5262,25 @@ msgstr "Artefact associé"
 msgid "Reload"
 msgstr "Recharger"
 
-#: crispy_print/public/js/components/LayoutPane.vue:588
-#: crispy_print/public/js/components/TableColumnsDialog.vue:66
+#: crispy_print/public/js/components/LayoutPane.vue:571
+#: crispy_print/public/js/components/TableColumnsDialog.vue:77
 #: crispy_print/public/js/pages/cbpFields/ChartPaletteField.vue:95
 msgid "Remove"
 msgstr "Supprimer"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:311
+#: crispy_print/public/js/pages/CrispyPP.vue:325
 msgid "Remove QRCode"
 msgstr "Supprimer le QRCode"
 
-#: crispy_print/public/js/components/LayoutPane.vue:178
+#: crispy_print/public/js/components/LayoutPane.vue:186
 msgid "Remove column"
 msgstr "Supprimer la colonne"
 
-#: crispy_print/public/js/components/LayoutPane.vue:200
+#: crispy_print/public/js/components/LayoutPane.vue:208
 msgid "Remove page break"
 msgstr "Supprimer le saut de page"
 
-#: crispy_print/public/js/components/LayoutPane.vue:224
+#: crispy_print/public/js/components/LayoutPane.vue:232
 msgid "Remove section"
 msgstr "Supprimer la section"
 
@@ -5260,7 +5294,7 @@ msgstr "Paramètres de rendu"
 msgid "Render Status"
 msgstr "Statut du rendu"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:616
+#: crispy_print/public/js/pages/CrispyPP.vue:630
 msgid "Render Time"
 msgstr "Temps de rendu"
 
@@ -5306,7 +5340,7 @@ msgstr "Rendu des paramètres du profil de marque via Typst."
 msgid "Rendering custom Typst with branding profile specimen data."
 msgstr "Rendu Typst personnalisé avec des données d'échantillon de profil de marque."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:219
+#: crispy_print/public/js/components/PreviewRenderer.vue:220
 msgid "Rendering preview…"
 msgstr "Aperçu du rendu…"
 
@@ -5337,7 +5371,7 @@ msgstr "La couverture du rapport doit être Tous les rapports compatibles ou Rap
 msgid "Report Format"
 msgstr "Format du rapport"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1621
+#: crispy_print/public/js/pages/CrispyPP.vue:1635
 msgid "Report PDF generation failed."
 msgstr "Échec de la génération du rapport PDF."
 
@@ -5408,12 +5442,12 @@ msgstr "Les enregistrements d’audit de sortie de rapport sont immuables."
 msgid "Report output audit records cannot be deleted."
 msgstr "Les enregistrements d'audit de sortie de rapport ne peuvent pas être supprimés."
 
-#: crispy_print/api/v1/reports.py:896
+#: crispy_print/api/v1/reports.py:900
 msgid "Report output audit requires a Report format."
 msgstr "L'audit de sortie du rapport nécessite un format de rapport."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1056
-#: crispy_print/public/js/pages/CrispyPP.vue:1062
+#: crispy_print/public/js/pages/CrispyPP.vue:1070
+#: crispy_print/public/js/pages/CrispyPP.vue:1076
 msgid "Report preview access expired. Run Preview again."
 msgstr "L'accès à l'aperçu du rapport a expiré. Exécutez à nouveau l'aperçu."
 
@@ -5425,12 +5459,12 @@ msgstr "L’accès à l’aperçu du rapport a changé. Exécutez à nouveau l'a
 msgid "Report preview data has expired. Run Preview again."
 msgstr "Les données d'aperçu du rapport ont expiré. Exécutez à nouveau l'aperçu."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1063
+#: crispy_print/public/js/pages/CrispyPP.vue:1077
 msgid "Report preview failed."
 msgstr "L'aperçu du rapport a échoué."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1556
-#: crispy_print/public/js/pages/CrispyPP.vue:1589
+#: crispy_print/public/js/pages/CrispyPP.vue:1570
+#: crispy_print/public/js/pages/CrispyPP.vue:1603
 msgid "Report preview not ready yet."
 msgstr "L'aperçu du rapport n'est pas encore prêt."
 
@@ -5446,11 +5480,11 @@ msgstr "Les aperçus de rapport nécessitent un contexte de rapport en direct, c
 msgid "Report previews need filters, selected columns, and generated result data. Open the report first, configure the view you want, then launch Crispy Print Preview from that report."
 msgstr "Les aperçus de rapport nécessitent des filtres, des colonnes sélectionnées et des données de résultats générées. Ouvrez d'abord le rapport, configurez la vue souhaitée, puis lancez Crispy Print Preview à partir de ce rapport."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1573
+#: crispy_print/public/js/pages/CrispyPP.vue:1587
 msgid "Report printing failed."
 msgstr "L'impression du rapport a échoué."
 
-#: crispy_print/public/js/pages/CrispyPP.vue:1580
+#: crispy_print/public/js/pages/CrispyPP.vue:1594
 msgid "Report printing was blocked by the browser."
 msgstr "L'impression du rapport a été bloquée par le navigateur."
 
@@ -5542,7 +5576,7 @@ msgstr "Réinitialiser les modifications"
 msgid "Reset View Defaults"
 msgstr "Réinitialiser les paramètres d'affichage par défaut"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1507
+#: crispy_print/public/js/components/LayoutPane.vue:1513
 msgid "Reset layout to DocType default (from meta)? This discards all layout changes and restores the starting sections/columns/fields arrangement."
 msgstr "Réinitialiser la mise en page par défaut DocType (à partir de la méta) ? Cela annule toutes les modifications de mise en page et restaure la disposition des sections/colonnes/champs de départ."
 
@@ -5653,13 +5687,18 @@ msgstr "Révoqué à"
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/public/js/components/BoxSidesEditor.vue:40
-#: crispy_print/public/js/components/LayoutPane.vue:480
 #: crispy_print/public/js/pages/CbpBuilder.vue:79
 #: crispy_print/public/js/pages/CbpBuilder.vue:113
-#: crispy_print/public/js/pages/CrispyPP.vue:380
+#: crispy_print/public/js/pages/CrispyPP.vue:394
 #: crispy_print/public/js/pages/CtbBuilder.vue:78
 msgid "Right"
 msgstr "Droit"
+
+#: crispy_print/public/js/components/SettingsPane.vue:720
+#: crispy_print/public/js/components/SettingsPane.vue:857
+#: crispy_print/public/js/pages/CrispyPP.vue:282
+msgid "Right (physical)"
+msgstr "Droite (physique)"
 
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.py:294
 msgid "Right margin"
@@ -5688,7 +5727,7 @@ msgstr "Exécuter l'aperçu"
 msgid "Run Preview again"
 msgstr "Exécutez à nouveau l'aperçu"
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:216
+#: crispy_print/public/js/components/PreviewRenderer.vue:217
 msgid "Running report…"
 msgstr "Rapport en cours d'exécution…"
 
@@ -5855,7 +5894,7 @@ msgstr "Étiquette de section"
 msgid "Section Labels"
 msgstr "Étiquettes de sections"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1286
+#: crispy_print/public/js/components/LayoutPane.vue:1282
 msgid "Section Settings"
 msgstr "Paramètres des sections"
 
@@ -5872,7 +5911,7 @@ msgstr "Taille de la police de l'étiquette de section"
 msgid "Section menu"
 msgstr "Menu des rubriques"
 
-#: crispy_print/public/js/components/LayoutPane.vue:190
+#: crispy_print/public/js/components/LayoutPane.vue:198
 msgid "Section settings"
 msgstr "Paramètres des sections"
 
@@ -5930,11 +5969,11 @@ msgstr "Sélectionnez les colonnes et définissez les largeurs (par exemple, aut
 msgid "Select company"
 msgstr "Sélectionnez une entreprise"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:90
+#: crispy_print/public/js/components/TableColumnsDialog.vue:101
 msgid "Select field"
 msgstr "Sélectionner un champ"
 
-#: crispy_print/public/js/components/SettingsPane.vue:917
+#: crispy_print/public/js/components/SettingsPane.vue:943
 msgid "Select fields"
 msgstr "Sélectionnez les champs"
 
@@ -6125,11 +6164,11 @@ msgstr "Afficher les totaux"
 msgid "Show filters block"
 msgstr "Afficher le bloc de filtres"
 
-#: crispy_print/public/js/components/LayoutPane.vue:493
+#: crispy_print/public/js/components/LayoutPane.vue:476
 msgid "Show label"
 msgstr "Afficher l'étiquette"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:426
+#: crispy_print/public/js/pages/CrispyPP.vue:440
 msgid "Show preview diagnostics"
 msgstr "Afficher l'aperçu des diagnostics"
 
@@ -6202,9 +6241,9 @@ msgstr "Taille"
 
 #. Label of a Float field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:714
-#: crispy_print/public/js/components/SettingsPane.vue:837
-#: crispy_print/public/js/pages/CrispyPP.vue:275
+#: crispy_print/public/js/components/SettingsPane.vue:727
+#: crispy_print/public/js/components/SettingsPane.vue:863
+#: crispy_print/public/js/pages/CrispyPP.vue:289
 msgid "Size (mm)"
 msgstr "Taille (mm)"
 
@@ -6276,7 +6315,7 @@ msgstr "La société Source Crispy Format doit publier un modèle Crispy."
 msgid "Source Crispy Format does not belong to company {0}."
 msgstr "Le format source Crispy n'appartient pas à la société {0}."
 
-#: crispy_print/api/v1/formats.py:621
+#: crispy_print/api/v1/formats.py:622
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:370
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.py:420
 msgid "Source Crispy Format is required."
@@ -6336,7 +6375,7 @@ msgstr "Modèle source"
 msgid "Source document {0} {1} does not exist."
 msgstr "Le document source {0} {1} n'existe pas."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1730
+#: crispy_print/public/js/components/LayoutPane.vue:1742
 msgid "Spacer Value"
 msgstr "Valeur d'espacement"
 
@@ -6360,12 +6399,12 @@ msgstr "Espacement haut (pt)"
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
 #: crispy_print/crispy_print/doctype/crispy_qr_regulatory_profile/crispy_qr_regulatory_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:831
+#: crispy_print/public/js/components/SettingsPane.vue:844
 #: crispy_print/public/js/pages/CbpBuilder.vue:512
 msgid "Square"
 msgstr "Carré"
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:215
+#: crispy_print/public/js/components/TableColumnsDialog.vue:234
 msgid "Sr No."
 msgstr "Sr Non."
 
@@ -6382,6 +6421,12 @@ msgstr "Identifiant stable utilisé pour référencer ce bloc à partir de modè
 msgid "Standard"
 msgstr "Norme"
 
+#: crispy_print/public/js/components/SettingsPane.vue:721
+#: crispy_print/public/js/components/SettingsPane.vue:858
+#: crispy_print/public/js/pages/CrispyPP.vue:283
+msgid "Start"
+msgstr "Début"
+
 #. Option for the 'Content Source' (Select) field in DocType 'Crispy Document
 #. Code Profile'
 #: crispy_print/crispy_print/doctype/crispy_document_code_profile/crispy_document_code_profile.json
@@ -6392,7 +6437,7 @@ msgstr "Texte statique"
 #. Label of a Select field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:591
+#: crispy_print/public/js/pages/CrispyPP.vue:605
 msgid "Status"
 msgstr "Statut"
 
@@ -6440,7 +6485,7 @@ msgstr "Rayures"
 msgid "Stroke (pt)"
 msgstr "Accident vasculaire cérébral (pt)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1786
+#: crispy_print/public/js/components/LayoutPane.vue:1798
 msgid "Stroke Width"
 msgstr "Largeur de trait"
 
@@ -6541,7 +6586,7 @@ msgstr "Le document de remplacement {0} n’a pas été trouvé."
 
 #. Label of a Select field in DocType 'Crispy Branding Profile'
 #: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
-#: crispy_print/public/js/components/SettingsPane.vue:770
+#: crispy_print/public/js/components/SettingsPane.vue:783
 #: crispy_print/public/js/pages/CbpBuilder.vue:482
 msgid "Symbology"
 msgstr "Symbologie"
@@ -6564,7 +6609,7 @@ msgstr "Symboles"
 msgid "System Manager"
 msgstr "Responsable Système"
 
-#: crispy_print/public/js/pages/CrispyPP.vue:349
+#: crispy_print/public/js/pages/CrispyPP.vue:363
 msgid "T"
 msgstr "T"
 
@@ -6652,7 +6697,7 @@ msgstr "Entreprise cible"
 msgid "Target company is required."
 msgstr "La société cible est requise."
 
-#: crispy_print/api/v1/formats.py:628 crispy_print/api/v1/templates.py:168
+#: crispy_print/api/v1/formats.py:629 crispy_print/api/v1/templates.py:168
 msgid "Target company must be different from the source company."
 msgstr "La société cible doit être différente de la société source."
 
@@ -6662,7 +6707,7 @@ msgid "Tax"
 msgstr "Taxe"
 
 #: crispy_print/public/js/pages/CrispyPP.vue:137
-#: crispy_print/public/js/pages/CrispyPP.vue:593
+#: crispy_print/public/js/pages/CrispyPP.vue:607
 msgid "Template"
 msgstr "Modèle"
 
@@ -6695,7 +6740,7 @@ msgstr "Source du modèle"
 
 #. Label of a Data field in DocType 'Crispy Report Output Audit'
 #: crispy_print/crispy_print/doctype/crispy_report_output_audit/crispy_report_output_audit.json
-#: crispy_print/public/js/pages/CrispyPP.vue:594
+#: crispy_print/public/js/pages/CrispyPP.vue:608
 msgid "Template Version"
 msgstr "Version du modèle"
 
@@ -6758,7 +6803,7 @@ msgstr "Le moteur de rendu de rapport en amont a changé après la révision de 
 msgid "The upstream report sources are unavailable; the review cannot be acknowledged."
 msgstr "Les sources du rapport en amont ne sont pas disponibles ; l'avis ne peut pas être reconnu."
 
-#: crispy_print/api/v1/reports.py:645
+#: crispy_print/api/v1/reports.py:649
 msgid "This Basic report format has no generated Typst code. Open it in the Report Format Builder, save it, and try again."
 msgstr "Ce format de rapport de base n'a pas de code Typst généré. Ouvrez-le dans le générateur de format de rapport, enregistrez-le et réessayez."
 
@@ -6856,7 +6901,7 @@ msgstr "Trop de demandes. Veuillez patienter un moment et réessayer."
 #: crispy_print/public/js/components/BoxSidesEditor.vue:37
 #: crispy_print/public/js/pages/CbpBuilder.vue:76
 #: crispy_print/public/js/pages/CbpBuilder.vue:112
-#: crispy_print/public/js/pages/CrispyPP.vue:353
+#: crispy_print/public/js/pages/CrispyPP.vue:367
 #: crispy_print/public/js/pages/CtbBuilder.vue:58
 msgid "Top"
 msgstr "Haut"
@@ -6870,7 +6915,7 @@ msgstr "Marge supérieure"
 msgid "Top margin (mm)"
 msgstr "Marge supérieure (mm)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1361
+#: crispy_print/public/js/components/LayoutPane.vue:1366
 msgid "Top-Down"
 msgstr "De haut en bas"
 
@@ -6897,6 +6942,7 @@ msgstr "Le type d’événement de confiance est requis."
 
 #. Label of a Select field in DocType 'Crispy Format'
 #: crispy_print/crispy_print/doctype/crispy_format/crispy_format.json
+#: crispy_print/public/js/components/LayoutPane.vue:11
 #: crispy_print/public/js/components/SettingsPane.vue:668
 msgid "Type"
 msgstr "Type"
@@ -6941,7 +6987,7 @@ msgstr "Le code Typst est requis pour les modèles Typst bruts."
 msgid "Typst Code is required when Code Only is enabled."
 msgstr "Le code Typst est requis lorsque Code uniquement est activé."
 
-#: crispy_print/public/js/components/PreviewRenderer.vue:108
+#: crispy_print/public/js/components/PreviewRenderer.vue:109
 #: crispy_print/public/js/pages/CbpBuilder.vue:792
 msgid "Typst Error"
 msgstr "Erreur Typst"
@@ -6972,11 +7018,11 @@ msgstr "Hachage source Typst"
 #. Label of a Data field in DocType 'Crispy Template'
 #: crispy_print/crispy_print/doctype/crispy_issued_document/crispy_issued_document.json
 #: crispy_print/crispy_print/doctype/crispy_template/crispy_template.json
-#: crispy_print/public/js/pages/CrispyPP.vue:611
+#: crispy_print/public/js/pages/CrispyPP.vue:625
 msgid "Typst Version"
 msgstr "Version Typst"
 
-#: crispy_print/api/v1/reports.py:599
+#: crispy_print/api/v1/reports.py:603
 msgid "Typst code is required for an unsaved report preview."
 msgstr "Le code Typst est requis pour un aperçu du rapport non enregistré."
 
@@ -7009,19 +7055,19 @@ msgstr "Le code source Typst est requis"
 msgid "Typst specimen preview"
 msgstr "Aperçu du spécimen Typst"
 
-#: crispy_print/public/js/components/LayoutPane.vue:1787
+#: crispy_print/public/js/components/LayoutPane.vue:1799
 msgid "Typst units: 0.5pt, 1pt, 2pt, etc."
 msgstr "Unités Typst : 0,5 pt, 1 pt, 2 pt, etc."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1779
+#: crispy_print/public/js/components/LayoutPane.vue:1791
 msgid "Typst units: 100%, 80%, 10cm, etc."
 msgstr "Unités Typst : 100 %, 80 %, 10 cm, etc."
 
-#: crispy_print/public/js/components/LayoutPane.vue:1731
+#: crispy_print/public/js/components/LayoutPane.vue:1743
 msgid "Typst units: 1em, 2cm, 10pt, 5mm, etc."
 msgstr "Unités Typst : 1em, 2cm, 10pt, 5mm, etc."
 
-#: crispy_print/public/js/components/TableColumnsDialog.vue:62
+#: crispy_print/public/js/components/TableColumnsDialog.vue:73
 msgid "Typst width: auto, 1fr, 2fr, 100pt, etc."
 msgstr "Largeur Typst : auto, 1fr, 2fr, 100pt, etc."
 
@@ -7173,7 +7219,7 @@ msgstr "Clé d'encodeur non prise en charge : {0}"
 msgid "Unsupported font file type. Allowed extensions: {0}"
 msgstr "Type de fichier de police non pris en charge. Extensions autorisées : {0}"
 
-#: crispy_print/api/v1/formats.py:794
+#: crispy_print/api/v1/formats.py:795
 msgid "Unsupported import fields: {0}"
 msgstr "Champs d'importation non pris en charge : {0}"
 
@@ -7185,7 +7231,7 @@ msgstr "Codage de sortie non pris en charge : {0}"
 msgid "Unsupported payload format: {0}"
 msgstr "Format de charge utile non pris en charge : {0}"
 
-#: crispy_print/api/v1/formats.py:786
+#: crispy_print/api/v1/formats.py:787
 msgid "Unsupported schema_version. Expected {0}"
 msgstr "version_schéma non prise en charge. {0} attendu"
 
@@ -7246,7 +7292,7 @@ msgstr "Aperçu de l'image téléchargée"
 msgid "Uploaded letterhead preview"
 msgstr "Aperçu du papier à en-tête téléchargé"
 
-#: crispy_print/public/js/components/SettingsPane.vue:900
+#: crispy_print/public/js/components/SettingsPane.vue:926
 msgid "Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
 msgstr "Utilisez Basic QR pour la charge utile actuelle de la liste de champs, ou Document Code Profile pour résoudre la sortie QR réglementée à partir de la configuration du code de document back-end."
 
@@ -7334,10 +7380,10 @@ msgstr "Message de validation"
 msgid "Validation Status"
 msgstr "Statut de validation"
 
-#: crispy_print/public/js/components/LayoutPane.vue:760
-#: crispy_print/public/js/components/LayoutPane.vue:766
-#: crispy_print/public/js/components/LayoutPane.vue:1389
-#: crispy_print/public/js/components/LayoutPane.vue:1408
+#: crispy_print/public/js/components/LayoutPane.vue:753
+#: crispy_print/public/js/components/LayoutPane.vue:759
+#: crispy_print/public/js/components/LayoutPane.vue:1394
+#: crispy_print/public/js/components/LayoutPane.vue:1413
 msgid "Value"
 msgstr "Valeur"
 
@@ -7486,7 +7532,7 @@ msgstr "Largeur"
 msgid "Width (mm)"
 msgstr "Largeur (mm)"
 
-#: crispy_print/public/js/components/LayoutPane.vue:606
+#: crispy_print/public/js/components/LayoutPane.vue:589
 msgid "Width: {0}%"
 msgstr "Largeur : {0}%"
 
@@ -7588,11 +7634,11 @@ msgstr "Y à partir du haut (mm)"
 msgid "Yes"
 msgstr "Oui"
 
-#: crispy_print/api/v1/formats.py:882
+#: crispy_print/api/v1/formats.py:883
 msgid "You don't have permission to create Crispy Format"
 msgstr "Vous n'êtes pas autorisé à créer le format Crispy"
 
-#: crispy_print/api/v1/reports.py:596
+#: crispy_print/api/v1/reports.py:600
 msgid "You need permission to create Crispy Format before previewing an unsaved report."
 msgstr "Vous avez besoin de l'autorisation pour créer le format Crispy avant de prévisualiser un rapport non enregistré."
 
@@ -7652,7 +7698,7 @@ msgid "asset_files must be a list of image file paths"
 msgstr "Asset_files doit être une liste de chemins de fichiers image"
 
 #: crispy_print/public/js/components/CrispyImageDialog.vue:57
-#: crispy_print/public/js/components/TableColumnsDialog.vue:55
+#: crispy_print/public/js/components/TableColumnsDialog.vue:66
 #: crispy_print/public/js/pages/CrispyPP.vue:126
 #: crispy_print/public/js/report_button.bundle.js:471
 msgid "auto"
@@ -7694,15 +7740,15 @@ msgstr "personnalisé"
 msgid "doctype and name are required"
 msgstr "le type de document et le nom sont requis"
 
-#: crispy_print/public/js/components/SettingsPane.vue:724
-#: crispy_print/public/js/components/SettingsPane.vue:866
-#: crispy_print/public/js/pages/CrispyPP.vue:287
+#: crispy_print/public/js/components/SettingsPane.vue:737
+#: crispy_print/public/js/components/SettingsPane.vue:892
+#: crispy_print/public/js/pages/CrispyPP.vue:301
 msgid "dx (mm)"
 msgstr "dx (mm)"
 
-#: crispy_print/public/js/components/SettingsPane.vue:733
-#: crispy_print/public/js/components/SettingsPane.vue:875
-#: crispy_print/public/js/pages/CrispyPP.vue:297
+#: crispy_print/public/js/components/SettingsPane.vue:746
+#: crispy_print/public/js/components/SettingsPane.vue:901
+#: crispy_print/public/js/pages/CrispyPP.vue:311
 msgid "dy (mm)"
 msgstr "jour (mm)"
 
@@ -7812,11 +7858,11 @@ msgstr "oblique"
 msgid "portrait"
 msgstr "portrait"
 
-#: crispy_print/api/v1/formats.py:906
+#: crispy_print/api/v1/formats.py:907
 msgid "presentation_settings could not be parsed for reference checks"
 msgstr "présentation_settings n'a pas pu être analysé pour la vérification des références"
 
-#: crispy_print/api/v1/formats.py:738
+#: crispy_print/api/v1/formats.py:739
 msgid "presentation_settings could not be parsed while retargeting company"
 msgstr "présentation_settings n'a pas pu être analysé lors du reciblage de l'entreprise"
 
@@ -7902,7 +7948,7 @@ msgstr "Les chèques {0} doivent être révisés."
 msgid "{0} could not be opened safely: {1}"
 msgstr "{0} n'a pas pu être ouvert en toute sécurité : {1}"
 
-#: crispy_print/api/v1/formats.py:809
+#: crispy_print/api/v1/formats.py:810
 msgid "{0} exceeds the maximum size of {1} KB"
 msgstr "{0} dépasse la taille maximale de {1} Ko"
 
@@ -7910,7 +7956,7 @@ msgstr "{0} dépasse la taille maximale de {1} Ko"
 msgid "{0} exceeds the maximum size of {1} KB."
 msgstr "{0} dépasse la taille maximale de {1} Ko."
 
-#: crispy_print/public/js/components/SettingsPane.vue:1129
+#: crispy_print/public/js/components/SettingsPane.vue:1155
 msgid "{0} fields selected"
 msgstr "Champs {0} sélectionnés"
 
@@ -7974,7 +8020,7 @@ msgstr "{0} doit être compris entre {1} et {2}."
 msgid "{0} must be greater than zero."
 msgstr "{0} doit être supérieur à zéro."
 
-#: crispy_print/api/v1/formats.py:802
+#: crispy_print/api/v1/formats.py:803
 msgid "{0} must contain valid JSON"
 msgstr "{0} doit contenir un JSON valide"
 
@@ -8012,4 +8058,3 @@ msgstr "{0}.{1} doit être une liste."
 #: crispy_print/qr_registry/loader.py:200
 msgid "{0}.{1} references unknown fields: {2}"
 msgstr "{0}.{1} fait référence à des champs inconnus : {2}"
-

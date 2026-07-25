@@ -15,7 +15,7 @@
 						aria-haspopup="dialog"
 						aria-controls="settings-help"
 					>
-						?
+						{{ __("Help symbol") }}
 					</button>
 					<div id="settings-help" popover class="settings-pane__help-popover">
 						<ul class="settings-pane__help-list">

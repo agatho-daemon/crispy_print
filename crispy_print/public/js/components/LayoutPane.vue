@@ -8,7 +8,7 @@
 						v-if="showGenericReportTypeBadge"
 						class="layout-pane__generic-type-badge"
 					>
-						Generic Type: {{ genericReportTypeLabel }}
+						{{ __("Type") }}: {{ __(genericReportTypeLabel) }}
 					</span>
 				</div>
 				<div class="layout-pane__controls">
@@ -42,7 +42,7 @@
 							aria-haspopup="dialog"
 							aria-controls="layout-help"
 						>
-							?
+							{{ __("Help symbol") }}
 						</button>
 						<div id="layout-help" popover class="layout-pane__help-popover">
 							<ul class="layout-pane__help-list">
@@ -109,6 +109,12 @@
 									class="section-card__menu-btn"
 									:title="__('Section menu')"
 									@click.stop="toggleSectionMenu(section, sectionIndex, $event)"
+									@keydown.enter.stop.prevent="
+										toggleSectionMenu(section, sectionIndex, $event)
+									"
+									@keydown.space.stop.prevent="
+										toggleSectionMenu(section, sectionIndex, $event)
+									"
 									aria-haspopup="menu"
 									:aria-expanded="
 										openSectionMenuId ===
@@ -319,6 +325,28 @@
 														class="field-card__menu-btn"
 														:title="__('Field menu')"
 														@click.stop="
+															toggleFieldMenu(
+																getFieldMenuId(
+																	section,
+																	column,
+																	field,
+																	colIndex
+																),
+																$event
+															)
+														"
+														@keydown.enter.stop.prevent="
+															toggleFieldMenu(
+																getFieldMenuId(
+																	section,
+																	column,
+																	field,
+																	colIndex
+																),
+																$event
+															)
+														"
+														@keydown.space.stop.prevent="
 															toggleFieldMenu(
 																getFieldMenuId(
 																	section,
@@ -1001,7 +1029,7 @@ function onAlignSubmenuKeydown(event: KeyboardEvent) {
 	});
 }
 
-function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
+function toggleSectionMenu(section: Section, index: number, event: Event) {
 	const id = getSectionMenuId(section, index);
 	if (openSectionMenuId.value === id) {
 		closeSectionMenu();
@@ -1023,7 +1051,7 @@ function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
 	});
 }
 
-function toggleFieldMenu(id: string, event: MouseEvent) {
+function toggleFieldMenu(id: string, event: Event) {
 	if (openFieldMenuId.value === id) {
 		closeFieldMenu();
 		return;
@@ -2332,6 +2360,21 @@ function onEditDivider(field: Field) {
 	background: var(--control-bg, #f8f9fa);
 	border-radius: 6px;
 	padding: 4px 8px;
+}
+
+.layout-pane:dir(rtl) .section-card__header,
+.layout-pane:dir(rtl) .section-card__title-row,
+.layout-pane:dir(rtl) .field-card__row,
+.layout-pane:dir(rtl) .field-card__info,
+.layout-pane:dir(rtl) .field-card__columns {
+	direction: rtl;
+}
+
+.layout-pane:dir(rtl) .section-title-input,
+.layout-pane:dir(rtl) .field-card__label-input,
+.layout-pane:dir(rtl) .field-card__column-pill {
+	direction: rtl;
+	text-align: start;
 }
 
 .section-page-break {
