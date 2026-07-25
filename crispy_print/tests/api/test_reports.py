@@ -85,6 +85,8 @@ class TestReportDataPrep(FrappeTestCase):
 		)
 		self.assertTrue(out["rows"][0]["cells"][0]["value"])
 		self.assertEqual(out["rows"][0]["cells"][1]["value"], "KWD -12.375")
+		self.assertTrue(out["columns"][0]["is_ltr"])
+		self.assertTrue(out["rows"][0]["cells"][1]["is_ltr"])
 
 	def test_report_snapshot_is_user_and_tab_bound_and_cache_only(self):
 		from crispy_print.api.v1.reports import (

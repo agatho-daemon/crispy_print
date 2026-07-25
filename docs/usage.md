@@ -171,7 +171,7 @@ Key behavior:
 
 This keeps report editing accessible while protecting advanced customizations.
 
-`raw_typst` is the only persisted mode flag. Portable exports use schema v3; imports
+`raw_typst` is the only persisted mode flag. Portable exports use schema v4; imports
 from schema v1 and v2 remain accepted and convert the former `is_advanced` value to
 `raw_typst`. This schema compatibility is not an upgrade guarantee: Beta 2 remains a
 fresh-install-only release, and its internal patches do not establish a supported
@@ -188,6 +188,21 @@ Report formats now select a coverage scope and renderer:
 A draft may temporarily link several compatible reports while a designer is
 exploring coverage. Publication requires exactly one enabled Selected Report so
 each immutable template history has one unambiguous report target.
+
+### RTL layout semantics
+
+Choose `Auto`, `Start`, or `End` for direction-aware content. `Left` and
+`Right` are physical compatibility choices and never mirror. Newly configured
+tables use logical ordering, so their first semantic column appears at the
+reading-direction start; imported and previously saved tables retain physical
+stored order unless an author explicitly changes the setting. The same rule
+applies to semantic `Start`/`End` logo and QR anchors versus physical
+`Left`/`Right` anchors.
+
+The Desk language and print language may differ. For example, an English
+builder can preview an Arabic PDF, and an Arabic builder can author an English
+PDF. Numeric/accounting values use Latin digits and LTR isolation in either
+case.
 
 Basic mode offers renderer-curated sections and Standard, Compact, Minimal, and Summary Focus layout styles. The preview panel loads the selected report's real filters and executes live report data only after the designer supplies the required values and chooses **Run Preview**. No dummy report dataset is used. The Crispy Format company is authoritative: when the ERPNext report exposes a Company filter, preview displays that exact `company.name`, keeps the field read-only, and executes with that value.
 

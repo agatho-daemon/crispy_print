@@ -182,7 +182,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 }
 
 .fields-pane__spacer {
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .fields-pane__title {
@@ -229,7 +229,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 
 .fields-pane__help-list {
 	margin: 0;
-	padding-left: 16px;
+	padding-inline-start: 16px;
 	display: grid;
 	gap: 6px;
 	list-style: disc;

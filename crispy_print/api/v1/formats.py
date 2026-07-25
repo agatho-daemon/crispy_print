@@ -24,7 +24,7 @@ from ._common import require_target_company, truthy
 from .company_context import apply_effective_company_to_presentation_settings, resolve_effective_company
 from .security import ensure_doctype_read_permission
 
-EXPORT_SCHEMA_VERSION = 3
+EXPORT_SCHEMA_VERSION = 4
 ALLOWED_IMPORT_CONFLICT_ACTIONS = {"copy", "overwrite"}
 ALLOWED_DUPLICATE_NAME_STRATEGIES = {"copy", "replace"}
 MAX_IMPORT_FIELD_BYTES = {
@@ -506,7 +506,7 @@ def _coerce_tree_bool(value) -> bool | None:
 
 
 def export_crispy_format(name: str) -> dict:
-	"""Export a Crispy Format in portable schema v2 JSON payload."""
+	"""Export a Crispy Format in the current portable JSON schema."""
 	if not name:
 		frappe.throw(_("Format name is required"))
 
@@ -541,7 +541,7 @@ def check_import_conflicts(payload: dict | str) -> dict:
 
 
 def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict:
-	"""Import a Crispy Format, converting portable schema v1 and v2 when necessary."""
+	"""Import a Crispy Format, converting portable schemas v1-v3 when necessary."""
 	parsed = _parse_import_payload(payload)
 	parsed = _convert_legacy_import_payload(parsed)
 	format_data = _validate_import_payload(parsed)
@@ -578,7 +578,7 @@ def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict
 
 def _convert_legacy_import_payload(payload: dict) -> dict:
 	schema_version = payload.get("schema_version")
-	if schema_version not in {1, 2}:
+	if schema_version not in {1, 2, 3}:
 		return payload
 	converted = dict(payload)
 	data = dict(converted.get("format") or {})
@@ -602,8 +602,9 @@ def _convert_legacy_import_payload(payload: dict) -> dict:
 		settings.setdefault("report", {})["layout_style"] = style
 		data["presentation_settings"] = json.dumps(settings, separators=(",", ":"))
 
-	legacy_advanced = data.pop("is_advanced", 0)
-	data["raw_typst"] = 1 if truthy(data.get("raw_typst")) or truthy(legacy_advanced) else 0
+	if schema_version in {1, 2}:
+		legacy_advanced = data.pop("is_advanced", 0)
+		data["raw_typst"] = 1 if truthy(data.get("raw_typst")) or truthy(legacy_advanced) else 0
 	converted["format"] = data
 	converted["schema_version"] = EXPORT_SCHEMA_VERSION
 	return converted

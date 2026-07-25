@@ -66,7 +66,7 @@ const emit = defineEmits<{
 	cursor: pointer;
 	margin: 0;
 	padding: 10px 12px;
-	text-align: left;
+	text-align: start;
 	background: #fff;
 	color: #334155;
 	border: none !important;
@@ -76,8 +76,8 @@ const emit = defineEmits<{
 }
 
 .settings-pane__section-header.is-expanded {
-	border-left: 0;
-	padding-left: 12px;
+	border-inline-start: 0;
+	padding-inline-start: 12px;
 }
 
 .settings-pane__section-header:hover {

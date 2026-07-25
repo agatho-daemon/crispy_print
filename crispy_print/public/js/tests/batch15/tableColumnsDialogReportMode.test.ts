@@ -17,8 +17,8 @@ const DraggableStub = defineComponent({
         "div",
         { class: "draggable-stub" },
         (props.modelValue || []).map((element, index) =>
-          slots.item ? slots.item({ element, index }) : null
-        )
+          slots.item ? slots.item({ element, index }) : null,
+        ),
       );
   },
 });
@@ -55,7 +55,7 @@ describe("TableColumnsDialog report columns source", () => {
     expect(options.some((opt) => opt.value === "account")).toBe(true);
     expect(options.some((opt) => opt.value === "balance")).toBe(true);
 
-    await wrapper.find("select").setValue("account");
+    await wrapper.find("#add-column").setValue("account");
     await wrapper.find(".table-dialog__add-btn").trigger("click");
 
     const emitted = wrapper.emitted("update:modelValue") || [];

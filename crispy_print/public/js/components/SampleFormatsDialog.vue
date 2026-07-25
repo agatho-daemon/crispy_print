@@ -285,7 +285,7 @@ function confirm() {
 	max-height: 560px;
 	overflow: auto;
 	padding: 16px;
-	border-right: 1px solid #e5e7eb;
+	border-inline-end: 1px solid #e5e7eb;
 	background: #f8fafc;
 }
 
@@ -296,7 +296,7 @@ function confirm() {
 	gap: 4px;
 	padding: 12px;
 	margin: 0 0 8px;
-	text-align: left;
+	text-align: start;
 	border: 1px solid #d8dbe0;
 	border-radius: 8px;
 	background: #fff;
@@ -403,7 +403,7 @@ function confirm() {
 
 	.sample-formats__list {
 		max-height: 260px;
-		border-right: 0;
+		border-inline-end: 0;
 		border-bottom: 1px solid #e5e7eb;
 	}
 }

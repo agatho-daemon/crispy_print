@@ -5,9 +5,12 @@
   "scripts": {
     "postinstall": "cd crispy_print/public/js && yarn install --check-files",
     "lint": "eslint \"crispy_print/public/js/**/*.{js,ts,vue}\" --quiet",
-    "test:unit": "cd crispy_print/public/js && yarn test:unit"
+    "test:unit": "cd crispy_print/public/js && yarn test:unit",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",

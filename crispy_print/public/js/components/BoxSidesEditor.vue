@@ -78,7 +78,7 @@ function updateSide(key: SideKey, event: Event) {
 
 .box-sides-editor__prefix {
 	position: absolute;
-	left: 10px;
+	inset-inline-start: 10px;
 	top: 50%;
 	transform: translateY(-50%);
 	font-size: 10px;
@@ -87,6 +87,6 @@ function updateSide(key: SideKey, event: Event) {
 }
 
 .box-sides-editor__control {
-	padding-left: 50px;
+	padding-inline-start: 50px;
 }
 </style>

@@ -342,7 +342,7 @@ function seriesLabel(index: number, color: string): string {
 }
 
 .chart-palette-field__add span {
-	margin-right: 4px;
+	margin-inline-end: 4px;
 	font-size: 16px;
 }
 

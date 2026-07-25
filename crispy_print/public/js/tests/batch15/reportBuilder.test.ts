@@ -24,7 +24,7 @@ describe("reportBuilder utils", () => {
       'data.chart_spec.engine == "frappe_svg" and "chart_svg" in data',
     );
     expect(typst).toContain("data.columns");
-    expect(typst).toContain("data.columns.map(cp_column_width)");
+    expect(typst).toContain("cp-columns.map(cp_column_width)");
     expect(typst).toContain("table.header(");
     expect(typst).toContain("repeat: true");
     expect(typst).toContain(
@@ -137,7 +137,7 @@ describe("reportBuilder utils", () => {
     const config = getDefaultReportBuilderConfig("Tree");
     const typst = buildReportTypstFromConfig(config);
 
-    expect(typst).toContain("row.cells.enumerate().map(cell_entry => {");
+    expect(typst).toContain("cp-row-cells(row).enumerate().map(cell_entry => {");
     expect(typst).toContain(
       'if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
     );
@@ -153,10 +153,10 @@ describe("reportBuilder utils", () => {
     expect(typst).toContain('lang: "ar", region: "KW", dir: rtl');
     expect(typst).toContain('"Noto Naskh Arabic", "Noto Sans Arabic", "Inter"');
     expect(typst).toContain(
-      "if data.columns.at(x).is_numeric { left + horizon } else { right + horizon }",
+      "if cp-columns.at(x).is_numeric { left + horizon } else { right + horizon }",
     );
     expect(typst).toContain(
-      "let cell-dir = if cell.is_numeric { ltr } else { rtl }",
+      'let cell-dir = if cell.is_numeric or ("is_ltr" in cell and cell.is_ltr) { ltr } else { rtl }',
     );
     expect(typst).toContain("text(dir: cell-dir");
   });

@@ -4,13 +4,18 @@ import type {
 } from "./presentation_settings";
 import { typstTextStyle } from "../typst/textStyles";
 import { escapeTypstString } from "./typstEscape";
+import {
+  getLanguageDirection,
+  normalizeLanguage,
+  type LogicalAlignment,
+} from "./direction";
 
 export const REPORT_BASIC_SIGNATURE_PREFIX = "CRISPY_REPORT_BASIC_SIGNATURE:";
 export const REPORT_BASIC_GENERATOR_VERSION = 4;
 
 export type ReportBuilderMode = "basic" | "advanced";
 export type ReportBuilderPreset = "grid" | "tree" | "summary" | "minimal";
-export type ColumnAlignStrategy = "auto" | "left" | "center" | "right";
+export type ColumnAlignStrategy = LogicalAlignment;
 export type ChartRepresentation = "auto" | "bar" | "line" | "horizontal_bar";
 export type ReportLayoutStyle =
   | "Standard"
@@ -64,17 +69,8 @@ interface ReportTypstBuildOptions {
   language?: string | null;
 }
 
-const RTL_LANGUAGE_PREFIXES = new Set(["ar", "fa", "he", "ur"]);
-
 function normalizeReportLanguage(value: string | null | undefined): string {
-  const normalized = String(value || "en")
-    .trim()
-    .replace(/_/g, "-");
-  return normalized || "en";
-}
-
-function isRtlReportLanguage(language: string): boolean {
-  return RTL_LANGUAGE_PREFIXES.has(language.split("-", 1)[0].toLowerCase());
+  return normalizeLanguage(value);
 }
 
 export function getDefaultReportBuilderConfig(
@@ -140,7 +136,9 @@ export function normalizeReportBuilderConfig(
   );
   const column_align_strategy: ColumnAlignStrategy =
     alignCandidate === "left" ||
+    alignCandidate === "start" ||
     alignCandidate === "center" ||
+    alignCandidate === "end" ||
     alignCandidate === "right" ||
     alignCandidate === "auto"
       ? (alignCandidate as ColumnAlignStrategy)
@@ -271,9 +269,11 @@ export function buildReportTypstFromConfig(
   options: ReportTypstBuildOptions = {},
 ): string {
   const reportLanguage = normalizeReportLanguage(options.language);
-  const [reportLanguageCode, reportRegion] = reportLanguage.split("-", 2);
-  const reportIsRtl = isRtlReportLanguage(reportLanguage);
-  const reportDirection = reportIsRtl ? "rtl" : "ltr";
+  const direction = getLanguageDirection(reportLanguage);
+  const reportLanguageCode = direction.languageCode;
+  const reportRegion = direction.region;
+  const reportIsRtl = direction.direction === "rtl";
+  const reportDirection = direction.direction;
   const densityScale =
     config.layout_style === "Compact"
       ? 0.85
@@ -288,8 +288,14 @@ export function buildReportTypstFromConfig(
     const section = (config.sections || []).find((item) => item.key === key);
     return !section || section.visible !== false;
   };
-  const tableHeaderAlign = resolveHeaderAlign(config.column_align_strategy);
-  const tableBodyAlign = resolveBodyAlign(config.column_align_strategy);
+  const tableHeaderAlign = resolveHeaderAlign(
+    config.column_align_strategy,
+    reportDirection,
+  );
+  const tableBodyAlign = resolveBodyAlign(
+    config.column_align_strategy,
+    reportDirection,
+  );
   const tableSettings = options.tableSettings || null;
   const reportTheme = options.reportTheme || null;
   const titleFontFamily = asString(
@@ -618,8 +624,15 @@ export function buildReportTypstFromConfig(
     lines.push("  } else { auto }");
     lines.push("}");
     lines.push("");
+    lines.push(
+      `#let cp-columns = ${reportIsRtl ? "data.columns.rev()" : "data.columns"}`,
+    );
+    lines.push(
+      `#let cp-row-cells(row) = ${reportIsRtl ? "row.cells.rev()" : "row.cells"}`,
+    );
+    lines.push("");
     lines.push("#table(");
-    lines.push("  columns: data.columns.map(cp_column_width),");
+    lines.push("  columns: cp-columns.map(cp_column_width),");
     lines.push("");
     lines.push("  stroke: (x, y) => (");
     lines.push(
@@ -634,13 +647,15 @@ export function buildReportTypstFromConfig(
     lines.push("    if y == 0 {");
     if (reportIsRtl) {
       lines.push(
-        "      if data.columns.at(x).is_numeric { left + horizon } else { right + horizon }",
+        "      if cp-columns.at(x).is_numeric { left + horizon } else { right + horizon }",
       );
     } else {
       lines.push(`      ${tableHeaderAlign} + horizon`);
     }
-    lines.push("    } else if data.columns.at(x).is_numeric {");
-    lines.push(reportIsRtl ? "      left + horizon" : `      ${tableBodyAlign}`);
+    lines.push("    } else if cp-columns.at(x).is_numeric {");
+    lines.push(
+      reportIsRtl ? "      left + horizon" : `      ${tableBodyAlign}`,
+    );
     lines.push("    } else {");
     lines.push(
       reportIsRtl
@@ -664,7 +679,7 @@ export function buildReportTypstFromConfig(
     lines.push("  table.header(");
     lines.push("    repeat: true,");
     lines.push(
-      `    ..data.columns.map(col => text(..${headerTextStyle})[#col.label])`,
+      `    ..cp-columns.map(col => text(..${headerTextStyle})[#col.label])`,
     );
     lines.push("  ),");
     lines.push("");
@@ -695,20 +710,28 @@ export function buildReportTypstFromConfig(
       `        (table.cell(colspan: data.columns.len(), fill: row-fill, breakable: false)[#block(sticky: true)[#text(..${boldBodyTextStyle})[#heading.value]]],)`,
     );
     lines.push("      } else {");
-    lines.push("      row.cells.enumerate().map(cell_entry => {");
+    lines.push("      cp-row-cells(row).enumerate().map(cell_entry => {");
     lines.push("        let idx = cell_entry.at(0)");
     lines.push("        let cell = cell_entry.at(1)");
-    lines.push("        let cell-dir = if cell.is_numeric { ltr } else { " + reportDirection + " }");
+    lines.push(
+      '        let cell-dir = if cell.is_numeric or ("is_ltr" in cell and cell.is_ltr) { ltr } else { ' +
+        reportDirection +
+        " }",
+    );
     lines.push("        let content = if row.is_bold {");
-    lines.push(`          text(dir: cell-dir, ..${boldBodyTextStyle})[#cell.value]`);
+    lines.push(
+      `          text(dir: cell-dir, ..${boldBodyTextStyle})[#cell.value]`,
+    );
     lines.push("        } else {");
-    lines.push(`          text(dir: cell-dir, ..${bodyTextStyle})[#cell.value]`);
+    lines.push(
+      `          text(dir: cell-dir, ..${bodyTextStyle})[#cell.value]`,
+    );
     lines.push("        }");
     lines.push(
       '        if idx == 0 and "indent" in row and row.indent != none and row.indent > 0 {',
     );
     lines.push(
-      `          table.cell(fill: row-fill, breakable: row-breakable)[#block(sticky: keep-with-next)[#box(inset: (left: row.indent * ${formatPt(hierarchyIndentPt)}))[#content]]]`,
+      `          table.cell(fill: row-fill, breakable: row-breakable)[#block(sticky: keep-with-next)[#box(inset: (${reportIsRtl ? "right" : "left"}: row.indent * ${formatPt(hierarchyIndentPt)}))[#content]]]`,
     );
     lines.push("        } else {");
     lines.push(
@@ -818,8 +841,15 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-function resolveHeaderAlign(strategy: ColumnAlignStrategy): string {
+function resolveHeaderAlign(
+  strategy: ColumnAlignStrategy,
+  direction: "ltr" | "rtl",
+): string {
   switch (strategy) {
+    case "start":
+      return direction === "rtl" ? "right" : "left";
+    case "end":
+      return direction === "rtl" ? "left" : "right";
     case "left":
       return "left";
     case "right":
@@ -831,8 +861,15 @@ function resolveHeaderAlign(strategy: ColumnAlignStrategy): string {
   }
 }
 
-function resolveBodyAlign(strategy: ColumnAlignStrategy): string {
+function resolveBodyAlign(
+  strategy: ColumnAlignStrategy,
+  direction: "ltr" | "rtl",
+): string {
   switch (strategy) {
+    case "start":
+      return direction === "rtl" ? "right + horizon" : "left + horizon";
+    case "end":
+      return direction === "rtl" ? "left + horizon" : "right + horizon";
     case "left":
       return "left + horizon";
     case "center":

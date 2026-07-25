@@ -357,7 +357,7 @@ defineExpose({ save, dirty });
 	overflow: auto;
 	flex-direction: column;
 	padding: 16px;
-	border-right: 1px solid #e5e7eb;
+	border-inline-end: 1px solid #e5e7eb;
 	background: #fff;
 }
 
@@ -522,7 +522,7 @@ defineExpose({ save, dirty });
 
 	.ctb-builder__sidebar {
 		overflow: visible;
-		border-right: 0;
+		border-inline-end: 0;
 		border-bottom: 1px solid #e5e7eb;
 	}
 }

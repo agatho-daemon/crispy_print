@@ -1078,7 +1078,7 @@ defineExpose({ save, dirty });
 	overflow: auto;
 	min-height: 0;
 	overscroll-behavior: contain;
-	border-right: 1px solid #dfe3e8;
+	border-inline-end: 1px solid #dfe3e8;
 	background: #fff;
 	padding: 16px;
 }
@@ -1323,7 +1323,7 @@ label span,
 .cbp-preview-status-panel__body {
 	width: min(360px, calc(100vw - 72px));
 	min-height: 104px;
-	margin-right: 12px;
+	margin-inline-end: 12px;
 	padding: 18px 18px;
 	border: 1px solid #bfdbfe;
 	border-radius: 8px;
@@ -1442,13 +1442,13 @@ label span,
 .cbp-specimen-table td {
 	border: inherit;
 	padding: var(--cell-top) var(--cell-right) var(--cell-bottom) var(--cell-left);
-	text-align: left;
+	text-align: start;
 	vertical-align: top;
 }
 
 .cbp-specimen-table .num,
 .cbp-specimen-table th:nth-child(3) {
-	text-align: right;
+	text-align: end;
 }
 
 .cbp-qr {
@@ -1544,7 +1544,7 @@ label span,
 	.cbp-builder__controls {
 		max-height: none;
 		overflow: visible;
-		border-right: 0;
+		border-inline-end: 0;
 		border-bottom: 1px solid #dfe3e8;
 	}
 

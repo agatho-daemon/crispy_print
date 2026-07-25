@@ -12,6 +12,29 @@ This app includes comprehensive test coverage:
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 
+### RTL browser and PDF checks
+
+The Playwright suite uses deterministic Chromium, a 1440×1000 viewport,
+`Asia/Kuwait`, and repository-owned screenshot baselines. Seed or prepare the
+named RTL format, then run:
+
+```bash
+bench --site your-site execute crispy_print.dev_utils.rtl_e2e.seed
+
+CRISPY_E2E_BASE_URL=http://fdev.local:8000 \
+CRISPY_E2E_USER=Administrator \
+CRISPY_E2E_PASSWORD=admin \
+CRISPY_E2E_FORMAT="Crispy RTL E2E" \
+yarn test:e2e
+```
+
+Use `yarn test:e2e:update` only after visually reviewing intentional changes.
+The acceptance matrix covers Arabic and Persian UI roots, portal direction,
+keyboard interaction, and physical LTR canvas/editor islands. Typst unit and
+backend integration tests assert document metadata, mixed-direction values,
+font fallbacks, schema compatibility, and DocType/Report parity. Production
+release additionally requires native Arabic/Persian review.
+
 Sample Crispy Formats are not exported through Frappe fixtures. Keep curated
 examples as company-neutral JSON files under `crispy_print/examples/formats/` and
 load them through the Sample Format Catalog APIs. Do not re-add

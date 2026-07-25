@@ -384,7 +384,7 @@ onMounted(() => {
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 }
 

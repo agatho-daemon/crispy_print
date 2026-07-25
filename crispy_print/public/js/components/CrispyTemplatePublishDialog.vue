@@ -398,8 +398,8 @@ function confirm() {
 	.template-publish__header,
 	.template-publish__footer,
 	.template-publish__body {
-		padding-left: 16px;
-		padding-right: 16px;
+		padding-inline-start: 16px;
+		padding-inline-end: 16px;
 	}
 
 	.template-publish__grid {

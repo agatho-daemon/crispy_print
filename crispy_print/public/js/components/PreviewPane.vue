@@ -365,7 +365,7 @@ watch(
 }
 
 .preview-pane__spacer {
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .preview-mode-toggle {
@@ -428,7 +428,7 @@ watch(
 
 .preview-pane__help-list {
 	margin: 0;
-	padding-left: 16px;
+	padding-inline-start: 16px;
 	display: grid;
 	gap: 6px;
 	list-style: disc;

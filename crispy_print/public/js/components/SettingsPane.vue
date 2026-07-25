@@ -710,6 +710,19 @@
 						</p>
 						<div class="settings-pane__grid">
 							<div class="settings-pane__field">
+								<label class="settings-pane__sublabel">{{ __("Anchor") }}</label>
+								<select
+									v-model="logo_settings.anchor"
+									class="form-control"
+									@change="markSettingsDirty('immediate')"
+								>
+									<option value="left">{{ __("Left (physical)") }}</option>
+									<option value="right">{{ __("Right (physical)") }}</option>
+									<option value="start">{{ __("Start") }}</option>
+									<option value="end">{{ __("End") }}</option>
+								</select>
+							</div>
+							<div class="settings-pane__field">
 								<label class="settings-pane__sublabel">{{
 									__("Size (mm)")
 								}}</label>
@@ -831,6 +844,19 @@
 								<option value="">{{ __("Square") }}</option>
 								<option value="rect">{{ __("Rectangular") }}</option>
 								<option value="rect-ext">DMRE</option>
+							</select>
+						</div>
+						<div class="settings-pane__field">
+							<label class="settings-pane__sublabel">{{ __("Anchor") }}</label>
+							<select
+								v-model="qrSettings.anchor"
+								class="form-control"
+								@change="markSettingsDirty('immediate')"
+							>
+								<option value="left">{{ __("Left (physical)") }}</option>
+								<option value="right">{{ __("Right (physical)") }}</option>
+								<option value="start">{{ __("Start") }}</option>
+								<option value="end">{{ __("End") }}</option>
 							</select>
 						</div>
 						<div class="settings-pane__field">
@@ -1458,7 +1484,7 @@ watch(branding_profiles, (profiles) => {
 }
 
 .settings-pane__spacer {
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .settings-pane__help-btn {
@@ -1500,7 +1526,7 @@ watch(branding_profiles, (profiles) => {
 
 .settings-pane__help-list {
 	margin: 0;
-	padding-left: 16px;
+	padding-inline-start: 16px;
 	display: grid;
 	gap: 6px;
 	list-style: disc;

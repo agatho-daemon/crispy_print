@@ -595,8 +595,8 @@ onBeforeUnmount(() => {
 
 .preview-zoom-toolbar__icon {
 	width: 28px;
-	padding-left: 0;
-	padding-right: 0;
+	padding-inline-start: 0;
+	padding-inline-end: 0;
 }
 
 .preview-zoom-toolbar__spacer {

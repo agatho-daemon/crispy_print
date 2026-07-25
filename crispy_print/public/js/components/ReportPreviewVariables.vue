@@ -148,7 +148,7 @@ async function runPreview() {
 	padding: 0;
 	border: 0;
 	background: transparent;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 }
 .report-preview-variables__toggle:focus-visible {

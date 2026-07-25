@@ -20,6 +20,17 @@
 			<div class="table-dialog__body">
 				<div class="table-dialog__row">
 					<span>{{ __("Columns") }}</span>
+					<label class="table-dialog__order">
+						<span>{{ __("Column order") }}</span>
+						<select
+							:value="order"
+							class="table-dialog__select"
+							@change="onOrderChange"
+						>
+							<option value="logical">{{ __("Logical (direction-aware)") }}</option>
+							<option value="physical">{{ __("Physical (fixed)") }}</option>
+						</select>
+					</label>
 				</div>
 
 				<draggable
@@ -130,18 +141,26 @@ import type { TableColumn } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
 import { deepClone } from "../utils/json";
 import { __ } from "../utils/i18n";
+import type { LogicalAlignment, TableOrder } from "../utils/direction";
 
 interface Props {
 	modelValue: TableColumn[];
 	doctype: string;
 	availableColumns?: Array<{ label: string; fieldname: string; fieldtype?: string }>;
+	order?: TableOrder;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
 	(e: "update:modelValue", value: TableColumn[]): void;
+	(e: "update:order", value: TableOrder): void;
 	(e: "close"): void;
 }>();
+const order = computed(() => props.order || "physical");
+
+function onOrderChange(event: Event) {
+	emit("update:order", (event.target as HTMLSelectElement).value as TableOrder);
+}
 
 const cloneColumns = (cols?: TableColumn[] | null) => deepClone(cols || []);
 const localColumns = ref<TableColumn[]>(cloneColumns(props.modelValue || []));
@@ -272,21 +291,29 @@ function addColumn() {
 }
 
 function cycleColumnAlignment(column: TableColumn) {
-	const current = column.align || "left";
-	const alignments: Array<"left" | "center" | "right"> = ["left", "center", "right"];
+	const current = column.align || "auto";
+	const alignments: LogicalAlignment[] = ["auto", "start", "center", "end", "left", "right"];
 	const currentIndex = alignments.indexOf(current);
 	const nextIndex = (currentIndex + 1) % alignments.length;
 	column.align = alignments[nextIndex];
 }
 
-function getAlignIcon(align?: "left" | "center" | "right"): string {
+function getAlignIcon(align?: LogicalAlignment): string {
 	switch (align) {
+		case "auto":
+			return "A";
+		case "start":
+			return "⇤";
 		case "center":
 			return "≡";
-		case "right":
+		case "end":
 			return "⇥";
+		case "right":
+			return "R";
+		case "left":
+			return "L";
 		default:
-			return "⇤";
+			return "A";
 	}
 }
 
@@ -416,7 +443,7 @@ watch(
 	flex-direction: column;
 	gap: 10px;
 	overflow: auto;
-	padding-right: 4px;
+	padding-inline-end: 4px;
 }
 
 .table-dialog__item {
@@ -500,7 +527,7 @@ watch(
 	width: 80px;
 	padding: 6px 8px;
 	font-size: 14px;
-	text-align: right;
+	text-align: end;
 	border: 1px solid #e2e8f0;
 	border-radius: 8px;
 	background: #fff;
