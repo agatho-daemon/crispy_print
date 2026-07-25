@@ -16,3 +16,7 @@ __pycache__/
 *.bundle.*.js
 *.bundle.*.css
 dist/
+test-results/
+playwright-report/
+e2e/__screenshots__/
+!e2e/yarn.lock

@@ -14,11 +14,13 @@ Some backend integration tests depend on site fixtures and optional Typst CLI in
 
 ### RTL browser and PDF checks
 
-The Playwright suite uses deterministic Chromium, a 1440×1000 viewport,
-`Asia/Kuwait`, and repository-owned screenshot baselines. Seed or prepare the
-named RTL format, then run:
+The Playwright suite uses deterministic Chromium, a 1440×1000 viewport, and
+`Asia/Kuwait`. Seed or prepare the named RTL format, then run:
 
 ```bash
+yarn --cwd e2e install
+yarn --cwd e2e playwright install chromium
+
 bench --site your-site execute crispy_print.dev_utils.rtl_e2e.seed
 
 CRISPY_E2E_BASE_URL=http://fdev.local:8000 \
@@ -28,7 +30,13 @@ CRISPY_E2E_FORMAT="Crispy RTL E2E" \
 yarn test:e2e
 ```
 
-Use `yarn test:e2e:update` only after visually reviewing intentional changes.
+The isolated `e2e/package.json` is intentionally not installed by Bench during
+normal Crispy Print installation. Chromium is downloaded only by the explicit
+`yarn playwright install chromium` command. Screenshots, reports, traces, and
+other browser output are local ignored artifacts rather than application
+assets.
+
+Use `yarn test:e2e:update` to generate local screenshots for visual review.
 The acceptance matrix covers Arabic and Persian UI roots, portal direction,
 keyboard interaction, and physical LTR canvas/editor islands. Typst unit and
 backend integration tests assert document metadata, mixed-direction values,
