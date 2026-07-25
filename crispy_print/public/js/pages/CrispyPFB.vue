@@ -1,6 +1,6 @@
 <template>
 	<div
-		id="crispy-print-root"
+		id="crispy-print-app"
 		class="crispy-layout"
 		:class="{ 'crispy-layout--resizing': isResizing }"
 		:style="layoutStyle"
@@ -691,7 +691,7 @@ function resetMiddleSplit() {
 }
 
 function onResizePointerDown(event: PointerEvent) {
-	const root = (event.currentTarget as HTMLElement | null)?.closest("#crispy-print-root");
+	const root = (event.currentTarget as HTMLElement | null)?.closest(".crispy-layout");
 	if (!root) return;
 	event.preventDefault();
 	previewMode.value = "normal";

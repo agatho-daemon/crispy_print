@@ -2236,10 +2236,7 @@ function onEditDivider(field: Field) {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	position: absolute;
-	inset-inline-end: 4px;
-	top: 50%;
-	transform: translateY(-50%);
+	flex: 0 0 auto;
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.15s ease;
