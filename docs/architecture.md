@@ -102,7 +102,7 @@ crispy_print/
 │   │   └── crispy_studio.json            # Frappe v16+/dev-17 Crispy Studio sidebar link icon export
 │   ├── templates/
 │   │   └── pages/                        # Frappe website template package
-│   ├── translations/                     # App translation CSV files
+│   ├── locale/                           # Gettext POT source and translated PO catalogs
 │   └── tests/                            # Backend API/helper tests
 ├── patches/                             # Schema/data backfill patches
 ├── dev_utils/

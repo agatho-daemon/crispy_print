@@ -95,6 +95,7 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Compile Caching and Preview Optimizations** - Short-lived Typst compile cache, document fetch cache, report preview consolidation, lazy PDF page painting for complete previews, SVG rerender avoidance for focused authoring specimens, and bounded undo snapshots.
 - **Builder and Preview Diagnostics** - Collapsed builder checks plus runtime preview diagnostics for resolved format/template context, Typst version, render timing, page count, and cache state.
 - **Import, Export, Samples, and Migration Support** - Structured format import/export, explicit sample creation, schema validation, backfill patches, and compatibility tests for evolving format data.
+- **Multilingual UI Catalogs** - Gettext PO translations for Arabic, German, Spanish, Persian, French, Hindi, Indonesian, Italian, Brazilian Portuguese, Russian, Thai, Turkish, Vietnamese, and Simplified Chinese, with a shared POT catalog and a pull-request-friendly native-review workflow.
 - **Typed Frontend Architecture** - Vue 3 and TypeScript modules for builder state, report state, presentation settings, Typst translation, workers, and sanitization utilities.
 
 ## Requirements
@@ -350,6 +351,7 @@ Detailed guides live in the [`docs/`](docs/README.md) directory:
 - [Upstream Report Compatibility](docs/upstream-report-compatibility.md) - Upgrade review, composite source fingerprints, structural snapshots, renamed reports, and custom overrides.
 - [Report Format Lifecycle](docs/report-format-lifecycle.md) - Draft authoring, immutable publishing, version policy, default precedence, output audit history, and migration behavior without CID.
 - [Font Configuration](docs/fonts.md) - Bundled, system, uploaded, and custom fonts plus global Crispy Print Settings.
+- [Translations](docs/translations.md) - Included locales, gettext maintenance, contribution workflow, validation, and RTL review expectations.
 - [Architecture](docs/architecture.md) - Build system, product structure, key components, and data model.
 - [Known Limitations](docs/limitations.md) - Current beta constraints.
 - [Roadmap](docs/roadmap.md) - Recently added features and planned work.

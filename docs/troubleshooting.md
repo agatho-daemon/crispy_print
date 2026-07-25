@@ -165,4 +165,4 @@ A: It is in beta. Use it for testing and controlled non-critical workflows until
 A: Open an issue on GitHub with Frappe version, Typst version, and error logs.
 
 **Q: Does it support multi-language?**  
-A: Builder UI and default flow target LTR languages. Advanced language behavior may be possible through Typst, but full multilingual/RTL support is not complete.
+A: Crispy Print includes gettext UI catalogs for Arabic, German, Spanish, Persian, French, Hindi, Indonesian, Italian, Brazilian Portuguese, Russian, Thai, Turkish, Vietnamese, and Simplified Chinese. These catalogs are machine-assisted starting points intended for native-speaker review. Managed Basic reports support localized labels and RTL report text, but equivalent RTL validation is not yet complete across the builder UI and every DocType format path. See [Translations](translations.md) and [Report Preview and Output](report-preview-and-output.md#language-rtl-and-accounting-values).

@@ -97,6 +97,30 @@ bench --site your-site run-tests --doctype "Crispy Format"
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 
+### Translation Catalog Checks
+
+Crispy Print stores its source catalog and translated catalogs under
+`crispy_print/locale/`. After changing translatable source strings, regenerate the
+POT file and synchronize every PO catalog:
+
+```bash
+bench generate-pot-file --app crispy_print
+bench update-po-files --app crispy_print
+```
+
+Validate gettext syntax and runtime formatting before committing translation
+changes:
+
+```bash
+find apps/crispy_print/crispy_print/locale -maxdepth 1 -name '*.po' -print0 \
+  | xargs -0 -n 1 msgfmt --check --check-format -o /dev/null
+bench compile-po-to-mo --app crispy_print --force
+```
+
+PO changes must preserve runtime placeholders, HTML tags, and the contents of
+`<code>` elements. See the [translation guide](translations.md) for the included
+locales, contribution policy, and native-review expectations.
+
 **Sample format catalog checks:**
 
 ```bash

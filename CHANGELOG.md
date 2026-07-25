@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added complete gettext catalogs for 14 non-English UI locales: Arabic (`ar`), German (`de`), Spanish (`es`), Persian (`fa`), French (`fr`), Hindi (`hi`), Indonesian (`id`), Italian (`it`), Brazilian Portuguese (`pt_BR`), Russian (`ru`), Thai (`th`), Turkish (`tr`), Vietnamese (`vi`), and Simplified Chinese (`zh`).
+- Added a shared `locale/main.pot` source catalog containing all 1,542 currently extracted application messages and contributor guidance for editing, synchronizing, validating, and compiling translations.
+- Added machine-assisted starting translations with exact source-catalog coverage, reusing established Frappe and ERPNext community translations where available. Native-speaker review remains encouraged, especially for accounting, regulatory, and RTL terminology.
+
+### Changed
+
+- Migrated Crispy Print localization from the legacy `translations/zh.csv` file to the Frappe gettext `locale/*.po` workflow. Translation catalogs now support standard gettext editors and contribution platforms while retaining repository-based pull-request contributions.
+- Added translation integrity checks for source coverage, empty values, runtime placeholders, HTML structure, embedded `<code>` literals, PO syntax, and MO compilation across every included locale.
+
+### Removed
+
+- Removed the superseded Simplified Chinese CSV catalog after migrating its translations to `locale/zh.po`.
+
 ## [0.2.0-beta.2] - 2026-07-24
 
 ### Beta Release Notes
