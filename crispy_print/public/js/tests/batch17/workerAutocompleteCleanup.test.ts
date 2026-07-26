@@ -58,4 +58,21 @@ describe("worker autocomplete cleanup", () => {
 		vi.advanceTimersByTime(300)
 		expect((globalThis as any).frappe.call).not.toHaveBeenCalled()
 	})
+
+	it("localizes the document search placeholder", () => {
+		const input = document.querySelector<HTMLInputElement>("#typst-sample-doc-input")!
+		;(globalThis as any).__ = (value: string, replacements?: string[]) => {
+			if (value === "Sales Invoice") return "فاتورة مبيعات"
+			if (value === "Search {0}...") return `البحث عن ${replacements?.[0]}...`
+			return value
+		}
+		;(globalThis as any).Awesomplete = vi.fn(function (this: any) {
+			this.list = []
+		})
+
+		const autocomplete = makeAutocomplete(input)
+		autocomplete.setup("Sales Invoice")
+
+		expect(input.placeholder).toBe("البحث عن فاتورة مبيعات...")
+	})
 })

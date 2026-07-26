@@ -2,6 +2,8 @@ import { createApp, watch } from "vue";
 import CrispyPFB from "./pages/CrispyPFB.vue";
 import CbpBuilder from "./pages/CbpBuilder.vue";
 import { useStore } from "./composables/useStore";
+import { applyDirectionAttributes } from "./utils/direction";
+import "./rtl.css";
 
 if (typeof __VUE_OPTIONS_API__ === "undefined") {
 	globalThis.__VUE_OPTIONS_API__ = true;
@@ -40,6 +42,7 @@ window.mountCrispyPrint = (selector = "#crispy-print-root") => {
 		logger.warn("Mount point not found", { selector });
 		return null;
 	}
+	applyDirectionAttributes(mountPoint);
 
 	const app = createApp(CrispyPFB);
 	const mountedComponent = app.mount(selector);
@@ -61,6 +64,7 @@ window.mountCbpBuilder = (selector = "#cbp-builder-root", props = {}) => {
 		logger.warn("Mount point not found", { selector });
 		return null;
 	}
+	applyDirectionAttributes(mountPoint);
 
 	const app = createApp(CbpBuilder, props);
 	const mountedComponent = app.mount(selector);

@@ -5,6 +5,31 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Frappe](https://img.shields.io/badge/frappe-v15%2Fv16%2Fdev--17-orange.svg)](https://frappeframework.com/)
 
+> [!IMPORTANT]
+>
+> ## RTL language and jurisdiction review required
+>
+> Automated engineering tests verify Arabic and Persian RTL layout, mixed-direction
+> values, leading negative signs, logical table order, embedded fonts, multipage
+> output, and DocType/Report PDF generation. They do **not** certify the wording as
+> native-quality or make a document legally compliant in any country.
+>
+> Before production use, native Arabic and Persian reviewers should inspect the
+> complete UI and representative PDFs for natural accounting terminology,
+> grammar, punctuation, text shaping, wrapping, truncation, mixed Latin/RTL
+> content, accessibility labels, and PDF copy/paste order. Review invoices, credit
+> notes, reports, positive and negative amounts, dates, addresses, identifiers,
+> QR/barcode payloads, and multipage totals.
+>
+> Each intended country also requires separate review by a local tax/accounting or
+> compliance professional. Confirm mandatory document fields and wording, tax and
+> registration identifiers, numbering and date rules, currency and exchange-rate
+> presentation, tax breakdowns and exemptions, credit/debit-note references,
+> language requirements, QR/e-invoicing payloads, signatures, archival rules, and
+> whether the authority requires structured data in addition to a PDF. Record
+> approval by **locale, country, document type, reviewer, and date**. Do not claim
+> statutory compliance for a jurisdiction that has not received that sign-off.
+>
 > [!CAUTION]
 >
 > # BETA 2 FRESH-INSTALL POLICY

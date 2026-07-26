@@ -3,7 +3,7 @@
 		<div class="section-head fields-pane__header">
 			<div class="section-head-content fields-pane__header-row">
 				<h3 class="section-title fields-pane__title">
-					{{ __("Fields") }}
+					{{ __("Fields", null, "Crispy Print UI") }}
 				</h3>
 				<div class="fields-pane__spacer"></div>
 				<div class="fields-pane__help">
@@ -16,7 +16,7 @@
 						aria-haspopup="dialog"
 						aria-controls="fields-help"
 					>
-						?
+						{{ __("Help symbol") }}
 					</button>
 					<div id="fields-help" popover class="fields-pane__help-popover">
 						<ul class="fields-pane__help-list">
@@ -182,7 +182,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 }
 
 .fields-pane__spacer {
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .fields-pane__title {
@@ -229,7 +229,7 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 
 .fields-pane__help-list {
 	margin: 0;
-	padding-left: 16px;
+	padding-inline-start: 16px;
 	display: grid;
 	gap: 6px;
 	list-style: disc;
@@ -308,6 +308,12 @@ function onFieldDragStart(event: DragEvent, field: DocField) {
 	border-radius: 3px;
 	white-space: nowrap;
 	flex-shrink: 0;
+}
+
+.fields-pane:dir(rtl) .field-item,
+.fields-pane:dir(rtl) .field-label {
+	direction: rtl;
+	text-align: start;
 }
 
 .fields-pane__header :deep(.section-head-content) {

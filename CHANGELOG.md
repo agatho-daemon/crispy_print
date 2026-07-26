@@ -9,14 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added end-to-end RTL direction handling for Arabic and Persian across the
+  builders, portal-mounted menus, DocType/Report previews, Typst, branding, and
+  final PDFs. Hebrew and Urdu are also recognized by the generic direction
+  engine.
+- Added semantic `start`/`end` alignment, logical table ordering, semantic
+  branding anchors, mixed-direction field isolation, and Arabic-capable font
+  fallback after the selected company font.
+- Added deterministic Playwright Chromium coverage and RTL Typst/PDF regression
+  assertions for interface/document language combinations, accounting values,
+  keyboard/drag interaction, multipage DocType output, Report output, published
+  final previews, and physical LTR authoring controls.
+- Added separate Arabic, Persian, and English RTL acceptance formats plus
+  deterministic multipage, QR, Report, drag/menu, and optional published final
+  preview coverage. Test documents no longer combine Arabic and Persian labels.
 - Added complete gettext catalogs for 14 non-English UI locales: Arabic (`ar`), German (`de`), Spanish (`es`), Persian (`fa`), French (`fr`), Hindi (`hi`), Indonesian (`id`), Italian (`it`), Brazilian Portuguese (`pt_BR`), Russian (`ru`), Thai (`th`), Turkish (`tr`), Vietnamese (`vi`), and Simplified Chinese (`zh`).
-- Added a shared `locale/main.pot` source catalog containing all 1,542 currently extracted application messages and contributor guidance for editing, synchronizing, validating, and compiling translations.
+- Added a shared `locale/main.pot` source catalog containing all 1,550 currently extracted application messages and contributor guidance for editing, synchronizing, validating, and compiling translations.
 - Added machine-assisted starting translations with exact source-catalog coverage, reusing established Frappe and ERPNext community translations where available. Native-speaker review remains encouraged, especially for accounting, regulatory, and RTL terminology.
 
 ### Changed
 
+- Upgraded portable Crispy Format exports to additive schema v4. Schemas v1-v3
+  remain importable; legacy physical alignment/table order and frozen Crispy
+  Templates are never rewritten automatically.
+- Mirrored application chrome with CSS logical properties while retaining
+  physical LTR behavior for the page canvas, source editors, coordinates,
+  dimensions, identifiers, URLs, hashes, color values, and accounting digits.
 - Migrated Crispy Print localization from the legacy `translations/zh.csv` file to the Frappe gettext `locale/*.po` workflow. Translation catalogs now support standard gettext editors and contribution platforms while retaining repository-based pull-request contributions.
 - Added translation integrity checks for source coverage, empty values, runtime placeholders, HTML structure, embedded `<code>` literals, PO syntax, and MO compilation across every included locale.
+- Localized the sample-document search placeholder and remaining hard-coded
+  builder type badge while preserving translated DocType names.
+
+### Fixed
+
+- Fixed split RTL accounting table cells so currency/UOM labels and negative
+  values are isolated in explicit LTR boxes; negative amounts retain leading
+  sign order such as `-700.000` in rendered and extracted PDFs.
+- Fixed RTL builder-card ordering and text alignment, localized help punctuation,
+  automatic bidi handling for preview placeholder prose, Enter activation for
+  field menus, and inaccurate Arabic/Persian physical-side and zoom labels.
+- Fixed gettext collisions with other installed Frappe apps by context-scoping
+  common builder labels such as Builder, Preview, Fields, Refresh, and
+  Diagnostics.
+- Fixed semantic RTL table ordering so the renderer mirrors logical columns
+  exactly once while legacy physical ordering remains unchanged, and isolated
+  page-counter footers so `1 of 1` preserves its visual and extracted order.
 
 ### Removed
 

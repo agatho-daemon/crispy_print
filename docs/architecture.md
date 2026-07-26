@@ -25,6 +25,7 @@ crispy_print/
 │   ├── hooks.py                          # Frappe hooks and desk assets
 │   ├── install.py                        # Install-time setup helpers
 │   ├── json_utils.py                     # Shared JSON parsing/coercion helpers
+│   ├── direction.py                      # Shared backend language/direction contract
 │   ├── letterhead_lifecycle.py           # Letter Head lifecycle fields and validation
 │   ├── report_lifecycle.py               # Report publication gates and format precedence
 │   ├── report_renderers.py               # Renderer registry and upstream compatibility
@@ -68,6 +69,7 @@ crispy_print/
 │   │   │   │   └── worker*.ts            # Compile/autocomplete/PDF workers
 │   │   │   └── utils/
 │   │   │       ├── layout.ts             # Layout model and helpers
+│   │   │       ├── direction.ts          # UI/document/value direction contract
 │   │   │       ├── reportState.ts        # Report builder state helpers
 │   │   │       ├── presentation_settings.ts
 │   │   │       └── safeSvg.ts            # Preview SVG sanitization
@@ -113,6 +115,20 @@ crispy_print/
 ```
 
 ### Key Components
+
+### Direction and portable-layout contract
+
+Crispy Print maintains three independent direction contexts: Frappe's user
+language for application chrome, the effective print language for Typst/PDF,
+and field classification for individual values. Backend Report preparation and
+frontend DocType/Basic Report generators consume the same normalized
+language/region/direction contract.
+
+Portable exports use schema v4. Schemas v1-v3 remain importable without
+rewriting stored layout JSON. `left` and `right` remain physical; `start` and
+`end` resolve against document direction. Legacy tables default to physical
+stored order, while newly configured tables default to logical reading order.
+Published Crispy Templates remain immutable.
 
 **Pages:**
 

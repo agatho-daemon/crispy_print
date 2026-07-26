@@ -6,11 +6,74 @@ _Part of the [Crispy Print documentation](README.md)._
 
 This app includes comprehensive test coverage:
 
-- **269 frontend tests** across 63 Vitest files
-- **439 backend tests** in the complete Frappe application suite (5 skipped in the Beta 2 release run)
+- **279 frontend tests** across 67 Vitest files (2 opt-in Typst integration tests)
+- **446 backend tests** in the complete Frappe application suite (5 skipped in the latest RTL verification run)
 - **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
+
+### RTL browser and PDF checks
+
+The Playwright suite uses deterministic Chromium, a 1440×1000 viewport, and
+`Asia/Kuwait`. Seed or prepare the named RTL format, then run:
+
+```bash
+yarn --cwd e2e install
+yarn --cwd e2e playwright install chromium
+
+bench --site your-site execute crispy_print.dev_utils.rtl_e2e.seed
+
+CRISPY_E2E_BASE_URL=http://fdev.local:8000 \
+CRISPY_E2E_USER=Administrator \
+CRISPY_E2E_PASSWORD=admin \
+CRISPY_E2E_FORMAT_AR="Crispy RTL E2E Arabic" \
+CRISPY_E2E_FORMAT_FA="Crispy RTL E2E Persian" \
+CRISPY_E2E_FORMAT_EN="Crispy RTL E2E English" \
+CRISPY_E2E_FORMAT_MULTIPAGE="Crispy RTL E2E Multipage" \
+CRISPY_E2E_FORMAT_REPORT="Crispy RTL E2E Report" \
+CRISPY_E2E_DOCNAME="ACC-SINV-..." \
+yarn test:e2e
+```
+
+The default seed creates language-specific Arabic, Persian, and English
+formats, plus deterministic multipage and General Ledger report formats. It
+also configures a basic QR payload. It never combines Arabic and Persian labels
+in one document.
+
+For a disposable test site, the seed can create or refresh a dedicated
+least-surprise browser user without placing credentials in the repository:
+
+```bash
+bench --site your-site execute crispy_print.dev_utils.rtl_e2e.seed \
+  --kwargs '{"test_user_password": "local-secret"}'
+
+# After the browser run:
+bench --site your-site execute crispy_print.dev_utils.rtl_e2e.disable_test_user
+```
+
+The dedicated user is opt-in and is never created during app installation or a
+normal seed run.
+
+The seed does not activate a frozen Crispy Template by default. On a disposable
+acceptance site only, pass `--kwargs '{"publish": 1}'` to publish the Arabic
+fixture and supply its returned template ID through `CRISPY_E2E_TEMPLATE`.
+Publishing may supersede another active Sales Invoice template for the same
+company, so never enable this on a production or shared-authoring site.
+
+The isolated `e2e/package.json` is intentionally not installed by Bench during
+normal Crispy Print installation. Chromium is downloaded only by the explicit
+`yarn playwright install chromium` command. Screenshots, reports, traces, and
+other browser output are local ignored artifacts rather than application
+assets.
+
+Use `yarn test:e2e:update` to generate local screenshots for visual review.
+The acceptance matrix covers Arabic and Persian UI roots, localized fixture
+labels, portal direction, keyboard and drag interaction, physical LTR
+canvas/editor islands, multipage output, a deterministic RTL report, and an
+optional published-template final preview. Typst integration tests assert
+negative-sign order, document metadata, mixed-direction values, font
+fallbacks, schema compatibility, and DocType/Report parity. Production release
+additionally requires native Arabic/Persian review.
 
 Sample Crispy Formats are not exported through Frappe fixtures. Keep curated
 examples as company-neutral JSON files under `crispy_print/examples/formats/` and

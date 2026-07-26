@@ -11,6 +11,7 @@ from frappe import _
 from crispy_print.crispy_print.doctype.crispy_branding_profile.crispy_branding_profile import (
 	resolve_effective_presentation_settings,
 )
+from crispy_print.direction import get_language_direction, is_ltr_field, normalize_language
 from crispy_print.permissions import ensure_company_access
 from crispy_print.report_charts import (
 	apply_chart_representation,
@@ -33,7 +34,6 @@ from .typst_doc import _build_typst_document
 
 REPORT_PREVIEW_SNAPSHOT_TTL_SECONDS = 15 * 60
 REPORT_DATA_FILENAME = "crispy-report-data.json"
-RTL_LANGUAGE_PREFIXES = {"ar", "fa", "he", "ur"}
 IMAGE_EXTENSIONS = {
 	"png",
 	"jpg",
@@ -192,14 +192,13 @@ def _serialize_report_data_file(data: dict) -> str:
 
 
 def _normalize_report_language(language: str | None) -> str:
-	value = str(language or "en").strip().replace("_", "-")
-	return value or "en"
+	return normalize_language(language)
 
 
 def _localize_report_typst_data(typst_data: dict, language: str | None) -> dict:
 	"""Localize labels/dates while retaining raw accounting values for re-rendering."""
 	language = _normalize_report_language(language)
-	language_prefix = language.split("-", 1)[0].lower()
+	direction = get_language_direction(language)
 	columns = [column for column in typst_data.get("columns") or [] if isinstance(column, dict)]
 	columns_by_fieldname = {
 		str(column.get("fieldname") or ""): column for column in columns if column.get("fieldname")
@@ -209,6 +208,10 @@ def _localize_report_typst_data(typst_data: dict, language: str | None) -> dict:
 		label = str(column.get("label") or "")
 		if label:
 			column["label"] = _(label, lang=language)
+		column["is_ltr"] = is_ltr_field(
+			str(column.get("fieldtype") or ""),
+			str(column.get("fieldname") or ""),
+		)
 
 	previous_language = getattr(frappe.local, "lang", None)
 	frappe.local.lang = language
@@ -222,6 +225,7 @@ def _localize_report_typst_data(typst_data: dict, language: str | None) -> dict:
 				fieldname = str(cell.get("fieldname") or "")
 				column = columns_by_fieldname.get(fieldname) or {}
 				fieldtype = str(column.get("fieldtype") or "")
+				cell["is_ltr"] = is_ltr_field(fieldtype, fieldname)
 				label = str(cell.get("label") or "")
 				if label:
 					cell["label"] = _(label, lang=language)
@@ -240,8 +244,8 @@ def _localize_report_typst_data(typst_data: dict, language: str | None) -> dict:
 			frappe.local.lang = previous_language
 
 	typst_data["locale"] = {
-		"language": language,
-		"direction": "rtl" if language_prefix in RTL_LANGUAGE_PREFIXES else "ltr",
+		"language": direction["language"],
+		"direction": direction["direction"],
 		# Accounting reports retain Latin digits unless a future explicit
 		# numbering-system setting requests conversion.
 		"numbering_system": "latn",
@@ -1828,16 +1832,23 @@ def _build_report_presentation_settings_block(
 	margin_right = margins.get("right", 20)
 	branding_mode = str(branding.get("mode") or "none")
 	language = _normalize_report_language(presentation_settings.get("language"))
-	language_parts = language.split("-", 1)
-	language_code = language_parts[0].lower()
-	region = language_parts[1].upper() if len(language_parts) > 1 else ""
-	is_rtl = language_code in RTL_LANGUAGE_PREFIXES
+	direction = get_language_direction(language)
+	language_code = direction["language_code"]
+	region = direction["region"]
+	is_rtl = direction["direction"] == "rtl"
 	page_label = _("Page", lang=language)
 	logo = branding.get("logo") or {}
 	logo_image = logo_filename or logo.get("image") or ""
 	logo_size = logo.get("size", 25)
 	logo_dx = logo.get("dx", 0)
 	logo_dy = logo.get("dy", 0)
+	logo_anchor = str(logo.get("anchor") or "left")
+	if logo_anchor == "start":
+		logo_anchor = "right" if is_rtl else "left"
+	elif logo_anchor == "end":
+		logo_anchor = "left" if is_rtl else "right"
+	elif logo_anchor not in {"left", "right"}:
+		logo_anchor = "left"
 
 	lines = []
 	lines.append("#set page(")
@@ -1869,7 +1880,7 @@ def _build_report_presentation_settings_block(
 	if branding_mode in {"logo", "logo_letterhead"} and logo_image:
 		lines.append("  foreground: [")
 		lines.append(
-			f'    #place(top + left, dx: {logo_dx}mm, dy: {logo_dy}mm, image("{logo_image}", width: {logo_size}mm))'
+			f'    #place(top + {logo_anchor}, dx: {logo_dx}mm, dy: {logo_dy}mm, image("{logo_image}", width: {logo_size}mm))'
 		)
 		lines.append("  ]")
 

@@ -1,6 +1,8 @@
 import { createApp } from "vue";
 import CrispyPP from "./pages/CrispyPP.vue";
 import { setupWorker } from "./typst/setupWorker";
+import { applyDirectionAttributes } from "./utils/direction";
+import "./rtl.css";
 
 if (typeof __VUE_OPTIONS_API__ === "undefined") {
 	globalThis.__VUE_OPTIONS_API__ = true;
@@ -38,6 +40,7 @@ window.mountCrispyPreview = (selector = "#crispy-preview-root", props = {}) => {
 		logger.warn("Mount point not found", { selector });
 		return null;
 	}
+	applyDirectionAttributes(mountPoint);
 
 	const app = createApp(CrispyPP, props);
 	const mountedComponent = app.mount(selector);

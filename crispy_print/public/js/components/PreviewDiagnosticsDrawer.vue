@@ -50,7 +50,7 @@ const normalizedItems = computed(() =>
 .diagnostics {
 	position: absolute;
 	top: calc(100% + 8px);
-	right: 0;
+	inset-inline-end: 0;
 	z-index: 5;
 	width: min(520px, calc(100vw - 32px));
 	max-height: min(680px, calc(100vh - 220px));

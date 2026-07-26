@@ -1,0 +1,34 @@
+/*
+ * Direction is applied to each Crispy Print mount independently from the
+ * document language. Logical CSS mirrors application chrome; these islands
+ * remain physically LTR because their coordinates or syntax are not semantic.
+ */
+[dir="rtl"] .preview-stage,
+[dir="rtl"] .preview-stage-sizer,
+[dir="rtl"] .typst-page,
+[dir="rtl"] .pdf-page,
+[dir="rtl"] .code-editor,
+[dir="rtl"] .typst-code,
+[dir="rtl"] textarea[data-code-editor],
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="url"],
+[dir="rtl"] .physical-ltr {
+	direction: ltr;
+	unicode-bidi: isolate;
+}
+
+[dir="rtl"] .directional-icon {
+	transform: scaleX(-1);
+}
+
+[dir="rtl"] code,
+[dir="rtl"] pre,
+[dir="rtl"] .identifier,
+[dir="rtl"] .filename,
+[dir="rtl"] .hash,
+[dir="rtl"] .url {
+	direction: ltr;
+	unicode-bidi: isolate;
+	text-align: start;
+}

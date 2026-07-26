@@ -165,4 +165,21 @@ A: It is in beta. Use it for testing and controlled non-critical workflows until
 A: Open an issue on GitHub with Frappe version, Typst version, and error logs.
 
 **Q: Does it support multi-language?**  
-A: Crispy Print includes gettext UI catalogs for Arabic, German, Spanish, Persian, French, Hindi, Indonesian, Italian, Brazilian Portuguese, Russian, Thai, Turkish, Vietnamese, and Simplified Chinese. These catalogs are machine-assisted starting points intended for native-speaker review. Managed Basic reports support localized labels and RTL report text, but equivalent RTL validation is not yet complete across the builder UI and every DocType format path. See [Translations](translations.md) and [Report Preview and Output](report-preview-and-output.md#language-rtl-and-accounting-values).
+A: Crispy Print includes gettext UI catalogs for Arabic, German, Spanish, Persian, French, Hindi, Indonesian, Italian, Brazilian Portuguese, Russian, Thai, Turkish, Vietnamese, and Simplified Chinese. These catalogs are machine-assisted starting points intended for native-speaker review. Arabic and Persian have end-to-end RTL engineering coverage across the builder, managed DocType/Report output, and PDFs; Hebrew and Urdu are recognized by the direction engine but do not ship catalogs. See [Translations](translations.md) and [Report Preview and Output](report-preview-and-output.md#language-rtl-and-accounting-values).
+
+### RTL text is square boxes or falls back incorrectly
+
+1. Verify the selected company font contains Arabic/Persian glyphs.
+2. Run Typst font discovery and confirm `Noto Naskh Arabic` or
+   `Noto Sans Arabic` is available after the selected font.
+3. Rebuild assets and restart Bench after changing `TYPST_FONT_PATHS`.
+4. Inspect the compiled PDF's embedded-font list; PDF/A output must embed the
+   resolved faces.
+
+### UI and document flow in different directions
+
+This is expected when the Frappe user language differs from the format's print
+language. The user language mirrors application chrome; the print language
+controls preview/PDF content. If the wrong document direction is shown, inspect
+the format's effective language and company/branding defaults rather than
+changing the Desk language.

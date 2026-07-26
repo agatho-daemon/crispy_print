@@ -812,7 +812,7 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self._insert_format("Test ImportExport Export")
 		payload = export_crispy_format("Test ImportExport Export")
 
-		self.assertEqual(payload["schema_version"], 3)
+		self.assertEqual(payload["schema_version"], 4)
 		self.assertEqual(payload["app"], "crispy_print")
 		self.assertIn("exported_at", payload)
 		self.assertIn("format", payload)
@@ -921,6 +921,43 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		result = import_crispy_format(payload, on_conflict="copy")
 		imported = frappe.get_doc("Crispy Format", result["name"])
 		self.assertEqual(imported.raw_typst, 1)
+
+	def test_import_schema_v3_preserves_legacy_layout_contract(self):
+		from crispy_print.api.v1 import import_crispy_format
+
+		layout = {
+			"sections": [
+				{
+					"id": "legacy",
+					"columns": [
+						{
+							"id": "legacy-column",
+							"fields": [
+								{"fieldname": "customer_name", "fieldtype": "Data"},
+								{"fieldname": "grand_total", "fieldtype": "Currency", "align": "right"},
+							],
+						}
+					],
+				}
+			]
+		}
+		payload = {
+			"schema_version": 3,
+			"format": {
+				"name": "Test ImportExport V3 Physical Layout",
+				"crispy_format_type": "DocType",
+				"doc_type": "Sales Invoice",
+				"layout_json": json.dumps(layout),
+				"presentation_settings": json.dumps({"language": "ar"}),
+			},
+		}
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		imported = frappe.get_doc("Crispy Format", result["name"])
+
+		self.assertEqual(json.loads(imported.layout_json), layout)
+		self.assertNotIn("table_order", imported.layout_json)
+		self.assertNotIn('"align": "auto"', imported.layout_json)
 
 	def test_import_old_payload_without_metadata_is_compatible(self):
 		from crispy_print.api.v1 import import_crispy_format

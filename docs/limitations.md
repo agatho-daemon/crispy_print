@@ -52,11 +52,19 @@ As a **beta release**, Crispy Print has several known limitations:
 ### Letterhead & Branding
 
 - **Letterhead Source**: Frappe Letter Head documents and uploaded assets are supported, but full letterhead authoring remains outside Crispy Print.
-- **Absolute Branding Placement**: Logo and QR offsets are explicit numeric positioning controls.
+- **Branding Placement**: Existing left/right logo and QR anchors remain
+  physical. New start/end anchors are semantic; numeric offsets remain physical.
 
 ### Data & Compatibility
 
-- **Partial RTL Coverage**: Managed Basic report output supports Arabic, Persian, Hebrew, and Urdu direction, mixed text, localized labels/dates, and LTR accounting values. Equivalent RTL coverage is not yet complete across the builder UI and every DocType format path; Raw Typst remains available for bespoke multilingual documents.
+- **RTL Acceptance Scope**: DocType and managed Report builders/output share
+  end-to-end direction handling for Arabic and Persian. Hebrew and Urdu are
+  recognized by the generic engine but have no shipped catalogs or native
+  acceptance gate. Raw Typst authors remain responsible for direction in their
+  custom source.
+- **Native Review Required**: Automated browser/PDF tests verify layout,
+  extracted order, and font availability, but native Arabic/Persian linguistic
+  and regulatory approval is still required before production release.
 - **No Jinja Support**: Crispy Print uses structured layouts and Typst, not Frappe Print Format Jinja templates.
 - **No Python Scripts**: Formats do not execute custom Python code.
 - **Import/Export Scope**: Format import/export exists, but cross-site migration should still be tested carefully in beta.

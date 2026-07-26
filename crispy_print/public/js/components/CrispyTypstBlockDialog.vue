@@ -181,7 +181,7 @@ const filteredBlocks = computed(() => {
 	border-radius: 6px;
 	padding: 10px 12px;
 	background: #fff;
-	text-align: left;
+	text-align: start;
 }
 
 .typst-block-dialog__item:hover,

@@ -47,6 +47,7 @@ export interface QrSettings {
   moduleSize?: number;
   width?: number;
   height?: number;
+  anchor?: "left" | "right" | "start" | "end";
   datamatrixEncodation?: string;
   datamatrixSymbols?: string;
 }
@@ -57,6 +58,7 @@ export interface LogoSettings {
   size: number;
   dx: number;
   dy: number;
+  anchor?: "left" | "right" | "start" | "end";
 }
 
 export interface TableSettings {
@@ -265,7 +267,7 @@ export const default_presentation_settings: PresentationSettings = {
     mode: "letterhead",
     letterhead: "",
     letterhead_image: "",
-    logo: { company: "", image: "", size: 25, dx: 0, dy: 0 },
+    logo: { company: "", image: "", size: 25, dx: 0, dy: 0, anchor: "left" },
   },
   typography: undefined,
   table: undefined,
@@ -274,6 +276,7 @@ export const default_presentation_settings: PresentationSettings = {
     dx: 0,
     dy: 0,
     size: 15,
+    anchor: "left",
     fields: [],
     enabled: false,
     sourceMode: "",

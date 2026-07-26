@@ -21,7 +21,9 @@ The following areas are planned or under active stabilization:
 - [ ] Batch printing from list view
 - [ ] Progress indicator for multi-document compilation
 - [ ] Configurable batch size limits
-- [ ] Complete multi-language document rendering across the builder UI and DocType formats (managed Basic reports already apply language/region, RTL text, localized labels/dates, and stable LTR accounting values)
+- [x] Complete multi-language document rendering across the builder UI,
+  managed DocType formats, and Basic reports, including language/region,
+  RTL text, localized labels/dates, and stable LTR accounting values
 - [ ] Complete report renderer acceptance testing for generic, receivable/payable, financial statement, General Ledger, and Bank Reconciliation families
 - [ ] Validate report layouts with representative filters, empty and large datasets, multi-page output, charts, branding, RTL, and supported PDF standards
 - [ ] Stabilize report publishing after renderer-family acceptance criteria pass

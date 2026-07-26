@@ -3,12 +3,14 @@
 		<div class="section-head layout-pane__header">
 			<div class="section-head-content layout-pane__header-row">
 				<div class="layout-pane__title-wrap">
-					<h3 class="section-title layout-pane__title">{{ __("Builder") }}</h3>
+					<h3 class="section-title layout-pane__title">
+						{{ __("Builder", null, "Crispy Print UI") }}
+					</h3>
 					<span
 						v-if="showGenericReportTypeBadge"
 						class="layout-pane__generic-type-badge"
 					>
-						Generic Type: {{ genericReportTypeLabel }}
+						{{ __("Type") }}: {{ __(genericReportTypeLabel) }}
 					</span>
 				</div>
 				<div class="layout-pane__controls">
@@ -42,7 +44,7 @@
 							aria-haspopup="dialog"
 							aria-controls="layout-help"
 						>
-							?
+							{{ __("Help symbol") }}
 						</button>
 						<div id="layout-help" popover class="layout-pane__help-popover">
 							<ul class="layout-pane__help-list">
@@ -109,6 +111,12 @@
 									class="section-card__menu-btn"
 									:title="__('Section menu')"
 									@click.stop="toggleSectionMenu(section, sectionIndex, $event)"
+									@keydown.enter.stop.prevent="
+										toggleSectionMenu(section, sectionIndex, $event)
+									"
+									@keydown.space.stop.prevent="
+										toggleSectionMenu(section, sectionIndex, $event)
+									"
 									aria-haspopup="menu"
 									:aria-expanded="
 										openSectionMenuId ===
@@ -133,6 +141,8 @@
 										)}`"
 										:ref="setSectionMenuRef"
 										class="section-card__menu"
+										:dir="interfaceDirection.direction"
+										:lang="interfaceDirection.language"
 										:style="sectionMenuStyle"
 										@click.stop
 										role="menu"
@@ -327,6 +337,28 @@
 																$event
 															)
 														"
+														@keydown.enter.stop.prevent="
+															toggleFieldMenu(
+																getFieldMenuId(
+																	section,
+																	column,
+																	field,
+																	colIndex
+																),
+																$event
+															)
+														"
+														@keydown.space.stop.prevent="
+															toggleFieldMenu(
+																getFieldMenuId(
+																	section,
+																	column,
+																	field,
+																	colIndex
+																),
+																$event
+															)
+														"
 														aria-haspopup="menu"
 														:aria-expanded="
 															openFieldMenuId ===
@@ -365,6 +397,8 @@
 															)}`"
 															:ref="setFieldMenuRef"
 															class="field-card__menu"
+															:dir="interfaceDirection.direction"
+															:lang="interfaceDirection.language"
 															:style="fieldMenuStyle"
 															@click.stop
 															role="menu"
@@ -402,42 +436,20 @@
 																@keydown="onAlignSubmenuKeydown"
 															>
 																<button
-																	type="button"
-																	class="field-card__menu-item"
-																	@click="
-																		setAlignment(field, 'left')
-																	"
-																	role="menuitemradio"
-																	:aria-checked="
-																		getFieldAlign(field) ===
-																		'left'
-																	"
-																>
-																	<span
-																		class="field-card__menu-check"
-																		>{{
-																			getFieldAlign(
-																				field
-																			) === "left"
-																				? "✓"
-																				: ""
-																		}}</span
-																	>
-																	{{ __("Left") }}
-																</button>
-																<button
+																	v-for="option in alignmentOptions"
+																	:key="option.value"
 																	type="button"
 																	class="field-card__menu-item"
 																	@click="
 																		setAlignment(
 																			field,
-																			'center'
+																			option.value
 																		)
 																	"
 																	role="menuitemradio"
 																	:aria-checked="
 																		getFieldAlign(field) ===
-																		'center'
+																		option.value
 																	"
 																>
 																	<span
@@ -445,39 +457,12 @@
 																		>{{
 																			getFieldAlign(
 																				field
-																			) === "center"
+																			) === option.value
 																				? "✓"
 																				: ""
 																		}}</span
 																	>
-																	{{ __("Center") }}
-																</button>
-																<button
-																	type="button"
-																	class="field-card__menu-item"
-																	@click="
-																		setAlignment(
-																			field,
-																			'right'
-																		)
-																	"
-																	role="menuitemradio"
-																	:aria-checked="
-																		getFieldAlign(field) ===
-																		'right'
-																	"
-																>
-																	<span
-																		class="field-card__menu-check"
-																		>{{
-																			getFieldAlign(
-																				field
-																			) === "right"
-																				? "✓"
-																				: ""
-																		}}</span
-																	>
-																	{{ __("Right") }}
+																	{{ __(option.label) }}
 																</button>
 															</div>
 
@@ -631,7 +616,9 @@
 			:model-value="editingColumns"
 			:doctype="columnEditor.field.options || ''"
 			:available-columns="columnEditorAvailableColumns"
+			:order="columnEditor.field.table_order || 'physical'"
 			@update:modelValue="onColumnsUpdate"
+			@update:order="onTableOrderUpdate"
 			@close="closeColumnEditor"
 		/>
 		<CrispyTypstBlockDialog
@@ -670,8 +657,16 @@ import type {
 } from "../utils/layout";
 import { createLayoutId, getTableColumns } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
+import {
+	getInterfaceLanguage,
+	getLanguageDirection,
+	type LogicalAlignment,
+	type TableOrder,
+} from "../utils/direction";
 import { deepClone } from "../utils/json";
 import { __ } from "../utils/i18n";
+
+const interfaceDirection = getLanguageDirection(getInterfaceLanguage());
 
 type Section = LayoutSection & {
 	id?: string | number;
@@ -791,17 +786,20 @@ function getFloatingMenuPosition(
 	const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 	const maxLeft = viewportWidth - menuRect.width - padding;
 	const maxTop = viewportHeight - menuRect.height - padding;
+	const isRtl = anchor.closest('[dir="rtl"]') !== null;
 	let left = 0;
 	let top = 0;
 
 	if (placement === "right-start") {
-		left = anchorRect.right + gap;
+		left = isRtl ? anchorRect.left - menuRect.width - gap : anchorRect.right + gap;
 		top = anchorRect.top;
-		if (left > maxLeft) {
+		if (!isRtl && left > maxLeft) {
 			left = anchorRect.left - menuRect.width - gap;
+		} else if (isRtl && left < padding) {
+			left = anchorRect.right + gap;
 		}
 	} else {
-		left = anchorRect.right - menuRect.width;
+		left = isRtl ? anchorRect.left : anchorRect.right - menuRect.width;
 		top = anchorRect.bottom + gap;
 		if (top > maxTop) {
 			top = anchorRect.top - menuRect.height - gap;
@@ -1033,7 +1031,7 @@ function onAlignSubmenuKeydown(event: KeyboardEvent) {
 	});
 }
 
-function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
+function toggleSectionMenu(section: Section, index: number, event: Event) {
 	const id = getSectionMenuId(section, index);
 	if (openSectionMenuId.value === id) {
 		closeSectionMenu();
@@ -1055,7 +1053,7 @@ function toggleSectionMenu(section: Section, index: number, event: MouseEvent) {
 	});
 }
 
-function toggleFieldMenu(id: string, event: MouseEvent) {
+function toggleFieldMenu(id: string, event: Event) {
 	if (openFieldMenuId.value === id) {
 		closeFieldMenu();
 		return;
@@ -1310,7 +1308,16 @@ function removeField(column: Column, fieldIndex: number) {
 	store.markDirty();
 }
 
-function getFieldAlign(field: Field): "left" | "center" | "right" {
+const alignmentOptions: Array<{ value: LogicalAlignment; label: string }> = [
+	{ value: "auto", label: "Auto" },
+	{ value: "start", label: "Start" },
+	{ value: "center", label: "Center" },
+	{ value: "end", label: "End" },
+	{ value: "left", label: "Left (physical)" },
+	{ value: "right", label: "Right (physical)" },
+];
+
+function getFieldAlign(field: Field): LogicalAlignment {
 	return field.align || getDefaultAlignment(field.fieldtype);
 }
 
@@ -1328,7 +1335,7 @@ function toggleAlignSubmenu() {
 	}
 }
 
-function setAlignment(field: Field, align: "left" | "center" | "right") {
+function setAlignment(field: Field, align: LogicalAlignment) {
 	field.align = align;
 	store.markDirty();
 	closeFieldMenu();
@@ -1469,6 +1476,7 @@ async function onDropField(event: DragEvent, column: Column) {
 
 		if (parsed.fieldtype === "Table") {
 			field.table_columns = [];
+			field.table_order = "logical";
 			field.options = parsed.options;
 			await ensureTableColumns(field);
 		}
@@ -1551,6 +1559,12 @@ function onColumnsUpdate(columns: TableColumn[]) {
 	if (!columnEditor.value) return;
 	editingColumns.value = deepClone(columns || []);
 	columnEditor.value.field.table_columns = columns;
+	store.markDirty();
+}
+
+function onTableOrderUpdate(order: TableOrder) {
+	if (!columnEditor.value) return;
+	columnEditor.value.field.table_order = order;
 	store.markDirty();
 }
 
@@ -1969,7 +1983,7 @@ function onEditDivider(field: Field) {
 }
 
 .layout-pane__spacer {
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .layout-pane__help-btn {
@@ -2012,7 +2026,7 @@ function onEditDivider(field: Field) {
 
 .layout-pane__help-list {
 	margin: 0;
-	padding-left: 16px;
+	padding-inline-start: 16px;
 	display: grid;
 	gap: 6px;
 	list-style: disc;
@@ -2107,7 +2121,7 @@ function onEditDivider(field: Field) {
 
 .section-card__menu-item {
 	width: 100%;
-	text-align: left;
+	text-align: start;
 	border: 0;
 	background: transparent;
 	padding: 8px 10px;
@@ -2252,10 +2266,7 @@ function onEditDivider(field: Field) {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	position: absolute;
-	right: 4px;
-	top: 50%;
-	transform: translateY(-50%);
+	flex: 0 0 auto;
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.15s ease;
@@ -2293,7 +2304,7 @@ function onEditDivider(field: Field) {
 
 .field-card__menu-item {
 	width: 100%;
-	text-align: left;
+	text-align: start;
 	border: 0;
 	background: transparent;
 	padding: 8px 10px;
@@ -2335,7 +2346,7 @@ function onEditDivider(field: Field) {
 }
 
 .field-card__menu-arrow {
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .field-card__columns {
@@ -2351,6 +2362,21 @@ function onEditDivider(field: Field) {
 	background: var(--control-bg, #f8f9fa);
 	border-radius: 6px;
 	padding: 4px 8px;
+}
+
+.layout-pane:dir(rtl) .section-card__header,
+.layout-pane:dir(rtl) .section-card__title-row,
+.layout-pane:dir(rtl) .field-card__row,
+.layout-pane:dir(rtl) .field-card__info,
+.layout-pane:dir(rtl) .field-card__columns {
+	direction: rtl;
+}
+
+.layout-pane:dir(rtl) .section-title-input,
+.layout-pane:dir(rtl) .field-card__label-input,
+.layout-pane:dir(rtl) .field-card__column-pill {
+	direction: rtl;
+	text-align: start;
 }
 
 .section-page-break {

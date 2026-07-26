@@ -1,6 +1,6 @@
 <template>
 	<div
-		id="crispy-print-root"
+		id="crispy-print-app"
 		class="crispy-layout"
 		:class="{ 'crispy-layout--resizing': isResizing }"
 		:style="layoutStyle"
@@ -691,7 +691,7 @@ function resetMiddleSplit() {
 }
 
 function onResizePointerDown(event: PointerEvent) {
-	const root = (event.currentTarget as HTMLElement | null)?.closest("#crispy-print-root");
+	const root = (event.currentTarget as HTMLElement | null)?.closest(".crispy-layout");
 	if (!root) return;
 	event.preventDefault();
 	previewMode.value = "normal";
@@ -811,12 +811,12 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 .pane-toggle--inline {
 	position: static;
 	flex: 0 0 auto;
-	margin-left: 2px;
+	margin-inline-start: 2px;
 }
 
 .pane-toggle--settings.pane-toggle--inline {
-	margin-left: 0;
-	margin-right: 2px;
+	margin-inline-start: 0;
+	margin-inline-end: 2px;
 }
 
 .pane-toggle:hover {
@@ -901,7 +901,7 @@ if (typeof frappe !== "undefined" && frappe?.router?.on) {
 	position: absolute;
 	top: 8px;
 	bottom: 8px;
-	left: 4px;
+	inset-inline-start: 4px;
 	width: 2px;
 	border-radius: 9999px;
 	background: #cbd5e1;

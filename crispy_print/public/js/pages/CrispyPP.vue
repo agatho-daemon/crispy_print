@@ -144,7 +144,7 @@
 										aria-haspopup="dialog"
 										aria-controls="preview-template-help"
 									>
-										?
+										{{ __("Help symbol") }}
 									</button>
 									<div
 										id="preview-template-help"
@@ -270,6 +270,20 @@
 								{{ __("Selected company has no logo set.") }}
 							</p>
 							<div class="row">
+								<div class="col-xs-12 form-group">
+									<label class="control-label text-muted small">{{
+										__("Anchor")
+									}}</label>
+									<select
+										v-model="logo_settings.anchor"
+										class="form-control input-sm"
+									>
+										<option value="left">{{ __("Left (physical)") }}</option>
+										<option value="right">{{ __("Right (physical)") }}</option>
+										<option value="start">{{ __("Start") }}</option>
+										<option value="end">{{ __("End") }}</option>
+									</select>
+								</div>
 								<div class="col-xs-12 form-group">
 									<label class="control-label text-muted small">{{
 										__("Size (mm)")
@@ -426,7 +440,7 @@
 						:title="__('Show preview diagnostics')"
 						@click.stop.prevent="diagnosticsOpen = !diagnosticsOpen"
 					>
-						{{ __("Diagnostics") }}
+						{{ __("Diagnostics", null, "Crispy Print UI") }}
 					</button>
 					<PreviewDiagnosticsDrawer :open="diagnosticsOpen" :items="diagnosticItems" />
 				</div>
@@ -1664,8 +1678,8 @@ defineExpose({
 /* Settings Pane */
 .settings-pane {
 	background: white;
-	border-right: none;
-	padding-right: 12px;
+	border-inline-end: none;
+	padding-inline-end: 12px;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -1716,7 +1730,7 @@ defineExpose({
 
 .settings-pane__help-list {
 	margin: 0;
-	padding-left: 20px;
+	padding-inline-start: 20px;
 	font-size: 13px;
 	color: #6b7280;
 	line-height: 1.6;

@@ -38,16 +38,32 @@ deserves particular care.
 ## Runtime scope and RTL
 
 The PO catalogs translate the Crispy Print application interface and other
-strings passed through Frappe's translation APIs. A translated UI catalog is
-separate from document-layout support:
+strings passed through Frappe's translation APIs. Interface and output
+directions are deliberately independent:
 
-- Managed Basic reports localize labels, dates, page numbers, and report content.
-- Arabic and Persian select RTL report text while accounting values remain LTR.
-- Builder UI, DocType output, mixed-direction content, and custom Raw Typst
-  documents still require visual testing for each target language.
+- The Frappe user language controls the builder and preview interface.
+- The format's effective print language controls the preview and compiled PDF.
+- Field semantics control value isolation inside the document.
+
+Arabic and Persian are the engineering acceptance locales. Hebrew and Urdu use
+the same generic direction engine but do not yet ship catalogs or native
+acceptance coverage. Managed DocType and Report output sets Typst language,
+region, and base direction; identifiers and accounting values stay LTR while
+prose follows the document direction. Latin accounting digits remain the
+default.
+
+- Builder panels, menus, dialogs, drawers, focus order, and directional icons
+  mirror in RTL.
+- The page canvas, Typst source, coordinates, dimensions, filenames, URLs,
+  hashes, color values, and numeric controls remain physical LTR islands.
+- Mixed Arabic/Persian and Latin prose is shaped by Typst under the document
+  direction.
 - A successful gettext validation does not prove that a translated string fits
   its control, that an RTL panel is positioned correctly, or that a PDF uses an
   appropriate font.
+
+Native Arabic/Persian review of linguistic, accounting, and regulatory output
+is a production-release gate. It is intentionally not a code-merge gate.
 
 See [Report Preview and Output](report-preview-and-output.md#language-rtl-and-accounting-values)
 and [Known Limitations](limitations.md) for the wider rendering contract.

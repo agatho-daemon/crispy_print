@@ -14,7 +14,7 @@
 						aria-haspopup="dialog"
 						aria-controls="typst-code-help"
 					>
-						?
+						{{ __("Help symbol") }}
 					</button>
 					<div
 						id="typst-code-help"
@@ -152,7 +152,7 @@ function onDrop(event: DragEvent) {
 }
 
 .typst-code-pane__spacer {
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .typst-code-pane__help-btn {
@@ -195,7 +195,7 @@ function onDrop(event: DragEvent) {
 
 .typst-code-pane__help-list {
 	margin: 0;
-	padding-left: 16px;
+	padding-inline-start: 16px;
 	display: grid;
 	gap: 6px;
 	list-style: disc;

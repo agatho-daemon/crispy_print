@@ -1,5 +1,7 @@
 import { createApp, watch } from "vue";
 import CtbBuilder from "./pages/CtbBuilder.vue";
+import { applyDirectionAttributes } from "./utils/direction";
+import "./rtl.css";
 
 if (typeof __VUE_OPTIONS_API__ === "undefined") {
 	globalThis.__VUE_OPTIONS_API__ = true;
@@ -37,6 +39,7 @@ window.mountCtbBuilder = (selector = "#ctb-builder-root", props = {}) => {
 		logger.warn("Mount point not found", { selector });
 		return null;
 	}
+	applyDirectionAttributes(mountPoint);
 
 	const app = createApp(CtbBuilder, props);
 	const mountedComponent = app.mount(selector);
