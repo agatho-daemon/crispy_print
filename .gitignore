@@ -21,3 +21,5 @@ playwright-report/
 e2e/__screenshots__/
 !e2e/yarn.lock
 /tmp/
+
+.github/copilot-instructions.md
