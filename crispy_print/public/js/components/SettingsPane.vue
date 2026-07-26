@@ -3,7 +3,9 @@
 		<div class="section-head settings-pane__header">
 			<div class="section-head-content settings-pane__header-row">
 				<slot name="header-actions"></slot>
-				<h3 class="section-title settings-pane__title">{{ __("Presentation") }}</h3>
+				<h3 class="section-title settings-pane__title">
+					{{ __("Presentation", null, "Crispy Print UI") }}
+				</h3>
 				<div class="settings-pane__spacer"></div>
 				<div>
 					<button
@@ -79,7 +81,7 @@
 				<SettingsSection
 					v-if="!isReportMode && !isRawTypst"
 					v-model="isPrintBehaviorExpanded"
-					:title="__('Print Behavior')"
+					:title="__('Print Behavior', null, 'Crispy Print UI')"
 				>
 					<label class="settings-pane__checkbox-row">
 						<span class="input-area">
@@ -131,7 +133,7 @@
 				<SettingsSection
 					v-if="!isRawTypst"
 					v-model="isPresentationSettingsExpanded"
-					:title="__('Page Settings')"
+					:title="__('Page Settings', null, 'Crispy Print UI')"
 					:readonly="profilePresentationReadOnly"
 					:readonly-label="profilePresentationReadOnly ? inheritedProfileLabel : ''"
 				>
@@ -454,7 +456,7 @@
 				<SettingsSection
 					v-if="!isReportMode && !isRawTypst"
 					v-model="isTypographyExpanded"
-					:title="__('Typography')"
+					:title="__('Typography', null, 'Crispy Print UI')"
 					:readonly="profilePresentationReadOnly"
 					:readonly-label="profilePresentationReadOnly ? inheritedProfileLabel : ''"
 				>
@@ -483,7 +485,7 @@
 				<SettingsSection
 					v-if="!isRawTypst"
 					v-model="isTableExpanded"
-					:title="__('Table Settings')"
+					:title="__('Table Settings', null, 'Crispy Print UI')"
 					:readonly="profilePresentationReadOnly"
 					:readonly-label="profilePresentationReadOnly ? inheritedProfileLabel : ''"
 				>
@@ -662,7 +664,7 @@
 				<SettingsSection
 					v-if="is_custom_profile && !isRawTypst"
 					v-model="isBrandingExpanded"
-					:title="__('Branding')"
+					:title="__('Branding', null, 'Crispy Print UI')"
 				>
 					<div class="settings-pane__field">
 						<label class="settings-pane__label">{{ __("Type") }}</label>
@@ -775,7 +777,10 @@
 				</label>
 
 				<div v-if="!isReportMode && qrSettings.enabled" class="settings-pane__section">
-					<SettingsSection v-model="isQrExpanded" :title="__('QR-Code')">
+					<SettingsSection
+						v-model="isQrExpanded"
+						:title="__('QR-Code', null, 'Crispy Print UI')"
+					>
 						<p class="settings-pane__hint">
 							{{ __("QR Code is anchored to bottom-left using #place().") }}
 						</p>

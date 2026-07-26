@@ -624,12 +624,8 @@ export function buildReportTypstFromConfig(
     lines.push("  } else { auto }");
     lines.push("}");
     lines.push("");
-    lines.push(
-      `#let cp-columns = ${reportIsRtl ? "data.columns.rev()" : "data.columns"}`,
-    );
-    lines.push(
-      `#let cp-row-cells(row) = ${reportIsRtl ? "row.cells.rev()" : "row.cells"}`,
-    );
+    lines.push("#let cp-columns = data.columns");
+    lines.push("#let cp-row-cells(row) = row.cells");
     lines.push("");
     lines.push("#table(");
     lines.push("  columns: cp-columns.map(cp_column_width),");

@@ -51,6 +51,8 @@ class RTLE2EFixtureTestCase(unittest.TestCase):
 		values = _doc_format_values(Invoice(), "fa-IR")
 		self.assertEqual(values["default_print_language"], "fa")
 		self.assertIn('"schema_version": 4', values["layout_json"])
+		self.assertIn("align(end + horizon)", values["doc_footer"])
+		self.assertIn("dir: ltr", values["doc_footer"])
 
 
 if __name__ == "__main__":

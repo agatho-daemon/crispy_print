@@ -918,11 +918,14 @@ class JSONTypstTranslator {
         ? this.getCompactItemColumns(columns)
         : { visible: columns, folded: [] as TableColumn[] };
       const direction = this.get_direction_context();
+      const tableOrder = field.table_order || "physical";
       const effectiveColumns = orderForDirection(
         compactColumns.visible,
-        field.table_order || "physical",
+        tableOrder,
         direction.direction,
       );
+      const tableDirection =
+        tableOrder === "logical" ? direction.direction : "ltr";
       const tableSettings = ensure_table_settings(
         this.get_presentation_settings(),
       );
@@ -932,6 +935,7 @@ class JSONTypstTranslator {
       lines.push(
         `#if type(doc.${fieldname}) == array and doc.${fieldname}.len() > 0 [`,
       );
+      lines.push(`  #set text(dir: ${tableDirection})`);
       lines.push(`  #table(`);
       // Use column widths from layout (auto, 1fr, 2fr, 100pt, etc.)
       const widths = effectiveColumns.flatMap((col) =>

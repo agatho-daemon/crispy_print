@@ -6,7 +6,7 @@ _Part of the [Crispy Print documentation](README.md)._
 
 This app includes comprehensive test coverage:
 
-- **278 frontend tests** across 66 Vitest files (2 opt-in Typst integration tests)
+- **279 frontend tests** across 67 Vitest files (2 opt-in Typst integration tests)
 - **446 backend tests** in the complete Frappe application suite (5 skipped in the latest RTL verification run)
 - **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
 
@@ -39,6 +39,20 @@ The default seed creates language-specific Arabic, Persian, and English
 formats, plus deterministic multipage and General Ledger report formats. It
 also configures a basic QR payload. It never combines Arabic and Persian labels
 in one document.
+
+For a disposable test site, the seed can create or refresh a dedicated
+least-surprise browser user without placing credentials in the repository:
+
+```bash
+bench --site your-site execute crispy_print.dev_utils.rtl_e2e.seed \
+  --kwargs '{"test_user_password": "local-secret"}'
+
+# After the browser run:
+bench --site your-site execute crispy_print.dev_utils.rtl_e2e.disable_test_user
+```
+
+The dedicated user is opt-in and is never created during app installation or a
+normal seed run.
 
 The seed does not activate a frozen Crispy Template by default. On a disposable
 acceptance site only, pass `--kwargs '{"publish": 1}'` to publish the Arabic

@@ -4,6 +4,7 @@ const baseURL = process.env.CRISPY_E2E_BASE_URL || "http://127.0.0.1:8000";
 
 export default defineConfig({
   testDir: ".",
+  timeout: 120_000,
   outputDir: "../test-results/playwright",
   snapshotDir: "./__screenshots__",
   fullyParallel: false,

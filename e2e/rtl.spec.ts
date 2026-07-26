@@ -33,6 +33,9 @@ async function openBuilder(
   await page.goto("/app");
   await page.evaluate(async (lang) => {
     const frappeGlobal = (window as any).frappe;
+    if (String(frappeGlobal.boot?.lang || "en").startsWith(lang)) {
+      return;
+    }
     await frappeGlobal.call({
       method: "frappe.client.set_value",
       args: {
@@ -43,10 +46,14 @@ async function openBuilder(
       },
     });
   }, language);
+  await page.waitForLoadState("networkidle");
   await page.goto(
     `/app/crispy-format-builder/${encodeURIComponent(formatName)}`,
   );
   await page.locator("#crispy-print-app.crispy-layout").waitFor();
+  await expect(page).toHaveURL(
+    new RegExp(`/app/crispy-format-builder/${encodeURIComponent(formatName)}$`),
+  );
 }
 
 async function captureOriginalState(page: Page) {
@@ -58,14 +65,13 @@ async function captureOriginalState(page: Page) {
 }
 
 async function selectInvoice(page: Page) {
-  const input = page.locator("#typst-sample-doc-input");
-  await input.click();
-  if (fixtureDocname) {
-    await input.fill(fixtureDocname);
+  if (!fixtureDocname) {
+    throw new Error("CRISPY_E2E_DOCNAME is required for document preview tests");
   }
-  const firstResult = page.locator(".awesomplete ul li").first();
-  await firstResult.waitFor();
-  await firstResult.click();
+  const input = page.locator("#typst-sample-doc-input");
+  await expect(input).toHaveAttribute("data-doctype", "Sales Invoice");
+  await input.fill(fixtureDocname);
+  await input.dispatchEvent("awesomplete-selectcomplete");
   await page.locator(".pdf-preview__page").first().waitFor({ timeout: 60_000 });
 }
 
@@ -128,12 +134,9 @@ test.describe("RTL builder acceptance matrix", () => {
       const uiDirection = entry.ui === "en" ? "ltr" : "rtl";
       await expect(root).toHaveAttribute("dir", uiDirection);
       await expect(root).toHaveAttribute("lang", new RegExp(`^${entry.ui}`));
-      await expect(page.locator(".section-card").first()).toContainText(
-        entry.label,
-      );
-      await expect(page.locator(".section-card").first()).not.toContainText(
-        " / ",
-      );
+      const sectionTitle = page.locator(".section-title-input").first();
+      await expect(sectionTitle).toHaveValue(entry.label);
+      await expect(sectionTitle).not.toHaveValue(/ \/ /);
 
       await page.locator(".field-card").first().hover();
       await page.locator(".field-card__menu-btn").first().click();
@@ -172,15 +175,20 @@ test.describe("RTL builder acceptance matrix", () => {
     await expect(page.locator("#layout-help")).toHaveCSS("direction", "rtl");
 
     const fieldCards = page.locator(".field-card");
-    const firstLabel = await fieldCards.nth(0).textContent();
-    const secondLabel = await fieldCards.nth(1).textContent();
-    await fieldCards.nth(0).dragTo(fieldCards.nth(1));
-    await expect(fieldCards.nth(0)).not.toContainText(
-      String(firstLabel || "").trim(),
-    );
-    await expect(fieldCards.nth(0)).toContainText(
-      String(secondLabel || "").trim(),
-    );
+    const firstLabelInput = fieldCards.nth(0).locator(".field-card__label-input");
+    const secondLabelInput = fieldCards.nth(1).locator(".field-card__label-input");
+    const firstLabel = await firstLabelInput.inputValue();
+    const secondLabel = await secondLabelInput.inputValue();
+    await fieldCards
+      .nth(0)
+      .locator(".field-grip")
+      .dragTo(fieldCards.nth(1));
+    await expect(
+      fieldCards.nth(0).locator(".field-card__label-input"),
+    ).not.toHaveValue(firstLabel);
+    await expect(
+      fieldCards.nth(0).locator(".field-card__label-input"),
+    ).toHaveValue(secondLabel);
     await page.reload();
     await page.locator("#crispy-print-app.crispy-layout").waitFor();
   });
@@ -230,7 +238,7 @@ test.describe("RTL builder acceptance matrix", () => {
       .locator(".pdf-preview__page")
       .first()
       .waitFor({ timeout: 60_000 });
-    await expect(page.locator("#crispy-print-root")).toHaveAttribute(
+    await expect(page.locator("#crispy-preview-root")).toHaveAttribute(
       "dir",
       "rtl",
     );

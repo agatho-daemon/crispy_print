@@ -34,8 +34,8 @@ describe("shared language direction", () => {
     expect(getContentDirection("Text", "description", "rtl")).toBe("rtl");
   });
 
-  it("reverses only logical RTL table order", () => {
-    expect(orderForDirection(["a", "b"], "logical", "rtl")).toEqual(["b", "a"]);
+  it("keeps semantic table source order stable for the renderer", () => {
+    expect(orderForDirection(["a", "b"], "logical", "rtl")).toEqual(["a", "b"]);
     expect(orderForDirection(["a", "b"], "physical", "rtl")).toEqual([
       "a",
       "b",

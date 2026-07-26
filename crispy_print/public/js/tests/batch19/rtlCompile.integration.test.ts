@@ -86,10 +86,14 @@ describe.skipIf(!enabled)("real RTL Typst PDF", () => {
       {
         language: "ar-KW",
         table: { cellLabel: { enabled: true } },
+        typstPreamble:
+          '#let footer_block = align(end + horizon)[\n  #set text(size: 8pt, dir: ltr)\n  #context counter(page).display("1 of 1", both: true)\n]',
       },
     );
     const input = join(workdir, "rtl.typ");
     const output = join(workdir, "rtl.pdf");
+    expect(source).toContain("#set text(dir: rtl)");
+    expect(source.indexOf("رمز الصنف")).toBeLessThan(source.indexOf("المبلغ"));
     writeFileSync(input, source, "utf8");
 
     execFileSync("typst", ["compile", input, output], { stdio: "pipe" });
@@ -103,6 +107,19 @@ describe.skipIf(!enabled)("real RTL Typst PDF", () => {
       });
       expect(text).toContain("KWD -12.375");
       expect(text).toContain("-700.000");
+      expect(text).toContain("1 of 1");
+
+      const bbox = execFileSync("pdftotext", ["-bbox", output, "-"], {
+        encoding: "utf8",
+      });
+      const xMin = (word: string) => {
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const match = bbox.match(
+          new RegExp(`<word xMin="([^"]+)"[^>]*>${escaped}</word>`),
+        );
+        return match ? Number(match[1]) : Number.NaN;
+      };
+      expect(xMin("RTL-001")).toBeGreaterThan(xMin("-700.000"));
       expect(text).not.toContain("700.000-");
       expect(text).toMatch(/Example|العميل|الإجمالي/);
     } catch (error: any) {
@@ -164,5 +181,17 @@ ${report}`;
     );
 
     expect(readFileSync(output).subarray(0, 4).toString()).toBe("%PDF");
+    const bbox = execFileSync("pdftotext", ["-bbox", output, "-"], {
+      encoding: "utf8",
+    });
+    const xMin = (word: string) => {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const match = bbox.match(
+        new RegExp(`<word xMin="([^"]+)"[^>]*>${escaped}</word>`),
+      );
+      return match ? Number(match[1]) : Number.NaN;
+    };
+    expect(xMin("Example")).toBeGreaterThan(xMin("KW-12345"));
+    expect(xMin("KW-12345")).toBeGreaterThan(xMin("KWD"));
   });
 });

@@ -440,7 +440,7 @@
 						:title="__('Show preview diagnostics')"
 						@click.stop.prevent="diagnosticsOpen = !diagnosticsOpen"
 					>
-						{{ __("Diagnostics") }}
+						{{ __("Diagnostics", null, "Crispy Print UI") }}
 					</button>
 					<PreviewDiagnosticsDrawer :open="diagnosticsOpen" :items="diagnosticItems" />
 				</div>

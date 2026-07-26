@@ -15,6 +15,13 @@ PERSIAN_FORMAT_NAME = "Crispy RTL E2E Persian"
 ENGLISH_FORMAT_NAME = "Crispy RTL E2E English"
 MULTIPAGE_FORMAT_NAME = "Crispy RTL E2E Multipage"
 REPORT_FORMAT_NAME = "Crispy RTL E2E Report"
+TEST_USER = "crispy-rtl-e2e@local.test"
+RTL_FOOTER = (
+	"#let footer_block = align(end + horizon)[\n"
+	"  #set text(size: 8pt, dir: ltr)\n"
+	'  #context counter(page).display("1 of 1", both: true)\n'
+	"]"
+)
 
 LABELS = {
 	"ar": {
@@ -184,6 +191,7 @@ def _doc_format_values(invoice, language: str, *, repeat_sections: int = 1) -> d
 		"module": "Crispy Print",
 		"raw_typst": 0,
 		"default_print_language": language.split("-", 1)[0],
+		"doc_footer": RTL_FOOTER,
 		"layout_json": json.dumps(
 			_layout(language.split("-", 1)[0], repeat_sections=repeat_sections),
 			ensure_ascii=False,
@@ -207,7 +215,42 @@ def _report_format_values(company: str) -> dict:
 	}
 
 
-def seed(publish: int | bool = 0) -> dict:
+def _ensure_test_user(password: str):
+	if frappe.db.exists("User", TEST_USER):
+		user = frappe.get_doc("User", TEST_USER)
+	else:
+		user = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": TEST_USER,
+				"first_name": "Crispy RTL",
+				"last_name": "E2E",
+				"enabled": 1,
+				"user_type": "System User",
+				"send_welcome_email": 0,
+			}
+		)
+		user.insert(ignore_permissions=True)
+	user.enabled = 1
+	user.new_password = password
+	user.save(ignore_permissions=True)
+	required_roles = {"System Manager", "Accounts User", "Accounts Manager", "Sales User", "Sales Manager"}
+	missing_roles = sorted(required_roles - set(frappe.get_roles(TEST_USER)))
+	if missing_roles:
+		user.add_roles(*missing_roles)
+	return user
+
+
+def disable_test_user() -> dict:
+	"""Disable the opt-in disposable-site browser user."""
+	frappe.only_for("System Manager")
+	if frappe.db.exists("User", TEST_USER):
+		frappe.db.set_value("User", TEST_USER, "enabled", 0)
+		frappe.db.commit()
+	return {"user": TEST_USER, "enabled": False}
+
+
+def seed(publish: int | bool = 0, test_user_password: str | None = None) -> dict:
 	"""Create/update the named test format and report usable source records."""
 	frappe.only_for("System Manager")
 	invoice = frappe.db.get_value(
@@ -251,6 +294,7 @@ def seed(publish: int | bool = 0) -> dict:
 			notes="Deterministic RTL E2E fixture; disposable test sites only.",
 		)["name"]
 
+	test_user = _ensure_test_user(test_user_password) if test_user_password else None
 	frappe.db.commit()
 	return {
 		"format": formats["arabic"].name,
@@ -260,4 +304,5 @@ def seed(publish: int | bool = 0) -> dict:
 		"doctype": "Sales Invoice",
 		"docname": invoice.name,
 		"company": invoice.company,
+		"test_user": test_user.name if test_user else None,
 	}

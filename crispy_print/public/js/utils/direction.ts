@@ -119,9 +119,10 @@ export function getContentDirection(
 
 export function orderForDirection<T>(
   values: readonly T[],
-  order: TableOrder | null | undefined,
-  direction: TextDirection,
+  _order: TableOrder | null | undefined,
+  _direction: TextDirection,
 ): T[] {
-  const result = [...values];
-  return order === "logical" && direction === "rtl" ? result.reverse() : result;
+  // Keep semantic source order stable. Direction-aware renderers place the
+  // first logical item at inline-start; reversing here would mirror it twice.
+  return [...values];
 }

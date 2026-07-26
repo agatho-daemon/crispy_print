@@ -35,7 +35,9 @@
 		<template #menu>
 			<div class="section-head preview-pane__header">
 				<div class="section-head-content preview-pane__header-row">
-					<h3 class="section-title preview-pane__title">{{ __("Preview") }}</h3>
+					<h3 class="section-title preview-pane__title">
+						{{ __("Preview", null, "Crispy Print UI") }}
+					</h3>
 					<div class="preview-pane__spacer"></div>
 					<div
 						class="preview-mode-toggle"
@@ -138,7 +140,7 @@
 							:title="__('Refresh preview')"
 							@click="onRefreshClick"
 						>
-							{{ __("Refresh") }}
+							{{ __("Refresh", null, "Crispy Print UI") }}
 						</button>
 						<button
 							id="typst-view-code"
@@ -146,7 +148,7 @@
 							type="button"
 							:title="__('View Typst code')"
 						>
-							{{ __("View code") }}
+							{{ __("View code", null, "Crispy Print UI") }}
 						</button>
 						<button
 							type="button"
@@ -154,7 +156,7 @@
 							:title="__('Duplicate for another company')"
 							@click="emit('duplicateForCompany')"
 						>
-							{{ __("Duplicate") }}
+							{{ __("Duplicate", null, "Crispy Print UI") }}
 						</button>
 						<button
 							type="button"
@@ -162,7 +164,7 @@
 							:title="__('Publish Crispy Template')"
 							@click="emit('publishTemplate')"
 						>
-							{{ __("Publish Template") }}
+							{{ __("Publish Template", null, "Crispy Print UI") }}
 						</button>
 					</div>
 				</div>

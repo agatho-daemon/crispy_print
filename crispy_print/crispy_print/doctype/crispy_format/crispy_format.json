@@ -179,7 +179,7 @@
       "mandatory_depends_on": "eval:doc.raw_typst"
     },
     {
-      "default": "#let footer_block = align(right + horizon)[\n  #set text(size: 8pt)\n  #context counter(page).display(\"1 of 1\", both: true)\n]",
+      "default": "#let footer_block = align(end + horizon)[\n  #set text(size: 8pt, dir: ltr)\n  #context counter(page).display(\"1 of 1\", both: true)\n]",
       "depends_on": "eval:!doc.raw_typst",
       "description": "See Typst Help below for examples and usage.",
       "fieldname": "doc_footer",

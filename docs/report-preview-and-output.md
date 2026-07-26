@@ -103,8 +103,10 @@ Accounting output currently uses the Latin `latn` numbering system
 intentionally. Arabic-Indic digits are not selected implicitly from the
 document language.
 
-RTL support here describes generated Basic report output. The wider builder UI
-and every DocType format path have not yet completed equivalent RTL coverage.
+The same direction contract now applies to the builder UI, managed DocType
+formats, Basic reports, previews, and final PDF compilation. Interface language
+and effective print language remain independent, while accounting values and
+other identifier-like content stay explicitly LTR.
 
 ## PDF.js preview behavior
 

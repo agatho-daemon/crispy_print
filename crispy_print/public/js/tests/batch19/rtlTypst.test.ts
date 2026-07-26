@@ -73,8 +73,8 @@ describe("RTL Typst generation parity", () => {
     expect(typst).toContain(
       'if cell.is_numeric or ("is_ltr" in cell and cell.is_ltr) { ltr } else { rtl }',
     );
-    expect(typst).toContain("#let cp-columns = data.columns.rev()");
-    expect(typst).toContain("#let cp-row-cells(row) = row.cells.rev()");
+    expect(typst).toContain("#let cp-columns = data.columns");
+    expect(typst).toContain("#let cp-row-cells(row) = row.cells");
     expect(typst).toContain("right + horizon");
     expect(typst).toContain('"Noto Naskh Arabic"');
   });

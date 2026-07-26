@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fallback after the selected company font.
 - Added deterministic Playwright Chromium coverage and RTL Typst/PDF regression
   assertions for interface/document language combinations, accounting values,
-  keyboard interaction, and physical LTR authoring controls.
+  keyboard/drag interaction, multipage DocType output, Report output, published
+  final previews, and physical LTR authoring controls.
 - Added separate Arabic, Persian, and English RTL acceptance formats plus
   deterministic multipage, QR, Report, drag/menu, and optional published final
   preview coverage. Test documents no longer combine Arabic and Persian labels.
@@ -47,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed RTL builder-card ordering and text alignment, localized help punctuation,
   automatic bidi handling for preview placeholder prose, Enter activation for
   field menus, and inaccurate Arabic/Persian physical-side and zoom labels.
+- Fixed gettext collisions with other installed Frappe apps by context-scoping
+  common builder labels such as Builder, Preview, Fields, Refresh, and
+  Diagnostics.
+- Fixed semantic RTL table ordering so the renderer mirrors logical columns
+  exactly once while legacy physical ordering remains unchanged, and isolated
+  page-counter footers so `1 of 1` preserves its visual and extracted order.
 
 ### Removed
 
