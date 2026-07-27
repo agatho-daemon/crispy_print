@@ -65,6 +65,7 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 			section_label_font_size_pt=15,
 			section_label_font_weight="Extrabold",
 			enable_qr_code=1,
+			qr_source_mode="Custom Document QR",
 			qr_code_size_mm=22,
 			qr_dx_mm=3,
 			qr_dy_mm=4,
@@ -82,7 +83,7 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(settings["typography"]["sectionLabel"]["fontWeight"], "extrabold")
 		self.assertTrue(settings["qr"]["enabled"])
 		self.assertEqual(settings["qr"]["dy"], 4)
-		self.assertEqual(settings["qr"]["sourceMode"], "basic")
+		self.assertEqual(settings["qr"]["sourceMode"], "custom")
 		self.assertEqual(settings["reportTheme"]["title"]["fontWeight"], "bold")
 		self.assertEqual(settings["reportTheme"]["negativeColor"], "#B91C1C")
 		self.assertEqual(len(settings["reportTheme"]["chartPalette"]), 6)
@@ -97,6 +98,10 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		self.assertEqual(doc.section_label_font_style, "italic")
 		self.assertEqual(doc.field_label_font_weight, "semibold")
 		self.assertEqual(doc.report_title_font_weight, "bold")
+
+	def test_rejects_enabled_legacy_basic_qr_configuration(self):
+		with self.assertRaises(frappe.ValidationError):
+			self._insert_profile(enable_qr_code=1, qr_source_mode="Basic QR")
 
 	def test_typography_option_patch_backfills_legacy_values_idempotently(self):
 		doc = self._insert_profile()

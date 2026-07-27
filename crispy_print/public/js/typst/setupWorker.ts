@@ -19,6 +19,7 @@ import {
 	parseTypstError,
 } from "./workerCompilation"
 import { createDocumentLoader, sanitizeFilename } from "./workerDocuments"
+import { buildCustomQrPayload } from "../utils/customQr"
 import {
 	DOWNLOAD_REQUEST_ID,
 	PREVIEW_REQUEST_ID,
@@ -204,6 +205,11 @@ export function setupWorker(
 
 			sampleDocData = doc
 			sampleDocSelected = true
+			window.dispatchEvent(
+				new CustomEvent(CrispyPreviewEvents.Document, {
+					detail: { doctype, docname, document: doc, instanceId },
+				})
+			)
 			compile()
 
 			frappe?.show_alert?.({
@@ -560,9 +566,11 @@ export function setupWorker(
 
 	function getEffectiveQrSourceMode() {
 		const qrSettings = getQrSettings()
-		return String(qrSettings.sourceMode || "").trim() === "document_code_profile"
-			? "document_code_profile"
-			: "basic"
+		const mode = String(qrSettings.sourceMode || "").trim()
+		if (mode === "document_code_profile" || mode === "custom" || mode === "basic") {
+			return mode
+		}
+		return ""
 	}
 
 	function getDocumentRequestFields() {
@@ -611,7 +619,7 @@ export function setupWorker(
 			adapter &&
 			typeof adapter.getQrEnabled === "function" &&
 			adapter.getQrEnabled() &&
-			getEffectiveQrSourceMode() !== "document_code_profile"
+			["custom", "basic"].includes(getEffectiveQrSourceMode())
 		) {
 			qrFields.forEach((field: any) => {
 				const fieldname = String(field || "").trim()
@@ -654,6 +662,10 @@ export function setupWorker(
 		) {
 			return generatedCode.encoded_value.trim()
 		}
+		if (getEffectiveQrSourceMode() === "custom") {
+			return buildCustomQrPayload(doc, fields)
+		}
+		if (getEffectiveQrSourceMode() !== "basic") return ""
 		if (!fields.length) return String(doc.name || "")
 		const wantsTimestamp = fields.includes("timestamp")
 		const lines: string[] = []

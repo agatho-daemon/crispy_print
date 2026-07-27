@@ -7,6 +7,7 @@ from frappe import _
 from crispy_print.crispy_print.doctype.crispy_print_settings.crispy_print_settings import (
 	validate_document_print_policy,
 )
+from crispy_print.qr_registry import get_qr_fields
 
 from ._common import truthy
 from .document_codes import get_preferred_document_code_for_doc
@@ -231,6 +232,10 @@ def _build_document_code_preview(
 	profile_name = result.get("profile_name")
 	if profile_name:
 		frappe.get_doc("Crispy Document Code Profile", profile_name).check_permission("read")
+	regulatory_profile = result.get("regulatory_profile") or {}
+	authority_code = regulatory_profile.get("authority_code")
+	registry = get_qr_fields(doc.doctype, authority_code=authority_code) if authority_code else {}
+	authority = registry.get("authority") or {}
 	return {
 		"code_purpose": result.get("code_purpose"),
 		"environment": result.get("environment"),
@@ -238,6 +243,12 @@ def _build_document_code_preview(
 		"code_format": result.get("code_format"),
 		"code_symbology": result.get("code_symbology"),
 		"encoded_value": result.get("encoded_value"),
+		"payload_format": result.get("payload_format"),
+		"output_encoding": result.get("output_encoding"),
+		"authority_code": authority_code,
+		"country": authority.get("country"),
+		"required_fields": authority.get("required_fields") or [],
+		"optional_fields": authority.get("optional_fields") or [],
 	}
 
 

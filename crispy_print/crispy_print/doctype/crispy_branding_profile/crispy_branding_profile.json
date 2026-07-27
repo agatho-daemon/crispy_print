@@ -871,12 +871,12 @@
       "label": "Enable QR Code"
     },
     {
-      "default": "Basic QR",
+      "default": "Custom Document QR",
       "depends_on": "eval:doc.enable_qr_code == 1",
       "fieldname": "qr_source_mode",
       "fieldtype": "Select",
       "label": "QR Source Mode",
-      "options": "Basic QR\nDocument Code Profile"
+      "options": "Custom Document QR\nRegulatory Document Code"
     },
     {
       "default": "QR Code",

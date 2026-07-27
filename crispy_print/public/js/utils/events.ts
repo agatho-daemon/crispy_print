@@ -32,6 +32,13 @@ export type CrispyPreviewSetDocDetail = {
 	instanceId?: string
 }
 
+export type CrispyPreviewDocumentDetail = {
+	doctype: string
+	docname: string
+	document: Record<string, unknown>
+	instanceId?: string
+}
+
 export type CrispyPreviewPdfAction = "view" | "download" | "print"
 export type CrispyPreviewPdfRequestDetail = {
 	action: CrispyPreviewPdfAction
@@ -41,6 +48,7 @@ export type CrispyPreviewPdfRequestDetail = {
 export const CrispyPreviewEvents = {
 	Status: "crispy-preview:status",
 	SetDoc: "crispy-preview:set-doc",
+	Document: "crispy-preview:document",
 	Refresh: "crispy-preview:refresh",
 	RequestSource: "crispy-preview:request-source",
 	Source: "crispy-preview:source",

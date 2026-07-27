@@ -9,6 +9,7 @@ from frappe.model.document import Document
 
 from crispy_print.api.v1.company_context import resolve_effective_company
 from crispy_print.defaults import enforce_single_default
+from crispy_print.qr_settings import validate_editable_qr_settings
 from crispy_print.report_renderers import (
 	get_source_fingerprint,
 	infer_renderer_for_reports,
@@ -59,6 +60,10 @@ class CrispyFormat(Document):
 	def validate(self):
 		"""Validate field combinations for the selected format type."""
 		self._set_default_company_if_missing()
+		validate_editable_qr_settings(
+			self.presentation_settings,
+			self.doc_type if self.crispy_format_type == "DocType" else None,
+		)
 		if not self.company and self.crispy_format_type != "Report":
 			frappe.throw(_("Company is required for Crispy Format. Set a Default Company first."))
 

@@ -3011,7 +3011,7 @@ msgstr ""
 #: crispy_print/public/js/components/SettingsPane.vue:20
 #: crispy_print/public/js/components/TypstCodePane.vue:17
 #: crispy_print/public/js/pages/CrispyPP.vue:147
-msgid "Help symbol"
+msgid "?"
 msgstr ""
 
 #. Option for the 'Output Encoding' (Select) field in DocType 'Crispy Document
@@ -8063,3 +8063,181 @@ msgstr ""
 msgid "{0}.{1} references unknown fields: {2}"
 msgstr ""
 
+#: crispy_print/public/js/components/QrFieldsDialog.vue:83
+msgid "Add document field"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:993
+msgid "Authority / country"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:9
+msgid "Choose exact document fieldnames and drag them into payload order. This QR is for internal or general business use and does not certify regulatory compliance."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1010
+msgid "Configuration resolved"
+msgstr ""
+
+#. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
+#. Profile'
+#: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
+#: crispy_print/public/js/components/SettingsPane.vue:924
+msgid "Custom Document QR"
+msgstr ""
+
+#: crispy_print/qr_settings.py:69
+msgid "Custom Document QR field is unavailable for {0}: {1}"
+msgstr ""
+
+#: crispy_print/qr_settings.py:77
+msgid "Custom Document QR field is unsafe or unsupported: {0}"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:6
+msgid "Custom Document QR fields"
+msgstr ""
+
+#: crispy_print/qr_settings.py:59
+msgid "Custom Document QR fields cannot contain duplicates."
+msgstr ""
+
+#: crispy_print/qr_settings.py:57
+msgid "Custom Document QR fields must contain exact fieldname strings."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:972
+msgid "Custom Document QR is intended for internal or general business use and does not certify regulatory compliance."
+msgstr ""
+
+#: crispy_print/qr_settings.py:51
+msgid "Custom Document QR requires a DocType-backed format."
+msgstr ""
+
+#: crispy_print/qr_settings.py:55
+msgid "Custom Document QR requires at least one document field."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:956
+msgid "Custom QR fields"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:47
+#: crispy_print/public/js/components/QrFieldsDialog.vue:99
+msgid "Data"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:38
+#: crispy_print/public/js/components/QrFieldsDialog.vue:39
+msgid "Drag to reorder"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:114
+msgid "Exact payload preview"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:984
+msgid "Format-level fields are ignored. The backend Document Code Profile owns the regulated payload."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:942
+msgid "Legacy Basic QR configuration"
+msgstr ""
+
+#: crispy_print/qr_settings.py:42
+msgid "Legacy Basic QR configuration must be explicitly changed to Custom Document QR before saving or publishing."
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:60
+msgid "Move down"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:52
+msgid "Move up"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:79
+msgid "No fields selected. Add at least one document field."
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:117
+msgid "No payload"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1250
+#: crispy_print/public/js/components/SettingsPane.vue:1253
+msgid "None declared"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:995
+#: crispy_print/public/js/components/SettingsPane.vue:1002
+#: crispy_print/public/js/components/SettingsPane.vue:1003
+msgid "Not specified"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1007
+msgid "Optional fields"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:991
+msgid "Profile"
+msgstr ""
+
+#. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
+#. Profile'
+#: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
+#: crispy_print/public/js/components/SettingsPane.vue:926
+msgid "Regulatory Document Code"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1376
+msgid "Regulatory configuration could not be resolved."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1371
+msgid "Regulatory configuration resolved successfully."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1005
+msgid "Required fields"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:89
+msgid "Search by label or fieldname..."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:945
+msgid "Select Custom Document QR and configure its exact fields before saving. This legacy mode is not converted automatically."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1031
+msgid "Select a preview document to resolve and validate its Document Code Profile."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1038
+msgid "The bundled registry is an implementation catalog, not legal certification. Obtain jurisdiction-specific professional approval."
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:120
+msgid "This payload is becoming dense. Reduce the number or size of fields and verify scanning at the printed QR size."
+msgstr ""
+
+#: crispy_print/qr_settings.py:47
+msgid "Unsupported QR source mode: {0}"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:931
+msgid "Use Custom Document QR for an author-controlled internal payload, or Regulatory Document Code for backend profile-controlled output."
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1025
+msgid "Validate configuration"
+msgstr ""
+
+#: crispy_print/public/js/components/SettingsPane.vue:1018
+msgid "View profile"
+msgstr ""
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:115
+msgid "{0} bytes"
+msgstr ""

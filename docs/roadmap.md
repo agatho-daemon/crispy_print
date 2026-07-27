@@ -12,6 +12,11 @@ _Part of the [Crispy Print documentation](README.md)._
 - [x] Frappe v16 curated Workspace Sidebar
 - [x] Fully template-driven document preview
 - [x] Beta 2 report publishing architecture for generic, receivable/payable, financial statement, General Ledger, and Bank Reconciliation families
+- [x] Custom Document QR with ordered exact-field payloads, safe live DocType
+  field selection, payload size diagnostics, and strict separation from
+  registry-backed Regulatory Document Codes
+- [x] Explicit legacy Basic QR compatibility: editable settings require manual
+  reconfiguration while frozen published templates retain their prior output
 
 ### Future Features
 
@@ -32,3 +37,18 @@ The following areas are planned or under active stabilization:
 - [ ] Builder-side draft format version history
 - [ ] Digital-signature and archival workflows beyond PDF/A
 - [ ] Machine-verifiable document workflow extensions
+- [ ] Extend Custom Document QR with explicit child-table/aggregation rules,
+  custom labels, format overrides, payload templates, and JSON payloads
+- [ ] Add operational QR use cases for document lookup, assets, items,
+  serial/batch records, warehouses, tools, projects, sites, and shipments
+- [ ] Add signed/revocable lookup URLs, minimal public payloads, and
+  permission-aware scan actions that require normal ERPNext validation and user
+  confirmation
+- [ ] Compact table presets for common invoice, service, tax, and
+  serial/batch layouts
+- [ ] Crispy Template publish notes/history with active/retired versions and
+  snapshot-hash visibility
+- [ ] Saved Report preview presets
+- [ ] Export bundles containing formats, Branding Profiles, Typst Blocks, and
+  related configuration
+- [ ] Import dry-run summaries for creates, overwrites, renames, and skips

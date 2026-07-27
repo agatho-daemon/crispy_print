@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added Custom Document QR with an RTL-aware ordered field editor, live safe
+  DocType metadata, exact fieldname persistence, payload preview, encoded-byte
+  estimate, density warnings, and duplicate/unsupported-field validation.
+- Added a read-only Regulatory Document Code summary with resolved profile,
+  authority, country, encoding, registry requirements, profile navigation, and
+  explicit configuration validation.
 - Added end-to-end RTL direction handling for Arabic and Persian across the
   builders, portal-mounted menus, DocType/Report previews, Typst, branding, and
   final PDFs. Hebrew and Urdu are also recognized by the generic direction
@@ -24,11 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deterministic multipage, QR, Report, drag/menu, and optional published final
   preview coverage. Test documents no longer combine Arabic and Persian labels.
 - Added complete gettext catalogs for 14 non-English UI locales: Arabic (`ar`), German (`de`), Spanish (`es`), Persian (`fa`), French (`fr`), Hindi (`hi`), Indonesian (`id`), Italian (`it`), Brazilian Portuguese (`pt_BR`), Russian (`ru`), Thai (`th`), Turkish (`tr`), Vietnamese (`vi`), and Simplified Chinese (`zh`).
-- Added a shared `locale/main.pot` source catalog containing all 1,550 currently extracted application messages and contributor guidance for editing, synchronizing, validating, and compiling translations.
+- Added a shared `locale/main.pot` source catalog containing all 1,604 currently extracted application messages and contributor guidance for editing, synchronizing, validating, and compiling translations.
 - Added machine-assisted starting translations with exact source-catalog coverage, reusing established Frappe and ERPNext community translations where available. Native-speaker review remains encouraged, especially for accounting, regulatory, and RTL terminology.
 
 ### Changed
 
+- Replaced editable Basic QR with the explicit `custom` source mode and separated
+  internal/general-business payloads from registry-backed regulatory codes.
+  Editable legacy `basic` settings now require deliberate reconfiguration,
+  while published frozen templates keep their previous rendering unchanged.
 - Upgraded portable Crispy Format exports to additive schema v4. Schemas v1-v3
   remain importable; legacy physical alignment/table order and frozen Crispy
   Templates are never rewritten automatically.

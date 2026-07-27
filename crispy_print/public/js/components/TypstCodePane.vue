@@ -14,7 +14,7 @@
 						aria-haspopup="dialog"
 						aria-controls="typst-code-help"
 					>
-						{{ __("Help symbol") }}
+						{{ __("?") }}
 					</button>
 					<div
 						id="typst-code-help"

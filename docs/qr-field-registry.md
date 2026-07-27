@@ -4,13 +4,21 @@ _Part of the [Crispy Print documentation](README.md)._
 
 ## Purpose
 
-Crispy Print keeps QR/document-code field definitions in a backend-owned registry file:
+Crispy Print keeps **Regulatory Document Code** field definitions in a
+backend-owned registry file:
 
 ```text
 crispy_print/qr_registry/fields.v1.json
 ```
 
-This registry is the canonical allow-list for fields that may be used in QR payloads. Users do not type arbitrary document paths. They select registry-backed fields through `Crispy Document Code Profile`.
+This registry is the canonical allow-list for Document Code Profile payloads.
+Users do not type arbitrary document paths; they select registry-backed fields
+through `Crispy Document Code Profile`.
+
+It does not define or normalize **Custom Document QR** fields. Custom QR stores
+an ordered `string[]` of exact fieldnames selected from the current DocType's
+live metadata. Its translated labels and field types are resolved only for the
+editor display.
 
 ## Data Model
 
@@ -80,7 +88,10 @@ Selected QR fields are not allowed for <DocType>: <field_key>
 
 ## Business Field Sets
 
-Business field sets are convenience bundles for non-regulatory use cases such as inventory traceability or payment receipts. They live in the repo registry, but applying them adds normal `Crispy Document Code Field` child rows to the profile.
+Business field sets are convenience bundles for profile-driven document-code
+use cases such as inventory traceability or payment receipts. They live in the
+repo registry, but applying them adds normal `Crispy Document Code Field` child
+rows to the profile. They do not alter a format's Custom Document QR field list.
 
 This keeps site configuration explicit while avoiding repetitive manual row entry.
 

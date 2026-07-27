@@ -40,7 +40,7 @@ export interface QrSettings {
   size: number;
   fields: string[];
   enabled?: boolean;
-  sourceMode?: "" | "basic" | "document_code_profile";
+  sourceMode?: "" | "custom" | "basic" | "document_code_profile";
   symbology?: "QR Code" | "DataMatrix";
   errorCorrection?: "Low" | "Medium" | "Quartile" | "High";
   quietZone?: number;

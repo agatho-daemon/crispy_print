@@ -64,6 +64,7 @@ describe("Help button accessibility", () => {
       props: { fields: [], isReportMode: false },
     });
     const fieldsHelp = fields.find("button.fields-pane__help-btn");
+    expect(fieldsHelp.text()).toBe("?");
     expect(fieldsHelp.attributes("aria-haspopup")).toBe("dialog");
     expect(fieldsHelp.attributes("aria-controls")).toBe("fields-help");
 
@@ -94,11 +95,13 @@ describe("Help button accessibility", () => {
       },
     });
     const settingsHelp = settings.find("button.settings-pane__help-btn");
+    expect(settingsHelp.text()).toBe("?");
     expect(settingsHelp.attributes("aria-haspopup")).toBe("dialog");
     expect(settingsHelp.attributes("aria-controls")).toBe("settings-help");
 
     const typst = mount(TypstCodePane);
     const typstHelp = typst.find("button.typst-code-pane__help-btn");
+    expect(typstHelp.text()).toBe("?");
     expect(typstHelp.attributes("aria-haspopup")).toBe("dialog");
     expect(typstHelp.attributes("aria-controls")).toBe("typst-code-help");
 
@@ -112,6 +115,7 @@ describe("Help button accessibility", () => {
       },
     });
     const previewHelp = preview.find("button.preview-pane__help-btn");
+    expect(previewHelp.text()).toBe("?");
     expect(previewHelp.attributes("aria-haspopup")).toBe("dialog");
     expect(previewHelp.attributes("aria-controls")).toBe("preview-help");
   });

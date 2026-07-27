@@ -309,7 +309,7 @@ describe("setupWorker race guards", () => {
 		expect(previewMessage.typstSrc).toContain("#text[#doc.name]")
 	})
 
-	it("sends selected-field payload for basic QR compilation", async () => {
+	it("sends exact selected-field payload for custom QR compilation", async () => {
 		const pane = makePane()
 		setupWorker(
 			"Test Format",
@@ -318,7 +318,7 @@ describe("setupWorker race guards", () => {
 				...makeAdapter(),
 				getQrEnabled: () => true,
 				get_presentation_settings: () => ({
-					qr: { sourceMode: "basic", fields: ["name", "customer"] },
+					qr: { sourceMode: "custom", fields: ["name", "customer"] },
 				}),
 			},
 			{
@@ -347,5 +347,41 @@ describe("setupWorker race guards", () => {
 		expect(previewMessage.typstSrc).toContain("crispy-qrcode")
 		expect(previewMessage.typstSrc).toContain("name: A\\ncustomer: Customer A")
 		expect(previewMessage.typstSrc).toContain("#text[#doc.name]")
+	})
+
+	it("preserves the frozen legacy basic QR timestamp payload", async () => {
+		const pane = makePane()
+		setupWorker(
+			"Frozen Legacy Template",
+			pane,
+			{
+				...makeAdapter(),
+				getQrEnabled: () => true,
+				get_presentation_settings: () => ({
+					qr: { sourceMode: "basic", fields: ["timestamp", "name"] },
+				}),
+			},
+			{
+				createWorker: () => ({ worker: worker as any, cleanup: vi.fn() }),
+				instanceId: "pane-a",
+			}
+		)
+
+		window.dispatchEvent(
+			new CustomEvent(CrispyPreviewEvents.SetDoc, {
+				detail: { doctype: "Sales Invoice", docname: "A", instanceId: "pane-a" },
+			})
+		)
+		callbacks.A({
+			message: {
+				name: "A",
+				posting_date: "2026-07-27",
+				posting_time: "14:30:00",
+			},
+		})
+		await flushCompileTimers()
+
+		const previewMessage = worker.messages.find((message) => message.requestId === "preview")
+		expect(previewMessage.qrData).toBe("timestamp: 2026-07-27T14:30:00\nname: A")
 	})
 })

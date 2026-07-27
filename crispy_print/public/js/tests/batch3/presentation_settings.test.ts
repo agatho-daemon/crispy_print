@@ -53,7 +53,7 @@ describe("presentation_settings helpers", () => {
 	it("merges overrides with defaults", () => {
 		const merged = merge_presentation_settings(default_presentation_settings, {
 			page: { margins: { top: 10, bottom: 20, left: 30, right: 40 } } as any,
-			qr: { size: 20, dx: 0, dy: 0, fields: [], enabled: true, sourceMode: "basic" },
+			qr: { size: 20, dx: 0, dy: 0, fields: [], enabled: true, sourceMode: "custom" },
 			branding: { logo: { company: "Acme", image: "", size: 25, dx: 0, dy: 0 } } as any,
 			table: {
 				stroke: { width: 1, color: "#000000" },
@@ -63,7 +63,7 @@ describe("presentation_settings helpers", () => {
 		expect(merged.page.margins.top).toBe(10)
 		expect(merged.page.margins.left).toBe(30)
 		expect(merged.qr?.size).toBe(20)
-		expect(merged.qr?.sourceMode).toBe("basic")
+		expect(merged.qr?.sourceMode).toBe("custom")
 		expect(merged.branding.logo?.company).toBe("Acme")
 		expect(merged.table?.stroke.width).toBe(1)
 		expect(merged.table?.cellLabel.enabled).toBe(false)

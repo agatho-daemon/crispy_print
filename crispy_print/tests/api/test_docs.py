@@ -243,6 +243,7 @@ class TestFormattedDocAPI(FrappeTestCase):
 		from crispy_print.api.v1.docs import get_formatted_doc
 
 		mock_doc = SimpleNamespace(
+			doctype="Sales Invoice",
 			check_permission=mock.Mock(),
 			as_dict=lambda: {"name": "DOC-1"},
 		)
@@ -265,6 +266,7 @@ class TestFormattedDocAPI(FrappeTestCase):
 		from crispy_print.api.v1.docs import get_formatted_doc
 
 		mock_doc = SimpleNamespace(
+			doctype="Sales Invoice",
 			check_permission=mock.Mock(),
 			as_dict=lambda: {"name": "DOC-1"},
 		)
@@ -286,10 +288,23 @@ class TestFormattedDocAPI(FrappeTestCase):
 					"profile_name": "Profile-1",
 					"code_format": "QR Code",
 					"code_symbology": "QR Code",
+					"payload_format": "TLV",
+					"output_encoding": "Base64",
+					"regulatory_profile": {"authority_code": "ZATCA"},
 					"payload": {"name": "DOC-1"},
 					"encoded_value": "ENCODED-QR",
 				},
 			) as get_preferred,
+			mock.patch(
+				"crispy_print.api.v1.docs.get_qr_fields",
+				return_value={
+					"authority": {
+						"country": "SA",
+						"required_fields": ["company", "grand_total"],
+						"optional_fields": ["name"],
+					}
+				},
+			),
 		):
 			out = get_formatted_doc(
 				"Any",
@@ -300,6 +315,9 @@ class TestFormattedDocAPI(FrappeTestCase):
 
 		self.assertEqual(out["__crispy_document_code"]["encoded_value"], "ENCODED-QR")
 		self.assertEqual(out["__crispy_document_code"]["profile_name"], "Profile-1")
+		self.assertEqual(out["__crispy_document_code"]["authority_code"], "ZATCA")
+		self.assertEqual(out["__crispy_document_code"]["country"], "SA")
+		self.assertEqual(out["__crispy_document_code"]["required_fields"], ["company", "grand_total"])
 		self.assertNotIn("payload", out["__crispy_document_code"])
 		get_preferred.assert_called_once_with(mock_doc, allow_custom_methods=False)
 		mock_profile.check_permission.assert_called_once_with("read")

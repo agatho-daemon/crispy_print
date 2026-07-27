@@ -73,7 +73,7 @@ msgid ""
 "    </div>\n"
 "  </div>\n"
 "</div>"
-msgstr ""
+msgstr "<div style=\"line-height:1.5;\">\n  <h4 style=\"margin:0 0 10px;\">Typst Help</h4>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>How Styling Works</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>\n        In normal builder mode, <code>fieldLabelStyle</code>, <code>fieldValueStyle</code>, and <code>sectionLabelStyle</code> are configured in the Builder and automatically inserted before <code>typst_preamble</code>.\n      </li>\n      <li>\n        <code>typst_preamble</code> runs before document content and can override global styles.\n      </li>\n      <li>\n        <code>doc_header</code> defines <code>header_block</code>, and <code>doc_footer</code> defines <code>footer_block</code> for page header/footer setup.\n      </li>\n      <li>\n        In Raw Typst mode, Crispy only injects document data and helper functions. Page setup, styling, header, footer, and layout belong in the Raw Typst code.\n      </li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Raw Typst Helpers</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Document data is available as <code>#doc.fieldname</code>.</li>\n      <li>Use <code>crispy_image(\"logo.svg\", width: 20mm)</code> and <code>crispy_block(\"document_title-v1.0\")</code> inside function arguments or other Typst expression contexts.</li>\n      <li>When calling a helper directly from markup, add Typst's markup escape: <code>#crispy_image(\"logo.svg\", width: 20mm)</code> or <code>#crispy_block(\"document_title-v1.0\")</code>.</li>\n      <li><code>crispy_image</code> resolves plain filenames only from the current site's private files assets.</li>\n    </ol>\n  </div>\n\n  <div style=\"margin-bottom:14px;\">\n    <strong>Quick Examples</strong>\n    <ol style=\"margin:6px 0 0 18px; padding:0;\">\n      <li>Preamble: <code>#set text(font: \"Inter\", size: 11pt)</code></li>\n      <li>Header: <code>#let header_block = [#text(weight: 700)[#doc.doctype]]</code></li>\n      <li>Footer: <code>#let footer_block = [#text(size: 8pt)[#doc.name]]</code></li>\n      <li>Raw placement: <code>#place(top + left, crispy_image(\"logo.svg\", width: 20mm))</code></li>\n    </ol>\n  </div>\n\n  <div>\n    <strong>Branding Layers</strong>\n    <div style=\"margin-top:4px;\">\n      In normal builder mode, the letterhead is rendered in the page <code>background</code>, while the logo and QR code are rendered in the <code>foreground</code> layer.\n    </div>\n  </div>\n</div>"
 "<div style=\"line-height:1.5;\">\n"
 "  \n"
 "  <h4 style=\"margin:0 0 10px;\">مساعدة تايبست</h4>\n"
@@ -498,7 +498,7 @@ msgstr "التحف"
 msgid ""
 "Asset file resolution failed:\n"
 "{0}"
-msgstr ""
+msgstr "Asset file resolution failed:\n{0}"
 "فشل تحليل ملف الأصول:\n"
 "{0}"
 
@@ -506,7 +506,7 @@ msgstr ""
 msgid ""
 "Asset filenames must be unique within a compile request:\n"
 "{0}"
-msgstr ""
+msgstr "Asset filenames must be unique within a compile request:\n{0}"
 "يجب أن تكون أسماء ملفات الأصول فريدة ضمن طلب الترجمة:\n"
 "{0}"
 
@@ -2864,7 +2864,7 @@ msgid "Height (mm)"
 msgstr "الارتفاع (مم)"
 
 #: crispy_print/public/js/components/FieldsPane.vue:19 crispy_print/public/js/components/LayoutPane.vue:47 crispy_print/public/js/components/PreviewPane.vue:70 crispy_print/public/js/components/SettingsPane.vue:20 crispy_print/public/js/components/TypstCodePane.vue:17 crispy_print/public/js/pages/CrispyPP.vue:147
-msgid "Help symbol"
+msgid "?"
 msgstr "؟"
 
 #. Option for the 'Output Encoding' (Select) field in DocType 'Crispy Document
@@ -3070,7 +3070,7 @@ msgstr "حمولة JSON غير صالحة"
 msgid ""
 "Invalid asset_files entries:\n"
 "{0}"
-msgstr ""
+msgstr "Invalid asset_files entries:\n{0}"
 "إدخالات ملفات_الأصول غير صالحة:\n"
 "{0}"
 
@@ -4104,7 +4104,7 @@ msgid ""
 "<span style=\"color: var(--orange-600);\">\n"
 "  Note: PDF/A output embeds fonts, so selected fonts must permit PDF embedding/subsetting.\n"
 "</span>"
-msgstr ""
+msgstr "PDF output standard:\n<ul>\n  <li>PDF/A-2u for normal business archives</li>\n  <li>PDF/A-3u when embedding machine-readable payloads such as XML or JSON</li>\n  <li>PDF 1.7 for non-archival output (Typst default)</li>\n  <li>PDF 2.0 for modern non-archival output where supported</li>\n  <li>PDF/A-4 where accepted by the relevant authority</li>\n</ul>\n<span style=\"color: var(--orange-600);\">\n  Note: PDF/A output embeds fonts, so selected fonts must permit PDF embedding/subsetting.\n</span>"
 "معيار الإخراج PDF:\n"
 "<ul>\n"
 "  <li>PDF/A-2u لأرشيفات الأعمال العادية</li>\n"
@@ -7570,3 +7570,182 @@ msgstr "يجب أن تكون {0}.{1} قائمة."
 #: crispy_print/qr_registry/loader.py:200
 msgid "{0}.{1} references unknown fields: {2}"
 msgstr "{0}.{1} تشير إلى حقول غير معروفة: {2}"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:83
+msgid "Add document field"
+msgstr "إضافة حقل من المستند"
+
+#: crispy_print/public/js/components/SettingsPane.vue:993
+msgid "Authority / country"
+msgstr "الجهة / الدولة"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:9
+msgid "Choose exact document fieldnames and drag them into payload order. This QR is for internal or general business use and does not certify regulatory compliance."
+msgstr "اختر أسماء حقول المستند كما هي واسحبها لترتيب البيانات. هذا الرمز للاستخدام الداخلي أو التجاري العام ولا يُثبت الامتثال التنظيمي."
+
+#: crispy_print/public/js/components/SettingsPane.vue:1010
+msgid "Configuration resolved"
+msgstr "تم التحقق من الإعداد"
+
+#. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
+#. Profile'
+#: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
+#: crispy_print/public/js/components/SettingsPane.vue:924
+msgid "Custom Document QR"
+msgstr "رمز QR مخصص للمستند"
+
+#: crispy_print/qr_settings.py:69
+msgid "Custom Document QR field is unavailable for {0}: {1}"
+msgstr "Custom Document QR field is unavailable for {0}: {1}"
+
+#: crispy_print/qr_settings.py:77
+msgid "Custom Document QR field is unsafe or unsupported: {0}"
+msgstr "Custom Document QR field is unsafe or unsupported: {0}"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:6
+msgid "Custom Document QR fields"
+msgstr "حقول رمز QR المخصص للمستند"
+
+#: crispy_print/qr_settings.py:59
+msgid "Custom Document QR fields cannot contain duplicates."
+msgstr "Custom Document QR fields cannot contain duplicates."
+
+#: crispy_print/qr_settings.py:57
+msgid "Custom Document QR fields must contain exact fieldname strings."
+msgstr "Custom Document QR fields must contain exact fieldname strings."
+
+#: crispy_print/public/js/components/SettingsPane.vue:972
+msgid "Custom Document QR is intended for internal or general business use and does not certify regulatory compliance."
+msgstr "Custom Document QR is intended for internal or general business use and does not certify regulatory compliance."
+
+#: crispy_print/qr_settings.py:51
+msgid "Custom Document QR requires a DocType-backed format."
+msgstr "Custom Document QR requires a DocType-backed format."
+
+#: crispy_print/qr_settings.py:55
+msgid "Custom Document QR requires at least one document field."
+msgstr "Custom Document QR requires at least one document field."
+
+#: crispy_print/public/js/components/SettingsPane.vue:956
+msgid "Custom QR fields"
+msgstr "حقول رمز QR المخصص"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:47
+#: crispy_print/public/js/components/QrFieldsDialog.vue:99
+msgid "Data"
+msgstr "البيانات"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:38
+#: crispy_print/public/js/components/QrFieldsDialog.vue:39
+msgid "Drag to reorder"
+msgstr "اسحب لإعادة الترتيب"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:114
+msgid "Exact payload preview"
+msgstr "معاينة البيانات الفعلية"
+
+#: crispy_print/public/js/components/SettingsPane.vue:984
+msgid "Format-level fields are ignored. The backend Document Code Profile owns the regulated payload."
+msgstr "Format-level fields are ignored. The backend Document Code Profile owns the regulated payload."
+
+#: crispy_print/public/js/components/SettingsPane.vue:942
+msgid "Legacy Basic QR configuration"
+msgstr "إعداد Basic QR قديم"
+
+#: crispy_print/qr_settings.py:42
+msgid "Legacy Basic QR configuration must be explicitly changed to Custom Document QR before saving or publishing."
+msgstr "Legacy Basic QR configuration must be explicitly changed to Custom Document QR before saving or publishing."
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:60
+msgid "Move down"
+msgstr "تحريك لأسفل"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:52
+msgid "Move up"
+msgstr "تحريك لأعلى"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:79
+msgid "No fields selected. Add at least one document field."
+msgstr "لم يتم تحديد حقول. أضف حقل مستند واحدًا على الأقل."
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:117
+msgid "No payload"
+msgstr "لا توجد بيانات"
+
+#: crispy_print/public/js/components/SettingsPane.vue:1250
+#: crispy_print/public/js/components/SettingsPane.vue:1253
+msgid "None declared"
+msgstr "لم يُحدد شيء"
+
+#: crispy_print/public/js/components/SettingsPane.vue:995
+#: crispy_print/public/js/components/SettingsPane.vue:1002
+#: crispy_print/public/js/components/SettingsPane.vue:1003
+msgid "Not specified"
+msgstr "غير محدد"
+
+#: crispy_print/public/js/components/SettingsPane.vue:1007
+msgid "Optional fields"
+msgstr "الحقول الاختيارية"
+
+#: crispy_print/public/js/components/SettingsPane.vue:991
+msgid "Profile"
+msgstr "ملف التعريف"
+
+#. Option for the 'QR Source Mode' (Select) field in DocType 'Crispy Branding
+#. Profile'
+#: crispy_print/crispy_print/doctype/crispy_branding_profile/crispy_branding_profile.json
+#: crispy_print/public/js/components/SettingsPane.vue:926
+msgid "Regulatory Document Code"
+msgstr "رمز مستند تنظيمي"
+
+#: crispy_print/public/js/components/SettingsPane.vue:1376
+msgid "Regulatory configuration could not be resolved."
+msgstr "تعذر التحقق من الإعداد التنظيمي."
+
+#: crispy_print/public/js/components/SettingsPane.vue:1371
+msgid "Regulatory configuration resolved successfully."
+msgstr "تم التحقق من الإعداد التنظيمي بنجاح."
+
+#: crispy_print/public/js/components/SettingsPane.vue:1005
+msgid "Required fields"
+msgstr "الحقول المطلوبة"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:89
+msgid "Search by label or fieldname..."
+msgstr "البحث بالتسمية أو اسم الحقل..."
+
+#: crispy_print/public/js/components/SettingsPane.vue:945
+msgid "Select Custom Document QR and configure its exact fields before saving. This legacy mode is not converted automatically."
+msgstr "Select Custom Document QR and configure its exact fields before saving. This legacy mode is not converted automatically."
+
+#: crispy_print/public/js/components/SettingsPane.vue:1031
+msgid "Select a preview document to resolve and validate its Document Code Profile."
+msgstr "Select a preview document to resolve and validate its Document Code Profile."
+
+#: crispy_print/public/js/components/SettingsPane.vue:1038
+msgid "The bundled registry is an implementation catalog, not legal certification. Obtain jurisdiction-specific professional approval."
+msgstr "The bundled registry is an implementation catalog, not legal certification. Obtain jurisdiction-specific professional approval."
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:120
+msgid "This payload is becoming dense. Reduce the number or size of fields and verify scanning at the printed QR size."
+msgstr "This payload is becoming dense. Reduce the number or size of fields and verify scanning at the printed QR size."
+
+#: crispy_print/qr_settings.py:47
+msgid "Unsupported QR source mode: {0}"
+msgstr "Unsupported QR source mode: {0}"
+
+#: crispy_print/public/js/components/SettingsPane.vue:931
+msgid "Use Custom Document QR for an author-controlled internal payload, or Regulatory Document Code for backend profile-controlled output."
+msgstr "Use Custom Document QR for an author-controlled internal payload, or Regulatory Document Code for backend profile-controlled output."
+
+#: crispy_print/public/js/components/SettingsPane.vue:1025
+msgid "Validate configuration"
+msgstr "التحقق من الإعداد"
+
+#: crispy_print/public/js/components/SettingsPane.vue:1018
+msgid "View profile"
+msgstr "عرض ملف التعريف"
+
+#: crispy_print/public/js/components/QrFieldsDialog.vue:115
+msgid "{0} bytes"
+msgstr "{0} بايت"

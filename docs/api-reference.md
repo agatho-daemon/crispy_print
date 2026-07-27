@@ -69,7 +69,7 @@ this policy metadata.
 - Args:
   - `doctype: str`
   - `name: str`
-  - optional `qr_source_mode: "basic" | "document_code_profile"`
+  - optional `qr_source_mode: "" | "custom" | "document_code_profile"`
   - optional `fields: list[str] | JSON string` with top-level fields and child paths such as `items.item_code`
   - optional `allow_document_code_preview: 0 | 1`
 - Returns: formatted render payload
@@ -78,7 +78,17 @@ this policy metadata.
   - Child tables return only requested child columns. A top-level child-table field such as `items` keeps the legacy all-child-columns behavior for raw Typst compatibility.
   - When `fields` is provided, hidden, password, internal, and unsupported field paths are ignored instead of being copied from `doc.as_dict()`.
   - Omitting `fields` keeps the legacy broad formatted document payload for backward compatibility; new preview callers should send fields.
-  - Document-code QR preview is not executed unless `qr_source_mode="document_code_profile"` and `allow_document_code_preview=1`. Preview output is limited to safe QR metadata and encoded value.
+  - Custom Document QR uses `qr_source_mode="custom"` and requests the exact
+    ordered top-level fieldnames persisted in `presentation_settings.qr.fields`.
+    It does not normalize aliases or synthesize fields.
+  - Legacy `qr_source_mode="basic"` is retained only by the frozen-template
+    renderer. Editable formats and Branding Profiles must be explicitly
+    reconfigured before saving or publishing.
+  - Document-code QR preview is not executed unless
+    `qr_source_mode="document_code_profile"` and
+    `allow_document_code_preview=1`. Preview output is limited to the encoded
+    value and safe profile, purpose, environment, authority, country, encoding,
+    required-field, and optional-field metadata.
 
 ### `get_crispy_formats_for_doctype(doctype, company=None)`
 

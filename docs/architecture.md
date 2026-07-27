@@ -221,3 +221,9 @@ Render payload policy:
 - **Safe essentials** - `get_formatted_doc` always includes `doctype`, `name`, `docstatus`, `modified`, and the Crispy print context needed by render helpers.
 - **Legacy compatibility** - Callers that omit `fields` still receive the older broad formatted document payload during the compatibility window.
 - **Document-code preview gate** - Document Code Profile QR preview is opt-in per request and skips custom-method rules in preview/read contexts.
+- **Separated QR contracts** - Custom Document QR persists one ordered
+  `string[]` of exact safe top-level Frappe fieldnames and builds a readable
+  internal-use payload. Regulatory Document Code ignores that list and resolves
+  only through the permission-aware Document Code Profile and registry path.
+  Editable legacy `basic` configurations are rejected until explicitly
+  reconfigured; frozen templates retain a narrow legacy renderer.

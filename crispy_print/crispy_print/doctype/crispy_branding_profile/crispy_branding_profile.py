@@ -123,9 +123,18 @@ class CrispyBrandingProfile(Document):
 		# if flt(self.get("code_only")):
 		# 	return
 		self.validate_branding_assets()
+		self.validate_qr_source_mode()
 		self.validate_numeric_settings()
 		self.validate_chart_settings()
 		self.clear_other_company_defaults()
+
+	def validate_qr_source_mode(self) -> None:
+		if flt(self.enable_qr_code) and self.qr_source_mode == "Basic QR":
+			frappe.throw(
+				_(
+					"Legacy Basic QR configuration must be explicitly changed to Custom Document QR before saving or publishing."
+				)
+			)
 
 	def set_defaults(self) -> None:
 		defaults = {
@@ -209,7 +218,7 @@ class CrispyBrandingProfile(Document):
 			"qr_code_size_mm": 20,
 			"qr_dx_mm": 0,
 			"qr_dy_mm": 0,
-			"qr_source_mode": "Basic QR",
+			"qr_source_mode": "Custom Document QR",
 			"qr_symbology": "QR Code",
 			"qr_error_correction": "Medium",
 			"qr_quiet_zone": 1,
@@ -474,9 +483,11 @@ class CrispyBrandingProfile(Document):
 
 	def get_qr_source_mode(self) -> str:
 		return {
+			"Custom Document QR": "custom",
+			"Regulatory Document Code": "document_code_profile",
 			"Basic QR": "basic",
 			"Document Code Profile": "document_code_profile",
-		}.get(self.qr_source_mode or "Basic QR", "basic")
+		}.get(self.qr_source_mode or "Custom Document QR", "custom")
 
 	def get_datamatrix_encodation(self) -> str:
 		return {

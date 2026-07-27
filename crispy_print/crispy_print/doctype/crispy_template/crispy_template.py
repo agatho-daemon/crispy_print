@@ -26,6 +26,7 @@ from crispy_print.crispy_print.doctype.crispy_typst_block.crispy_typst_block imp
 	resolve_layout_json_typst_blocks,
 )
 from crispy_print.json_utils import loads_dict_or_empty
+from crispy_print.qr_settings import validate_editable_qr_settings
 from crispy_print.render_contract import (
 	TEMPLATE_IMMUTABLE_AFTER_INSERT_FIELDS,
 	TEMPLATE_SNAPSHOT_FIELD_MAP,
@@ -371,6 +372,7 @@ def publish_crispy_template(
 	source = frappe.get_doc("Crispy Format", source_crispy_format)
 	source.check_permission("read")
 	source.check_permission("write")
+	validate_editable_qr_settings(source.presentation_settings, source.doc_type)
 	validate_report_format_for_publish(source)
 	_validate_publish_source_company(source)
 	_validate_expected_source_company(source, company)
@@ -420,6 +422,7 @@ def get_publish_preview(
 		frappe.throw(_("Source Crispy Format is required."))
 	source = frappe.get_doc("Crispy Format", source_crispy_format)
 	source.check_permission("read")
+	validate_editable_qr_settings(source.presentation_settings, source.doc_type)
 	validate_report_format_for_publish(source)
 	_validate_publish_source_company(source)
 	_validate_expected_source_company(source, company)

@@ -298,6 +298,33 @@ Full-page SVG letterhead/background
 
 Use separate Crispy Typst Blocks for headers, footers, or repeated sections only when those elements are dynamic, conditional, or data-driven. Static brand furniture usually belongs in the page-sized letterhead/background asset or Branding Profile.
 
+### Custom Document QR
+
+Use **Custom Document QR** for internal or general-business payloads that do not
+claim regulatory compliance. Select safe top-level fields from the current
+DocType, drag them into payload order, and inspect the exact payload and encoded
+byte estimate before saving. Crispy Print persists only the exact technical
+fieldnames, for example:
+
+```json
+{
+  "qr": {
+    "enabled": true,
+    "sourceMode": "custom",
+    "fields": ["name", "customer_name", "grand_total"]
+  }
+}
+```
+
+Payload keys remain those exact fieldnames; translated labels are display-only.
+Fields are formatted using their DocField types, and no aliases, normalization,
+or synthetic timestamp field is introduced. Child tables and aggregation rules
+are not supported in this first version.
+
+An editable legacy `sourceMode: "basic"` configuration is shown with a warning
+and must be explicitly reconfigured and saved as Custom Document QR. Published
+frozen templates retain their legacy rendering unchanged.
+
 ### Document Code and Regulatory QR Workflow
 
 Use this layer only when documents need deterministic identifiers or machine-verifiable compliance payloads:
@@ -305,7 +332,13 @@ Use this layer only when documents need deterministic identifiers or machine-ver
 1. Create a **Crispy QR Regulatory Profile** for the relevant authority/country behavior.
 2. Add **Crispy Fiscal Credential** records for company/environment-specific identity values.
 3. Configure **Crispy Document Code Profile** and related rules.
-4. Use QR or document-code fields in the format or branding profile.
+4. Select **Regulatory Document Code** in the format or branding profile.
+5. Review the resolved authority, country, encoding, registry requirements, and
+   validation state. Format-level Custom QR field selections never affect this
+   payload.
+
+The bundled registry is an implementation catalog, not legal approval. Obtain
+jurisdiction-specific professional review before production use.
 
 ### Advanced: Creating Formats Without Default
 

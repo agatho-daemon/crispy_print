@@ -125,7 +125,7 @@ describe("PreviewRenderer", () => {
       qrEnabled: true,
       presentation_settings: {
         ...presentationSettings,
-        qr: { ...presentationSettings.qr, enabled: true, sourceMode: "basic" },
+        qr: { ...presentationSettings.qr, enabled: true, sourceMode: "custom" },
       },
     });
 

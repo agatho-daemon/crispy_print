@@ -39,6 +39,12 @@ As a **beta release**, Crispy Print has several known limitations:
 - **Raw Private Images**: Raw image helpers intentionally resolve only uploaded private files by filename; public paths, nested paths, URLs, and traversal are rejected.
 - **Raw Typst Ownership**: Raw Typst mode intentionally hides builder-owned print behavior, page, typography, and table controls. Authors must define those concerns directly in Typst source.
 - **QR Code Format**: QR output is SVG-based.
+- **Custom QR Field Scope**: Custom Document QR supports ordered, safe,
+  top-level scalar DocType fields only. Child-table values, aggregation rules,
+  custom labels, payload templates, and JSON payloads are not implemented.
+- **Regulatory QR Approval**: Regulatory Document Code uses the bundled registry
+  and Document Code Profiles, but still requires jurisdiction-specific
+  professional approval before production use.
 - **Table Styling**: Visual controls expose common table options; full Typst table control is available through Raw Typst.
 
 ### PDF Generation

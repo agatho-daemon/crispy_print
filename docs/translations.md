@@ -25,15 +25,18 @@ each PO file contains one locale's translations.
 | Vietnamese | `vi` | `vi.po` |
 | Simplified Chinese | `zh` | `zh.po` |
 
-The initial catalogs provide complete coverage of the 1,542 messages currently
+The initial catalogs provide complete structural coverage of the 1,604 messages currently
 extracted into `main.pot`. They combine existing Frappe/ERPNext community
 translations with machine-assisted translations for Crispy Print-specific
 strings.
 
-Complete catalog coverage does not mean every translation has received native
-review. Contributors are encouraged to improve terminology, tone, and clarity.
-Accounting, regulatory, certificate, fiscal, and issued-document terminology
-deserves particular care.
+Complete catalog coverage means every source message has a nonempty catalog
+entry; it does not mean every entry has been translated or reviewed natively.
+New Custom Document QR controls have targeted Arabic and Persian translations,
+while some new entries in the other shipped catalogs currently retain English
+fallback text. Contributors are encouraged to translate and improve
+terminology, tone, and clarity. Accounting, QR, regulatory, certificate,
+fiscal, and issued-document terminology deserves particular care.
 
 ## Runtime scope and RTL
 

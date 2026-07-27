@@ -67,7 +67,7 @@
 							aria-haspopup="dialog"
 							aria-controls="preview-help"
 						>
-							{{ __("Help symbol") }}
+							{{ __("?") }}
 						</button>
 						<div
 							id="preview-help"

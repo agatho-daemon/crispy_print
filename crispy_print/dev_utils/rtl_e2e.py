@@ -161,7 +161,7 @@ def _presentation(language: str) -> dict:
 		},
 		"qr": {
 			"enabled": True,
-			"sourceMode": "basic",
+			"sourceMode": "custom",
 			"fields": ["name", "customer_name", "grand_total"],
 			"symbology": "QR Code",
 			"size": 18,

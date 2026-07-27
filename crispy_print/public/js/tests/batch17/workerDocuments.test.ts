@@ -62,12 +62,12 @@ describe("createDocumentLoader", () => {
 		});
 		const loader = createDocumentLoader(2);
 
-		await loader.fetchDoc("Sales Invoice", "INV-1", { qrSourceMode: "basic" });
-		await loader.fetchDoc("Sales Invoice", "INV-1", { qrSourceMode: "basic" });
+		await loader.fetchDoc("Sales Invoice", "INV-1", { qrSourceMode: "custom" });
+		await loader.fetchDoc("Sales Invoice", "INV-1", { qrSourceMode: "custom" });
 		await loader.fetchDoc("Sales Invoice", "INV-1", { qrSourceMode: "document_code_profile" });
 
 		expect(call).toHaveBeenCalledTimes(2);
-		expect(call.mock.calls[0][0].args.qr_source_mode).toBe("basic");
+		expect(call.mock.calls[0][0].args.qr_source_mode).toBe("custom");
 		expect(call.mock.calls[1][0].args.qr_source_mode).toBe("document_code_profile");
 	});
 

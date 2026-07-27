@@ -144,7 +144,7 @@
 										aria-haspopup="dialog"
 										aria-controls="preview-template-help"
 									>
-										{{ __("Help symbol") }}
+										{{ __("?") }}
 									</button>
 									<div
 										id="preview-template-help"

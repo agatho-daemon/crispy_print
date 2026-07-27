@@ -17,7 +17,7 @@
 						aria-haspopup="dialog"
 						aria-controls="settings-help"
 					>
-						{{ __("Help symbol") }}
+						{{ __("?") }}
 					</button>
 					<div id="settings-help" popover class="settings-pane__help-popover">
 						<ul class="settings-pane__help-list">
@@ -921,24 +921,40 @@
 								<option value="">
 									{{ __("Inherit branding default") }}
 								</option>
-								<option value="basic">{{ __("Basic QR") }}</option>
+								<option value="custom">{{ __("Custom Document QR") }}</option>
 								<option value="document_code_profile">
-									{{ __("Document Code Profile") }}
+									{{ __("Regulatory Document Code") }}
 								</option>
 							</select>
 							<p class="settings-pane__hint">
 								{{
 									__(
-										"Use Basic QR for the current field-list payload, or Document Code Profile to resolve regulated QR output from backend document-code configuration."
+										"Use Custom Document QR for an author-controlled internal payload, or Regulatory Document Code for backend profile-controlled output."
 									)
 								}}
 							</p>
 						</div>
 						<div
-							v-if="qrSettings.sourceMode !== 'document_code_profile'"
+							v-if="qrSettings.sourceMode === 'basic'"
+							class="settings-pane__qr-legacy"
+							role="alert"
+						>
+							<strong>{{ __("Legacy Basic QR configuration") }}</strong>
+							<p>
+								{{
+									__(
+										"Select Custom Document QR and configure its exact fields before saving. This legacy mode is not converted automatically."
+									)
+								}}
+							</p>
+						</div>
+						<div
+							v-if="qrSettings.sourceMode === 'custom'"
 							class="settings-pane__field"
 						>
-							<label class="settings-pane__sublabel">{{ __("QR fields") }}</label>
+							<label class="settings-pane__sublabel">{{
+								__("Custom QR fields")
+							}}</label>
 							<div class="settings-pane__qr-row">
 								<button
 									type="button"
@@ -951,14 +967,90 @@
 									qrFieldsSummary
 								}}</span>
 							</div>
+							<p class="settings-pane__hint">
+								{{
+									__(
+										"Custom Document QR is intended for internal or general business use and does not certify regulatory compliance."
+									)
+								}}
+							</p>
 						</div>
-						<p v-else class="settings-pane__hint">
-							{{
-								__(
-									"QR payload fields are ignored in Document Code Profile mode because the backend resolves the final encoded value."
-								)
-							}}
-						</p>
+						<div
+							v-else-if="qrSettings.sourceMode === 'document_code_profile'"
+							class="settings-pane__regulatory-summary"
+						>
+							<p class="settings-pane__hint">
+								{{
+									__(
+										"Format-level fields are ignored. The backend Document Code Profile owns the regulated payload."
+									)
+								}}
+							</p>
+							<template v-if="regulatorySummary">
+								<dl>
+									<dt>{{ __("Profile") }}</dt>
+									<dd>{{ regulatorySummary.profile_name }}</dd>
+									<dt>{{ __("Authority / country") }}</dt>
+									<dd>
+										{{
+											regulatorySummary.authority_code || __("Not specified")
+										}}
+										<span v-if="regulatorySummary.country">
+											· {{ regulatorySummary.country }}</span
+										>
+									</dd>
+									<dt>{{ __("Encoding") }}</dt>
+									<dd>
+										{{
+											regulatorySummary.payload_format || __("Not specified")
+										}}
+										·
+										{{
+											regulatorySummary.output_encoding ||
+											__("Not specified")
+										}}
+									</dd>
+									<dt>{{ __("Required fields") }}</dt>
+									<dd>{{ regulatoryRequiredFields }}</dd>
+									<dt>{{ __("Optional fields") }}</dt>
+									<dd>{{ regulatoryOptionalFields }}</dd>
+									<dt>{{ __("Validation") }}</dt>
+									<dd class="settings-pane__valid">
+										{{ __("Configuration resolved") }}
+									</dd>
+								</dl>
+								<div class="settings-pane__qr-row">
+									<button
+										type="button"
+										class="btn btn-default btn-xs"
+										@click="viewRegulatoryProfile"
+									>
+										{{ __("View profile") }}
+									</button>
+									<button
+										type="button"
+										class="btn btn-default btn-xs"
+										@click="validateRegulatoryConfiguration"
+									>
+										{{ __("Validate configuration") }}
+									</button>
+								</div>
+							</template>
+							<p v-else class="settings-pane__hint">
+								{{
+									__(
+										"Select a preview document to resolve and validate its Document Code Profile."
+									)
+								}}
+							</p>
+							<p class="settings-pane__hint">
+								{{
+									__(
+										"The bundled registry is an implementation catalog, not legal certification. Obtain jurisdiction-specific professional approval."
+									)
+								}}
+							</p>
+						</div>
 					</SettingsSection>
 				</div>
 			</div>
@@ -967,13 +1059,14 @@
 			v-if="showQrDialog"
 			:fields="qrAvailableFields"
 			:model-value="qrSettings.fields"
+			:sample-values="qrSampleValues"
 			@update:model-value="updateQrFields"
 			@close="showQrDialog = false"
 		/>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import {
 	ensure_logo_settings,
 	ensure_qr_settings,
@@ -995,12 +1088,14 @@ import { getLogger } from "../logger";
 import {
 	getBrandingProfilePresentationSettings,
 	getBrandingProfiles,
+	resolveDocumentCode,
 	type CrispyBrandingProfileOption,
 } from "../api/crispy";
 import { getDefaultReportBuilderConfig, type ReportBuilderConfig } from "../utils/reportBuilder";
 import { FONT_WEIGHT_OPTIONS } from "../utils/typographyOptions";
 import type { TypstFontFamilyFaces } from "../api/crispy";
 import { __ } from "../utils/i18n";
+import { CrispyPreviewEvents, type CrispyPreviewDocumentDetail } from "../utils/events";
 
 interface Props {
 	presentation_settings: PresentationSettings;
@@ -1152,6 +1247,18 @@ const syncedTableRef = ref(false);
 const qrSettings = computed(() => ensure_qr_settings(props.presentation_settings));
 
 const qrAvailableFields = computed(() => store.fields.value || []);
+const qrSampleValues = ref<Record<string, unknown> | null>(null);
+const qrSampleDoctype = ref("");
+const qrSampleDocname = ref("");
+const regulatorySummary = computed<any>(
+	() => (qrSampleValues.value as any)?.__crispy_document_code || null
+);
+const regulatoryRequiredFields = computed(
+	() => regulatorySummary.value?.required_fields?.join(", ") || __("None declared")
+);
+const regulatoryOptionalFields = computed(
+	() => regulatorySummary.value?.optional_fields?.join(", ") || __("None declared")
+);
 
 const qrFieldsSummary = computed(() => {
 	const count = qrSettings.value.fields?.length || 0;
@@ -1235,6 +1342,49 @@ const updateQrFields = (fields: string[]) => {
 	qrSettings.value.fields = fields;
 	markSettingsDirty("live");
 };
+
+function handlePreviewDocument(event: Event) {
+	const detail = (event as CustomEvent<CrispyPreviewDocumentDetail>).detail;
+	qrSampleValues.value = detail?.document || null;
+	qrSampleDoctype.value = detail?.doctype || "";
+	qrSampleDocname.value = detail?.docname || "";
+}
+
+function viewRegulatoryProfile() {
+	const profileName = regulatorySummary.value?.profile_name;
+	if (profileName && typeof frappe !== "undefined") {
+		frappe.set_route("Form", "Crispy Document Code Profile", profileName);
+	}
+}
+
+async function validateRegulatoryConfiguration() {
+	if (!qrSampleDoctype.value || !qrSampleDocname.value) return;
+	try {
+		const resolved = await resolveDocumentCode({
+			doctype: qrSampleDoctype.value,
+			name: qrSampleDocname.value,
+			code_purpose: regulatorySummary.value?.code_purpose || "Regulatory",
+			environment: regulatorySummary.value?.environment || "Production",
+		});
+		qrSampleValues.value = {
+			...(qrSampleValues.value || {}),
+			__crispy_document_code: {
+				...(regulatorySummary.value || {}),
+				...resolved,
+				authority_code: (resolved.regulatory_profile as any)?.authority_code,
+			},
+		};
+		frappe?.show_alert?.({
+			message: __("Regulatory configuration resolved successfully."),
+			indicator: "green",
+		});
+	} catch (error: any) {
+		frappe?.show_alert?.({
+			message: error?.message || __("Regulatory configuration could not be resolved."),
+			indicator: "red",
+		});
+	}
+}
 
 function updatePrintBehavior(
 	fieldname: "compact_item_print" | "print_uom_after_quantity" | "print_taxes_with_zero_amount",
@@ -1388,9 +1538,14 @@ async function fetch_branding_profiles() {
 }
 
 onMounted(() => {
+	window.addEventListener(CrispyPreviewEvents.Document, handlePreviewDocument);
 	fetchScopedLetterheads();
 	fetchCompanies({ include_current: selected_company.value || null });
 	if (formatReady.value) fetch_branding_profiles();
+});
+
+onUnmounted(() => {
+	window.removeEventListener(CrispyPreviewEvents.Document, handlePreviewDocument);
 });
 
 function fetchScopedLetterheads() {
@@ -1623,6 +1778,46 @@ watch(branding_profiles, (profiles) => {
 
 .settings-pane__qr-summary {
 	font-size: 12px;
+}
+
+.settings-pane__qr-legacy,
+.settings-pane__regulatory-summary {
+	display: grid;
+	gap: 8px;
+	padding: 10px;
+	border: 1px solid #f59e0b;
+	border-radius: 10px;
+	background: #fffbeb;
+	font-size: 12px;
+}
+
+.settings-pane__qr-legacy p {
+	margin: 0;
+}
+
+.settings-pane__regulatory-summary {
+	border-color: #cbd5e1;
+	background: #f8fafc;
+}
+
+.settings-pane__regulatory-summary dl {
+	display: grid;
+	grid-template-columns: minmax(80px, auto) minmax(0, 1fr);
+	gap: 5px 10px;
+	margin: 0;
+}
+
+.settings-pane__regulatory-summary dt {
+	font-weight: 600;
+}
+
+.settings-pane__regulatory-summary dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.settings-pane__valid {
+	color: #15803d;
 }
 
 .settings-pane__section {
