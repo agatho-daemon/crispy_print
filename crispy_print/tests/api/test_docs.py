@@ -144,6 +144,96 @@ class TestFormattedDocAPI(FrappeTestCase):
 		self.assertNotIn("owner", out)
 		self.assertNotIn("_assign", out)
 
+	def test_get_formatted_doc_rejects_requested_field_after_permission_loss(self):
+		"""A persisted QR field must never disappear silently when permlevel access changes."""
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		restricted = SimpleNamespace(
+			fieldname="grand_total",
+			fieldtype="Currency",
+			options=None,
+			hidden=0,
+			permlevel=1,
+		)
+		mock_doc = SimpleNamespace(
+			doctype="Sales Invoice",
+			name="SINV-1",
+			check_permission=mock.Mock(),
+			has_permlevel_access_to=mock.Mock(return_value=False),
+			as_dict=lambda: {"doctype": "Sales Invoice", "name": "SINV-1", "grand_total": -700},
+		)
+		mock_meta = SimpleNamespace(fields=[restricted])
+
+		with (
+			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
+			mock.patch("crispy_print.api.v1.docs.frappe.get_meta", return_value=mock_meta),
+			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
+		):
+			with self.assertRaisesRegex(frappe.PermissionError, "grand_total"):
+				get_formatted_doc("Sales Invoice", "SINV-1", fields=["grand_total"])
+
+		mock_doc.has_permlevel_access_to.assert_called_once_with(
+			"grand_total",
+			restricted,
+			permission_type="read",
+		)
+
+	def test_get_formatted_doc_formats_custom_qr_value_types_without_changing_keys(self):
+		from types import SimpleNamespace
+
+		from crispy_print.api.v1.docs import get_formatted_doc
+
+		fields = [
+			SimpleNamespace(fieldname="posting_date", fieldtype="Date", options=None, hidden=0),
+			SimpleNamespace(fieldname="grand_total", fieldtype="Currency", options=None, hidden=0),
+			SimpleNamespace(fieldname="remarks", fieldtype="Small Text", options=None, hidden=0),
+			SimpleNamespace(fieldname="po_no", fieldtype="Data", options=None, hidden=0),
+		]
+		mock_doc = SimpleNamespace(
+			doctype="Sales Invoice",
+			name="SINV-UNICODE",
+			check_permission=mock.Mock(),
+			has_permlevel_access_to=mock.Mock(return_value=True),
+			as_dict=lambda: {
+				"doctype": "Sales Invoice",
+				"name": "SINV-UNICODE",
+				"posting_date": "2026-07-27",
+				"grand_total": -700,
+				"remarks": "فاتورة تجريبية\nآزمایش",  # noqa: RUF001
+				"po_no": "",
+			},
+		)
+		formatted = {
+			"2026-07-27": "27-07-2026",
+			-700: "-700.000",
+			"فاتورة تجريبية\nآزمایش": "فاتورة تجريبية\nآزمایش",  # noqa: RUF001
+			"": "",
+		}
+
+		with (
+			mock.patch("crispy_print.api.v1.docs.frappe.get_doc", return_value=mock_doc),
+			mock.patch(
+				"crispy_print.api.v1.docs.frappe.get_meta", return_value=SimpleNamespace(fields=fields)
+			),
+			mock.patch(
+				"crispy_print.api.v1.docs.frappe.format",
+				side_effect=lambda value, *args, **kwargs: formatted[value],
+			),
+			mock.patch("crispy_print.api.v1.docs.validate_document_print_policy", return_value={}),
+		):
+			out = get_formatted_doc(
+				"Sales Invoice",
+				"SINV-UNICODE",
+				fields=["posting_date", "grand_total", "remarks", "po_no"],
+			)
+
+		self.assertEqual(out["posting_date"], "27-07-2026")
+		self.assertEqual(out["grand_total"], "-700.000")
+		self.assertEqual(out["remarks"], "فاتورة تجريبية\nآزمایش")  # noqa: RUF001
+		self.assertEqual(out["po_no"], "")
+
 	def test_get_formatted_doc_with_requested_child_fields_limits_child_columns(self):
 		"""Requested table paths should return only requested child columns."""
 		from types import SimpleNamespace

@@ -867,6 +867,35 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 		self.assertEqual(imported.pdf_standard, "PDF/A-3u")
 		self.assertEqual(imported.is_default, 0)
 
+	def test_custom_qr_export_import_preserves_exact_ordered_fieldnames(self):
+		from crispy_print.api.v1 import export_crispy_format, import_crispy_format
+
+		qr_fields = ["name", "posting_date", "customer_name", "grand_total", "po_no"]
+		self._insert_format(
+			"Test ImportExport Custom QR Source",
+			presentation_settings=json.dumps(
+				{
+					"language": "ar-KW",
+					"qr": {
+						"enabled": True,
+						"sourceMode": "custom",
+						"fields": qr_fields,
+					},
+				},
+				ensure_ascii=False,
+			),
+		)
+		payload = export_crispy_format("Test ImportExport Custom QR Source")
+		payload["format"]["name"] = "Test ImportExport Custom QR Imported"
+
+		result = import_crispy_format(payload, on_conflict="copy")
+		imported = frappe.get_doc("Crispy Format", result["name"])
+		settings = json.loads(imported.presentation_settings)
+
+		self.assertEqual(settings["qr"]["sourceMode"], "custom")
+		self.assertEqual(settings["qr"]["fields"], qr_fields)
+		self.assertNotIn("timestamp", settings["qr"]["fields"])
+
 	def test_import_generic_report_preserves_validation(self):
 		from crispy_print.api.v1 import import_crispy_format
 

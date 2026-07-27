@@ -60,6 +60,37 @@ class TestDocumentCodes(FrappeTestCase):
 		self.assertEqual(out["field_mapping"]["seller_name"], "company_name")
 		self.assertEqual(len(out["matched_rules"]), 1)
 
+	def test_preferred_profile_does_not_leak_caught_no_match_messages(self):
+		profile = self._make_profile(
+			profile_name="DCR Preferred Sandbox",
+			environment="Sandbox",
+			code_purpose="Regulatory",
+			regulatory_profile=self.regulatory_profile,
+			fiscal_credential=None,
+			encoder_key="zatca_tlv",
+			field_mapping_json='{"seller_name":"company_name","company_code":"abbr"}',
+			document_rules=[
+				{
+					"document_type": "Company",
+					"document_role": "Other",
+					"condition_type": "Filter JSON",
+					"condition_json": '{"abbr":"DCR"}',
+					"priority": 10,
+				}
+			],
+		)
+		doc = frappe.get_doc("Company", self.company)
+		frappe.local.message_log = [{"message": "pre-existing"}]
+
+		out = get_preferred_document_code_for_doc(
+			doc,
+			purposes=("Regulatory",),
+			environments=("Production", "Sandbox"),
+		)
+
+		self.assertEqual(out["profile_name"], profile.name)
+		self.assertEqual(frappe.local.message_log, [{"message": "pre-existing"}])
+
 	def test_generate_document_code_builds_selected_fields_payload(self):
 		profile = self._make_profile(
 			profile_name="DCR Selected Fields",

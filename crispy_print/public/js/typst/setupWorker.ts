@@ -13,11 +13,7 @@ import {
 } from "../utils/events"
 import { getLogger } from "../logger"
 import { createSampleDocAutocomplete } from "./workerAutocomplete"
-import {
-	buildRawQrBlock,
-	normalizeDocImageAssets,
-	parseTypstError,
-} from "./workerCompilation"
+import { buildRawQrBlock, normalizeDocImageAssets, parseTypstError } from "./workerCompilation"
 import { createDocumentLoader, sanitizeFilename } from "./workerDocuments"
 import { buildCustomQrPayload } from "../utils/customQr"
 import {
@@ -74,7 +70,7 @@ function getCurrentSiteName(): string {
 			frappeAny?.boot?.site_name ||
 			frappeAny?.boot?.site ||
 			frappeAny?.site_name ||
-			""
+			"",
 	).trim()
 }
 
@@ -82,7 +78,7 @@ export function setupWorker(
 	printFormatName: string,
 	previewPane: HTMLElement,
 	adapter: TypstAdapter,
-	opts?: { createWorker?: typeof createTypstWorker; instanceId?: string }
+	opts?: { createWorker?: typeof createTypstWorker; instanceId?: string },
 ) {
 	const createWorker = opts?.createWorker || createTypstWorker
 	const { worker, cleanup } = createWorker()
@@ -190,32 +186,32 @@ export function setupWorker(
 				allowDocumentCodePreview: qrSourceMode === "document_code_profile",
 			})
 			.then((doc) => {
-			if (disposed || capturedGeneration !== documentLoadGeneration) {
-				return
-			}
-			if (!doc) {
-				logger.warn("Failed to fetch document", { doctype, docname })
-				if (statusEl) {
-					statusEl.textContent = __("document not found")
-					statusEl.style.color = "#e74c3c"
+				if (disposed || capturedGeneration !== documentLoadGeneration) {
+					return
 				}
-				dispatchStatus("error", "document not found")
-				return
-			}
+				if (!doc) {
+					logger.warn("Failed to fetch document", { doctype, docname })
+					if (statusEl) {
+						statusEl.textContent = __("document not found")
+						statusEl.style.color = "#e74c3c"
+					}
+					dispatchStatus("error", "document not found")
+					return
+				}
 
-			sampleDocData = doc
-			sampleDocSelected = true
-			window.dispatchEvent(
-				new CustomEvent(CrispyPreviewEvents.Document, {
-					detail: { doctype, docname, document: doc, instanceId },
+				sampleDocData = doc
+				sampleDocSelected = true
+				window.dispatchEvent(
+					new CustomEvent(CrispyPreviewEvents.Document, {
+						detail: { doctype, docname, document: doc, instanceId },
+					}),
+				)
+				compile()
+
+				frappe?.show_alert?.({
+					message: __("Preview loaded: {0}", [docname]),
+					indicator: "green",
 				})
-			)
-			compile()
-
-			frappe?.show_alert?.({
-				message: __("Preview loaded: {0}", [docname]),
-				indicator: "green",
-			})
 			})
 	}
 
@@ -241,7 +237,10 @@ export function setupWorker(
 				setCurrentDoc(doctype, docname, { force: true })
 				return
 			}
-			frappe?.show_alert?.({ message: __("Select a document first"), indicator: "orange" })
+			frappe?.show_alert?.({
+				message: __("Select a document first"),
+				indicator: "orange",
+			})
 			return
 		}
 		// Refetch + recompile to ensure latest values (single source of truth).
@@ -356,7 +355,10 @@ export function setupWorker(
 
 		if (!lastTypstCode) {
 			logger.warn("No Typst code available for PDF request")
-			frappe?.show_alert({ message: __("Typst code not ready yet"), indicator: "orange" })
+			frappe?.show_alert({
+				message: __("Typst code not ready yet"),
+				indicator: "orange",
+			})
 			return
 		}
 
@@ -408,6 +410,22 @@ export function setupWorker(
 		}
 	}
 	window.addEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
+	const handleDocumentRequest = (event: Event) => {
+		const requestedInstance = (event as CustomEvent<{ instanceId?: string }>).detail?.instanceId
+		if (requestedInstance && requestedInstance !== instanceId) return
+		if (!sampleDocData || !currentDoctype || !currentDocname) return
+		window.dispatchEvent(
+			new CustomEvent(CrispyPreviewEvents.Document, {
+				detail: {
+					doctype: currentDoctype,
+					docname: currentDocname,
+					document: sampleDocData,
+					instanceId,
+				},
+			}),
+		)
+	}
+	window.addEventListener(CrispyPreviewEvents.RequestDocument, handleDocumentRequest)
 
 	const autocomplete = createSampleDocAutocomplete({
 		previewPane,
@@ -734,9 +752,7 @@ export function setupWorker(
 			}
 			if (missingLayoutRetries < 5) {
 				missingLayoutRetries += 1
-				logger.warn(
-					`Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`
-				)
+				logger.warn(`Retrying compile due to missing layout (attempt ${missingLayoutRetries}/5)`)
 				scheduleCompile(500 * missingLayoutRetries)
 			} else {
 				logger.error("Max retries (5) reached. Disabling compilation.")
@@ -845,17 +861,23 @@ export function setupWorker(
 				}
 				typst = parts.join("\n\n")
 			} else {
-				typst = translateJSONToTypst(layout as any, letterheadData, printFormatName, normalizedDoc, {
-					...presentation_settings,
-					docHeader,
-					docFooter,
-					typstPreamble,
-					qrEnabled,
-					qrData: docNameForQr,
-					qrFilename,
-					qrSettings: qrPayload.qrSettings,
-					printBehavior,
-				})
+				typst = translateJSONToTypst(
+					layout as any,
+					letterheadData,
+					printFormatName,
+					normalizedDoc,
+					{
+						...presentation_settings,
+						docHeader,
+						docFooter,
+						typstPreamble,
+						qrEnabled,
+						qrData: docNameForQr,
+						qrFilename,
+						qrSettings: qrPayload.qrSettings,
+						printBehavior,
+					},
+				)
 			}
 		} catch (e: any) {
 			logger.error("Translation error", e)
@@ -870,10 +892,10 @@ export function setupWorker(
 		}
 
 		if (typst === lastTypstCode && !qrPayloadChanged) {
-				if (statusEl) {
-					statusEl.textContent = __("up to date")
-					statusEl.style.color = "#95a5a6"
-				}
+			if (statusEl) {
+				statusEl.textContent = __("up to date")
+				statusEl.style.color = "#95a5a6"
+			}
 			return
 		}
 		if (statusEl) {
@@ -939,8 +961,7 @@ export function setupWorker(
 			renderMs,
 			typstVersion,
 			pdfStandard,
-		} =
-			e.data || {}
+		} = e.data || {}
 		if (type === "csrf-token-request") {
 			worker.postMessage({
 				type: "csrf-token-response",
@@ -1148,7 +1169,10 @@ export function setupWorker(
 			}
 
 			if (!lastTypstCode) {
-				frappe?.show_alert({ message: __("Typst code not ready yet"), indicator: "orange" })
+				frappe?.show_alert({
+					message: __("Typst code not ready yet"),
+					indicator: "orange",
+				})
 				return
 			}
 
@@ -1201,7 +1225,10 @@ export function setupWorker(
 			}
 
 			if (!lastTypstCode) {
-				frappe?.show_alert({ message: __("Typst code not ready yet"), indicator: "orange" })
+				frappe?.show_alert({
+					message: __("Typst code not ready yet"),
+					indicator: "orange",
+				})
 				return
 			}
 
@@ -1241,7 +1268,9 @@ export function setupWorker(
 			const adapterDoctype = adapter.getDoctype?.()
 			const adapterDocname = adapter.getDocname?.()
 			const canRefreshViaWorker = Boolean(
-				sampleDocSelected || (currentDoctype && currentDocname) || (adapterDoctype && adapterDocname)
+				sampleDocSelected ||
+				(currentDoctype && currentDocname) ||
+				(adapterDoctype && adapterDocname),
 			)
 			if (!canRefreshViaWorker) {
 				return
@@ -1353,6 +1382,7 @@ export function setupWorker(
 		window.removeEventListener(CrispyPreviewEvents.RequestSource, handleSourceRequest)
 		window.removeEventListener(CrispyPreviewEvents.Source, handleSourceUpdate)
 		window.removeEventListener(CrispyPreviewEvents.RequestPdf, handlePdfRequest)
+		window.removeEventListener(CrispyPreviewEvents.RequestDocument, handleDocumentRequest)
 		worker.removeEventListener("error", handleWorkerError)
 		worker.removeEventListener("messageerror", handleWorkerMessageError)
 		worker.removeEventListener("message", handleWorkerMessage)

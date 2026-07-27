@@ -66,6 +66,42 @@ normal Crispy Print installation. Chromium is downloaded only by the explicit
 other browser output are local ignored artifacts rather than application
 assets.
 
+### Custom and Regulatory QR acceptance
+
+Run this only on a disposable development site. The seed is idempotent, uses
+existing draft/submitted ERPNext documents, creates isolated Crispy Formats,
+and labels its ZATCA profile as non-certifying:
+
+```bash
+bench --site your-site execute \
+  crispy_print.dev_utils.rtl_e2e.seed_qr_acceptance \
+  --kwargs '{"publish": 1, "test_user_password": "local-secret"}'
+```
+
+Copy the returned document names into the browser matrix:
+
+```bash
+CRISPY_E2E_BASE_URL=https://your-site \
+CRISPY_E2E_USER=crispy-rtl-e2e@local.test \
+CRISPY_E2E_PASSWORD=local-secret \
+CRISPY_QR_E2E_SALES_INVOICE=ACC-SINV-... \
+CRISPY_QR_E2E_PURCHASE_INVOICE=ACC-PINV-... \
+CRISPY_QR_E2E_DELIVERY_NOTE=MAT-DN-... \
+CRISPY_QR_E2E_PAYMENT_ENTRY=ACC-PAY-... \
+yarn --cwd e2e playwright test qr.spec.ts
+```
+
+The suite verifies exact field order, English/Arabic/Persian editor behavior,
+cross-DocType rendering, legacy save blocking, live regulatory-profile
+resolution, real QR decoding, and preview-source/final-PDF payload equality.
+It uses `@zxing/library`, `pngjs`, and `pdftoppm` only inside the isolated E2E
+toolchain. PDFs, rendered PNGs, traces, and failure screenshots remain under
+ignored `test-results/` paths. Disable the test user afterward with
+`crispy_print.dev_utils.rtl_e2e.disable_test_user`.
+
+The bundled ZATCA registry/profile fixture proves the implementation path; it
+does not constitute jurisdictional certification.
+
 Use `yarn test:e2e:update` to generate local screenshots for visual review.
 The acceptance matrix covers Arabic and Persian UI roots, localized fixture
 labels, portal direction, keyboard and drag interaction, physical LTR

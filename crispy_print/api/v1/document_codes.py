@@ -142,11 +142,13 @@ def get_preferred_document_code_for_doc(
 	purposes = tuple(purposes or ("Regulatory", "Verification", "Portal Link", "Other"))
 	environments = tuple(environments or ("Production", "Sandbox"))
 	last_error: Exception | None = None
+	original_messages = list(getattr(frappe.local, "message_log", []) or [])
 
 	for environment in environments:
 		for purpose in purposes:
+			frappe.local.message_log = []
 			try:
-				return generate_document_code_for_doc(
+				result = generate_document_code_for_doc(
 					doc=doc,
 					code_purpose=purpose,
 					environment=environment,
@@ -154,10 +156,13 @@ def get_preferred_document_code_for_doc(
 				)
 			except Exception as exc:
 				last_error = exc
-				if _is_no_match_error(exc):
-					continue
+				frappe.local.message_log = []
 				continue
+			success_messages = list(getattr(frappe.local, "message_log", []) or [])
+			frappe.local.message_log = [*original_messages, *success_messages]
+			return result
 
+	frappe.local.message_log = original_messages
 	if last_error:
 		frappe.flags.crispy_document_code_error = str(last_error)
 	return None
@@ -713,14 +718,3 @@ def _looks_like_base64(value: str) -> bool:
 		return True
 	except Exception:
 		return False
-
-
-def _is_no_match_error(exc: Exception) -> bool:
-	message = str(exc or "")
-	return any(
-		fragment in message
-		for fragment in (
-			"No enabled Document Code Profile matches this document context.",
-			"Unable to resolve company for document code generation.",
-		)
-	)

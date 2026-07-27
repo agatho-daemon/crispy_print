@@ -1539,6 +1539,7 @@ async function fetch_branding_profiles() {
 
 onMounted(() => {
 	window.addEventListener(CrispyPreviewEvents.Document, handlePreviewDocument);
+	window.dispatchEvent(new CustomEvent(CrispyPreviewEvents.RequestDocument));
 	fetchScopedLetterheads();
 	fetchCompanies({ include_current: selected_company.value || null });
 	if (formatReady.value) fetch_branding_profiles();

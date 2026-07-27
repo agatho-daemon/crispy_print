@@ -6,7 +6,10 @@
     "test:update": "playwright test --update-snapshots"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.0"
+    "@playwright/test": "1.62.0",
+    "@types/pngjs": "6.0.5",
+    "@zxing/library": "0.21.3",
+    "pngjs": "7.0.0"
   },
   "engines": {
     "node": ">=24.18.0 <25",

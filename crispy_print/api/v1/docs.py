@@ -36,6 +36,7 @@ def get_formatted_doc(
 	raw_data = doc.as_dict()
 	requested = _parse_requested_fields(fields)
 	field_map = {df.fieldname: df for df in meta.fields if df.fieldname}
+	_validate_requested_field_permissions(doc, requested, field_map)
 	data = _build_initial_payload(doc, raw_data, doctype, print_policy, requested, field_map)
 	requested_children = _requested_child_fields(requested)
 	fieldnames = _fieldnames_to_format(raw_data, field_map, requested)
@@ -166,6 +167,27 @@ def _requested_top_fields(requested: set[str] | None) -> set[str]:
 	if requested is None:
 		return set()
 	return {field_path.split(".", 1)[0] for field_path in requested}
+
+
+def _validate_requested_field_permissions(doc, requested: set[str] | None, field_map: dict) -> None:
+	"""Reject explicitly requested fields the current user cannot read.
+
+	The formatted-document endpoint is used by Custom Document QR. Silently
+	dropping a selected field would change the encoded payload without changing
+	the persisted QR contract, so permission loss must be an actionable error.
+	"""
+	if requested is None:
+		return
+	check_access = getattr(doc, "has_permlevel_access_to", None)
+	if not callable(check_access):
+		return
+	for fieldname in sorted(_requested_top_fields(requested)):
+		df = field_map.get(fieldname)
+		if df and not check_access(fieldname, df, permission_type="read"):
+			frappe.throw(
+				_("You do not have permission to read the selected document field: {0}").format(fieldname),
+				frappe.PermissionError,
+			)
 
 
 def _requested_child_fields(requested: set[str] | None) -> dict[str, set[str] | None]:

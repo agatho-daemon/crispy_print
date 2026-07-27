@@ -49,6 +49,7 @@ export const CrispyPreviewEvents = {
 	Status: "crispy-preview:status",
 	SetDoc: "crispy-preview:set-doc",
 	Document: "crispy-preview:document",
+	RequestDocument: "crispy-preview:request-document",
 	Refresh: "crispy-preview:refresh",
 	RequestSource: "crispy-preview:request-source",
 	Source: "crispy-preview:source",

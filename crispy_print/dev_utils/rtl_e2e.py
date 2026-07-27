@@ -15,6 +15,11 @@ PERSIAN_FORMAT_NAME = "Crispy RTL E2E Persian"
 ENGLISH_FORMAT_NAME = "Crispy RTL E2E English"
 MULTIPAGE_FORMAT_NAME = "Crispy RTL E2E Multipage"
 REPORT_FORMAT_NAME = "Crispy RTL E2E Report"
+QR_CUSTOM_FORMAT_PREFIX = "Crispy QR E2E Custom"
+QR_REGULATORY_FORMAT_NAME = "Crispy QR E2E Regulatory"
+QR_LEGACY_FORMAT_NAME = "Crispy QR E2E Legacy Basic"
+QR_REGULATORY_PROFILE_NAME = "Crispy QR E2E ZATCA (Non-Certifying)"
+QR_DOCUMENT_CODE_PROFILE_NAME = "Crispy QR E2E ZATCA Document Code"
 TEST_USER = "crispy-rtl-e2e@local.test"
 RTL_FOOTER = (
 	"#let footer_block = align(end + horizon)[\n"
@@ -212,6 +217,248 @@ def _report_format_values(company: str) -> dict:
 		"default_print_language": "ar",
 		"layout_json": json.dumps({"schema_version": 4, "sections": []}),
 		"presentation_settings": json.dumps(_presentation("ar-KW"), ensure_ascii=False),
+	}
+
+
+def _qr_layout(doctype: str, fieldnames: list[str]) -> dict:
+	meta = frappe.get_meta(doctype)
+	field_map = {df.fieldname: df for df in meta.fields if df.fieldname}
+	fields = []
+	for index, fieldname in enumerate(fieldnames):
+		df = field_map.get(fieldname)
+		fields.append(
+			{
+				"id": f"qr-e2e-{doctype.lower().replace(' ', '-')}-{fieldname}-{index}",
+				"fieldname": fieldname,
+				"fieldtype": getattr(df, "fieldtype", "Data") if df else "Data",
+				"label": getattr(df, "label", fieldname) if df else fieldname,
+				"align": "auto",
+			}
+		)
+	return {
+		"schema_version": 4,
+		"sections": [
+			{
+				"id": f"qr-e2e-{doctype.lower().replace(' ', '-')}",
+				"label": f"{doctype} QR acceptance",
+				"columns": [{"id": "qr-e2e-main", "label": "", "fields": fields}],
+			}
+		],
+	}
+
+
+def _safe_qr_fixture_fields(doctype: str) -> list[str]:
+	preferred = {
+		"Sales Invoice": ["name", "posting_date", "posting_time", "customer_name", "grand_total", "po_no"],
+		"Purchase Invoice": [
+			"name",
+			"posting_date",
+			"posting_time",
+			"supplier_name",
+			"grand_total",
+			"bill_no",
+		],
+		"Delivery Note": ["name", "posting_date", "posting_time", "customer_name", "grand_total", "lr_no"],
+		"Payment Entry": [
+			"name",
+			"posting_date",
+			"payment_type",
+			"party_name",
+			"paid_amount",
+			"reference_no",
+		],
+	}.get(doctype, ["name"])
+	fieldnames = {df.fieldname for df in frappe.get_meta(doctype).fields if df.fieldname}
+	return [fieldname for fieldname in preferred if fieldname == "name" or fieldname in fieldnames]
+
+
+def _qr_format_values(doc, *, source_mode: str = "custom") -> dict:
+	fields = _safe_qr_fixture_fields(doc.doctype)
+	return {
+		"crispy_format_type": "DocType",
+		"doc_type": doc.doctype,
+		"company": getattr(doc, "company", None),
+		"module": "Crispy Print",
+		"raw_typst": 0,
+		"default_print_language": "en",
+		"layout_json": json.dumps(_qr_layout(doc.doctype, fields), ensure_ascii=False),
+		"presentation_settings": json.dumps(
+			{
+				"language": "en",
+				"qr": {
+					"enabled": True,
+					"sourceMode": source_mode,
+					"fields": fields,
+					"symbology": "QR Code",
+					"size": 24,
+					"anchor": "end",
+				},
+			},
+			ensure_ascii=False,
+		),
+	}
+
+
+def _upsert_zatca_acceptance_profile(company: str) -> dict:
+	if not frappe.db.exists("Crispy QR Regulatory Profile", QR_REGULATORY_PROFILE_NAME):
+		frappe.get_doc(
+			{
+				"doctype": "Crispy QR Regulatory Profile",
+				"profile_name": QR_REGULATORY_PROFILE_NAME,
+				"enabled": 1,
+				"authority_code": "ZATCA",
+				"standard": "ZATCA TLV",
+				"version": "E2E",
+				"payload_format": "TLV",
+				"code_symbology": "QR Code",
+				"output_encoding": "Base64",
+				"error_correction": "Medium",
+				"encoder_key": "zatca_tlv",
+			}
+		).insert(ignore_permissions=True)
+
+	values = {
+		"enabled": 1,
+		"company": company,
+		"environment": "Sandbox",
+		"code_purpose": "Regulatory",
+		"regulatory_profile": QR_REGULATORY_PROFILE_NAME,
+		"code_format": "QR Code",
+		"code_symbology": "QR Code",
+		"payload_format": "TLV",
+		"output_encoding": "Base64",
+		"content_source": "Encoder",
+		"encoder_key": "zatca_tlv",
+		"field_mapping_json": json.dumps(
+			{
+				"seller_name": "company",
+				"invoice_timestamp": "posting_date",
+				"invoice_total": "grand_total",
+				"tax_total": "total_taxes_and_charges",
+			}
+		),
+		"priority": 1000,
+		"notes": (
+			"Disposable engineering fixture only. This profile does not certify "
+			"ZATCA or jurisdictional compliance."
+		),
+	}
+	if frappe.db.exists("Crispy Document Code Profile", QR_DOCUMENT_CODE_PROFILE_NAME):
+		profile = frappe.get_doc("Crispy Document Code Profile", QR_DOCUMENT_CODE_PROFILE_NAME)
+		profile.update(values)
+		profile.set(
+			"document_rules",
+			[
+				{
+					"enabled": 1,
+					"document_type": "Sales Invoice",
+					"document_role": "Invoice",
+					"required": 1,
+					"condition_type": "Always",
+					"priority": 1000,
+				}
+			],
+		)
+		profile.save(ignore_permissions=True)
+	else:
+		profile = frappe.get_doc(
+			{
+				"doctype": "Crispy Document Code Profile",
+				"profile_name": QR_DOCUMENT_CODE_PROFILE_NAME,
+				**values,
+				"document_rules": [
+					{
+						"enabled": 1,
+						"document_type": "Sales Invoice",
+						"document_role": "Invoice",
+						"required": 1,
+						"condition_type": "Always",
+						"priority": 1000,
+					}
+				],
+			}
+		).insert(ignore_permissions=True)
+	return {"regulatory_profile": QR_REGULATORY_PROFILE_NAME, "document_code_profile": profile.name}
+
+
+def seed_qr_acceptance(publish: int | bool = 1, test_user_password: str | None = None) -> dict:
+	"""Seed Custom/Regulatory QR acceptance records on a disposable site."""
+	frappe.only_for("System Manager")
+	fixtures = {}
+	for doctype in ("Sales Invoice", "Purchase Invoice", "Delivery Note", "Payment Entry"):
+		row = frappe.db.get_value(
+			doctype,
+			{"docstatus": ["<", 2]},
+			["name", "company"],
+			as_dict=True,
+		)
+		if not row:
+			fixtures[doctype] = {"available": False}
+			continue
+		doc = frappe.get_doc(doctype, row.name)
+		format_name = f"{QR_CUSTOM_FORMAT_PREFIX} {doctype}"
+		format_doc = _upsert_format(format_name, _qr_format_values(doc))
+		fixtures[doctype] = {
+			"available": True,
+			"docname": doc.name,
+			"format": format_doc.name,
+			"fields": _safe_qr_fixture_fields(doctype),
+		}
+
+	invoice_fixture = fixtures.get("Sales Invoice") or {}
+	if not invoice_fixture.get("available"):
+		frappe.throw("Create at least one Sales Invoice before seeding QR acceptance data.")
+	invoice = frappe.get_doc("Sales Invoice", invoice_fixture["docname"])
+	regulatory = _upsert_format(
+		QR_REGULATORY_FORMAT_NAME,
+		_qr_format_values(invoice, source_mode="document_code_profile"),
+	)
+	profiles = _upsert_zatca_acceptance_profile(invoice.company)
+
+	if frappe.db.exists("Crispy Format", QR_LEGACY_FORMAT_NAME):
+		legacy = frappe.get_doc("Crispy Format", QR_LEGACY_FORMAT_NAME)
+	else:
+		legacy = _upsert_format(QR_LEGACY_FORMAT_NAME, _qr_format_values(invoice))
+	legacy_settings = json.loads(legacy.presentation_settings)
+	legacy_settings["qr"]["sourceMode"] = "basic"
+	legacy_settings["qr"]["fields"] = ["timestamp", "name", "grand_total"]
+	frappe.db.set_value(
+		"Crispy Format",
+		legacy.name,
+		"presentation_settings",
+		json.dumps(legacy_settings),
+		update_modified=False,
+	)
+	legacy_template = frappe.db.get_value(
+		"Crispy Template",
+		{"source_crispy_format": legacy.name, "status": ["in", ["Approved", "Draft"]]},
+		"name",
+	)
+	if publish and not legacy_template:
+		template = frappe.get_doc(
+			{
+				"doctype": "Crispy Template",
+				"template_name": f"{QR_LEGACY_FORMAT_NAME} Frozen",
+				"source_crispy_format": legacy.name,
+				"company": invoice.company,
+				"status": "Approved",
+				"is_active": 0,
+				"notes": "Frozen pre-Custom QR legacy acceptance fixture.",
+			}
+		)
+		template.insert(ignore_permissions=True)
+		legacy_template = template.name
+
+	test_user = _ensure_test_user(test_user_password) if test_user_password else None
+	frappe.db.commit()
+	return {
+		"fixtures": fixtures,
+		"regulatory_format": regulatory.name,
+		"profiles": profiles,
+		"legacy_format": legacy.name,
+		"legacy_template": legacy_template,
+		"test_user": test_user.name if test_user else None,
+		"disposable_site_only": True,
 	}
 
 

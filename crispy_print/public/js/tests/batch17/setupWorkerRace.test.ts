@@ -349,6 +349,41 @@ describe("setupWorker race guards", () => {
 		expect(previewMessage.typstSrc).toContain("#text[#doc.name]")
 	})
 
+	it("replays the selected document when a late-mounted settings pane requests it", async () => {
+		const pane = makePane()
+		setupWorker("Test Format", pane, makeAdapter(), {
+			createWorker: () => ({ worker: worker as any, cleanup: vi.fn() }),
+			instanceId: "pane-replay",
+		})
+		window.dispatchEvent(
+			new CustomEvent(CrispyPreviewEvents.SetDoc, {
+				detail: {
+					doctype: "Sales Invoice",
+					docname: "A",
+					instanceId: "pane-replay",
+				},
+			})
+		)
+		callbacks.A({ message: { name: "A", customer: "Customer A" } })
+		await flushCompileTimers()
+
+		const received = vi.fn()
+		window.addEventListener(CrispyPreviewEvents.Document, received, { once: true })
+		window.dispatchEvent(
+			new CustomEvent(CrispyPreviewEvents.RequestDocument, {
+				detail: { instanceId: "pane-replay" },
+			})
+		)
+
+		expect(received).toHaveBeenCalledOnce()
+		expect((received.mock.calls[0][0] as CustomEvent).detail).toMatchObject({
+			doctype: "Sales Invoice",
+			docname: "A",
+			document: { name: "A", customer: "Customer A" },
+			instanceId: "pane-replay",
+		})
+	})
+
 	it("preserves the frozen legacy basic QR timestamp payload", async () => {
 		const pane = makePane()
 		setupWorker(

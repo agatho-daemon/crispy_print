@@ -1,9 +1,12 @@
 import unittest
+from unittest import mock
 
 from crispy_print.dev_utils.rtl_e2e import (
 	_doc_format_values,
 	_layout,
 	_presentation,
+	_qr_format_values,
+	_safe_qr_fixture_fields,
 )
 
 
@@ -53,6 +56,40 @@ class RTLE2EFixtureTestCase(unittest.TestCase):
 		self.assertIn('"schema_version": 4', values["layout_json"])
 		self.assertIn("align(end + horizon)", values["doc_footer"])
 		self.assertIn("dir: ltr", values["doc_footer"])
+
+	def test_qr_acceptance_fixture_uses_exact_doctype_fieldnames(self):
+		class Invoice:
+			doctype = "Sales Invoice"
+			company = "Test Company"
+
+		with mock.patch(
+			"crispy_print.dev_utils.rtl_e2e.frappe.get_meta",
+			return_value=type(
+				"Meta",
+				(),
+				{
+					"fields": [
+						type(
+							"DF",
+							(),
+							{"fieldname": "posting_date", "fieldtype": "Date", "label": "Posting Date"},
+						)(),
+						type(
+							"DF",
+							(),
+							{"fieldname": "grand_total", "fieldtype": "Currency", "label": "Grand Total"},
+						)(),
+					]
+				},
+			)(),
+		):
+			fields = _safe_qr_fixture_fields("Sales Invoice")
+			values = _qr_format_values(Invoice())
+
+		self.assertEqual(fields, ["name", "posting_date", "grand_total"])
+		settings = __import__("json").loads(values["presentation_settings"])
+		self.assertEqual(settings["qr"]["sourceMode"], "custom")
+		self.assertEqual(settings["qr"]["fields"], fields)
 
 
 if __name__ == "__main__":

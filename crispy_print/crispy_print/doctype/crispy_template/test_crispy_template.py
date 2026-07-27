@@ -229,6 +229,68 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(second_doc.status, "Approved")
 		self.assertEqual(second_doc.is_active, 1)
 
+	def test_publish_freezes_exact_custom_qr_field_order(self):
+		source = self._insert_format("CT Test Source Custom QR Freeze")
+		original_fields = ["name", "posting_date", "customer_name", "grand_total"]
+		source.presentation_settings = json.dumps(
+			{
+				"qr": {
+					"enabled": True,
+					"sourceMode": "custom",
+					"fields": original_fields,
+				}
+			}
+		)
+		source.save(ignore_permissions=True)
+
+		result = publish_crispy_template(source.name, version_bump="minor", make_active=True)
+		template = frappe.get_doc("Crispy Template", result["name"])
+		frozen_before = json.loads(template.presentation_settings_json)
+
+		source.presentation_settings = json.dumps(
+			{
+				"qr": {
+					"enabled": True,
+					"sourceMode": "custom",
+					"fields": ["grand_total", "name"],
+				}
+			}
+		)
+		source.save(ignore_permissions=True)
+		template.reload()
+
+		self.assertEqual(frozen_before["qr"]["fields"], original_fields)
+		self.assertEqual(json.loads(template.presentation_settings_json)["qr"]["fields"], original_fields)
+
+	def test_frozen_legacy_basic_template_keeps_legacy_snapshot(self):
+		source = self._insert_format("CT Test Source Legacy Basic Frozen")
+		# Existing editable formats reject this mode, so emulate a template
+		# published before Custom Document QR replaced Basic QR.
+		frappe.db.set_value(
+			"Crispy Format",
+			source.name,
+			"presentation_settings",
+			json.dumps(
+				{
+					"qr": {
+						"enabled": True,
+						"sourceMode": "basic",
+						"fields": ["timestamp", "name"],
+					}
+				}
+			),
+			update_modified=False,
+		)
+		template = self._insert_template(
+			template_name="CT Test Legacy Basic Frozen",
+			source_crispy_format=source.name,
+			company=self.company,
+		)
+
+		settings = json.loads(template.presentation_settings_json)
+		self.assertEqual(settings["qr"]["sourceMode"], "basic")
+		self.assertEqual(settings["qr"]["fields"], ["timestamp", "name"])
+
 	def test_designer_can_publish_template_from_writable_format(self):
 		ensure_designer_role()
 		source = self._insert_format("CT Test Source Designer Publish")
