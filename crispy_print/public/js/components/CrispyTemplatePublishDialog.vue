@@ -103,6 +103,51 @@
 						class="form-control template-publish__notes"
 					></textarea>
 				</div>
+
+				<section class="template-publish__history">
+					<div class="template-publish__history-heading">
+						<div>
+							<strong>{{ __("Template history") }}</strong>
+							<p>{{ __("Frozen versions for this format and company.") }}</p>
+						</div>
+						<span>{{ preview?.history?.length || 0 }}</span>
+					</div>
+					<div class="template-publish__next-hash">
+						<span>{{ __("Next snapshot hash") }}</span>
+						<code :title="preview?.snapshot_hash || ''">{{
+							shortHash(preview?.snapshot_hash)
+						}}</code>
+					</div>
+					<div v-if="preview?.history?.length" class="template-publish__history-list">
+						<a
+							v-for="item in preview.history"
+							:key="item.name"
+							class="template-publish__history-row"
+							:href="templateHref(item.name)"
+							target="_blank"
+							rel="noopener"
+						>
+							<span class="template-publish__history-version">
+								v{{ item.version }}
+							</span>
+							<span
+								class="template-publish__history-status"
+								:class="{ 'is-active': Boolean(item.is_active) }"
+							>
+								{{ item.is_active ? __("Active") : __(item.status) }}
+							</span>
+							<code :title="item.snapshot_hash || ''">{{
+								shortHash(item.snapshot_hash)
+							}}</code>
+							<span class="template-publish__history-note">
+								{{ item.notes || __("No publication notes") }}
+							</span>
+						</a>
+					</div>
+					<p v-else class="template-publish__history-empty">
+						{{ __("No published versions yet.") }}
+					</p>
+				</section>
 			</div>
 
 			<footer class="template-publish__footer">
@@ -196,6 +241,15 @@ function confirm() {
 		notes: form.notes || null,
 	});
 }
+
+function shortHash(value?: string | null): string {
+	if (!value) return __("Unavailable");
+	return value.length > 16 ? `${value.slice(0, 12)}…${value.slice(-4)}` : value;
+}
+
+function templateHref(name: string): string {
+	return `/app/crispy-template/${encodeURIComponent(name)}`;
+}
 </script>
 
 <style scoped>
@@ -226,6 +280,87 @@ function confirm() {
 	border-radius: 8px;
 	box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
 	overflow: hidden;
+}
+
+.template-publish__history {
+	padding: 12px;
+	border: 1px solid #d8dbe0;
+	border-radius: 7px;
+	background: #f8fafc;
+}
+
+.template-publish__history-heading,
+.template-publish__next-hash,
+.template-publish__history-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.template-publish__history-heading {
+	justify-content: space-between;
+}
+
+.template-publish__history-heading p,
+.template-publish__history-empty {
+	margin: 2px 0 0;
+	color: #6b7280;
+	font-size: 12px;
+}
+
+.template-publish__next-hash {
+	justify-content: space-between;
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid #e5e7eb;
+	font-size: 12px;
+}
+
+.template-publish__next-hash code,
+.template-publish__history-row code {
+	direction: ltr;
+	unicode-bidi: isolate;
+	color: #475569;
+}
+
+.template-publish__history-list {
+	display: grid;
+	gap: 6px;
+	margin-top: 10px;
+}
+
+.template-publish__history-row {
+	display: grid;
+	grid-template-columns: 52px 82px 132px minmax(0, 1fr);
+	padding: 7px 8px;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	background: #fff;
+	color: inherit;
+	text-decoration: none;
+}
+
+.template-publish__history-row:hover {
+	border-color: #b8c7dd;
+}
+
+.template-publish__history-version {
+	font-weight: 600;
+}
+
+.template-publish__history-status {
+	color: #64748b;
+}
+
+.template-publish__history-status.is-active {
+	color: #16794b;
+	font-weight: 600;
+}
+
+.template-publish__history-note {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .template-publish__header,

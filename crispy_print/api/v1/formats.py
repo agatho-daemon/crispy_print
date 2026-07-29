@@ -525,26 +525,29 @@ def export_crispy_format(name: str) -> dict:
 
 
 def check_import_conflicts(payload: dict | str) -> dict:
-	"""Preflight payload validation and collision check."""
+	"""Validate an import without writes and describe both conflict outcomes."""
 	_ensure_create_permission()
-	parsed = _convert_legacy_import_payload(_parse_import_payload(payload))
-	format_data = _validate_import_payload(parsed)
+	parsed, format_data = _prepare_import_payload(payload)
 	name = format_data.get("name")
 	exists = bool(name and frappe.db.exists("Crispy Format", name))
+	warnings = _preview_import_warnings(format_data, parsed)
 
 	return {
 		"schema_version": EXPORT_SCHEMA_VERSION,
 		"name": name,
 		"exists": exists,
 		"conflict": exists,
+		"warnings": warnings,
+		"plans": {
+			"copy": _build_import_plan(format_data, "copy", exists, warnings),
+			"overwrite": _build_import_plan(format_data, "overwrite", exists, warnings),
+		},
 	}
 
 
 def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict:
 	"""Import a Crispy Format, converting portable schemas v1-v3 when necessary."""
-	parsed = _parse_import_payload(payload)
-	parsed = _convert_legacy_import_payload(parsed)
-	format_data = _validate_import_payload(parsed)
+	parsed, format_data = _prepare_import_payload(payload)
 	on_conflict_value = (on_conflict or "copy").strip().lower()
 
 	if on_conflict_value not in ALLOWED_IMPORT_CONFLICT_ACTIONS:
@@ -573,6 +576,57 @@ def import_crispy_format(payload: dict | str, on_conflict: str = "copy") -> dict
 		"name": imported_doc.name,
 		"warnings": warnings,
 		"conflict_action": on_conflict_value,
+	}
+
+
+def _prepare_import_payload(payload: dict | str) -> tuple[dict, dict]:
+	parsed = _convert_legacy_import_payload(_parse_import_payload(payload))
+	return parsed, _validate_import_payload(parsed)
+
+
+def _preview_import_warnings(format_data: dict, parsed: dict) -> list[str]:
+	doc_data = {**format_data, "doctype": "Crispy Format"}
+	warnings = _collect_reference_warnings(frappe.get_doc(doc_data))
+	warnings.extend(_collect_metadata_reference_warnings(parsed))
+	return warnings
+
+
+def _build_import_plan(
+	format_data: dict,
+	on_conflict: str,
+	exists: bool,
+	warnings: list[str],
+) -> dict:
+	source_name = str(format_data.get("name") or "")
+	if not exists:
+		action = "create"
+		target_name = source_name
+	elif on_conflict == "overwrite":
+		action = "overwrite"
+		target_name = source_name
+	else:
+		action = "rename"
+		target_name = _get_imported_copy_name(source_name)
+	allowed = True
+	blockers: list[str] = []
+	if action == "overwrite":
+		allowed = bool(frappe.get_doc("Crispy Format", source_name).has_permission("write"))
+		if not allowed:
+			blockers.append(
+				_("You don't have permission to overwrite Crispy Format {0}.").format(source_name)
+			)
+
+	return {
+		"action": action,
+		"source_name": source_name,
+		"target_name": target_name,
+		"creates": 1 if action in {"create", "rename"} else 0,
+		"overwrites": 1 if action == "overwrite" else 0,
+		"renames": 1 if action == "rename" else 0,
+		"skips": 0,
+		"allowed": allowed,
+		"blockers": blockers,
+		"warnings": list(warnings),
 	}
 
 

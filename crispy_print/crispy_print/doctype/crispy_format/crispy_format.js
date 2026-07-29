@@ -181,24 +181,58 @@ async function openImportDialog() {
 		});
 		const conflict = conflictResponse.message || {};
 		const hasConflict = Boolean(conflict.exists || conflict.conflict);
+		const copyPlan = conflict.plans?.copy;
+		const overwritePlan = conflict.plans?.overwrite;
 
 		if (hasConflict) {
-			frappe.confirm(
-				__(
-					"Format <strong>{0}</strong> already exists.<br><br>Yes: overwrite existing.<br>No: import as copy.",
-					[escapeHtml(conflict.name || "")]
-				),
-				async () => {
+			if (overwritePlan && overwritePlan.allowed === false) {
+				showImportDryRunDialog({
+					primaryActionLabel: __("Import renamed copy"),
+					primaryAction: async () => {
+						await importFormatPayload(fileText, "copy");
+					},
+					message: buildImportDryRunHtml(copyPlan, {
+						heading: __("Import dry run"),
+						decision: __(
+							"The existing format cannot be overwritten. Continue by importing a renamed copy?"
+						),
+					}),
+				});
+				return;
+			}
+			showImportDryRunDialog({
+				primaryActionLabel: __("Overwrite"),
+				primaryAction: async () => {
 					await importFormatPayload(fileText, "overwrite");
 				},
-				async () => {
+				secondaryActionLabel: __("Import renamed copy"),
+				secondaryAction: async () => {
 					await importFormatPayload(fileText, "copy");
-				}
-			);
+				},
+				message: [
+					buildImportDryRunHtml(overwritePlan, {
+						heading: __("Overwrite dry run"),
+						decision: __("Overwrite the existing format."),
+					}),
+					buildImportDryRunHtml(copyPlan, {
+						heading: __("Copy dry run"),
+						decision: __("Or import as the renamed copy shown below."),
+					}),
+				].join("<hr>"),
+			});
 			return;
 		}
 
-		await importFormatPayload(fileText, "copy");
+		showImportDryRunDialog({
+			primaryActionLabel: __("Import"),
+			primaryAction: async () => {
+				await importFormatPayload(fileText, "copy");
+			},
+			message: buildImportDryRunHtml(copyPlan, {
+				heading: __("Import dry run"),
+				decision: __("Continue with this import?"),
+			}),
+		});
 	} catch (error) {
 		frappe.msgprint({
 			title: __("Import Failed"),
@@ -206,6 +240,77 @@ async function openImportDialog() {
 			indicator: "red",
 		});
 	}
+}
+
+function showImportDryRunDialog({
+	message,
+	primaryActionLabel,
+	primaryAction,
+	secondaryActionLabel,
+	secondaryAction,
+}) {
+	const dialog = new frappe.ui.Dialog({
+		title: __("Import dry run"),
+		fields: [
+			{
+				fieldname: "dry_run_summary",
+				fieldtype: "HTML",
+				options: message,
+			},
+		],
+		primary_action_label: primaryActionLabel,
+		primary_action: async () => {
+			dialog.hide();
+			await primaryAction();
+		},
+		...(secondaryAction
+			? {
+					secondary_action_label: secondaryActionLabel,
+					secondary_action: async () => {
+						dialog.hide();
+						await secondaryAction();
+					},
+			  }
+			: {}),
+	});
+	dialog.show();
+}
+
+function buildImportDryRunHtml(plan, options = {}) {
+	if (!plan) {
+		return `<p>${escapeHtml(options.decision || __("Import validation passed."))}</p>`;
+	}
+	const warnings = Array.isArray(plan.warnings) ? plan.warnings : [];
+	const blockers = Array.isArray(plan.blockers) ? plan.blockers : [];
+	const summary = [
+		[__("Create"), Number(plan.creates || 0)],
+		[__("Overwrite"), Number(plan.overwrites || 0)],
+		[__("Rename"), Number(plan.renames || 0)],
+		[__("Skip"), Number(plan.skips || 0)],
+	]
+		.map(([label, value]) => `<li>${escapeHtml(label)}: <strong>${value}</strong></li>`)
+		.join("");
+	const details = [
+		`<p><strong>${escapeHtml(options.heading || __("Import dry run"))}</strong></p>`,
+		`<ul>${summary}</ul>`,
+		`<p>${__("Target")}: <code>${escapeHtml(plan.target_name || "")}</code></p>`,
+	];
+	if (warnings.length) {
+		details.push(
+			`<p>${__("Warnings")}</p><ul>${warnings
+				.map((warning) => `<li>${escapeHtml(warning)}</li>`)
+				.join("")}</ul>`
+		);
+	}
+	if (blockers.length) {
+		details.push(
+			`<p>${__("Blocked")}</p><ul>${blockers
+				.map((blocker) => `<li>${escapeHtml(blocker)}</li>`)
+				.join("")}</ul>`
+		);
+	}
+	details.push(`<p>${escapeHtml(options.decision || "")}</p>`);
+	return details.join("");
 }
 
 async function importFormatPayload(fileText, action) {

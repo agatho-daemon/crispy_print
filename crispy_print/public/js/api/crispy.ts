@@ -80,6 +80,24 @@ export interface ConflictResult {
   name: string;
   exists: boolean;
   conflict: boolean;
+  warnings?: string[];
+  plans?: {
+    copy: ImportDryRunPlan;
+    overwrite: ImportDryRunPlan;
+  };
+}
+
+export interface ImportDryRunPlan {
+  action: "create" | "rename" | "overwrite";
+  source_name: string;
+  target_name: string;
+  creates: number;
+  overwrites: number;
+  renames: number;
+  skips: number;
+  allowed: boolean;
+  blockers: string[];
+  warnings: string[];
 }
 
 export interface ImportResult {
@@ -99,6 +117,9 @@ export interface SampleFormatCatalogItem {
   tags: string[];
   recommended_use?: string | null;
   format_name?: string | null;
+  release_scope?: string | null;
+  business_purpose?: string | null;
+  variant?: string | null;
 }
 
 export interface CreateFormatFromSampleResult {
@@ -273,6 +294,21 @@ export interface CrispyTemplatePublishPreview {
   current_version?: string | null;
   next_version: string;
   version_bump: "minor" | "major";
+  history?: CrispyTemplateHistoryItem[];
+}
+
+export interface CrispyTemplateHistoryItem {
+  name: string;
+  version: string;
+  status: string;
+  is_active: number | boolean;
+  notes?: string | null;
+  snapshot_hash?: string | null;
+  snapshot_hash_version?: string | null;
+  effective_from?: string | null;
+  effective_to?: string | null;
+  creation?: string | null;
+  owner?: string | null;
 }
 
 export interface CrispyTemplatePublishResult {

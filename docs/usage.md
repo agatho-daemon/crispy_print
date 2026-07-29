@@ -33,8 +33,62 @@ The created record is a normal company-scoped **Crispy Format**. It can be saved
 edited, published as a Crispy Template, exported, duplicated for another company,
 or deleted like any user-created format.
 
-Current samples include regular builder starters for Sales Invoice, Quotation,
-and Purchase Order, plus a Raw Typst **Receipt Voucher** sample for Payment Entry.
+The catalog also includes the accepted core-v1 business starters:
+
+- Payment Entry receipt/payment voucher and supplier remittance advice
+- Stock Entry movement and Material Request requisition
+- Journal Entry voucher, including cash/petty-cash use
+- General Ledger statement of account and Accounts Receivable/Payable aging
+- POS Invoice 80 mm thermal receipt and A4 invoice
+
+These are editable starters, not installed business records. See
+[Core v1 Business-Format Acceptance](business-format-acceptance.md) for the
+targets, variants, deterministic test fixtures, and acceptance boundary.
+
+### Compact Table Presets
+
+Open **Configure columns** for a document child table to apply one of the
+application-owned compact presets:
+
+- Invoice items
+- Service rows
+- Tax rows
+- Serial and batch rows
+- Compact POS rows
+
+The dialog previews the exact available columns before applying anything.
+Required fields missing from the live child DocType block the preset; missing
+optional fields are listed explicitly. Applying a preset requires confirmation,
+replaces only that table's current column configuration, and sets its ordering
+to logical/direction-aware. It does not alter other fields, saved formats, or
+frozen templates.
+
+Preset definitions use exact Frappe fieldnames. Labels and field types come
+from the current site's DocType metadata, so customized labels remain visible
+without aliases or normalization.
+
+### Template Publication History
+
+The **Publish Template** dialog shows the frozen history for the current format
+and company, including version, active or superseded state, publication notes,
+and snapshot hash. Each history row opens its immutable Crispy Template record.
+The dialog also previews the hash of the version about to be published.
+
+History is read-only. Publishing, retirement, supersession, and frozen snapshot
+rules remain controlled by the existing Crispy Template workflow.
+
+### Import Dry Run
+
+Import validates the complete portable payload before writing and displays:
+
+- records to create, overwrite, rename, or skip;
+- the exact target format name;
+- missing-reference and metadata warnings; and
+- permission blockers.
+
+When a name conflicts, the dry run shows both the overwrite and renamed-copy
+outcomes. The eventual import uses the same payload conversion and validation
+path. Closing the confirmation dialog performs no write.
 
 > **Fixture removal note:** older beta builds shipped sample `Crispy Format`
 > records through `fixtures/crispy_format.json`. That fixture path has been

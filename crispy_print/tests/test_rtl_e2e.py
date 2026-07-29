@@ -6,6 +6,7 @@ from crispy_print.dev_utils.rtl_e2e import (
 	_layout,
 	_presentation,
 	_qr_format_values,
+	_report_format_values,
 	_safe_qr_fixture_fields,
 )
 
@@ -56,6 +57,15 @@ class RTLE2EFixtureTestCase(unittest.TestCase):
 		self.assertIn('"schema_version": 4', values["layout_json"])
 		self.assertIn("align(end + horizon)", values["doc_footer"])
 		self.assertIn("dir: ltr", values["doc_footer"])
+
+	def test_report_fixture_does_not_enable_doctype_only_custom_qr(self):
+		values = _report_format_values("Test Company")
+		settings = __import__("json").loads(values["presentation_settings"])
+
+		self.assertNotIn("qr", settings)
+		self.assertIn("CRISPY_REPORT_BASIC_GENERATOR:4", values["typst_code"])
+		self.assertIn("dir: rtl", values["typst_code"])
+		self.assertIn("#text(dir: ltr)", values["typst_code"])
 
 	def test_qr_acceptance_fixture_uses_exact_doctype_fieldnames(self):
 		class Invoice:

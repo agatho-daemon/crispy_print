@@ -27,6 +27,22 @@ RTL_FOOTER = (
 	'  #context counter(page).display("1 of 1", both: true)\n'
 	"]"
 )
+RTL_REPORT_TYPST = """// Generated deterministic RTL report acceptance fixture
+// CRISPY_REPORT_BASIC_GENERATOR:4
+#set text(
+  font: ("Noto Naskh Arabic", "Noto Sans Arabic", "Inter"),
+  lang: "ar",
+  region: "KW",
+  dir: rtl,
+)
+#align(right)[
+  #text(size: 16pt, weight: "bold")[تقرير دفتر الأستاذ العام]
+  #v(0.5em)
+  #text[اختبار تقرير حتمي من اليمين إلى اليسار]
+  #v(0.5em)
+  #text(dir: ltr)[Rows: #data.rows.len() · -700.000 KWD]
+]
+"""
 
 LABELS = {
 	"ar": {
@@ -156,15 +172,17 @@ def _layout(language: str, repeat_sections: int = 1) -> dict:
 	}
 
 
-def _presentation(language: str) -> dict:
-	return {
+def _presentation(language: str, *, enable_custom_qr: bool = True) -> dict:
+	settings = {
 		"language": language,
 		"page": {
 			"size": "A4",
 			"orientation": "portrait",
 			"margins": {"top": 20, "bottom": 20, "left": 18, "right": 18},
 		},
-		"qr": {
+	}
+	if enable_custom_qr:
+		settings["qr"] = {
 			"enabled": True,
 			"sourceMode": "custom",
 			"fields": ["name", "customer_name", "grand_total"],
@@ -173,8 +191,8 @@ def _presentation(language: str) -> dict:
 			"anchor": "end",
 			"dx": 0,
 			"dy": 0,
-		},
-	}
+		}
+	return settings
 
 
 def _upsert_format(name: str, values: dict):
@@ -216,7 +234,11 @@ def _report_format_values(company: str) -> dict:
 		"report": [{"report": "General Ledger", "disabled": 0}],
 		"default_print_language": "ar",
 		"layout_json": json.dumps({"schema_version": 4, "sections": []}),
-		"presentation_settings": json.dumps(_presentation("ar-KW"), ensure_ascii=False),
+		"typst_code": RTL_REPORT_TYPST,
+		"presentation_settings": json.dumps(
+			_presentation("ar-KW", enable_custom_qr=False),
+			ensure_ascii=False,
+		),
 	}
 
 
@@ -481,7 +503,15 @@ def _ensure_test_user(password: str):
 	user.enabled = 1
 	user.new_password = password
 	user.save(ignore_permissions=True)
-	required_roles = {"System Manager", "Accounts User", "Accounts Manager", "Sales User", "Sales Manager"}
+	required_roles = {
+		"System Manager",
+		"Accounts User",
+		"Accounts Manager",
+		"Sales User",
+		"Sales Manager",
+		"Stock User",
+		"Stock Manager",
+	}
 	missing_roles = sorted(required_roles - set(frappe.get_roles(TEST_USER)))
 	if missing_roles:
 		user.add_roles(*missing_roles)

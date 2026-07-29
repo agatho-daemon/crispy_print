@@ -229,6 +229,30 @@ class TestCrispyTemplate(FrappeTestCase):
 		self.assertEqual(second_doc.status, "Approved")
 		self.assertEqual(second_doc.is_active, 1)
 
+	def test_publish_preview_returns_read_only_template_history_and_next_hash(self):
+		source = self._insert_format("CT Test Source History")
+		first = publish_crispy_template(
+			source.name,
+			version_bump="minor",
+			make_active=True,
+			notes="Initial approval",
+		)
+		second = publish_crispy_template(
+			source.name,
+			version_bump="minor",
+			make_active=True,
+			notes="Updated approval",
+		)
+
+		preview = get_publish_preview(source.name, version_bump="minor")
+
+		self.assertEqual(preview["next_version"], "1.2")
+		self.assertEqual(len(preview["snapshot_hash"]), 64)
+		self.assertEqual([row["name"] for row in preview["history"][:2]], [second["name"], first["name"]])
+		self.assertEqual(preview["history"][0]["notes"], "Updated approval")
+		self.assertEqual(preview["history"][0]["snapshot_hash"], second["snapshot_hash"])
+		self.assertEqual(preview["history"][1]["is_active"], 0)
+
 	def test_publish_freezes_exact_custom_qr_field_order(self):
 		source = self._insert_format("CT Test Source Custom QR Freeze")
 		original_fields = ["name", "posting_date", "customer_name", "grand_total"]

@@ -18,6 +18,82 @@
 			</div>
 
 			<div class="table-dialog__body">
+				<section v-if="presetOptions.length" class="table-dialog__presets">
+					<div class="table-dialog__preset-heading">
+						<div>
+							<strong>{{ __("Compact table preset") }}</strong>
+							<p>
+								{{
+									__(
+										"Presets replace the current columns with an RTL-safe logical layout."
+									)
+								}}
+							</p>
+						</div>
+						<div class="table-dialog__preset-actions">
+							<select v-model="selectedPresetId" class="table-dialog__select">
+								<option value="">{{ __("Select preset") }}</option>
+								<option
+									v-for="option in presetOptions"
+									:key="option.preset.id"
+									:value="option.preset.id"
+								>
+									{{
+										presetMessages[option.preset.id]?.label ||
+										option.preset.label
+									}}
+								</option>
+							</select>
+							<button
+								type="button"
+								class="table-dialog__add-btn"
+								:disabled="!selectedPreset?.applicable"
+								@click="confirmApplyPreset"
+							>
+								{{ __("Apply preset") }}
+							</button>
+						</div>
+					</div>
+					<div v-if="selectedPreset" class="table-dialog__preset-preview">
+						<p>
+							{{
+								presetMessages[selectedPreset.preset.id]?.description ||
+								selectedPreset.preset.description
+							}}
+						</p>
+						<div class="table-dialog__preset-columns">
+							<span
+								v-for="column in selectedPreset.columns"
+								:key="column.fieldname"
+								class="table-dialog__preset-column"
+							>
+								{{ column.label }}
+								<code>{{ column.fieldname }}</code>
+							</span>
+						</div>
+						<p
+							v-if="selectedPreset.missingRequired.length"
+							class="table-dialog__preset-warning"
+						>
+							{{
+								__("Required fields unavailable: {0}", [
+									selectedPreset.missingRequired.join(", "),
+								])
+							}}
+						</p>
+						<p
+							v-if="selectedPreset.missingOptional.length"
+							class="table-dialog__preset-note"
+						>
+							{{
+								__("Optional fields unavailable: {0}", [
+									selectedPreset.missingOptional.join(", "),
+								])
+							}}
+						</p>
+					</div>
+				</section>
+
 				<div class="table-dialog__row">
 					<span>{{ __("Columns") }}</span>
 					<label class="table-dialog__order">
@@ -139,6 +215,12 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import type { TableColumn } from "../utils/layout";
 import { getDefaultAlignment } from "../utils/tableColumns";
+import {
+	TABLE_PRESETS,
+	resolveTablePreset,
+	type ResolvedTablePreset,
+	type TablePresetFieldOption,
+} from "../utils/tablePresets";
 import { deepClone } from "../utils/json";
 import { __ } from "../utils/i18n";
 import type { LogicalAlignment, TableOrder } from "../utils/direction";
@@ -166,6 +248,29 @@ const cloneColumns = (cols?: TableColumn[] | null) => deepClone(cols || []);
 const localColumns = ref<TableColumn[]>(cloneColumns(props.modelValue || []));
 const childMeta = ref<any>(null);
 const pendingFieldname = ref<string>("");
+const selectedPresetId = ref("");
+const presetMessages: Record<string, { label: string; description: string }> = {
+	"invoice-items": {
+		label: __("Invoice items"),
+		description: __("Item, description, quantity, rate, and amount."),
+	},
+	"service-rows": {
+		label: __("Service rows"),
+		description: __("Description-led rows for services and professional work."),
+	},
+	"tax-rows": {
+		label: __("Tax rows"),
+		description: __("Tax description, rate, tax amount, and running total."),
+	},
+	"serial-batch": {
+		label: __("Serial and batch rows"),
+		description: __("Item identity, serial/batch values, quantity, and warehouse."),
+	},
+	"pos-compact": {
+		label: __("Compact POS rows"),
+		description: __("Compact item, quantity, rate, and amount receipt rows."),
+	},
+};
 const syncingFromProp = ref(false);
 const validationMessage = ref<string>("");
 let validationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -228,8 +333,7 @@ watch(
 	{ deep: true }
 );
 
-const availableColumnOptions = computed(() => {
-	const existing = new Set(localColumns.value.map((c) => c.fieldname));
+const allColumnOptions = computed<TablePresetFieldOption[]>(() => {
 	const base: { label: string; fieldname: string; fieldtype: string }[] = [
 		{ label: __("Sr No."), fieldname: "idx", fieldtype: "Data" },
 	];
@@ -241,8 +345,7 @@ const availableColumnOptions = computed(() => {
 				label: f.label,
 				fieldname: f.fieldname,
 				fieldtype: f.fieldtype || "Data",
-			}))
-			.filter((f) => !existing.has(f.fieldname));
+			}));
 	}
 
 	if (!childMeta.value?.fields) {
@@ -265,8 +368,38 @@ const availableColumnOptions = computed(() => {
 			fieldtype: f.fieldtype,
 		}));
 
-	return [...base, ...metaFields].filter((f) => !existing.has(f.fieldname));
+	return [...base, ...metaFields];
 });
+
+const availableColumnOptions = computed(() => {
+	const existing = new Set(localColumns.value.map((c) => c.fieldname));
+	return allColumnOptions.value.filter((field) => !existing.has(field.fieldname));
+});
+
+const presetOptions = computed<ResolvedTablePreset[]>(() => {
+	if (Array.isArray(props.availableColumns) && props.availableColumns.length) return [];
+	return TABLE_PRESETS.map((preset) => resolveTablePreset(preset, allColumnOptions.value));
+});
+
+const selectedPreset = computed(
+	() => presetOptions.value.find((option) => option.preset.id === selectedPresetId.value) || null
+);
+
+function applySelectedPreset() {
+	if (!selectedPreset.value?.applicable) return;
+	localColumns.value = cloneColumns(selectedPreset.value.columns);
+	emit("update:order", "logical");
+}
+
+function confirmApplyPreset() {
+	if (!selectedPreset.value?.applicable) return;
+	const message = __("Apply preset? This replaces the current table columns.");
+	if (typeof frappe !== "undefined" && typeof frappe.confirm === "function") {
+		frappe.confirm(message, applySelectedPreset);
+		return;
+	}
+	if (window.confirm(message)) applySelectedPreset();
+}
 
 function removeColumn(column: TableColumn) {
 	localColumns.value = localColumns.value.filter((col) => col !== column);
@@ -428,6 +561,71 @@ watch(
 	justify-content: space-between;
 	font-size: 14px;
 	color: #475569;
+}
+
+.table-dialog__presets {
+	padding: 12px;
+	border: 1px solid #d8e2f0;
+	border-radius: 10px;
+	background: #f8fafc;
+}
+
+.table-dialog__preset-heading {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.table-dialog__preset-heading p,
+.table-dialog__preset-preview p {
+	margin: 3px 0 0;
+	color: #64748b;
+	font-size: 12px;
+}
+
+.table-dialog__preset-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.table-dialog__preset-preview {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid #d8e2f0;
+}
+
+.table-dialog__preset-columns {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.table-dialog__preset-column {
+	display: inline-flex;
+	gap: 5px;
+	align-items: center;
+	padding: 4px 7px;
+	border: 1px solid #d8e2f0;
+	border-radius: 6px;
+	background: #fff;
+	font-size: 12px;
+}
+
+.table-dialog__preset-column code {
+	color: #64748b;
+	direction: ltr;
+	unicode-bidi: isolate;
+}
+
+.table-dialog__preset-preview .table-dialog__preset-warning {
+	color: #b42318;
+}
+
+.table-dialog__preset-preview .table-dialog__preset-note {
+	color: #8a6116;
 }
 
 .table-dialog__total {

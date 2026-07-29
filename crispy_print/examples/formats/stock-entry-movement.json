@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "app": "crispy_print",
+  "sample": {
+    "id": "stock-entry-movement",
+    "title": "Stock Entry Movement",
+    "description": "An internal stock document for material issue, receipt, transfer, repack, and manufacture movements.",
+    "target_type": "DocType",
+    "doc_type": "Stock Entry",
+    "tags": ["stock", "inventory", "movement", "v1"],
+    "recommended_use": "Use for warehouse movement and stock-control sign-off."
+  },
+  "format": {
+    "name": "Sample Stock Entry Movement",
+    "crispy_format_type": "DocType",
+    "doc_type": "Stock Entry",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "report_scope": null,
+    "report_renderer": null,
+    "raw_typst": 0,
+    "layout_json": "{\"schema_version\":4,\"sections\":[{\"id\":\"movement\",\"label\":\"Stock Movement\",\"columns\":[{\"id\":\"movement-source\",\"width\":1,\"fields\":[{\"fieldname\":\"stock_entry_type\",\"label\":\"Purpose\",\"fieldtype\":\"Link\",\"align\":\"auto\"},{\"fieldname\":\"posting_date\",\"label\":\"Posting Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"posting_time\",\"label\":\"Posting Time\",\"fieldtype\":\"Time\",\"align\":\"auto\"},{\"fieldname\":\"from_warehouse\",\"label\":\"Source Warehouse\",\"fieldtype\":\"Link\",\"align\":\"auto\"}]},{\"id\":\"movement-target\",\"width\":1,\"fields\":[{\"fieldname\":\"to_warehouse\",\"label\":\"Target Warehouse\",\"fieldtype\":\"Link\",\"align\":\"auto\"},{\"fieldname\":\"value_difference\",\"label\":\"Value Difference\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"remarks\",\"label\":\"Remarks\",\"fieldtype\":\"Small Text\",\"align\":\"auto\"}]}]},{\"id\":\"movement-items\",\"label\":\"Items\",\"columns\":[{\"id\":\"movement-items-main\",\"width\":1,\"fields\":[{\"fieldname\":\"items\",\"label\":\"Items\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"s_warehouse\",\"label\":\"From\",\"align\":\"start\"},{\"fieldname\":\"t_warehouse\",\"label\":\"To\",\"align\":\"start\"},{\"fieldname\":\"item_code\",\"label\":\"Item\",\"align\":\"start\"},{\"fieldname\":\"item_name\",\"label\":\"Description\",\"align\":\"start\"},{\"fieldname\":\"qty\",\"label\":\"Qty\",\"align\":\"end\"},{\"fieldname\":\"uom\",\"label\":\"UOM\",\"align\":\"start\"},{\"fieldname\":\"basic_rate\",\"label\":\"Rate\",\"align\":\"end\"},{\"fieldname\":\"basic_amount\",\"label\":\"Amount\",\"align\":\"end\"}]}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a4\",\"orientation\":\"landscape\",\"margins\":{\"top\":18,\"bottom\":16,\"left\":12,\"right\":12}},\"branding\":{\"mode\":\"none\",\"profile\":\"\",\"company\":\"\",\"letterhead\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":26,\"dx\":0,\"dy\":0}},\"typography\":{},\"table\":{\"inset\":{\"top\":3,\"right\":3,\"bottom\":3,\"left\":3},\"stroke\":{\"width\":0.5,\"color\":\"#d1d8dd\"},\"header\":{\"backgroundColor\":\"#f3f5f7\"},\"stripe\":{\"enabled\":true,\"color\":\"#f8f9fa\"}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 1,
+    "print_uom_after_quantity": 1,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

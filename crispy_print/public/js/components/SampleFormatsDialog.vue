@@ -29,7 +29,15 @@
 						:class="{ 'is-active': form.sample_id === sample.id }"
 						@click="selectSample(sample)"
 					>
-						<span class="sample-formats__item-title">{{ sample.title }}</span>
+						<span class="sample-formats__item-heading">
+							<span class="sample-formats__item-title">{{ sample.title }}</span>
+							<span
+								v-if="sample.release_scope === 'core-v1'"
+								class="sample-formats__scope"
+							>
+								{{ __("Core v1") }}
+							</span>
+						</span>
 						<span class="sample-formats__item-meta">
 							{{ sample.target_type }}
 							<template v-if="sample.doc_type"> · {{ sample.doc_type }}</template>
@@ -53,6 +61,10 @@
 					<div v-if="selectedSample" class="sample-formats__summary">
 						<h4>{{ selectedSample.title }}</h4>
 						<p>{{ selectedSample.recommended_use || selectedSample.description }}</p>
+						<p v-if="selectedSample.business_purpose" class="sample-formats__purpose">
+							<strong>{{ __("Business purpose") }}:</strong>
+							{{ selectedSample.business_purpose }}
+						</p>
 						<div v-if="selectedSample.tags.length" class="sample-formats__tags">
 							<span
 								v-for="tag in selectedSample.tags"
@@ -316,6 +328,25 @@ function confirm() {
 	line-height: 1.35;
 }
 
+.sample-formats__item-heading {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.sample-formats__scope {
+	flex: 0 0 auto;
+	padding: 1px 6px;
+	border: 1px solid #b8d5f5;
+	border-radius: 999px;
+	background: #eaf4ff;
+	color: #1f5f99;
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 1.5;
+}
+
 .sample-formats__item-meta {
 	color: #64748b;
 	font-size: 12px;
@@ -346,6 +377,13 @@ function confirm() {
 	color: #334155;
 	font-size: 13px;
 	line-height: 1.5;
+}
+
+.sample-formats__summary .sample-formats__purpose {
+	padding: 8px 10px;
+	border-inline-start: 3px solid #2490ef;
+	background: #f5f9fd;
+	color: #334155;
 }
 
 .sample-formats__tags {

@@ -326,7 +326,7 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		doc = self._insert_profile(
 			profile_name="CBP Test QR Source",
 			enable_qr_code=1,
-			qr_source_mode="Document Code Profile",
+			qr_source_mode="Regulatory Document Code",
 		)
 
 		settings = doc.to_presentation_settings()
@@ -634,6 +634,7 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 					"company_name": company,
 					"abbr": abbr,
 					"default_currency": "KWD",
+					"country": "Kuwait",
 				}
 			).insert(ignore_permissions=True)
 		return company

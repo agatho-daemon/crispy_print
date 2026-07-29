@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added application-owned compact table presets for invoice, service, tax,
+  serial/batch, and POS child tables. Presets resolve exact live metadata,
+  expose unavailable fields, confirm replacement, and apply logical RTL-aware
+  ordering without changing existing formats automatically.
+- Added read-only publication history to the Crispy Template publish dialog,
+  including versions, active/superseded status, publication notes, links to
+  frozen records, full snapshot hashes, and the next prospective hash.
+- Added non-mutating format import dry runs that reuse portable-schema
+  conversion and validation while reporting create, overwrite, rename, skip,
+  target-name, warning, and permission-blocker outcomes before confirmation.
+- Added ten company-neutral core-v1 business-format starters covering Payment
+  Entry receipts/vouchers, remittance advice, Stock Entry, Material Request,
+  Journal Entry and cash/petty-cash vouchers, General Ledger statements,
+  receivable/payable aging, and POS thermal/A4 output.
+- Added a deterministic disposable-site core-format seed and authenticated
+  browser matrix spanning representative ERPNext records and report execution.
+- Recorded completion of native Arabic linguistic review by Agathodaemon on
+  2026-07-28 across the translated UI and representative RTL document/PDF
+  acceptance output. Native Persian linguistic review and
+  jurisdiction-specific professional approval remain separate release gates.
+- Added an explicit Frappe/ERPNext v15, v16, and current dev-17 clean-install
+  CI matrix with branch-specific Python versions, pinned Node 24.18.0,
+  matching official Payments branches, repeated migration checks, full backend
+  tests, and production asset builds.
+- Added a release and compatibility gate guide covering commit-specific
+  evidence, clean-site commands, export/import and frozen-template acceptance,
+  browser/PDF checks, and the boundary between engineering verification and
+  native or jurisdictional approval.
 - Added Custom Document QR with an RTL-aware ordered field editor, live safe
   DocType metadata, exact fieldname persistence, payload preview, encoded-byte
   estimate, density warnings, and duplicate/unsupported-field validation.
@@ -52,6 +80,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed managed layout generation for numeric grid/table tracks by emitting
+  valid Typst fractional tracks, while preserving numeric widths through
+  legacy layout normalization.
+- Fixed clean-site backend testing by provisioning deterministic ERPNext
+  baseline fixtures/defaults and making every test-created Company supply its
+  mandatory country instead of relying on records left by earlier runs.
+- Fixed MariaDB default-setting advisory locks for current Frappe/MariaDB by
+  keeping lock names within the 64-character limit and namespacing their hash
+  per site so concurrent sites do not block one another.
+- Fixed the deterministic RTL Report seed so it excludes DocType-only Custom
+  QR settings and stores a current generated Basic Report Typst fixture,
+  allowing idempotent reseeding and real Report PDF browser acceptance.
+- Fixed a stale Branding Profile test fixture that still inserted the removed
+  `Document Code Profile` select label instead of
+  `Regulatory Document Code`.
 - Fixed split RTL accounting table cells so currency/UOM labels and negative
   values are isolated in explicit LTR boxes; negative amounts retain leading
   sign order such as `-700.000` in rendered and extracted PDFs.
@@ -68,6 +111,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Removed the superseded Simplified Chinese CSV catalog after migrating its translations to `locale/zh.po`.
+
+### Tests
+
+- Passed 12 authenticated core-v1 business-format browser cases, including
+  ordinary and cash/petty-cash Journal Entries, 80 mm and A4 POS output, and
+  General Ledger/Receivable/Payable report previews. Real Typst compilation
+  also passed for all six managed document samples and the thermal receipt;
+  the expanded full suites pass 467 backend tests and 293 default frontend
+  tests.
+- Passed the local Frappe v15 release-gate matrix with two consecutive
+  migrations, all 461 backend tests (5 optional skips), 283 frontend tests,
+  strict TypeScript, 2 real-Typst RTL/PDF tests, the production asset build,
+  the authenticated RTL DocType/Report browser matrix, and all 9
+  Custom/Regulatory QR browser, decoding, and final-PDF parity checks.
+- Passed all 461 backend tests (5 optional skips) against local Frappe v16 and
+  current dev-17 runtimes using the same uncommitted primary source, plus
+  8-case authenticated functional RTL browser matrices on both compatibility
+  targets and 7 focused Custom/Regulatory QR browser/PDF cases on each target.
+  The compatibility QR runs covered multilingual editing, Purchase Invoice,
+  decoded final-PDF parity, regulatory resolution/validation, and legacy Basic
+  QR blocking; Delivery Note and Payment Entry were fixture skips on these
+  sites and remain covered by the complete v15 matrix. Exact-SHA CI remains a
+  release-candidate gate.
 
 ## [0.2.0-beta.2] - 2026-07-24
 

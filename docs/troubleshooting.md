@@ -165,7 +165,7 @@ A: It is in beta. Use it for testing and controlled non-critical workflows until
 A: Open an issue on GitHub with Frappe version, Typst version, and error logs.
 
 **Q: Does it support multi-language?**  
-A: Crispy Print includes gettext UI catalogs for Arabic, German, Spanish, Persian, French, Hindi, Indonesian, Italian, Brazilian Portuguese, Russian, Thai, Turkish, Vietnamese, and Simplified Chinese. These catalogs are machine-assisted starting points intended for native-speaker review. Arabic and Persian have end-to-end RTL engineering coverage across the builder, managed DocType/Report output, and PDFs; Hebrew and Urdu are recognized by the direction engine but do not ship catalogs. See [Translations](translations.md) and [Report Preview and Output](report-preview-and-output.md#language-rtl-and-accounting-values).
+A: Crispy Print includes gettext UI catalogs for Arabic, German, Spanish, Persian, French, Hindi, Indonesian, Italian, Brazilian Portuguese, Russian, Thai, Turkish, Vietnamese, and Simplified Chinese. These catalogs began as machine-assisted translations. Arabic received native linguistic review from Agathodaemon on 2026-07-28. Arabic and Persian both have end-to-end RTL engineering coverage across the builder, managed DocType/Report output, and PDFs, but Persian and the other catalogs remain contribution-ready starting points for native review. Hebrew and Urdu are recognized by the direction engine but do not ship catalogs. See [Translations](translations.md) and [Report Preview and Output](report-preview-and-output.md#language-rtl-and-accounting-values).
 
 ### RTL text is square boxes or falls back incorrectly
 

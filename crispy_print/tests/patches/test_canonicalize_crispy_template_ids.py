@@ -151,6 +151,7 @@ class TestCanonicalizeCrispyTemplateIdsPatch(FrappeTestCase):
 					"company_name": name,
 					"abbr": "PMIG",
 					"default_currency": "KWD",
+					"country": "Kuwait",
 				}
 			).insert(ignore_permissions=True)
 		return name

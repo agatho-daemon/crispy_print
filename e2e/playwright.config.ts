@@ -13,6 +13,7 @@ export default defineConfig({
   reporter: process.env.CI ? [["html", { open: "never" }], ["line"]] : "list",
   use: {
     baseURL,
+    ignoreHTTPSErrors: true,
     viewport: { width: 1440, height: 1000 },
     timezoneId: "Asia/Kuwait",
     locale: "en-US",

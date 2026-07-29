@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "app": "crispy_print",
+  "sample": {
+    "id": "payment-entry-voucher",
+    "title": "Payment Entry Receipt and Voucher",
+    "description": "An A5 voucher that covers customer receipts and supplier payments from the Payment Entry payment type.",
+    "target_type": "DocType",
+    "doc_type": "Payment Entry",
+    "tags": ["payment", "receipt", "voucher", "v1"],
+    "recommended_use": "Use for customer receipt and supplier payment voucher workflows."
+  },
+  "format": {
+    "name": "Sample Payment Entry Voucher",
+    "crispy_format_type": "DocType",
+    "doc_type": "Payment Entry",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "report_scope": null,
+    "report_renderer": null,
+    "raw_typst": 0,
+    "layout_json": "{\"schema_version\":4,\"sections\":[{\"id\":\"voucher\",\"label\":\"Payment Voucher\",\"columns\":[{\"id\":\"voucher-party\",\"width\":1,\"fields\":[{\"fieldname\":\"payment_type\",\"label\":\"Payment Type\",\"fieldtype\":\"Select\",\"align\":\"auto\"},{\"fieldname\":\"party_name\",\"label\":\"Party\",\"fieldtype\":\"Data\",\"align\":\"auto\"},{\"fieldname\":\"posting_date\",\"label\":\"Posting Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"mode_of_payment\",\"label\":\"Mode of Payment\",\"fieldtype\":\"Link\",\"align\":\"auto\"}]},{\"id\":\"voucher-amount\",\"width\":1,\"fields\":[{\"fieldname\":\"paid_amount\",\"label\":\"Paid Amount\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"received_amount\",\"label\":\"Received Amount\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"reference_no\",\"label\":\"Reference No\",\"fieldtype\":\"Data\",\"align\":\"auto\"},{\"fieldname\":\"remarks\",\"label\":\"Remarks\",\"fieldtype\":\"Small Text\",\"align\":\"auto\"}]}]},{\"id\":\"allocations\",\"label\":\"Allocated Documents\",\"columns\":[{\"id\":\"allocations-main\",\"width\":1,\"fields\":[{\"fieldname\":\"references\",\"label\":\"References\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"reference_doctype\",\"label\":\"Type\",\"align\":\"start\"},{\"fieldname\":\"reference_name\",\"label\":\"Document\",\"align\":\"start\"},{\"fieldname\":\"total_amount\",\"label\":\"Total\",\"align\":\"end\"},{\"fieldname\":\"outstanding_amount\",\"label\":\"Outstanding\",\"align\":\"end\"},{\"fieldname\":\"allocated_amount\",\"label\":\"Allocated\",\"align\":\"end\"}]}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a5\",\"orientation\":\"landscape\",\"margins\":{\"top\":12,\"bottom\":12,\"left\":12,\"right\":12}},\"branding\":{\"mode\":\"none\",\"profile\":\"\",\"company\":\"\",\"letterhead\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":24,\"dx\":0,\"dy\":0}},\"typography\":{},\"table\":{\"inset\":{\"top\":3,\"right\":3,\"bottom\":3,\"left\":3},\"stroke\":{\"width\":0.5,\"color\":\"#d1d8dd\"},\"header\":{\"backgroundColor\":\"#f3f5f7\"},\"stripe\":{\"enabled\":true,\"color\":\"#f8f9fa\"}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 0,
+    "print_uom_after_quantity": 0,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

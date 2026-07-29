@@ -15,14 +15,19 @@ const formatNames = {
 };
 const fixtureDocname = process.env.CRISPY_E2E_DOCNAME;
 const fixtureTemplate = process.env.CRISPY_E2E_TEMPLATE;
+const deskPrefix = process.env.CRISPY_E2E_DESK_PREFIX || "/app";
+const skipScreenshots = process.env.CRISPY_E2E_SKIP_SCREENSHOTS === "1";
 let originalUserLanguage: string | undefined;
 
 async function login(page: Page) {
-  await page.goto("/login");
-  await page.locator("#login_email").fill(user!);
-  await page.locator("#login_password").fill(password!);
-  await page.locator(".btn-login").click();
-  await page.waitForURL(/\/app(?:\/|$)/);
+  const response = await page.request.post("/api/method/login", {
+    form: { usr: user!, pwd: password! },
+  });
+  expect(response.ok(), await response.text()).toBe(true);
+  await page.goto(`${deskPrefix}/crispy-studio`);
+  await page.waitForFunction(
+    () => Boolean((window as any).frappe?.session?.user),
+  );
 }
 
 async function openBuilder(
@@ -30,7 +35,7 @@ async function openBuilder(
   language: "ar" | "fa" | "en",
   formatName: string,
 ) {
-  await page.goto("/app");
+  await page.goto(`${deskPrefix}/crispy-studio`);
   await page.evaluate(async (lang) => {
     const frappeGlobal = (window as any).frappe;
     if (String(frappeGlobal.boot?.lang || "en").startsWith(lang)) {
@@ -48,11 +53,13 @@ async function openBuilder(
   }, language);
   await page.waitForLoadState("networkidle");
   await page.goto(
-    `/app/crispy-format-builder/${encodeURIComponent(formatName)}`,
+    `${deskPrefix}/crispy-format-builder/${encodeURIComponent(formatName)}`,
   );
   await page.locator("#crispy-print-app.crispy-layout").waitFor();
   await expect(page).toHaveURL(
-    new RegExp(`/app/crispy-format-builder/${encodeURIComponent(formatName)}$`),
+    new RegExp(
+      `/(?:app|desk)/crispy-format-builder/${encodeURIComponent(formatName)}$`,
+    ),
   );
 }
 
@@ -144,9 +151,11 @@ test.describe("RTL builder acceptance matrix", () => {
         "dir",
         uiDirection,
       );
-      await expect(page).toHaveScreenshot(`${entry.name}.png`, {
-        fullPage: true,
-      });
+      if (!skipScreenshots) {
+        await expect(page).toHaveScreenshot(`${entry.name}.png`, {
+          fullPage: true,
+        });
+      }
     });
   }
 
@@ -230,7 +239,7 @@ test.describe("RTL builder acceptance matrix", () => {
     );
     await openBuilder(page, "ar", formatNames.ar);
     await page.goto(
-      `/app/crispy-print-preview/Sales%20Invoice/${encodeURIComponent(
+      `${deskPrefix}/crispy-print-preview/Sales%20Invoice/${encodeURIComponent(
         fixtureDocname!,
       )}/${encodeURIComponent(formatNames.ar)}`,
     );

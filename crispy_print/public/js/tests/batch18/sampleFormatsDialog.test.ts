@@ -13,6 +13,8 @@ const listSampleFormats = vi.fn(async () => [
 		tags: ["invoice", "starter"],
 		recommended_use: "Use as a first invoice format.",
 		format_name: "Sample Sales Invoice Starter",
+		release_scope: "core-v1",
+		business_purpose: "Customer tax invoice",
 	},
 ])
 const getCompanies = vi.fn(async () => [{ name: "ACME", abbr: "AC" }])
@@ -46,6 +48,8 @@ describe("SampleFormatsDialog", () => {
 		expect(listSampleFormats).toHaveBeenCalled()
 		expect(getCompanies).toHaveBeenCalled()
 		expect(wrapper.text()).toContain("Sales Invoice Starter")
+		expect(wrapper.text()).toContain("Core v1")
+		expect(wrapper.text()).toContain("Customer tax invoice")
 
 		await wrapper.find("select").setValue("ACME")
 		await wrapper.find("input.form-control").setValue("My Invoice Example")

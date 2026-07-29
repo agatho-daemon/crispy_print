@@ -12,12 +12,14 @@ class TestSampleFormatCatalog(FrappeTestCase):
 		frappe.set_user("Administrator")
 		frappe.db.delete("Crispy Format", {"name": ["like", "Sample Sales Invoice Starter%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test Sample Format%"]})
+		frappe.db.delete("Crispy Format", {"name": ["like", "Test Core V1 Sample%"]})
 		frappe.db.commit()
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
 		frappe.db.delete("Crispy Format", {"name": ["like", "Sample Sales Invoice Starter%"]})
 		frappe.db.delete("Crispy Format", {"name": ["like", "Test Sample Format%"]})
+		frappe.db.delete("Crispy Format", {"name": ["like", "Test Core V1 Sample%"]})
 		frappe.db.commit()
 
 	def _ensure_company(self, name="Test Sample Format Company", abbr="TSFC"):
@@ -28,6 +30,7 @@ class TestSampleFormatCatalog(FrappeTestCase):
 					"company_name": name,
 					"abbr": abbr,
 					"default_currency": "USD",
+					"country": "United States",
 				}
 			).insert(ignore_permissions=True)
 		return name
@@ -45,6 +48,9 @@ class TestSampleFormatCatalog(FrappeTestCase):
 
 		self.assertIn("sales-invoice-basic", sample_ids)
 		self.assertIn("receipt-voucher-raw-typst", sample_ids)
+		self.assertIn("payment-entry-voucher", sample_ids)
+		self.assertIn("statement-of-account", sample_ids)
+		self.assertIn("pos-invoice-thermal", sample_ids)
 		for row in samples:
 			payload = get_sample_format(row["id"])
 			format_data = payload["format"]
@@ -56,6 +62,10 @@ class TestSampleFormatCatalog(FrappeTestCase):
 		self.assertEqual(receipt.get("doc_type"), "Payment Entry")
 		self.assertEqual(receipt.get("raw_typst"), 1)
 		self.assertIn("Receipt Voucher", receipt.get("typst_code") or "")
+
+		core_card = next(row for row in samples if row["id"] == "payment-entry-voucher")
+		self.assertEqual(core_card["release_scope"], "core-v1")
+		self.assertEqual(core_card["variant"], "receive-or-pay")
 
 	def test_catalog_skips_invalid_sample_files(self):
 		from crispy_print.api.v1 import sample_formats
@@ -148,3 +158,18 @@ class TestSampleFormatCatalog(FrappeTestCase):
 		self.assertEqual(first["name"], "Test Sample Format Collision")
 		self.assertNotEqual(second["name"], first["name"])
 		self.assertTrue(second["name"].startswith("Test Sample Format Collision"))
+
+	def test_every_core_v1_sample_creates_a_company_scoped_format(self):
+		from crispy_print.api.v1.sample_formats import create_format_from_sample
+		from crispy_print.business_format_acceptance import CORE_V1_BUSINESS_FORMATS
+
+		company = self._ensure_company()
+		for index, spec in enumerate(CORE_V1_BUSINESS_FORMATS, start=1):
+			result = create_format_from_sample(
+				spec.sample_id,
+				company,
+				name=f"Test Core V1 Sample {index}",
+			)
+			doc = frappe.get_doc("Crispy Format", result["name"])
+			self.assertEqual(doc.company, company)
+			self.assertEqual(doc.crispy_format_type, spec.target_type)

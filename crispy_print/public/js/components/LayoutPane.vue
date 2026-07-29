@@ -614,7 +614,7 @@
 		<TableColumnsDialog
 			v-if="columnEditor"
 			:model-value="editingColumns"
-			:doctype="columnEditor.field.options || ''"
+			:doctype="columnEditor.doctype"
 			:available-columns="columnEditorAvailableColumns"
 			:order="columnEditor.field.table_order || 'physical'"
 			@update:modelValue="onColumnsUpdate"
@@ -665,6 +665,7 @@ import {
 } from "../utils/direction";
 import { deepClone } from "../utils/json";
 import { __ } from "../utils/i18n";
+import { resolveChildTableDoctype } from "../utils/tablePresets";
 
 const interfaceDirection = getLanguageDirection(getInterfaceLanguage());
 
@@ -677,6 +678,7 @@ type Column = LayoutColumn;
 type Field = LayoutField;
 type TableEditorContext = {
 	field: Field;
+	doctype: string;
 };
 
 const store = useStore();
@@ -1547,7 +1549,20 @@ async function configureColumns(field: Field) {
 	if (field.fieldtype !== "Table") return;
 	await ensureTableColumns(field);
 	editingColumns.value = deepClone(field.table_columns || []);
-	columnEditor.value = { field };
+	const parentDoctype = String(currentFormat.value?.doc_type || "");
+	if (parentDoctype && typeof frappe !== "undefined" && frappe.model?.with_doctype) {
+		await new Promise<void>((resolve) => {
+			frappe.model.with_doctype(parentDoctype, () => resolve());
+		});
+	}
+	const parentFields =
+		parentDoctype && typeof frappe !== "undefined" && frappe.get_meta
+			? frappe.get_meta(parentDoctype)?.fields || []
+			: [];
+	columnEditor.value = {
+		field,
+		doctype: resolveChildTableDoctype(field.fieldname, field.options, parentFields),
+	};
 }
 
 async function onConfigureColumns(field: Field) {

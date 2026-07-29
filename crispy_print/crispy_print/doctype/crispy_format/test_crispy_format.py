@@ -75,6 +75,7 @@ class TestCrispyFormat(FrappeTestCase):
 					"company_name": name,
 					"abbr": abbr,
 					"default_currency": "USD",
+					"country": "United States",
 				}
 			).insert(ignore_permissions=True)
 		return name

@@ -432,7 +432,9 @@ def get_publish_preview(
 	template.source_crispy_format = source.name
 	template.company = _get_source_company(source)
 	template.set_source_snapshot()
+	template.snapshot_hash_version = "v2"
 	next_version = template.get_next_version(version_bump)
+	snapshot_hash = template.compute_snapshot_hash()
 
 	current_version = _get_latest_version(
 		template.source_crispy_format,
@@ -449,13 +451,42 @@ def get_publish_preview(
 		"company": template.company,
 		"company_abbr": get_company_abbr(template.company),
 		"source_branding_profile": template.source_branding_profile,
+		"snapshot_hash": snapshot_hash,
 		"snapshot_hash_version": template.snapshot_hash_version,
 		"zebra_version": template.zebra_version,
 		"barcode_symbology": template.barcode_symbology,
 		"current_version": current_version,
 		"next_version": next_version,
 		"version_bump": template.get_version_bump(version_bump),
+		"history": _get_template_history(source.name, template.company),
 	}
+
+
+def _get_template_history(source_crispy_format: str, company: str | None) -> list[dict]:
+	"""Return permission-aware, read-only publication history for one format stream."""
+	rows = frappe.get_list(
+		"Crispy Template",
+		filters={
+			"source_crispy_format": source_crispy_format,
+			"company": company or "",
+		},
+		fields=[
+			"name",
+			"version",
+			"status",
+			"is_active",
+			"notes",
+			"snapshot_hash",
+			"snapshot_hash_version",
+			"effective_from",
+			"effective_to",
+			"creation",
+			"owner",
+		],
+		order_by="creation desc",
+		limit_page_length=50,
+	)
+	return [dict(row) for row in rows]
 
 
 def _validate_expected_source_company(source, company: str | None = None) -> None:

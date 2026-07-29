@@ -7,6 +7,8 @@ from typing import Any
 import frappe
 from frappe import _
 
+from crispy_print.business_format_acceptance import CORE_V1_BUSINESS_FORMAT_BY_ID
+
 from .formats import (
 	EXPORT_SCHEMA_VERSION,
 	_convert_legacy_import_payload,
@@ -112,8 +114,10 @@ def _load_sample_file(path: Path) -> JSONDict:
 def _catalog_card(payload: JSONDict, path: Path) -> JSONDict:
 	sample = payload.get("sample") or {}
 	format_data = payload.get("format") or {}
+	sample_id = sample.get("id") or path.stem
+	acceptance = CORE_V1_BUSINESS_FORMAT_BY_ID.get(str(sample_id))
 	return {
-		"id": sample.get("id") or path.stem,
+		"id": sample_id,
 		"title": sample.get("title") or format_data.get("name") or path.stem,
 		"description": sample.get("description") or "",
 		"target_type": sample.get("target_type") or format_data.get("crispy_format_type") or "",
@@ -122,6 +126,9 @@ def _catalog_card(payload: JSONDict, path: Path) -> JSONDict:
 		"tags": sample.get("tags") if isinstance(sample.get("tags"), list) else [],
 		"recommended_use": sample.get("recommended_use") or "",
 		"format_name": format_data.get("name") or "",
+		"release_scope": "core-v1" if acceptance else "",
+		"business_purpose": acceptance.purpose if acceptance else "",
+		"variant": acceptance.variant if acceptance else "",
 	}
 
 

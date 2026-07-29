@@ -6,8 +6,8 @@ _Part of the [Crispy Print documentation](README.md)._
 
 This app includes comprehensive test coverage:
 
-- **279 frontend tests** across 67 Vitest files (2 opt-in Typst integration tests)
-- **446 backend tests** in the complete Frappe application suite (5 skipped in the latest RTL verification run)
+- **293 default frontend tests** across 69 Vitest files (plus opt-in Typst integration tests)
+- **467 backend tests** in the complete Frappe application suite (5 optional integration tests skipped)
 - **Test frameworks:** Vitest (frontend), Frappe Test Runner (backend)
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
@@ -102,14 +102,48 @@ ignored `test-results/` paths. Disable the test user afterward with
 The bundled ZATCA registry/profile fixture proves the implementation path; it
 does not constitute jurisdictional certification.
 
+### Core v1 business-format acceptance
+
+On a disposable site, create the ten company-scoped formats and discover or
+create their representative ERPNext documents:
+
+```bash
+bench --site your-site execute \
+  crispy_print.dev_utils.business_formats_e2e.seed \
+  --kwargs '{"test_user_password":"local-secret"}'
+```
+
+Supply the returned Payment Entry, Stock Entry, Material Request, ordinary and
+cash Journal Entry, and POS Invoice names as `CRISPY_V1_E2E_*` environment
+variables, then run:
+
+```bash
+yarn --cwd e2e playwright test business-formats.spec.ts
+```
+
+The matrix also executes General Ledger, Accounts Receivable, and Accounts
+Payable previews. It accepts rendered PDF.js canvases and rejects explicit
+report errors. See [Core v1 Business-Format Acceptance](business-format-acceptance.md)
+for the full catalog and boundary.
+
+Afterward, delete only the fixed-name formats and disposable draft documents
+and disable the browser user:
+
+```bash
+bench --site your-site execute crispy_print.dev_utils.business_formats_e2e.cleanup
+bench --site your-site execute crispy_print.dev_utils.rtl_e2e.disable_test_user
+```
+
 Use `yarn test:e2e:update` to generate local screenshots for visual review.
 The acceptance matrix covers Arabic and Persian UI roots, localized fixture
 labels, portal direction, keyboard and drag interaction, physical LTR
 canvas/editor islands, multipage output, a deterministic RTL report, and an
 optional published-template final preview. Typst integration tests assert
 negative-sign order, document metadata, mixed-direction values, font
-fallbacks, schema compatibility, and DocType/Report parity. Production release
-additionally requires native Arabic/Persian review.
+fallbacks, schema compatibility, and DocType/Report parity. Native Arabic
+review was completed by Agathodaemon on 2026-07-28; changes affecting Arabic
+wording or presentation surfaces require renewed review. Native Persian review
+remains required.
 
 Sample Crispy Formats are not exported through Frappe fixtures. Keep curated
 examples as company-neutral JSON files under `crispy_print/examples/formats/` and
@@ -188,11 +222,24 @@ bench --site your-site run-tests --module crispy_print.tests.test_api
 bench --site your-site run-tests --doctype "Crispy Format"
 ```
 
-**Beta 2 release validation:**
+**Current release validation:**
 
-- **Frontend:** 269 tests across 63 test files
-- **Backend:** 439 tests, 5 skipped, 0 failures
-- **Additional gates:** TypeScript checks, pre-commit, ESLint, Prettier, complete Bench asset build, and real-browser DocType/Report preview and printing smoke tests
+- **Frontend:** 293 default tests passed across 69 files, plus opt-in
+  real-Typst RTL/PDF and business-format compilation tests
+- **Backend:** 467 tests passed, with 5 optional integration tests skipped
+- **Browser:** authenticated RTL DocType/Report and Custom/Regulatory QR
+  Playwright matrices, including real QR decoding and final-PDF parity
+- **Additional gates:** strict TypeScript, pre-commit, ESLint, Prettier,
+  repeated migrations, and a complete production Bench asset build
+
+Every release candidate must also pass the explicit Frappe/ERPNext
+v15/v16/current-dev-17 clean-install CI matrix. See
+[Release and Compatibility Gates](release-compatibility.md).
+
+The clean-site backend gate installs the official Payments companion app before
+ERPNext (`version-15`, `version-16`, or `develop` to match the target). Payments
+is not declared as a Crispy Print dependency and normal Crispy Print
+installation does not fetch or install it.
 
 Some backend integration tests depend on site fixtures and optional Typst CLI integration settings.
 

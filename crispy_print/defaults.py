@@ -54,9 +54,12 @@ def acquire_default_locks(
 
 
 def build_default_lock_key(doctype: str, scope_key: str) -> str:
-	raw = f"{doctype}:{scope_key}"
+	site = str(getattr(frappe.local, "site", "") or "")
+	raw = f"{site}:{doctype}:{scope_key}"
 	digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:32]
-	return f"crispy_print:default:{doctype}:{digest}"
+	# MariaDB limits user-level lock names to 64 characters. Keep the scope in
+	# the digest instead of the visible prefix so long DocType names remain safe.
+	return f"crispy_print:default:{digest}"
 
 
 def _normalize_scope_keys(doctype: str, scope_keys: str | Iterable[str]) -> list[str]:

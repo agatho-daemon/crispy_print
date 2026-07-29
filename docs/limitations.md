@@ -68,9 +68,11 @@ As a **beta release**, Crispy Print has several known limitations:
   recognized by the generic engine but have no shipped catalogs or native
   acceptance gate. Raw Typst authors remain responsible for direction in their
   custom source.
-- **Native Review Required**: Automated browser/PDF tests verify layout,
-  extracted order, and font availability, but native Arabic/Persian linguistic
-  and regulatory approval is still required before production release.
+- **Review Scope**: Automated browser/PDF tests verify layout, extracted order,
+  and font availability. Native Arabic linguistic review was completed by
+  Agathodaemon on 2026-07-28 and must be renewed for affected changes. Native
+  Persian review and jurisdiction-specific regulatory approval are still
+  required before their respective production claims.
 - **No Jinja Support**: Crispy Print uses structured layouts and Typst, not Frappe Print Format Jinja templates.
 - **No Python Scripts**: Formats do not execute custom Python code.
 - **Import/Export Scope**: Format import/export exists, but cross-site migration should still be tested carefully in beta.

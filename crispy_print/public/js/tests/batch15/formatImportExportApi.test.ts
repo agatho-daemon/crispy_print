@@ -42,6 +42,16 @@ describe("crispy format import/export api wrappers", () => {
         name: "My Format",
         exists: true,
         conflict: true,
+        plans: {
+          copy: {
+            action: "rename",
+            target_name: "My Format (Imported)",
+          },
+          overwrite: {
+            action: "overwrite",
+            target_name: "My Format",
+          },
+        },
       },
     });
 
@@ -50,6 +60,7 @@ describe("crispy format import/export api wrappers", () => {
     const res = await checkImportConflicts(payload);
 
     expect(res.exists).toBe(true);
+    expect(res.plans?.copy.action).toBe("rename");
     expect((call as any).mock.calls[0][0]).toMatchObject({
       method: "crispy_print.api.v1.check_import_conflicts",
     });

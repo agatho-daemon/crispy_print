@@ -62,6 +62,7 @@ after_migrate = [
 	"crispy_print.setup.desk.setup_desk_compatibility",
 ]
 before_uninstall = "crispy_print.install.before_uninstall"
+before_tests = "crispy_print.tests.setup.before_tests"
 
 doc_events = {
 	"Company": {

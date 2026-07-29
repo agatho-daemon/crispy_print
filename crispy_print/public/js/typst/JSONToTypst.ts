@@ -46,6 +46,15 @@ function typstStringLiteral(value: unknown): string {
   return `"${escapeTypstString(normalizeHtmlText(value))}"`;
 }
 
+function typstTrack(value: unknown, fallback: string): string {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value > 0 ? `${value}fr` : fallback;
+  }
+  const clean = String(value ?? "").trim();
+  if (!clean) return fallback;
+  return /^\d+(?:\.\d+)?$/.test(clean) ? `${clean}fr` : clean;
+}
+
 export function translateJSONToTypst(
   layoutData: LayoutWithOptionalSections | null | undefined,
   letterheadData: any = null,
@@ -640,7 +649,9 @@ class JSONTypstTranslator {
     // Only create grid if there are rows
     if (maxRows > 0) {
       lines.push(`#grid(`);
-      const columnWidths = section.columns.map((col) => col.width || "1fr");
+      const columnWidths = section.columns.map((col) =>
+        typstTrack(col.width, "1fr"),
+      );
       lines.push(`  columns: (${columnWidths.join(", ")}),`);
 
       // Iterate row by row (row-major order)
@@ -940,8 +951,8 @@ class JSONTypstTranslator {
       // Use column widths from layout (auto, 1fr, 2fr, 100pt, etc.)
       const widths = effectiveColumns.flatMap((col) =>
         this.shouldSplitTableCellLabel(col, { itemTable, splitCellLabels })
-          ? ["auto", col.width || "auto"]
-          : [col.width || "auto"],
+          ? ["auto", typstTrack(col.width, "auto")]
+          : [typstTrack(col.width, "auto")],
       );
       lines.push(`    columns: (${widths.join(", ")}),`);
       const alignments = effectiveColumns.flatMap((col) => {

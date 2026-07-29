@@ -40,6 +40,7 @@ class TestCrispyFormatRetrievalAPI(FrappeTestCase):
 					"company_name": name,
 					"abbr": abbr,
 					"default_currency": "USD",
+					"country": "United States",
 				}
 			).insert(ignore_permissions=True)
 		return name
@@ -1044,6 +1045,31 @@ class TestCrispyFormatImportExportAPI(FrappeTestCase):
 
 		self.assertTrue(result["exists"])
 		self.assertEqual(result["name"], "Test ImportExport Check")
+		self.assertEqual(result["plans"]["overwrite"]["action"], "overwrite")
+		self.assertEqual(result["plans"]["overwrite"]["target_name"], "Test ImportExport Check")
+		self.assertEqual(result["plans"]["copy"]["action"], "rename")
+		self.assertEqual(result["plans"]["copy"]["creates"], 1)
+		self.assertEqual(result["plans"]["copy"]["renames"], 1)
+		self.assertTrue(
+			result["plans"]["copy"]["target_name"].startswith("Test ImportExport Check (Imported")
+		)
+
+	def test_import_dry_run_does_not_create_or_modify_formats(self):
+		from crispy_print.api.v1 import check_import_conflicts, export_crispy_format
+
+		source = self._insert_format("Test ImportExport Dry Run")
+		source.typst_code = "#text[Before]"
+		source.save()
+		payload = export_crispy_format(source.name)
+		payload["format"]["typst_code"] = "#text[After]"
+		before_count = frappe.db.count("Crispy Format")
+
+		result = check_import_conflicts(payload)
+
+		self.assertEqual(frappe.db.count("Crispy Format"), before_count)
+		self.assertEqual(frappe.db.get_value("Crispy Format", source.name, "typst_code"), "#text[Before]")
+		self.assertEqual(result["plans"]["overwrite"]["overwrites"], 1)
+		self.assertEqual(result["plans"]["overwrite"]["skips"], 0)
 
 	def test_invalid_schema_version_rejected(self):
 		from crispy_print.api.v1 import import_crispy_format

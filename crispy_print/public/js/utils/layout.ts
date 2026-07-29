@@ -66,7 +66,7 @@ export interface LayoutColumn {
   id?: string | number;
   label: string;
   fields: LayoutField[];
-  width?: string;
+  width?: string | number;
 }
 
 export interface LayoutSection {
@@ -147,7 +147,8 @@ export function normalizeLayout(
                 : createLayoutId(),
             label: typeof rawColumn?.label === "string" ? rawColumn.label : "",
             width:
-              typeof rawColumn?.width === "string"
+              typeof rawColumn?.width === "string" ||
+              typeof rawColumn?.width === "number"
                 ? rawColumn.width
                 : undefined,
             fields: Array.isArray(rawColumn?.fields)
@@ -179,6 +180,21 @@ export function normalizeLayout(
                     : "",
                 align: rawField?.align,
               };
+              if (
+                fieldtype === "Table" &&
+                !Array.isArray(normalizedField.table_columns) &&
+                Array.isArray(rawField?.columns)
+              ) {
+                normalizedField.table_columns = rawField.columns;
+              }
+              if (
+                fieldtype === "Table" &&
+                !normalizedField.table_order &&
+                (rawField?.orderMode === "logical" ||
+                  rawField?.orderMode === "physical")
+              ) {
+                normalizedField.table_order = rawField.orderMode;
+              }
               if (Array.isArray(normalizedField.table_columns)) {
                 normalizedField.table_columns = capArray(
                   normalizedField.table_columns,

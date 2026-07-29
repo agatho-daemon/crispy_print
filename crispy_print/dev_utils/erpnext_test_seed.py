@@ -10,8 +10,12 @@ from pathlib import Path
 from typing import Any
 
 import frappe
-from frappe.test_runner import make_test_objects, make_test_records_for_doctype
 from frappe.utils import getdate, today
+
+try:
+	from frappe.tests.utils.generators import make_test_objects, make_test_records_for_doctype
+except ImportError:  # Frappe v15
+	from frappe.test_runner import make_test_objects, make_test_records_for_doctype
 
 TEST_COMPANIES: dict[str, str] = {
 	"_Test Company": "_TC",

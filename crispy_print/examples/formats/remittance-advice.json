@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "app": "crispy_print",
+  "sample": {
+    "id": "remittance-advice",
+    "title": "Supplier Remittance Advice",
+    "description": "A supplier-facing remittance advice showing payment references and allocated purchase documents.",
+    "target_type": "DocType",
+    "doc_type": "Payment Entry",
+    "tags": ["payment", "supplier", "remittance", "v1"],
+    "recommended_use": "Use for remittance advice sent after a supplier payment."
+  },
+  "format": {
+    "name": "Sample Supplier Remittance Advice",
+    "crispy_format_type": "DocType",
+    "doc_type": "Payment Entry",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "report_scope": null,
+    "report_renderer": null,
+    "raw_typst": 0,
+    "layout_json": "{\"schema_version\":4,\"sections\":[{\"id\":\"remittance-summary\",\"label\":\"Remittance Advice\",\"columns\":[{\"id\":\"remittance-party\",\"width\":1,\"fields\":[{\"fieldname\":\"party_name\",\"label\":\"Supplier\",\"fieldtype\":\"Data\",\"align\":\"auto\"},{\"fieldname\":\"posting_date\",\"label\":\"Payment Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"reference_no\",\"label\":\"Bank Reference\",\"fieldtype\":\"Data\",\"align\":\"auto\"}]},{\"id\":\"remittance-payment\",\"width\":1,\"fields\":[{\"fieldname\":\"reference_date\",\"label\":\"Reference Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"mode_of_payment\",\"label\":\"Payment Method\",\"fieldtype\":\"Link\",\"align\":\"auto\"},{\"fieldname\":\"paid_amount\",\"label\":\"Remitted Amount\",\"fieldtype\":\"Currency\",\"align\":\"end\"}]}]},{\"id\":\"remittance-lines\",\"label\":\"Documents Settled\",\"columns\":[{\"id\":\"remittance-lines-main\",\"width\":1,\"fields\":[{\"fieldname\":\"references\",\"label\":\"References\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"reference_name\",\"label\":\"Invoice\",\"align\":\"start\"},{\"fieldname\":\"bill_no\",\"label\":\"Supplier Invoice\",\"align\":\"start\"},{\"fieldname\":\"due_date\",\"label\":\"Due Date\",\"align\":\"auto\"},{\"fieldname\":\"total_amount\",\"label\":\"Invoice Total\",\"align\":\"end\"},{\"fieldname\":\"allocated_amount\",\"label\":\"Paid\",\"align\":\"end\"}]}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a4\",\"orientation\":\"portrait\",\"margins\":{\"top\":20,\"bottom\":18,\"left\":15,\"right\":15}},\"branding\":{\"mode\":\"none\",\"profile\":\"\",\"company\":\"\",\"letterhead\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":28,\"dx\":0,\"dy\":0}},\"typography\":{},\"table\":{\"inset\":{\"top\":4,\"right\":4,\"bottom\":4,\"left\":4},\"stroke\":{\"width\":0.5,\"color\":\"#d1d8dd\"},\"header\":{\"backgroundColor\":\"#f3f5f7\"},\"stripe\":{\"enabled\":true,\"color\":\"#f8f9fa\"}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 0,
+    "print_uom_after_quantity": 0,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

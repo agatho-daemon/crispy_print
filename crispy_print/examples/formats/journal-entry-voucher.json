@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "app": "crispy_print",
+  "sample": {
+    "id": "journal-entry-voucher",
+    "title": "Journal and Cash Voucher",
+    "description": "A balanced Journal Entry voucher suitable for journal, cash receipt, cash payment, and petty-cash workflows.",
+    "target_type": "DocType",
+    "doc_type": "Journal Entry",
+    "tags": ["accounting", "journal", "cash", "petty-cash", "v1"],
+    "recommended_use": "Use for accounting approval, posting evidence, and cash-voucher sign-off."
+  },
+  "format": {
+    "name": "Sample Journal Entry Voucher",
+    "crispy_format_type": "DocType",
+    "doc_type": "Journal Entry",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "report_scope": null,
+    "report_renderer": null,
+    "raw_typst": 0,
+    "layout_json": "{\"schema_version\":4,\"sections\":[{\"id\":\"journal\",\"label\":\"Journal Voucher\",\"columns\":[{\"id\":\"journal-context\",\"width\":1,\"fields\":[{\"fieldname\":\"voucher_type\",\"label\":\"Voucher Type\",\"fieldtype\":\"Select\",\"align\":\"auto\"},{\"fieldname\":\"posting_date\",\"label\":\"Posting Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"user_remark\",\"label\":\"Narration\",\"fieldtype\":\"Small Text\",\"align\":\"auto\"}]},{\"id\":\"journal-totals\",\"width\":1,\"fields\":[{\"fieldname\":\"total_debit\",\"label\":\"Total Debit\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"total_credit\",\"label\":\"Total Credit\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"difference\",\"label\":\"Difference\",\"fieldtype\":\"Currency\",\"align\":\"end\"}]}]},{\"id\":\"journal-lines\",\"label\":\"Accounting Entries\",\"columns\":[{\"id\":\"journal-lines-main\",\"width\":1,\"fields\":[{\"fieldname\":\"accounts\",\"label\":\"Accounts\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"account\",\"label\":\"Account\",\"align\":\"start\"},{\"fieldname\":\"party_type\",\"label\":\"Party Type\",\"align\":\"start\"},{\"fieldname\":\"party\",\"label\":\"Party\",\"align\":\"start\"},{\"fieldname\":\"debit_in_account_currency\",\"label\":\"Debit\",\"align\":\"end\"},{\"fieldname\":\"credit_in_account_currency\",\"label\":\"Credit\",\"align\":\"end\"},{\"fieldname\":\"user_remark\",\"label\":\"Line Remark\",\"align\":\"start\"}]}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a4\",\"orientation\":\"portrait\",\"margins\":{\"top\":20,\"bottom\":18,\"left\":14,\"right\":14}},\"branding\":{\"mode\":\"none\",\"profile\":\"\",\"company\":\"\",\"letterhead\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":26,\"dx\":0,\"dy\":0}},\"typography\":{},\"table\":{\"inset\":{\"top\":4,\"right\":4,\"bottom\":4,\"left\":4},\"stroke\":{\"width\":0.5,\"color\":\"#d1d8dd\"},\"header\":{\"backgroundColor\":\"#f3f5f7\"},\"stripe\":{\"enabled\":false,\"color\":\"#f8f9fa\"}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 0,
+    "print_uom_after_quantity": 0,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

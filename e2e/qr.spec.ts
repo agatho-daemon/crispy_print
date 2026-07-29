@@ -3,6 +3,7 @@ import { decodeQrPdf } from "./qr-decode";
 
 const user = process.env.CRISPY_E2E_USER;
 const password = process.env.CRISPY_E2E_PASSWORD;
+const deskPrefix = process.env.CRISPY_E2E_DESK_PREFIX || "/app";
 const customFormat =
   process.env.CRISPY_QR_E2E_CUSTOM_FORMAT ||
   "Crispy QR E2E Custom Sales Invoice";
@@ -30,15 +31,18 @@ const crossDoctypeFixtures = [
 ] as const;
 
 async function login(page: Page) {
-  await page.goto("/login");
-  await page.locator("#login_email").fill(user!);
-  await page.locator("#login_password").fill(password!);
-  await page.locator(".btn-login").click();
-  await page.waitForURL(/\/app(?:\/|$)/);
+  const response = await page.request.post("/api/method/login", {
+    form: { usr: user!, pwd: password! },
+  });
+  expect(response.ok(), await response.text()).toBe(true);
+  await page.goto(`${deskPrefix}/crispy-studio`);
+  await page.waitForFunction(
+    () => Boolean((window as any).frappe?.session?.user),
+  );
 }
 
 async function setLanguage(page: Page, language: "en" | "ar" | "fa") {
-  await page.goto("/app");
+  await page.goto(`${deskPrefix}/crispy-studio`);
   await page.evaluate(async (value) => {
     const frappeGlobal = (window as any).frappe;
     await frappeGlobal.call({
@@ -55,7 +59,7 @@ async function setLanguage(page: Page, language: "en" | "ar" | "fa") {
 
 async function openBuilder(page: Page, formatName: string) {
   await page.goto(
-    `/app/crispy-format-builder/${encodeURIComponent(formatName)}`,
+    `${deskPrefix}/crispy-format-builder/${encodeURIComponent(formatName)}`,
   );
   await page.locator("#crispy-print-app.crispy-layout").waitFor();
 }
@@ -161,7 +165,7 @@ test.describe("Custom and Regulatory QR acceptance", () => {
       });
     });
     expect(source).toContain("crispy-qrcode");
-    expect(source).toContain("ACC-SINV-2026-04956");
+    expect(source).toContain(invoice!);
 
     const expected = await page.evaluate(
       async ({ docname }) => {

@@ -65,8 +65,12 @@ default.
   its control, that an RTL panel is positioned correctly, or that a PDF uses an
   appropriate font.
 
-Native Arabic/Persian review of linguistic, accounting, and regulatory output
-is a production-release gate. It is intentionally not a code-merge gate.
+Native Arabic linguistic review was completed by Agathodaemon on 2026-07-28
+across the translated UI and representative RTL document/PDF acceptance
+output. Future Arabic translation changes should receive renewed native review
+for the affected strings and surfaces. Native Persian linguistic review and
+jurisdiction-specific accounting and regulatory approval remain separate
+production-release gates.
 
 See [Report Preview and Output](report-preview-and-output.md#language-rtl-and-accounting-values)
 and [Known Limitations](limitations.md) for the wider rendering contract.

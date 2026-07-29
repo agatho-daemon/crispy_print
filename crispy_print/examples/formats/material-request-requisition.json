@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "app": "crispy_print",
+  "sample": {
+    "id": "material-request-requisition",
+    "title": "Material Request Requisition",
+    "description": "A requisition layout for purchase, transfer, issue, manufacture, and customer-provided materials.",
+    "target_type": "DocType",
+    "doc_type": "Material Request",
+    "tags": ["stock", "requisition", "material-request", "v1"],
+    "recommended_use": "Use for internal material approval and fulfillment."
+  },
+  "format": {
+    "name": "Sample Material Request Requisition",
+    "crispy_format_type": "DocType",
+    "doc_type": "Material Request",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "report_scope": null,
+    "report_renderer": null,
+    "raw_typst": 0,
+    "layout_json": "{\"schema_version\":4,\"sections\":[{\"id\":\"request\",\"label\":\"Material Requisition\",\"columns\":[{\"id\":\"request-type\",\"width\":1,\"fields\":[{\"fieldname\":\"material_request_type\",\"label\":\"Request Type\",\"fieldtype\":\"Select\",\"align\":\"auto\"},{\"fieldname\":\"transaction_date\",\"label\":\"Request Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"}]},{\"id\":\"request-schedule\",\"width\":1,\"fields\":[{\"fieldname\":\"schedule_date\",\"label\":\"Required By\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"set_warehouse\",\"label\":\"Target Warehouse\",\"fieldtype\":\"Link\",\"align\":\"auto\"}]}]},{\"id\":\"request-items\",\"label\":\"Requested Items\",\"columns\":[{\"id\":\"request-items-main\",\"width\":1,\"fields\":[{\"fieldname\":\"items\",\"label\":\"Items\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"item_code\",\"label\":\"Item\",\"align\":\"start\"},{\"fieldname\":\"item_name\",\"label\":\"Description\",\"align\":\"start\"},{\"fieldname\":\"schedule_date\",\"label\":\"Required By\",\"align\":\"auto\"},{\"fieldname\":\"warehouse\",\"label\":\"Warehouse\",\"align\":\"start\"},{\"fieldname\":\"qty\",\"label\":\"Qty\",\"align\":\"end\"},{\"fieldname\":\"uom\",\"label\":\"UOM\",\"align\":\"start\"}]}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a4\",\"orientation\":\"portrait\",\"margins\":{\"top\":20,\"bottom\":18,\"left\":14,\"right\":14}},\"branding\":{\"mode\":\"none\",\"profile\":\"\",\"company\":\"\",\"letterhead\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":26,\"dx\":0,\"dy\":0}},\"typography\":{},\"table\":{\"inset\":{\"top\":4,\"right\":4,\"bottom\":4,\"left\":4},\"stroke\":{\"width\":0.5,\"color\":\"#d1d8dd\"},\"header\":{\"backgroundColor\":\"#f3f5f7\"},\"stripe\":{\"enabled\":true,\"color\":\"#f8f9fa\"}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 1,
+    "print_uom_after_quantity": 1,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

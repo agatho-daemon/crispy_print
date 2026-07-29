@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "app": "crispy_print",
+  "sample": {
+    "id": "pos-invoice-thermal",
+    "title": "POS Invoice Thermal 80 mm",
+    "description": "A compact 80 mm roll-paper receipt with items, tenders, totals, and no regulatory QR claim.",
+    "target_type": "DocType",
+    "doc_type": "POS Invoice",
+    "tags": ["pos", "receipt", "thermal", "80mm", "raw-typst", "v1"],
+    "recommended_use": "Use as a raw Typst starting point for 80 mm receipt printers."
+  },
+  "format": {
+    "name": "Sample POS Invoice Thermal 80 mm",
+    "crispy_format_type": "DocType",
+    "doc_type": "POS Invoice",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "report_scope": null,
+    "report_renderer": null,
+    "raw_typst": 1,
+    "layout_json": "{\"schema_version\":4,\"sections\":[{\"id\":\"thermal-summary\",\"label\":\"Receipt\",\"columns\":[{\"id\":\"thermal-main\",\"width\":1,\"fields\":[{\"fieldname\":\"customer_name\",\"label\":\"Customer\",\"fieldtype\":\"Data\",\"align\":\"auto\"},{\"fieldname\":\"posting_date\",\"label\":\"Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"posting_time\",\"label\":\"Time\",\"fieldtype\":\"Time\",\"align\":\"auto\"},{\"fieldname\":\"grand_total\",\"label\":\"Total\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"paid_amount\",\"label\":\"Paid\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"items\",\"label\":\"Items\",\"fieldtype\":\"Table\",\"columns\":[{\"fieldname\":\"item_name\",\"label\":\"Item\"},{\"fieldname\":\"qty\",\"label\":\"Qty\"},{\"fieldname\":\"rate\",\"label\":\"Rate\"},{\"fieldname\":\"amount\",\"label\":\"Amount\"}]},{\"fieldname\":\"payments\",\"label\":\"Payments\",\"fieldtype\":\"Table\",\"columns\":[{\"fieldname\":\"mode_of_payment\",\"label\":\"Method\"},{\"fieldname\":\"amount\",\"label\":\"Amount\"}]}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"80mm\",\"orientation\":\"portrait\",\"margins\":{\"top\":4,\"bottom\":4,\"left\":4,\"right\":4}},\"branding\":{\"mode\":\"none\",\"profile\":\"\",\"company\":\"\",\"letterhead\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":18,\"dx\":0,\"dy\":0}},\"typography\":{},\"table\":{},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "#set page(width: 80mm, height: auto, margin: 4mm)\n#set text(font: \"Inter\", size: 8pt)\n#set par(justify: false, leading: 0.55em)\n#align(center)[\n  #text(size: 12pt, weight: \"bold\")[POS RECEIPT]\n  #line(length: 100%)\n  #doc.name\n]\n#grid(columns: (1fr, auto), gutter: 2mm,\n  [Date], [#doc.posting_date],\n  [Time], [#doc.posting_time],\n  [Customer], [#doc.customer_name],\n)\n#line(length: 100%, stroke: 0.4pt)\n#for item in doc.items {\n  grid(columns: (1fr, auto), gutter: 2mm,\n    [#item.item_name], [#item.amount],\n    [#item.qty × #item.rate], []\n  )\n}\n#line(length: 100%, stroke: 0.4pt)\n#grid(columns: (1fr, auto), gutter: 2mm,\n  [Grand Total], [#text(weight: \"bold\")[#doc.grand_total]],\n  [Paid], [#doc.paid_amount],\n)\n#if \"payments\" in doc {\n  line(length: 100%, stroke: 0.4pt)\n  for payment in doc.payments {\n    grid(columns: (1fr, auto), gutter: 2mm,\n      [#payment.mode_of_payment], [#payment.amount]\n    )\n  }\n}\n#align(center)[\n  #line(length: 100%)\n  Thank you\n]\n",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 1,
+    "print_uom_after_quantity": 0,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}

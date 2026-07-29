@@ -112,6 +112,7 @@ class TestCrispyFiscalCredential(FrappeTestCase):
 					"company_name": company,
 					"abbr": "CFTC",
 					"default_currency": "KWD",
+					"country": "Kuwait",
 				}
 			).insert(ignore_permissions=True)
 		return company

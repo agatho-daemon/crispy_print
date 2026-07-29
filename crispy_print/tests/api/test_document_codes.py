@@ -440,6 +440,7 @@ class TestDocumentCodes(FrappeTestCase):
 					"company_name": company,
 					"abbr": "DCR",
 					"default_currency": "KWD",
+					"country": "Kuwait",
 				}
 			).insert(ignore_permissions=True)
 		return company

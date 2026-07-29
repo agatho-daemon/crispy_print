@@ -533,6 +533,7 @@ class TestCrispyIssuedDocument(FrappeTestCase):
 					"company_name": name,
 					"abbr": abbr,
 					"default_currency": "KWD",
+					"country": "Kuwait",
 				}
 			).insert(ignore_permissions=True)
 		return name

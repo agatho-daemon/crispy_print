@@ -14,7 +14,24 @@ class TestDefaultHelpers(FrappeTestCase):
 
 		self.assertEqual(first, second)
 		self.assertNotEqual(first, other)
-		self.assertTrue(first.startswith("crispy_print:default:Crispy Format:"))
+		self.assertTrue(first.startswith("crispy_print:default:"))
+		self.assertLessEqual(len(first), 64)
+
+	def test_default_lock_key_stays_within_mariadb_limit_for_long_scopes(self):
+		lock_key = build_default_lock_key(
+			"Crispy Branding Profile With A Deliberately Long Name",
+			"Company A|" + ("scope-" * 100),
+		)
+
+		self.assertLessEqual(len(lock_key), 64)
+
+	def test_default_lock_key_is_namespaced_by_site(self):
+		with mock.patch.object(frappe.local, "site", "site-a.local"):
+			first = build_default_lock_key("Crispy Format", "Company A")
+		with mock.patch.object(frappe.local, "site", "site-b.local"):
+			second = build_default_lock_key("Crispy Format", "Company A")
+
+		self.assertNotEqual(first, second)
 
 	def test_lock_failure_raises_validation_error(self):
 		with (

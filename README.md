@@ -21,6 +21,11 @@
 > notes, reports, positive and negative amounts, dates, addresses, identifiers,
 > QR/barcode payloads, and multipage totals.
 >
+> Native Arabic linguistic review was completed by Agathodaemon on 2026-07-28
+> across the translated UI and representative RTL document/PDF acceptance
+> output. Changes to Arabic wording or affected presentation surfaces require
+> renewed review. Native Persian linguistic review remains required.
+>
 > Each intended country also requires separate review by a local tax/accounting or
 > compliance professional. Confirm mandatory document fields and wording, tax and
 > registration identifiers, numbering and date rules, currency and exchange-rate
@@ -54,7 +59,11 @@
 Crispy Print `0.2.0-beta.2` is a fresh-install beta release. Its primary release
 verification was performed on Frappe v15 with Node.js `24.18.0`, Yarn Classic
 `1.22.22`, Typst `0.15.0+`, and current Chrome as of 2026-07-24. Frappe v16 and
-current dev-17 remain compatibility targets and need continued tester coverage.
+current dev-17 remain compatibility targets. The repository now runs explicit
+clean-install CI jobs for all three branches, including each ERPNext line's
+matching Payments companion branch; require those jobs to pass for the exact
+release candidate and continue real-site tester coverage. Payments remains
+test/ERPNext bench setup and is not a Crispy Print installation dependency.
 Please report bugs, regressions, confusing behavior, and documentation gaps.
 
 - Test DocType print preview and PDF generation with real documents.
@@ -104,7 +113,12 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Crispy Print Workspace** - Desk workspace with grouped shortcuts and cards for builders, core format records, reusable libraries, issued documents, reports, and regulatory setup.
 - **Reusable Typst Blocks** - Governed snippets for repeatable custom document fragments, scoped by category and linked DocType usage, with generated snake_case reference keys, explicit major/minor versions, and a dedicated compile/preview builder.
 - **DocType-Aware Format Registry** - Crispy Format records link formats to target DocTypes, format types, branding profiles, custom builders, and generated Typst.
-- **Sample Format Catalog** - Ships company-neutral example formats as app files and lets users explicitly create company-scoped Crispy Formats from the builder Examples dialog, including a Raw Typst receipt voucher sample.
+- **Sample Format Catalog** - Ships company-neutral example formats as app
+  files and lets users explicitly create company-scoped Crispy Formats from the
+  builder Examples dialog. The accepted core-v1 catalog covers Payment Entry
+  receipts/vouchers, remittance advice, Stock Entry, Material Request, Journal
+  Entry and cash/petty-cash vouchers, statements/aging, and POS thermal/A4
+  output.
 - **Company-Scoped Rendering** - Format, template, branding profile, and Typst block resolution is company-aware, with company-scoped default selection, Company User Permission-aware list boundaries, and cache invalidation.
 - **Approved Render Contracts (Crispy Template)** - Publish frozen, versioned approved render snapshots from a Crispy Format with snapshot-hash versioning, PDF standard, and Typst/Zebra/barcode facts, including company-specific templates with fallback to global templates.
 - **Duplicate for Company** - Clone a Crispy Format or frozen Crispy Template snapshot to another company while preserving layout/content, retargeting company-scoped presentation settings, and optionally publishing a target-company template from the frozen snapshot.
@@ -123,6 +137,9 @@ For the full vision, technical value for admins, architectural direction, and lo
 - **Compile Caching and Preview Optimizations** - Short-lived Typst compile cache, document fetch cache, report preview consolidation, lazy PDF page painting for complete previews, SVG rerender avoidance for focused authoring specimens, and bounded undo snapshots.
 - **Builder and Preview Diagnostics** - Collapsed builder checks plus runtime preview diagnostics for resolved format/template context, Typst version, render timing, page count, and cache state.
 - **Import, Export, Samples, and Migration Support** - Structured format import/export, explicit sample creation, schema validation, backfill patches, and compatibility tests for evolving format data.
+- **RC1 Authoring Utilities** - Exact-field compact table presets, read-only
+  frozen-template publication history with snapshot hashes, and non-mutating
+  import dry-run summaries for create/overwrite/rename/skip outcomes.
 - **Multilingual UI Catalogs** - Gettext PO translations for Arabic, German, Spanish, Persian, French, Hindi, Indonesian, Italian, Brazilian Portuguese, Russian, Thai, Turkish, Vietnamese, and Simplified Chinese, with a shared POT catalog and a pull-request-friendly native-review workflow.
 - **Typed Frontend Architecture** - Vue 3 and TypeScript modules for builder state, report state, presentation settings, Typst translation, workers, and sanitization utilities.
 
@@ -170,7 +187,7 @@ Crispy Print ships a compact mix of variable, static, and collection fonts. Vari
 
 ### Frappe Compatibility
 
-- **Frappe:** v15, v16, and current dev-17 are compatibility targets. Beta 2 release verification used Frappe v15; v16 and dev-17 require continued beta retesting.
+- **Frappe:** v15, v16, and current dev-17 are compatibility targets. Beta 2 release verification used Frappe v15. Every release candidate must pass the explicit three-branch clean-install CI matrix; see [Release and Compatibility Gates](docs/release-compatibility.md).
 - **Frappe v15:** Uses the classic `/app/crispy` workspace route and v15-compatible Desk assets.
 - **Frappe v16/dev-17:** Ships a curated **Crispy Studio** Workspace Sidebar so newer Desk renders grouped app navigation (Builders, Formats, Reports, Branding, Issued Documents, Regulatory, Settings) instead of relying on the auto-generated sidebar. The v16+ **Crispy Print** app tile uses Frappe's native `add_to_apps_screen` `has_permission` parameter to hide the tile from website-only users and show it only to users with read access to user-facing Crispy Print records.
 - **Frappe dev-17:** Supported on the current development branch tested for this beta; retest before production use because dev-17 is still moving.

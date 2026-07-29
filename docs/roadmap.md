@@ -17,6 +17,14 @@ _Part of the [Crispy Print documentation](README.md)._
   registry-backed Regulatory Document Codes
 - [x] Explicit legacy Basic QR compatibility: editable settings require manual
   reconfiguration while frozen published templates retain their prior output
+- [x] Curated compact table presets for invoice items, service rows, tax rows,
+  serial/batch rows, and compact POS rows, using exact live child-DocType
+  fieldnames and logical RTL-aware ordering
+- [x] Read-only Crispy Template publication history with active/superseded
+  state, notes, versions, and snapshot-hash visibility
+- [x] Non-mutating Crispy Format import dry runs with exact create, overwrite,
+  rename, skip, warning, target-name, and permission-blocker summaries, plus
+  explicit actions and browser-verified side-effect-free cancellation
 
 ### Required Before v1
 
@@ -31,11 +39,18 @@ These are release gates rather than optional feature expansion:
 - [x] Complete Custom and Regulatory QR engineering acceptance across export/import,
   publication/freeze, real QR scanning, preview/final PDF parity, permissions,
   value types, RTL interfaces, legacy blocking, and representative DocTypes
-- [ ] Complete native Arabic/Persian linguistic review and
-  jurisdiction-specific professional review for supported regulatory profiles
+- [x] Complete native Arabic linguistic review. Agathodaemon reviewed Arabic
+  on 2026-07-28 across the translated UI and representative RTL document/PDF
+  acceptance output
+- [ ] Complete native Persian linguistic review
+- [ ] Complete jurisdiction-specific professional review for supported
+  regulatory profiles
 - [ ] Pass clean-install, migration, build, and smoke-test matrices on supported
-  Frappe v15, v16, and current dev-17 targets
-- [ ] Accept the core v1 Payment Entry, remittance, inventory movement,
+  Frappe v15, v16, and current dev-17 targets. The explicit three-branch CI
+  clean-install matrix and deterministic test bootstrap are in place; all jobs
+  and focused compatibility smoke tests must pass for the release candidate
+  commit before this gate is checked.
+- [x] Accept the core v1 Payment Entry, remittance, inventory movement,
   Journal Entry, statement/aging, and in-scope POS formats
 
 ### Future Added Features
@@ -59,19 +74,24 @@ compatibility, or regulatory contracts:
 - [ ] Add signed/revocable lookup URLs, minimal public payloads, and
   permission-aware scan actions that require normal ERPNext validation and user
   confirmation
-- [ ] Compact table presets for common invoice, service, tax, and
+- [x] Compact table presets for common invoice, service, tax, and
   serial/batch layouts
-- [ ] Crispy Template publish notes/history with active/retired versions and
+- [x] Crispy Template publish notes/history with active/retired versions and
   snapshot-hash visibility
 - [ ] Saved Report preview presets
 - [ ] Export bundles containing formats, Branding Profiles, Typst Blocks, and
   related configuration
-- [ ] Import dry-run summaries for creates, overwrites, renames, and skips
+- [x] Import dry-run summaries for creates, overwrites, renames, and skips,
+  with explicit overwrite/copy actions and side-effect-free dismissal
 - [ ] Resolve frozen Crispy Template snapshots for Report runtime after its
   report-template contract is finalized
 - [ ] Full-document PDF search and enhanced semantic accessibility
 - [ ] Real-time collaborative format editing
 - [ ] Broader native chart coverage
+- [ ] Consider hiding Check/boolean fields from default field discovery and
+  generated layouts, with an explicit “Show boolean fields” opt-in and
+  printable Yes/No, checkbox, or checkmark presentation. Existing authored and
+  frozen layouts must remain unchanged.
 
 ### Future Business-Format Coverage
 

@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "app": "crispy_print",
+  "sample": {
+    "id": "pos-invoice-a4",
+    "title": "POS Invoice A4",
+    "description": "An A4 point-of-sale tax invoice with customer, items, taxes, tenders, totals, and amount in words.",
+    "target_type": "DocType",
+    "doc_type": "POS Invoice",
+    "tags": ["pos", "invoice", "a4", "tax", "v1"],
+    "recommended_use": "Use where a full-size POS tax invoice is required."
+  },
+  "format": {
+    "name": "Sample POS Invoice A4",
+    "crispy_format_type": "DocType",
+    "doc_type": "POS Invoice",
+    "report": null,
+    "contract": null,
+    "company": null,
+    "report_scope": null,
+    "report_renderer": null,
+    "raw_typst": 0,
+    "layout_json": "{\"schema_version\":4,\"sections\":[{\"id\":\"pos-summary\",\"label\":\"POS Invoice\",\"columns\":[{\"id\":\"pos-customer\",\"width\":1,\"fields\":[{\"fieldname\":\"customer_name\",\"label\":\"Customer\",\"fieldtype\":\"Data\",\"align\":\"auto\"},{\"fieldname\":\"posting_date\",\"label\":\"Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"posting_time\",\"label\":\"Time\",\"fieldtype\":\"Time\",\"align\":\"auto\"}]},{\"id\":\"pos-total\",\"width\":1,\"fields\":[{\"fieldname\":\"due_date\",\"label\":\"Due Date\",\"fieldtype\":\"Date\",\"align\":\"auto\"},{\"fieldname\":\"grand_total\",\"label\":\"Grand Total\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"paid_amount\",\"label\":\"Paid Amount\",\"fieldtype\":\"Currency\",\"align\":\"end\"},{\"fieldname\":\"in_words\",\"label\":\"In Words\",\"fieldtype\":\"Data\",\"align\":\"auto\"}]}]},{\"id\":\"pos-items\",\"label\":\"Items\",\"columns\":[{\"id\":\"pos-items-main\",\"width\":1,\"fields\":[{\"fieldname\":\"items\",\"label\":\"Items\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"item_code\",\"label\":\"Item\",\"align\":\"start\"},{\"fieldname\":\"item_name\",\"label\":\"Description\",\"align\":\"start\"},{\"fieldname\":\"qty\",\"label\":\"Qty\",\"align\":\"end\"},{\"fieldname\":\"uom\",\"label\":\"UOM\",\"align\":\"start\"},{\"fieldname\":\"rate\",\"label\":\"Rate\",\"align\":\"end\"},{\"fieldname\":\"amount\",\"label\":\"Amount\",\"align\":\"end\"}]}]}]},{\"id\":\"pos-settlement\",\"label\":\"Taxes and Payment\",\"columns\":[{\"id\":\"pos-taxes\",\"width\":1,\"fields\":[{\"fieldname\":\"taxes\",\"label\":\"Taxes\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"description\",\"label\":\"Tax\",\"align\":\"start\"},{\"fieldname\":\"rate\",\"label\":\"Rate\",\"align\":\"end\"},{\"fieldname\":\"tax_amount\",\"label\":\"Amount\",\"align\":\"end\"}]}]},{\"id\":\"pos-payments\",\"width\":1,\"fields\":[{\"fieldname\":\"payments\",\"label\":\"Payments\",\"fieldtype\":\"Table\",\"orderMode\":\"logical\",\"columns\":[{\"fieldname\":\"mode_of_payment\",\"label\":\"Method\",\"align\":\"start\"},{\"fieldname\":\"amount\",\"label\":\"Amount\",\"align\":\"end\"}]}]}]}]}",
+    "presentation_settings": "{\"source\":\"custom\",\"page\":{\"size\":\"a4\",\"orientation\":\"portrait\",\"margins\":{\"top\":18,\"bottom\":16,\"left\":12,\"right\":12}},\"branding\":{\"mode\":\"none\",\"profile\":\"\",\"company\":\"\",\"letterhead\":\"\",\"logo\":{\"company\":\"\",\"image\":\"\",\"size\":26,\"dx\":0,\"dy\":0}},\"typography\":{},\"table\":{\"inset\":{\"top\":3,\"right\":3,\"bottom\":3,\"left\":3},\"stroke\":{\"width\":0.5,\"color\":\"#d1d8dd\"},\"header\":{\"backgroundColor\":\"#f3f5f7\"},\"stripe\":{\"enabled\":true,\"color\":\"#f8f9fa\"}},\"qr\":{\"enabled\":false}}",
+    "doc_header": "",
+    "doc_footer": "",
+    "typst_preamble": "",
+    "typst_code": "",
+    "default_print_language": null,
+    "pdf_standard": "PDF/A-2u",
+    "compact_item_print": 1,
+    "print_uom_after_quantity": 1,
+    "print_taxes_with_zero_amount": 0
+  },
+  "metadata": {}
+}
