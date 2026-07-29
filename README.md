@@ -1,7 +1,7 @@
 # Crispy Print
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status](https://img.shields.io/badge/status-beta-blue)]()
+[![Status](https://img.shields.io/badge/status-RC1-blue.svg)]()
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Frappe](https://img.shields.io/badge/frappe-v15%2Fv16%2Fdev--17-orange.svg)](https://frappeframework.com/)
 
