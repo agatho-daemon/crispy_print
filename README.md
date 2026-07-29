@@ -37,28 +37,28 @@
 >
 > [!CAUTION]
 >
-> # BETA 2 FRESH-INSTALL POLICY
+> # RC1 FRESH-INSTALL POLICY
 >
-> Crispy Print `0.2.0-beta.2` must be installed as a fresh application installation on a
+> Crispy Print `0.2.0-rc.1` must be installed as a fresh application installation on a
 > site where an earlier Crispy Print alpha or beta has not been installed.
 >
-> There is no supported in-place upgrade path from Beta 1 or any alpha release, and no
+> There is no supported in-place upgrade path from any earlier alpha or beta release, and no
 > guarantee that earlier database records, formats, templates, issued-document data,
 > exports, or other persisted state remain compatible. Do not rely on `bench update` or
-> `bench migrate` to convert an earlier Crispy Print installation to Beta 2.
+> `bench migrate` to convert an earlier Crispy Print installation to RC1.
 >
 > Keep the previous site or a database backup if historical test data matters. Exports
-> may be retained as design references, but successful import into Beta 2 is not
+> may be retained as design references, but successful import into RC1 is not
 > guaranteed. Beta data models and public behavior may continue to change before the
 > stable release.
 >
 > Typst CLI `0.15.0` or newer and the Node/Yarn versions listed below are required.
 
-## Beta 2 Testing Request
+## RC1 Testing Request
 
-Crispy Print `0.2.0-beta.2` is a fresh-install beta release. Its primary release
+Crispy Print `0.2.0-rc.1` is a fresh-install release candidate. Its primary release
 verification was performed on Frappe v15 with Node.js `24.18.0`, Yarn Classic
-`1.22.22`, Typst `0.15.0+`, and current Chrome as of 2026-07-24. Frappe v16 and
+`1.22.22`, Typst `0.15.0+`, and current Chrome as of 2026-07-29. Frappe v16 and
 current dev-17 remain compatibility targets. The repository now runs explicit
 clean-install CI jobs for all three branches, including each ERPNext line's
 matching Payments companion branch; require those jobs to pass for the exact
@@ -209,7 +209,7 @@ See [Requirements](#requirements) above - Typst must be installed first.
 
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/agatho-daemon/crispy_print --branch v0.2.0-beta.2
+bench get-app https://github.com/agatho-daemon/crispy_print --branch v0.2.0-rc.1
 bench --site your-site install-app crispy_print
 bench restart
 ```
