@@ -49,9 +49,7 @@ describe("report_button", () => {
 					btn_typst_print: null,
 					inner_toolbar: [{ querySelector: (): null => null }],
 					add_inner_button: (label: string, handler: () => void): any[] => {
-					return Object.assign([{
-						setAttribute: vi.fn(),
-					}], { length: 1, _handler: handler })
+					return Object.assign([document.createElement("button")], { _handler: handler })
 				},
 			},
 		} as any
@@ -107,7 +105,7 @@ describe("report_button", () => {
 				btn_typst_print: null,
 				inner_toolbar: [{ querySelector: (): null => null }],
 				add_inner_button: (_label: string, handler: () => void): any[] =>
-					Object.assign([{ setAttribute: vi.fn() }], { length: 1, _handler: handler }),
+					Object.assign([document.createElement("button")], { _handler: handler }),
 			},
 		} as any
 

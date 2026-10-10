@@ -3,6 +3,28 @@
 
 frappe.provide("crispy_print");
 
+crispy_print.decorate_print_button = function (button) {
+	const element = button && button[0];
+	if (!element) return;
+
+	const label = __("Crispy Print");
+	const title = __("Open Crispy Print Preview");
+	// Preserve the newer Frappe button's spinner and loading label.
+	const content = element.querySelector(".es-button__label") || element;
+	const image = document.createElement("img");
+	image.src = "/assets/crispy_print/icons/typst.svg";
+	image.alt = label;
+	image.style.width = "45px";
+	image.style.height = "45px";
+	image.style.marginTop = "2px";
+	image.addEventListener("error", () => {
+		content.textContent = label;
+	});
+	element.setAttribute("title", title);
+	element.setAttribute("aria-label", label);
+	content.replaceChildren(image);
+};
+
 (() => {
 	const getLogger = (scope = {}) => {
 		const base = window?.CrispyPrintLogger;
@@ -51,10 +73,7 @@ frappe.provide("crispy_print");
 			if (existing) return;
 		}
 
-		const btn_label = `<img src="/assets/crispy_print/icons/typst.svg"
-			style="width:45px;height:45px;margin-top:2px;"
-			alt="${__("Crispy Print")}"
-			title="${__("Open Crispy Print Preview")}"/>`;
+		const btn_label = __("Crispy Print");
 
 		qr.page.btn_typst_print = qr.page.add_inner_button(btn_label, () => {
 			const filters = qr.get_filter_values ? qr.get_filter_values() : {};
@@ -91,6 +110,7 @@ frappe.provide("crispy_print");
 			frappe.set_route("crispy-print-preview", "report", qr.report_name);
 		});
 
+		crispy_print.decorate_print_button(qr.page.btn_typst_print);
 		const btnEl = qr.page.btn_typst_print && qr.page.btn_typst_print[0];
 		if (btnEl) {
 			btnEl.setAttribute(BTN_MARK, "1");

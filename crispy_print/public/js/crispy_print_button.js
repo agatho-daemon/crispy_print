@@ -44,15 +44,10 @@
 					// Only show for saved documents
 					if (frm.is_new()) return;
 
-					frm.add_custom_button(
-						`<img src="/assets/crispy_print/icons/typst.svg"
-                             style="width:45px;height:45px;margin-top:2px;"
-                             alt="${__("Crispy Print")}"
-                             title="${__("Open Crispy Print Preview")}"/>`,
-						() => {
-							frappe.set_route("crispy-print-preview", frm.doctype, frm.docname);
-						}
-					);
+					const button = frm.add_custom_button(__("Crispy Print"), () => {
+						frappe.set_route("crispy-print-preview", frm.doctype, frm.docname);
+					});
+					crispy_print.decorate_print_button(button);
 				},
 			});
 		});
