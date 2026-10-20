@@ -320,19 +320,53 @@ page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25)";
 
 ### Updating the vendored PDF.js assets
 
-Keep the module and worker at the exact `pdfjs-dist` version declared in
-`crispy_print/public/js/package.json`. Copy both files from the same dependency
-release. Preserve the upstream license and version headers.
+The PDF.js module, worker, and license are committed deployment assets. Normal
+Bench builds do not copy or modify them. Upgrade them with these developer
+commands from the Crispy Print repository, using the supported Node version:
 
-Publish the copied files under versioned `.js` names, such as
-`pdf-6.1.200.min.js` and `pdf.worker-6.1.200.min.js`, in
-`crispy_print/public/vendor/pdfjs/`. Update both URLs in `utils/pdfJs.ts` together.
-These files remain JavaScript modules. The `.js` extension avoids relying on an
-additional `.mjs` content-type mapping in deployment servers.
+1. Set `pdfjs-dist` in `crispy_print/public/js/package.json` to an exact stable
+   three-part version and update the nested `yarn.lock`. Ranges, tags, pre-release
+   versions, and build metadata are not accepted.
+2. Install the locked dependencies with
+   `yarn --cwd crispy_print/public/js install --frozen-lockfile`.
+3. Run `yarn sync:pdfjs`.
+4. Run `yarn check:pdfjs`.
+5. Run `yarn test:pdfjs` and the relevant unit tests.
+6. Run `bench build --app crispy_print` from the active Bench.
+7. Verify real PDF.js worker startup and PDF rendering in both complete print
+   and format-builder previews with the built-in browser.
+8. Review and commit the dependency pin, lockfile, and synchronized vendor files.
 
-Run the vendor-version test in `tests/batch15/pdfJsAssets.test.ts`, build the app,
-and verify PDF preview in the built-in browser. Confirm that a real module worker
-starts and a PDF page renders. Test through Nginx without an `.mjs` mapping when
-changing this asset-loading contract; the Bench development server alone does
-not reproduce the deployment failure. Use versioned URLs to prevent a stale
-module from loading a newer worker after an upgrade.
+`sync:pdfjs` copies both **legacy** minified modules and `LICENSE` from the same
+installed `pdfjs-dist` package. It preserves their bytes and publishes versioned
+`.js` names, such as `pdf-6.1.200.min.js` and `pdf.worker-6.1.200.min.js`.
+The loader derives both URLs from the package pin through a JSON import; there
+is no generated TypeScript or second version constant.
+
+The script validates all source files, version headers, and destination paths
+before writing. It stages the complete replacement set, then renames files into
+place. Each rename is atomic; the complete update is not. A partial failure
+reports which managed files changed. Rerun `yarn sync:pdfjs` to repair the set.
+Inspect the diff before any targeted recovery; do not use a blanket `git restore`.
+A second successful run makes no writes.
+
+The script owns only `LICENSE` and filenames matching
+`pdf-<version>.min.js` or `pdf.worker-<version>.min.js` in
+`crispy_print/public/vendor/pdfjs/`. It preserves unrelated files and rejects
+managed symlinks. It removes previous managed versions after replacements
+succeed. Since deployment assets can point directly at this folder, an open
+browser tab may need a reload after an upgrade. Old deployed URLs are not retained.
+
+`check:pdfjs` is read-only. It verifies the exact stable pin, installed package
+version, expected managed file set, and byte-for-byte module, worker, and license
+contents. Continuous integration runs it after installing the locked nested
+dependencies. CI never synchronizes or silently repairs stale assets. The tooling
+acceptance tests use disposable fixture directories; the loader unit test checks
+URL construction separately.
+
+The `.js` extension avoids requiring an additional `.mjs` content-type mapping.
+When changing the asset-loading contract, also test through isolated Nginx without
+an `.mjs` mapping; the Bench development server alone cannot reproduce that fault.
+Use a separate loopback port, stop the test instance afterward, and preserve the
+normal Caddy configuration. Browser testing remains required after each PDF.js
+upgrade, even when all file checks pass.

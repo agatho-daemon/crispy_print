@@ -1,7 +1,10 @@
 import type * as PdfJsModule from "pdfjs-dist/legacy/build/pdf.mjs";
 
-const PDFJS_MODULE_URL = "/assets/crispy_print/vendor/pdfjs/pdf-6.1.200.min.js";
-const PDFJS_WORKER_URL = "/assets/crispy_print/vendor/pdfjs/pdf.worker-6.1.200.min.js";
+import { dependencies } from "../package.json";
+
+const version = dependencies["pdfjs-dist"];
+export const PDFJS_MODULE_URL = `/assets/crispy_print/vendor/pdfjs/pdf-${version}.min.js`;
+export const PDFJS_WORKER_URL = `/assets/crispy_print/vendor/pdfjs/pdf.worker-${version}.min.js`;
 
 let modulePromise: Promise<typeof PdfJsModule> | null = null;
 

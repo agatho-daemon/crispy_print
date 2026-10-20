@@ -7,7 +7,10 @@
     "lint": "eslint \"crispy_print/public/js/**/*.{js,ts,vue}\" --quiet",
     "test:unit": "cd crispy_print/public/js && yarn test:unit",
     "test:e2e": "yarn --cwd e2e test",
-    "test:e2e:update": "yarn --cwd e2e test:update"
+    "test:e2e:update": "yarn --cwd e2e test:update",
+    "sync:pdfjs": "node scripts/pdfjs-assets.mjs sync",
+    "check:pdfjs": "node scripts/pdfjs-assets.mjs check",
+    "test:pdfjs": "node --test scripts/pdfjs-assets.test.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

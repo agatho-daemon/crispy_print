@@ -125,6 +125,13 @@ jobs:
         env:
           CI: 'Yes'
 
+      - name: Verify vendored PDF.js assets
+        working-directory: /home/runner/frappe-bench/apps/crispy_print
+        run: |
+          yarn --cwd crispy_print/public/js install --frozen-lockfile
+          yarn check:pdfjs
+          yarn test:pdfjs
+
       - name: Run Tests
         working-directory: /home/runner/frappe-bench
         run: |
