@@ -106,7 +106,7 @@
 			</div>
 			<div v-if="errorPanel" class="preview-error">
 				<div class="preview-error__header">
-					<span class="preview-error__title">{{ __("Typst Error") }}</span>
+					<span class="preview-error__title">{{ __("Preview error") }}</span>
 					<button class="preview-error__copy" type="button" @click="copyError">
 						{{ __("Copy") }}
 					</button>

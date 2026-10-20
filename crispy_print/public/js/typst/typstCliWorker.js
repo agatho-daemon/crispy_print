@@ -47,6 +47,63 @@ async function postCompileRequest(apiUrl, body, csrfToken) {
 	}
 }
 
+// Frappe v1 serializes _server_messages as an array of JSON strings.
+function applicationMessage(data) {
+	let entries = data?._server_messages;
+	try {
+		if (typeof entries === "string") entries = JSON.parse(entries);
+	} catch {
+		entries = [];
+	}
+	const candidates = [];
+	for (let entry of Array.isArray(entries) ? entries : []) {
+		try {
+			if (typeof entry === "string") entry = JSON.parse(entry);
+			if (typeof entry?.message === "string") candidates.push(entry.message);
+		} catch {
+			// Ignore malformed message entries and continue to other messages.
+		}
+	}
+	candidates.push(data?._error_message, data?.message);
+	for (const candidate of candidates) {
+		if (typeof candidate !== "string") continue;
+		const text = candidate.trim();
+		if (!text || text.length > 2000 || /Traceback|File ".+", line \d|\n\s*at /i.test(text)) continue;
+		return text;
+	}
+	// `exception` can expose internals. Only use known compile messages.
+	const exception = data?.exception;
+	if (typeof exception === "string") {
+		const known = exception.match(/^(?:frappe\.exceptions\.)?ValidationError: (Typst compilation failed\. Check the server error log for details\.|Compilation timed out\. The document may be too complex\.)$/);
+		if (known) return known[1];
+	}
+	return "";
+}
+
+function compileResponseError(kind, status, message) {
+	return Object.assign(new Error(message), { kind, status });
+}
+
+async function readCompileResponse(response) {
+	const text = await response.text();
+	let data;
+	try {
+		data = JSON.parse(text);
+	} catch {
+		// HTML and malformed JSON are not compiler diagnostics.
+	}
+	const isObject = data && typeof data === "object" && !Array.isArray(data);
+	if (!response.ok || (isObject && (data.exc || data.exception || data.exc_type))) {
+		const message = isObject ? applicationMessage(data) : "";
+		if (message) throw compileResponseError("application", response.status, message);
+		throw compileResponseError("request", response.status, "The server request failed without a usable application error.");
+	}
+	if (!isObject) {
+		throw compileResponseError("response", response.status, "The server returned an invalid compilation response.");
+	}
+	return data;
+}
+
 async function compileWithCLI(
 	typstSrc,
 	csrfToken,
@@ -88,23 +145,18 @@ async function compileWithCLI(
 		}
 	}
 
-	if (!response.ok) {
-		const text = await response.text();
-		throw new Error(`Server returned ${response.status}: ${text}`);
-	}
-
-	const data = await response.json();
-	if (data.exc || data.exception) {
-		throw new Error(data.message || data.exc || "Server compilation failed");
-	}
+	const data = await readCompileResponse(response);
 
 	const payload = data.message || data;
-	const format = (payload?.format || outputFormat || "svg").toLowerCase();
+	const format = payload?.format;
+	if (payload?.success !== true || !["svg", "pdf"].includes(format) || format !== outputFormat) {
+		throw compileResponseError("response", response.status, "The server returned an invalid compilation response.");
+	}
 
 	if (format === "svg") {
 		const pages = payload?.svg_pages;
-		if (!Array.isArray(pages) || pages.length === 0) {
-			throw new Error("No svg_pages in server response");
+		if (!Array.isArray(pages) || pages.length === 0 || pages.some((page) => typeof page !== "string" || !page.trim())) {
+			throw compileResponseError("response", response.status, "The server returned an invalid compilation response.");
 		}
 		return {
 			format: "svg",
@@ -118,11 +170,16 @@ async function compileWithCLI(
 	}
 
 	const base64 = payload?.pdf_data;
-	if (!base64) {
-		throw new Error("No pdf_data in server response");
+	if (typeof base64 !== "string" || !base64) {
+		throw compileResponseError("response", response.status, "The server returned an invalid compilation response.");
 	}
 
-	const binary = atob(base64);
+	let binary;
+	try {
+		binary = atob(base64);
+	} catch {
+		throw compileResponseError("response", response.status, "The server returned an invalid compilation response.");
+	}
 	const bytes = new Uint8Array(binary.length);
 	for (let i = 0; i < binary.length; i++) {
 		bytes[i] = binary.charCodeAt(i);
@@ -223,7 +280,8 @@ self.addEventListener("message", async (event) => {
 			seq,
 			error: {
 				message: err?.message || String(err),
-				stack: err?.stack || null,
+				kind: err?.kind || "request",
+				status: err?.status || 0,
 			},
 		});
 	}

@@ -100,3 +100,31 @@ The single **Crispy Print Settings** DocType (System Manager only) centralizes f
 
 - **Render Timeout Seconds** - maximum seconds per Typst render or font-discovery command (default `60`).
 - **Allow Print for Draft** (with optional **Always Add Draft Heading**) and **Allow Print for Cancelled** - control whether draft/cancelled documents may be printed.
+
+### Chinese and other CJK documents
+
+CJK means Chinese, Japanese, and Korean. A Latin font such as Inter does not
+provide the character coverage needed for these documents. The bundled
+`CrispyShipporiMincho` is a Latin/financial-symbol subset; it does not include the
+original font's CJK repertoire.
+
+Use the existing font controls before changing a format:
+
+1. Upload a suitably licensed Chinese-capable font through **Crispy Print
+   Settings → Upload Font**, with **Enable Uploaded Fonts** enabled.
+2. Click **Refresh Font List**.
+3. Select the discovered font in the format or its branding profile.
+4. Preview a document containing both Chinese and English text.
+5. Verify PDF/A output using the format's required PDF standard.
+
+Alternatively, enable **Enable System Fonts** if the deployment already has an
+appropriate font, such as `WenQuanYi Zen Hei`, then refresh and select that family.
+Installing a system font alone does not make it available when system-font
+discovery is disabled. All compilation processes that serve the site must have
+access to the selected font.
+
+A PDF/A message such as `the text '全' could not be displayed with font
+'Libertinus Serif'` identifies a character that the resolved font could not
+render. Choose a font with the required character coverage and permission for
+PDF embedding. Keep the required PDF standard; changing to a non-archival
+standard does not correct missing character coverage.

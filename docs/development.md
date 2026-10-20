@@ -317,3 +317,22 @@ page.className = "typst-page";
 page.style.marginBottom = "1.5rem";
 page.style.boxShadow = "0 4px 12px rgba(148, 163, 184, 0.25)";
 ```
+
+### Updating the vendored PDF.js assets
+
+Keep the module and worker at the exact `pdfjs-dist` version declared in
+`crispy_print/public/js/package.json`. Copy both files from the same dependency
+release. Preserve the upstream license and version headers.
+
+Publish the copied files under versioned `.js` names, such as
+`pdf-6.1.200.min.js` and `pdf.worker-6.1.200.min.js`, in
+`crispy_print/public/vendor/pdfjs/`. Update both URLs in `utils/pdfJs.ts` together.
+These files remain JavaScript modules. The `.js` extension avoids relying on an
+additional `.mjs` content-type mapping in deployment servers.
+
+Run the vendor-version test in `tests/batch15/pdfJsAssets.test.ts`, build the app,
+and verify PDF preview in the built-in browser. Confirm that a real module worker
+starts and a PDF page renders. Test through Nginx without an `.mjs` mapping when
+changing this asset-loading contract; the Bench development server alone does
+not reproduce the deployment failure. Use versioned URLs to prevent a stale
+module from loading a newer worker after an upgrade.

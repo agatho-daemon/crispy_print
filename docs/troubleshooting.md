@@ -94,6 +94,81 @@ Solution:
 - Re-upload letterhead image
 - Verify file path in Letter Head document
 
+### Docker and reverse-proxy deployment errors
+
+#### PDF viewer fails to load a JavaScript module
+
+**Symptom:** The browser reports `Failed to fetch dynamically imported module`,
+or rejects a PDF.js module because of its content type. A file can return HTTP
+200 and still be rejected by the browser.
+
+Current builds publish the PDF.js module and its worker as versioned `.js`
+assets. Both must be served with a JavaScript content type. This avoids requiring
+an `.mjs` mapping on servers that already serve `.js` correctly. Rebuild app
+assets and reload the browser after upgrading.
+
+For older builds, inspect both responses using your actual site URL:
+
+```bash
+curl -I https://your-site/assets/crispy_print/vendor/pdfjs/pdf.min.mjs
+curl -I https://your-site/assets/crispy_print/vendor/pdfjs/pdf.worker.min.mjs
+```
+
+A JavaScript content type, such as `text/javascript` or `application/javascript`,
+is required. `application/octet-stream` is not sufficient for browser modules.
+Keep `X-Content-Type-Options: nosniff` enabled.
+
+For Nginx, ask the deployment administrator to add `mjs` to the **existing**
+JavaScript entry in the `mime.types` file used by the effective configuration.
+For example, extend `application/javascript js;` to
+`application/javascript js mjs;`. Use the content type already present in that
+configuration. Do not add a replacement `types` block inside a `server` or
+`location` block: it can replace inherited mappings for CSS, images, and fonts.
+Validate and reload Nginx using the deployment's normal procedure. Check both
+response headers again. Other servers or proxies need the equivalent mapping.
+
+#### Preview reports an HTTP error without a compilation diagnostic
+
+**Symptom:** A preview request fails with HTTP 500, or shows a server request
+error instead of a useful Typst diagnostic. Ordinary Frappe saves may also fail.
+This suggests a shared request-handling problem, but does not identify its cause.
+
+1. Record the HTTP status and request time from the browser Network panel.
+2. Inspect the application and reverse-proxy logs for that request.
+3. Check for log entries containing `client_body_temp`, a configured body-temp
+   path, or `Permission denied`.
+4. Inspect the effective Nginx `client_body_temp_path` if the logs identify a
+   temporary-file failure.
+5. Check that the Nginx runtime user can traverse the parent directories and
+   write to the configured directory.
+6. Correct ownership, permissions, or volume configuration through the deployment
+   administrator, then repeat the failed request.
+
+Nginx can buffer larger request bodies to disk before forwarding them. A small
+request can succeed while a larger preview fails. Verify the correction with a
+request large enough to use the body-temp directory. Make directory setup
+persistent across container recreation. Do not assume a fixed path or user ID,
+and do not use world-writable permissions as a general fix.
+
+The reporter of issue #8 observed an ownership change after running `nginx -t`
+as root in their custom non-root container. Treat this as a deployment-specific
+observation. Check directory ownership after administrative operations if the
+logs show permission failures; do not assume every Nginx installation behaves
+this way.
+
+HTTP status hints are not diagnoses:
+
+- **413:** Check request-size limits in the server or proxy.
+- **502:** Check backend availability, logs, and invalid backend responses.
+- **503:** Check maintenance state and server capacity.
+- **504:** Check backend response time and proxy timeout settings.
+- **500:** Inspect the application and proxy logs for the actual error.
+
+Crispy Print does not change Nginx directory permissions. A generic HTTP error
+cannot prove that the request failed before reaching the application. Genuine
+Frappe error messages are shown when available; raw HTML and developer tracebacks
+are not used as preview diagnostics.
+
 ### Slow PDF Generation
 
 If PDF generation takes more than 5 seconds:

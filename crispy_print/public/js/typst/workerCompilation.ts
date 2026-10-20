@@ -32,6 +32,24 @@ const IMAGE_EXTENSIONS = new Set([
  * Handles nested JSON, escaped strings, and Unicode box drawing characters.
  */
 export function parseTypstError(error: any): string {
+	// Transport failures are not Typst diagnostics. Preserve their classification
+	// through the preview path instead of collapsing them to "Compilation error".
+	if (error?.kind === "application") return String(error.message)
+	if (error?.kind === "response") {
+		return __("The server returned an invalid compilation response.")
+	}
+	if (error?.kind === "request") {
+		const status = Number(error.status) || 0
+		const message = status
+			? __("The server returned HTTP {0} without a usable application error.").replace("{0}", String(status))
+			: __("The compilation request could not be completed. Check the connection and server availability.")
+		let hint = __("Check the application and reverse-proxy logs.")
+		if (status === 413) hint = __("Check the request-size limit in the web server or reverse proxy.")
+		if (status === 502) hint = __("The gateway could not obtain a valid backend response. Check backend availability and logs.")
+		if (status === 503) hint = __("The service is unavailable. Check maintenance status, server capacity, and logs.")
+		if (status === 504) hint = __("The gateway timed out waiting for the backend. Check backend response time and proxy timeout settings.")
+		return `${message}\n${hint}`
+	}
 	try {
 		let errorStr = String(error?.message || error || "Typst compilation failed")
 
