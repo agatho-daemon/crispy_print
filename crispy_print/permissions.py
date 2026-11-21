@@ -5,6 +5,8 @@ from typing import Any
 import frappe
 from frappe import _
 from frappe.permissions import get_user_permissions
+from frappe.query_builder.functions import Coalesce
+from pypika.terms import Criterion
 
 DESIGNER_ROLE = "Crispy Print Designer"
 MANAGER_ROLES = {"System Manager", "Crispy Print Manager"}
@@ -89,7 +91,7 @@ def ensure_company_access(
 def company_permission_query_condition(
 	user: str | None = None,
 	doctype: str | None = None,
-) -> str:
+) -> str | Criterion:
 	if not doctype or doctype not in COMPANY_SCOPED_DOCTYPES_ALLOW_GLOBAL:
 		return ""
 	if is_crispy_print_manager(user):
@@ -101,11 +103,10 @@ def company_permission_query_condition(
 	if not allowed_companies:
 		return "1=0"
 
-	company_field = f"`tab{doctype}`.`company`"
-	escaped_companies = ", ".join(frappe.db.escape(company, percent=False) for company in allowed_companies)
-	condition = f"{company_field} in ({escaped_companies})"
+	company_field = frappe.qb.DocType(doctype).company
+	condition = company_field.isin(allowed_companies)
 	if COMPANY_SCOPED_DOCTYPES_ALLOW_GLOBAL[doctype]:
-		return f"(ifnull({company_field}, '')='' or {condition})"
+		return (Coalesce(company_field, "") == "") | condition
 	return condition
 
 

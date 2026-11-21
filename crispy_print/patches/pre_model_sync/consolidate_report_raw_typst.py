@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 
 import frappe
+from frappe.query_builder.functions import Coalesce
+from pypika.terms import Case
 
 
 def execute():
@@ -13,29 +15,25 @@ def execute():
 		return
 
 	if "is_advanced" in columns:
-		frappe.db.sql(
-			"""
-			update `tabCrispy Format`
-			set raw_typst = if(
-				coalesce(raw_typst, 0) = 1 or coalesce(is_advanced, 0) = 1,
-				1,
-				0
-			)
-			where crispy_format_type = 'Report'
-			"""
+		formats = frappe.qb.DocType("Crispy Format")
+		advanced = (Coalesce(formats.raw_typst, 0) == 1) | (Coalesce(formats.is_advanced, 0) == 1)
+		(
+			frappe.qb.update(formats)
+			.set(formats.raw_typst, Case().when(advanced, 1).else_(0))
+			.where(formats.crispy_format_type == "Report")
+			.run()
 		)
 
 	_normalize_persisted_report_modes()
 
 
 def _normalize_persisted_report_modes() -> None:
-	rows = frappe.db.sql(
-		"""
-		select name, raw_typst, presentation_settings
-		from `tabCrispy Format`
-		where crispy_format_type = 'Report'
-		""",
-		as_dict=True,
+	formats = frappe.qb.DocType("Crispy Format")
+	rows = (
+		frappe.qb.from_(formats)
+		.select(formats.name, formats.raw_typst, formats.presentation_settings)
+		.where(formats.crispy_format_type == "Report")
+		.run(as_dict=True)
 	)
 	for row in rows:
 		try:
@@ -51,10 +49,9 @@ def _normalize_persisted_report_modes() -> None:
 		if report.get("mode") == mode:
 			continue
 		report["mode"] = mode
-		frappe.db.set_value(
-			"Crispy Format",
-			row.name,
-			"presentation_settings",
-			json.dumps(settings, separators=(",", ":")),
-			update_modified=False,
+		(
+			frappe.qb.update(formats)
+			.set(formats.presentation_settings, json.dumps(settings, separators=(",", ":")))
+			.where(formats.name == row.name)
+			.run()
 		)

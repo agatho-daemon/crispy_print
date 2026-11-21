@@ -86,7 +86,7 @@ def _cleanup_leftover_company_test_artifacts() -> dict[str, Any]:
 			)
 			cleaned_profiles += 1
 
-		frappe.db.sql("delete from `tabMode of Payment Account` where company = %s", (company,))
+		frappe.db.delete("Mode of Payment Account", {"company": company})
 
 		try:
 			frappe.delete_doc("Company", company, ignore_permissions=True, force=True)

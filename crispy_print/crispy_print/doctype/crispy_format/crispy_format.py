@@ -157,36 +157,19 @@ class CrispyFormat(Document):
 		return enforce_single_default(
 			"Crispy Format",
 			self.name,
-			self._get_default_scope_keys(),
-			competing_names=self._get_scoped_default_names(),
+			competing_names=lambda: self._get_scoped_default_names(for_update=True),
 		)
 
-	def _get_default_scope_keys(self) -> list[str]:
+	def _get_scoped_default_names(self, *, for_update: bool = False) -> list[str]:
 		company = self._clean_scope_value(self.company)
-		format_type = self._clean_scope_value(self.crispy_format_type)
-		if self.crispy_format_type == "DocType":
-			return [f"{company}|{format_type}|doctype|{self._clean_scope_value(self.doc_type)}"]
-		if self.crispy_format_type == "Contract":
-			return [f"{company}|{format_type}|contract|{self._clean_scope_value(self.contract)}"]
-		if self.crispy_format_type == "Report" and self.report_scope == "All Compatible Reports":
-			return [f"{company}|{format_type}|renderer|{self._clean_scope_value(self.report_renderer)}"]
-		if self.crispy_format_type == "Report":
-			report_names = sorted(
-				{row.get("report") for row in self._get_linked_reports() if row.get("report")}
-			)
-			return [f"{company}|{format_type}|custom-report|{report}" for report in report_names]
-		return [f"{company}|{format_type}|unknown|{self.name}"]
-
-	def _get_scoped_default_names(self) -> list[str]:
-		company = self._clean_scope_value(self.company)
-		rows = frappe.get_all(
+		rows = frappe.db.get_values(
 			"Crispy Format",
 			filters={
 				"crispy_format_type": self.crispy_format_type,
 				"name": ["!=", self.name],
 				"is_default": 1,
 			},
-			fields=[
+			fieldname=[
 				"name",
 				"company",
 				"doc_type",
@@ -195,6 +178,8 @@ class CrispyFormat(Document):
 				"report_renderer",
 			],
 			order_by="name asc",
+			as_dict=True,
+			for_update=for_update,
 		)
 		rows = [row for row in rows if self._clean_scope_value(row.get("company")) == company]
 
@@ -203,10 +188,10 @@ class CrispyFormat(Document):
 		if self.crispy_format_type == "Contract":
 			return [row.name for row in rows if row.get("contract") == self.contract]
 		if self.crispy_format_type == "Report":
-			return self._get_scoped_report_default_names(rows)
+			return self._get_scoped_report_default_names(rows, for_update=for_update)
 		return []
 
-	def _get_scoped_report_default_names(self, rows: list[dict]) -> list[str]:
+	def _get_scoped_report_default_names(self, rows: list[dict], *, for_update: bool = False) -> list[str]:
 		if self.report_scope == "All Compatible Reports":
 			return [
 				row.name
@@ -223,14 +208,17 @@ class CrispyFormat(Document):
 		candidate_names = [row.name for row in rows if row.get("report_scope") == "Selected Reports"]
 		report_rows = []
 		if candidate_names:
-			report_rows = frappe.get_all(
+			report_rows = frappe.db.get_values(
 				"Crispy Format Reports",
 				filters={
 					"parent": ["in", candidate_names],
 					"parenttype": "Crispy Format",
 					"disabled": 0,
 				},
-				fields=["parent", "report"],
+				fieldname=["parent", "report"],
+				order_by="name asc",
+				as_dict=True,
+				for_update=for_update,
 			)
 		reports_by_parent: dict[str, set[str]] = {}
 		for report_row in report_rows:

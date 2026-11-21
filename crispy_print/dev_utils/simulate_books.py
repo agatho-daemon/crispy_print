@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta
 from typing import Any, Optional
 
 import frappe
+from frappe.query_builder.functions import Count, Sum
 from frappe.utils import getdate
 
 
@@ -887,6 +888,20 @@ def _clamp_date(d: date, lo: date, hi: date) -> date:
 	return d
 
 
+def _document_totals(doctype, amount_field, company, date_field, from_date, to_date):
+	table = frappe.qb.DocType(doctype)
+	return (
+		frappe.qb.from_(table)
+		.select(Count(table.name).as_("count"), Sum(table[amount_field]).as_("total"))
+		.where(
+			(table.company == company)
+			& (table.docstatus == 1)
+			& table[date_field].between(from_date, to_date)
+		)
+		.run(as_dict=True)[0]
+	)
+
+
 def _print_financial_summary(company: str, from_date: date, to_date: date) -> None:
 	"""Print financial summary of generated data"""
 	try:
@@ -895,42 +910,19 @@ def _print_financial_summary(company: str, from_date: date, to_date: date) -> No
 		print("\n📊 Financial Summary:")
 
 		# Sales
-		sales = frappe.db.sql(
-			"""
-			SELECT COUNT(*) as count, SUM(grand_total) as total
-			FROM `tabSales Invoice`
-			WHERE company = %s AND docstatus = 1
-			AND posting_date BETWEEN %s AND %s
-		""",
-			(company, from_date, to_date),
-			as_dict=1,
-		)[0]
+		sales = _document_totals("Sales Invoice", "grand_total", company, "posting_date", from_date, to_date)
 		print(f"   • Sales Invoices: {sales.count} documents ({flt(sales.total, 2)} KWD)")
 
 		# Purchases
-		purchases = frappe.db.sql(
-			"""
-			SELECT COUNT(*) as count, SUM(grand_total) as total
-			FROM `tabPurchase Invoice`
-			WHERE company = %s AND docstatus = 1
-			AND posting_date BETWEEN %s AND %s
-		""",
-			(company, from_date, to_date),
-			as_dict=1,
-		)[0]
+		purchases = _document_totals(
+			"Purchase Invoice", "grand_total", company, "posting_date", from_date, to_date
+		)
 		print(f"   • Purchase Invoices: {purchases.count} documents ({flt(purchases.total, 2)} KWD)")
 
 		# Payments
-		payments = frappe.db.sql(
-			"""
-			SELECT COUNT(*) as count, SUM(paid_amount) as total
-			FROM `tabPayment Entry`
-			WHERE company = %s AND docstatus = 1
-			AND posting_date BETWEEN %s AND %s
-		""",
-			(company, from_date, to_date),
-			as_dict=1,
-		)[0]
+		payments = _document_totals(
+			"Payment Entry", "paid_amount", company, "posting_date", from_date, to_date
+		)
 		print(f"   • Payment Entries: {payments.count} documents ({flt(payments.total, 2)} KWD)")
 
 		# GL Entries
@@ -945,17 +937,8 @@ def _print_financial_summary(company: str, from_date: date, to_date: date) -> No
 			{"company": company, "docstatus": 1, "start_date": ["between", [from_date, to_date]]},
 		)
 		if salary_slips:
-			salary_total = frappe.db.sql(
-				"""
-				SELECT SUM(net_pay) as total
-				FROM `tabSalary Slip`
-				WHERE company = %s AND docstatus = 1
-				AND start_date BETWEEN %s AND %s
-			""",
-				(company, from_date, to_date),
-				as_dict=1,
-			)[0]
-			print(f"   • Salary Slips: {salary_slips} documents ({flt(salary_total.total or 0, 2)} KWD)")
+			totals = _document_totals("Salary Slip", "net_pay", company, "start_date", from_date, to_date)
+			print(f"   • Salary Slips: {salary_slips} documents ({flt(totals.total, 2)} KWD)")
 
 		attendance_count = frappe.db.count(
 			"Attendance", {"company": company, "attendance_date": ["between", [from_date, to_date]]}

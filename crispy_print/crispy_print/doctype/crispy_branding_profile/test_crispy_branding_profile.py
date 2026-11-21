@@ -372,7 +372,6 @@ class TestCrispyBrandingProfile(FrappeTestCase):
 		enforce.assert_called_once_with(
 			"Crispy Branding Profile",
 			doc.name,
-			f"{self.company}|default-branding-profile",
 			filters={"company": self.company, "is_default": 1, "name": ["!=", doc.name]},
 		)
 

@@ -351,7 +351,6 @@ class CrispyBrandingProfile(Document):
 		return enforce_single_default(
 			"Crispy Branding Profile",
 			self.name,
-			f"{self.company}|default-branding-profile",
 			filters={"company": self.company, "is_default": 1, "name": ["!=", self.name]},
 		)
 

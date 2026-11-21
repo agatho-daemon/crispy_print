@@ -3,109 +3,52 @@ from unittest import mock
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from crispy_print.defaults import build_default_lock_key, enforce_single_default
+from crispy_print.defaults import enforce_single_default
 
 
 class TestDefaultHelpers(FrappeTestCase):
-	def test_default_lock_key_is_stable_and_scoped(self):
-		first = build_default_lock_key("Crispy Format", "Company A|DocType|Sales Invoice")
-		second = build_default_lock_key("Crispy Format", "Company A|DocType|Sales Invoice")
-		other = build_default_lock_key("Crispy Format", "Company B|DocType|Sales Invoice")
-
-		self.assertEqual(first, second)
-		self.assertNotEqual(first, other)
-		self.assertTrue(first.startswith("crispy_print:default:"))
-		self.assertLessEqual(len(first), 64)
-
-	def test_default_lock_key_stays_within_mariadb_limit_for_long_scopes(self):
-		lock_key = build_default_lock_key(
-			"Crispy Branding Profile With A Deliberately Long Name",
-			"Company A|" + ("scope-" * 100),
-		)
-
-		self.assertLessEqual(len(lock_key), 64)
-
-	def test_default_lock_key_is_namespaced_by_site(self):
-		with mock.patch.object(frappe.local, "site", "site-a.local"):
-			first = build_default_lock_key("Crispy Format", "Company A")
-		with mock.patch.object(frappe.local, "site", "site-b.local"):
-			second = build_default_lock_key("Crispy Format", "Company A")
-
-		self.assertNotEqual(first, second)
-
-	def test_lock_failure_raises_validation_error(self):
+	def test_resolves_competing_defaults_after_locking(self):
 		with (
-			mock.patch.object(frappe.db, "db_type", "mariadb"),
-			mock.patch.object(frappe.db, "sql", return_value=((0,),)),
-		):
-			with self.assertRaises(frappe.ValidationError):
-				enforce_single_default(
-					"Crispy Format",
-					"Current Format",
-					"Company A|DocType|Sales Invoice",
-					competing_names=["Other Format"],
-					timeout_seconds=0,
-				)
-
-	def test_competing_defaults_are_cleared_in_one_operation(self):
-		with (
-			mock.patch("crispy_print.defaults.acquire_default_locks") as acquire_locks,
+			mock.patch.object(frappe.db, "get_value", return_value="Crispy Format") as lock,
 			mock.patch.object(frappe.db, "set_value") as set_value,
 		):
-			out = enforce_single_default(
-				"Crispy Format",
-				"Current Format",
-				"Company A|DocType|Sales Invoice",
-				competing_names=["Other Format", "Current Format", "Other Format"],
-			)
+
+			def competing_names():
+				lock.assert_called_once_with("DocType", "Crispy Format", "name", for_update=True)
+				return ["Other Format", "Current Format", "Other Format"]
+
+			out = enforce_single_default("Crispy Format", "Current Format", competing_names=competing_names)
 
 		self.assertEqual(out, ["Other Format"])
-		acquire_locks.assert_called_once()
 		set_value.assert_called_once_with(
-			"Crispy Format",
-			{"name": ["in", ["Other Format"]]},
-			"is_default",
-			0,
-			update_modified=False,
+			"Crispy Format", {"name": ["in", ["Other Format"]]}, "is_default", 0, update_modified=False
 		)
 
 	def test_non_competing_defaults_are_not_touched(self):
 		with (
-			mock.patch("crispy_print.defaults.acquire_default_locks") as acquire_locks,
+			mock.patch.object(frappe.db, "get_value", return_value="Crispy Format"),
 			mock.patch.object(frappe.db, "set_value") as set_value,
 		):
 			out = enforce_single_default(
-				"Crispy Format",
-				"Current Format",
-				"Company A|DocType|Sales Invoice",
-				competing_names=["Current Format"],
+				"Crispy Format", "Current Format", competing_names=lambda: ["Current Format"]
 			)
-
 		self.assertEqual(out, [])
-		acquire_locks.assert_called_once()
 		set_value.assert_not_called()
 
-	def test_filter_based_clearing_excludes_current_record(self):
+	def test_filter_based_clearing_uses_current_locked_rows(self):
+		filters = {"company": "Company A", "is_default": 1}
 		with (
-			mock.patch("crispy_print.defaults.acquire_default_locks"),
+			mock.patch.object(frappe.db, "get_value", return_value="Crispy Branding Profile"),
 			mock.patch.object(
-				frappe, "get_all", return_value=["Current Profile", "Other Profile"]
-			) as get_all,
+				frappe.db, "get_values", return_value=["Current Profile", "Other Profile"]
+			) as get_values,
 			mock.patch.object(frappe.db, "set_value") as set_value,
 		):
-			out = enforce_single_default(
-				"Crispy Branding Profile",
-				"Current Profile",
-				"Company A|default-branding-profile",
-				filters={"company": "Company A", "is_default": 1},
-			)
+			out = enforce_single_default("Crispy Branding Profile", "Current Profile", filters=filters)
 
 		self.assertEqual(out, ["Other Profile"])
-		get_all.assert_called_once_with(
-			"Crispy Branding Profile",
-			filters={"company": "Company A", "is_default": 1},
-			pluck="name",
-			order_by="name asc",
+		get_values.assert_called_once_with(
+			"Crispy Branding Profile", filters, "name", for_update=True, pluck=True, order_by="name asc"
 		)
 		set_value.assert_called_once_with(
 			"Crispy Branding Profile",

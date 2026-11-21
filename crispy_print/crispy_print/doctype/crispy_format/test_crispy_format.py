@@ -383,68 +383,45 @@ class TestCrispyFormat(FrappeTestCase):
 			frappe._dict({"name": "Candidate B", "report_scope": "Selected Reports"}),
 		]
 
-		with mock.patch(
-			"crispy_print.crispy_print.doctype.crispy_format.crispy_format.frappe.get_all",
+		with mock.patch.object(
+			frappe.db,
+			"get_values",
 			return_value=[
 				frappe._dict({"parent": "Candidate A", "report": "Report A"}),
 				frappe._dict({"parent": "Candidate B", "report": "Report B"}),
 			],
-		) as get_all:
+		) as get_values:
 			defaults = doc._get_scoped_report_default_names(rows)
 
 		self.assertEqual(defaults, ["Candidate A"])
-		get_all.assert_called_once_with(
+		get_values.assert_called_once_with(
 			"Crispy Format Reports",
 			filters={
 				"parent": ["in", ["Candidate A", "Candidate B"]],
 				"parenttype": "Crispy Format",
 				"disabled": 0,
 			},
-			fields=["parent", "report"],
-		)
-
-	def test_custom_report_default_scope_locks_each_linked_report(self):
-		company = "Test Format Lock Company"
-		doc = self._new_format(
-			"Test Format Lock Scope",
-			company=company,
-			crispy_format_type="Report",
-			doc_type=None,
-			is_generic=0,
-		)
-		doc.append("report", {"report": "Report B"})
-		doc.append("report", {"report": "Report A"})
-
-		self.assertEqual(
-			doc._get_default_scope_keys(),
-			[
-				f"{company}|Report|custom-report|Report A",
-				f"{company}|Report|custom-report|Report B",
-			],
+			fieldname=["parent", "report"],
+			order_by="name asc",
+			as_dict=True,
+			for_update=False,
 		)
 
 	def test_clear_other_defaults_uses_shared_default_helper(self):
-		company = "Test Format Helper Company"
-		doc = self._new_format("Test Format Helper Scope", company=company)
+		doc = self._new_format("Test Format Helper Scope", company="Test Format Helper Company")
 		doc.name = "Test Format Helper Scope"
 
 		with (
 			mock.patch.object(doc, "_get_scoped_default_names", return_value=["Other Format"]) as defaults,
 			mock.patch(
-				"crispy_print.crispy_print.doctype.crispy_format.crispy_format.enforce_single_default",
-				return_value=["Other Format"],
+				"crispy_print.crispy_print.doctype.crispy_format.crispy_format.enforce_single_default"
 			) as enforce,
 		):
-			out = doc.clear_other_defaults()
+			enforce.side_effect = lambda doctype, name, *, competing_names: competing_names()
+			self.assertEqual(doc.clear_other_defaults(), ["Other Format"])
 
-		self.assertEqual(out, ["Other Format"])
-		defaults.assert_called_once_with()
-		enforce.assert_called_once_with(
-			"Crispy Format",
-			doc.name,
-			[f"{company}|DocType|doctype|Sales Invoice"],
-			competing_names=["Other Format"],
-		)
+		defaults.assert_called_once_with(for_update=True)
+		self.assertEqual(enforce.call_args.args, ("Crispy Format", doc.name))
 
 	def test_get_current_default(self):
 		"""Test getting the current default format for a DocType"""

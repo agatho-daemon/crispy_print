@@ -43,8 +43,10 @@ class TestCompanyPermissionPolicy(FrappeTestCase):
 				doctype="Crispy Format",
 			)
 
-		self.assertIn("`tabCrispy Format`.`company` in", condition)
-		self.assertIn(frappe.db.escape("Designer Company", percent=False), condition)
+		table = frappe.qb.DocType("Crispy Format")
+		query, values = frappe.qb.from_(table).select(table.name).where(condition).walk()
+		self.assertIn("COALESCE(", query.upper())
+		self.assertIn("Designer Company", values.values())
 
 	def test_designer_authoring_permissions_are_declared(self):
 		for doctype in (
@@ -119,10 +121,11 @@ class TestCompanyPermissionPolicy(FrappeTestCase):
 				doctype="Crispy Format",
 			)
 
-		self.assertIn("`tabCrispy Format`.`company` in", condition)
-		self.assertIn(frappe.db.escape("Allowed Company", percent=False), condition)
-		self.assertNotIn("Other Company", condition)
-		self.assertIn("ifnull(`tabCrispy Format`.`company`, '')=''", condition)
+		table = frappe.qb.DocType("Crispy Format")
+		query, values = frappe.qb.from_(table).select(table.name).where(condition).walk()
+		self.assertIn("COALESCE(", query.upper())
+		self.assertIn("Allowed Company", values.values())
+		self.assertNotIn("Other Company", values.values())
 
 	def test_company_permissions_filter_strict_company_doctype_without_global_fallback(self):
 		with (
@@ -137,8 +140,10 @@ class TestCompanyPermissionPolicy(FrappeTestCase):
 				doctype="Crispy Branding Profile",
 			)
 
-		self.assertIn("`tabCrispy Branding Profile`.`company` in", condition)
-		self.assertNotIn("ifnull(", condition)
+		table = frappe.qb.DocType("Crispy Branding Profile")
+		query, values = frappe.qb.from_(table).select(table.name).where(condition).walk()
+		self.assertNotIn("COALESCE(", query.upper())
+		self.assertIn("Allowed Company", values.values())
 
 	def test_company_permission_applicable_to_other_doctype_does_not_restrict_crispy_doctype(self):
 		with (

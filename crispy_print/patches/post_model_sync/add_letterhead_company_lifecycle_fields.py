@@ -15,10 +15,10 @@ def execute():
 		return
 	if STATUS_FIELD not in frappe.db.get_table_columns(LETTER_HEAD_DOCTYPE):
 		return
-	frappe.db.sql(
-		f"""
-		update `tab{LETTER_HEAD_DOCTYPE}`
-		set {STATUS_FIELD} = 'Active'
-		where coalesce({STATUS_FIELD}, '') = ''
-		"""
+	frappe.db.set_value(
+		LETTER_HEAD_DOCTYPE,
+		{STATUS_FIELD: ["is", "not set"]},
+		STATUS_FIELD,
+		"Active",
+		update_modified=False,
 	)

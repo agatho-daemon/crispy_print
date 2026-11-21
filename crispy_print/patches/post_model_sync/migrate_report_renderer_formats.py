@@ -21,28 +21,29 @@ STYLE_BY_LEGACY_TYPE = {
 def execute():
 	if not frappe.db.table_exists("Crispy Format"):
 		return
-	legacy_columns = {row[0] for row in frappe.db.sql("desc `tabCrispy Format`")}
+	legacy_columns = set(frappe.db.get_table_columns("Crispy Format"))
 	if not {"is_generic", "generic_report_type"}.issubset(legacy_columns):
 		return
 
-	names = frappe.get_all("Crispy Format", filters={"crispy_format_type": "Report"}, pluck="name")
-	for name in names:
-		doc = frappe.get_doc("Crispy Format", name)
-		legacy_generic, legacy_type = frappe.db.sql(
-			"select is_generic, generic_report_type from `tabCrispy Format` where name=%s",
-			name,
-		)[0]
-		legacy_generic = bool(legacy_generic)
+	formats = frappe.qb.DocType("Crispy Format")
+	legacy_reports = (
+		frappe.qb.from_(formats)
+		.select(formats.name, formats.is_generic, formats.generic_report_type)
+		.where(formats.crispy_format_type == "Report")
+		.run(as_dict=True)
+	)
+	for legacy in legacy_reports:
+		doc = frappe.get_doc("Crispy Format", legacy.name)
 		reports = [row.report for row in doc.get("report") or [] if row.report and not row.disabled]
 		groups: dict[str, list[str]] = {}
 		for report in reports:
 			groups.setdefault(infer_report_renderer(report), []).append(report)
 
-		if legacy_generic:
+		if legacy.is_generic:
 			doc.report_scope = "All Compatible Reports"
 			doc.report_renderer = "generic_report"
 			doc.set("report", [])
-			_set_report_style(doc, STYLE_BY_LEGACY_TYPE.get(legacy_type, "Standard"))
+			_set_report_style(doc, STYLE_BY_LEGACY_TYPE.get(legacy.generic_report_type, "Standard"))
 		elif len(groups) <= 1:
 			doc.report_scope = "Selected Reports"
 			doc.report_renderer = infer_renderer_for_reports(reports)
